@@ -1,5 +1,6 @@
 // Battle Scenes Editor – редактор фона битв и анимаций
 // Адаптивное окно 1024×768, загрузка и сохранение data/battles/entries.json
+// Редактирование анимаций: кадры, длительность, offset
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -14,20 +15,14 @@
 #include <commdlg.h>
 #include "cJSON.h"
 
-// Прототипы
-void safe_strcpy(char *dest, size_t size, const char *src);
-bool open_file_dialog(char *out, size_t out_len, const char *initial_dir);
-bool open_json_dialog(char *out, size_t out_len, const char *initial_dir);
-void get_relative_path(const char *abs_path, char *out, size_t out_len);
-
 // ─── Геометрия ───────────────────────────────
 #define LOGICAL_W          1024
 #define LOGICAL_H          768
 #define LEFT_PANEL_W        220
 #define PREVIEW_X           (LEFT_PANEL_W + 20)
-#define PREVIEW_Y           20
+#define PREVIEW_Y           ((LOGICAL_H - PREVIEW_H) / 2)   // автоматически центрируется
 #define PREVIEW_W           (LOGICAL_W - LEFT_PANEL_W - 40)
-#define PREVIEW_H           (LOGICAL_H - 100)
+#define PREVIEW_H           672    // как в игре (960 - 2*144)
 #define FONT_SIZE           18
 
 // ─── Цвета ────────────────────────────────────
@@ -58,6 +53,7 @@ typedef struct {
     char name[32];
     int frame_count;
     SDL_Texture *frames[MAX_ANIM_FRAMES];
+    float frame_durations[MAX_ANIM_FRAMES];   // длительность каждого кадра
     int offset_x;
     int offset_y;
 } AnimPhase;
@@ -67,9 +63,10 @@ typedef struct {
     int current_phase;      // 0..2
     int current_frame;      // индекс в текущей фазе
     bool loaded;
+    char json_path[512];    // путь к animation.json, чтобы сохранять
 } AnimationSet;
 
-typedef struct {
+typedef struct Editor {
     BattleEntry *entries;
     int entry_count;
     int current_index;
@@ -79,11 +76,11 @@ typedef struct {
     SDL_Renderer *renderer;
     TTF_Font     *font;
 
-    SDL_Texture  *bg_tex;          // предпросмотр фона
+    SDL_Texture  *bg_tex;
     char          bg_display_name[64];
     char          bg_full_path[256];
 
-    AnimationSet anim_set;         // загруженная анимация
+    AnimationSet anim_set;
 } Editor;
 
 // ─── Вспомогательные функции ──────────────────
@@ -226,7 +223,15 @@ void load_background_texture(Editor *ed, const char *rel_path) {
 }
 
 // ─── Загрузка анимаций из JSON ────────────────
-static void free_animation_set(AnimationSet *as) {
+static void extract_directory(const char *filepath, char *dir, size_t dir_size) {
+    safe_strcpy(dir, dir_size, filepath);
+    char *slash = strrchr(dir, '\\');
+    if (!slash) slash = strrchr(dir, '/');
+    if (slash) *(slash + 1) = '\0';
+    else dir[0] = '\0';
+}
+
+void free_animation_set(AnimationSet *as) {
     if (!as->loaded) return;
     for (int p = 0; p < 3; p++) {
         for (int f = 0; f < as->phases[p].frame_count; f++) {
@@ -238,14 +243,7 @@ static void free_animation_set(AnimationSet *as) {
     as->loaded = false;
     as->current_phase = 0;
     as->current_frame = 0;
-}
-
-static void extract_directory(const char *filepath, char *dir, size_t dir_size) {
-    safe_strcpy(dir, dir_size, filepath);
-    char *slash = strrchr(dir, '\\');
-    if (!slash) slash = strrchr(dir, '/');
-    if (slash) *(slash + 1) = '\0';  // оставляем слеш
-    else dir[0] = '\0';
+    as->json_path[0] = '\0';
 }
 
 bool load_animation_from_json(Editor *ed, const char *json_path) {
@@ -273,6 +271,7 @@ bool load_animation_from_json(Editor *ed, const char *json_path) {
 
     char base_dir[512];
     extract_directory(json_path, base_dir, sizeof(base_dir));
+    safe_strcpy(ed->anim_set.json_path, sizeof(ed->anim_set.json_path), json_path);
 
     const char *phase_keys[] = {"idle", "attack", "defense"};
     for (int p = 0; p < 3; p++) {
@@ -292,8 +291,10 @@ bool load_animation_from_json(Editor *ed, const char *json_path) {
         for (int i = 0; i < n; i++) {
             cJSON *frame = cJSON_GetArrayItem(frames, i);
             cJSON *file_json = cJSON_GetObjectItem(frame, "file");
+            cJSON *dur_json  = cJSON_GetObjectItem(frame, "duration");
             if (!file_json) continue;
             const char *filename = file_json->valuestring;
+            ap->frame_durations[i] = dur_json ? (float)dur_json->valuedouble : 0.3f;
 
             char full_path[768];
             snprintf(full_path, sizeof(full_path), "%s%s", base_dir, filename);
@@ -316,7 +317,6 @@ bool load_animation_from_json(Editor *ed, const char *json_path) {
 
     cJSON_Delete(root);
 
-    // Переходим к первой фазе, у которой есть кадры
     ed->anim_set.current_phase = 0;
     ed->anim_set.current_frame = 0;
     for (int p = 0; p < 3; p++) {
@@ -329,6 +329,68 @@ bool load_animation_from_json(Editor *ed, const char *json_path) {
 
     printf("Animation loaded: %s\n", json_path);
     return true;
+}
+
+// ─── Сохранение анимации в JSON ───────────────
+void save_animation_to_json(Editor *ed) {
+    if (!ed->anim_set.loaded || !ed->anim_set.json_path[0]) {
+        printf("No animation loaded to save.\n");
+        return;
+    }
+
+    // Читаем существующий JSON, чтобы не потерять имена файлов
+    FILE *f = fopen(ed->anim_set.json_path, "r");
+    cJSON *root = NULL;
+    if (f) {
+        fseek(f, 0, SEEK_END);
+        long len = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        char *data = malloc(len + 1);
+        fread(data, 1, len, f);
+        data[len] = '\0';
+        fclose(f);
+        root = cJSON_Parse(data);
+        free(data);
+    }
+    if (!root) root = cJSON_CreateObject();
+
+    const char *phase_keys[] = {"idle", "attack", "defense"};
+    for (int p = 0; p < 3; p++) {
+        AnimPhase *ap = &ed->anim_set.phases[p];
+        if (ap->frame_count <= 0) continue;
+
+        cJSON *phase = cJSON_GetObjectItem(root, phase_keys[p]);
+        if (!phase) {
+            phase = cJSON_CreateObject();
+            cJSON_AddItemToObject(root, phase_keys[p], phase);
+        }
+
+        // Обновляем offset
+        cJSON_ReplaceItemInObject(phase, "offset_x", cJSON_CreateNumber(ap->offset_x));
+        cJSON_ReplaceItemInObject(phase, "offset_y", cJSON_CreateNumber(ap->offset_y));
+
+        // Обновляем длительности кадров
+        cJSON *frames = cJSON_GetObjectItem(phase, "frames");
+        if (cJSON_IsArray(frames)) {
+            int n = cJSON_GetArraySize(frames);
+            for (int i = 0; i < n && i < ap->frame_count; i++) {
+                cJSON *frame = cJSON_GetArrayItem(frames, i);
+                if (frame) {
+                    cJSON_ReplaceItemInObject(frame, "duration", cJSON_CreateNumber(ap->frame_durations[i]));
+                }
+            }
+        }
+    }
+
+    char *str = cJSON_Print(root);
+    f = fopen(ed->anim_set.json_path, "wb");
+    if (f) {
+        fputs(str, f);
+        fclose(f);
+        printf("Animation saved: %s\n", ed->anim_set.json_path);
+    }
+    free(str);
+    cJSON_Delete(root);
 }
 
 // ─── Отрисовка интерфейса ─────────────────────
@@ -375,6 +437,7 @@ void draw_ui(Editor *ed) {
     SDL_Rect btn_bg     = {85, LOGICAL_H - 40, 100, 28};
     SDL_Rect btn_enemy  = {190, LOGICAL_H - 40, 110, 28};
     SDL_Rect btn_ally   = {305, LOGICAL_H - 40, 110, 28};
+    SDL_Rect btn_save_anim = {420, LOGICAL_H - 40, 100, 28};
 
     int mx, my;
     SDL_GetMouseState(&mx, &my);
@@ -419,6 +482,16 @@ void draw_ui(Editor *ed) {
     draw_text_centered(ed->renderer, ed->font, "Ally Anim",
                        btn_ally.x + btn_ally.w/2, btn_ally.y + btn_ally.h/2, TEXT_COLOR);
 
+    // Кнопка Save Anim
+    SDL_Color save_anim_col = BUTTON_COLOR;
+    if (logical_mx >= btn_save_anim.x && logical_mx < btn_save_anim.x+btn_save_anim.w &&
+        logical_my >= btn_save_anim.y && logical_my < btn_save_anim.y+btn_save_anim.h)
+        save_anim_col = BUTTON_HOVER;
+    SDL_SetRenderDrawColor(ed->renderer, save_anim_col.r, save_anim_col.g, save_anim_col.b, 255);
+    SDL_RenderFillRect(ed->renderer, &btn_save_anim);
+    draw_text_centered(ed->renderer, ed->font, "Save Anim",
+                       btn_save_anim.x + btn_save_anim.w/2, btn_save_anim.y + btn_save_anim.h/2, TEXT_COLOR);
+
     // Правая область предпросмотра
     if (ed->entry_count > 0) {
         BattleEntry *entry = &ed->entries[ed->current_index];
@@ -429,61 +502,102 @@ void draw_ui(Editor *ed) {
                            PREVIEW_X + PREVIEW_W/2, PREVIEW_Y - 5, TEXT_COLOR);
 
         SDL_Rect preview_rect = {PREVIEW_X, PREVIEW_Y, PREVIEW_W, PREVIEW_H};
-        SDL_SetRenderDrawColor(ed->renderer, 50, 50, 50, 255);
-        SDL_RenderFillRect(ed->renderer, &preview_rect);
+
+        // === 1. Фон битвы (всегда, если есть) ===
+        if (ed->bg_tex) {
+            int tex_w, tex_h;
+            SDL_QueryTexture(ed->bg_tex, NULL, NULL, &tex_w, &tex_h);
+            float scale = fminf((float)PREVIEW_W / tex_w, (float)(PREVIEW_H - 288) / tex_h);
+            int draw_w = (int)(tex_w * scale);
+            int draw_h = (int)(tex_h * scale);
+            SDL_Rect dst = {
+                PREVIEW_X + (PREVIEW_W - draw_w)/2,
+                PREVIEW_Y + 144 + ((PREVIEW_H - 288) - draw_h)/2,
+                draw_w, draw_h
+            };
+            SDL_SetRenderDrawColor(ed->renderer, 50, 50, 50, 255);
+            SDL_RenderFillRect(ed->renderer, &preview_rect);
+            SDL_RenderCopy(ed->renderer, ed->bg_tex, NULL, &dst);
+        } else {
+            SDL_SetRenderDrawColor(ed->renderer, 50, 50, 50, 255);
+            SDL_RenderFillRect(ed->renderer, &preview_rect);
+            draw_text_centered(ed->renderer, ed->font, "No background",
+                               PREVIEW_X + PREVIEW_W/2, PREVIEW_Y + PREVIEW_H/2,
+                               (SDL_Color){150,150,150,255});
+        }
+
+        // Рамка вокруг предпросмотра
         SDL_SetRenderDrawColor(ed->renderer, 200, 200, 200, 255);
         SDL_RenderDrawRect(ed->renderer, &preview_rect);
 
+        // === 2. Чёрные полосы и спрайт анимации ===
         if (ed->anim_set.loaded) {
-            // Показываем кадр анимации
+            // Чёрные полосы 144px сверху и снизу
+            SDL_Rect top_bar = {PREVIEW_X, PREVIEW_Y, PREVIEW_W, 144};
+            SDL_Rect bot_bar = {PREVIEW_X, PREVIEW_Y + PREVIEW_H - 144, PREVIEW_W, 144};
+            SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
+            SDL_RenderFillRect(ed->renderer, &top_bar);
+            SDL_RenderFillRect(ed->renderer, &bot_bar);
+
             AnimPhase *phase = &ed->anim_set.phases[ed->anim_set.current_phase];
             if (phase->frame_count > 0) {
                 int idx = ed->anim_set.current_frame % phase->frame_count;
+
                 SDL_Texture *tex = phase->frames[idx];
                 if (tex) {
                     int tw, th;
                     SDL_QueryTexture(tex, NULL, NULL, &tw, &th);
-                    float scale = fminf((float)(PREVIEW_W - 20) / tw, (float)(PREVIEW_H - 60) / th);
-                    if (scale > 1.0f) scale = 1.0f;
-                    int dw = (int)(tw * scale);
-                    int dh = (int)(th * scale);
-                    SDL_Rect dst = {
-                        PREVIEW_X + (PREVIEW_W - dw)/2,
-                        PREVIEW_Y + (PREVIEW_H - dh)/2 - 10,
-                        dw, dh
-                    };
+
+                    float sprite_scale = 0.5f;
+                    float fit_scale = fminf((float)(PREVIEW_W - 20) / (tw * sprite_scale),
+                                            (float)(PREVIEW_H - 288) / (th * sprite_scale));
+                    if (fit_scale > 1.0f) fit_scale = 1.0f;
+
+                    int dw = (int)(tw * sprite_scale * fit_scale);
+                    int dh = (int)(th * sprite_scale * fit_scale);
+
+                    int center_x = PREVIEW_X + PREVIEW_W/2;
+                    int center_y = PREVIEW_Y + 144 + (PREVIEW_H - 288)/2;
+
+                    int cx = center_x + (int)(phase->offset_x * sprite_scale * fit_scale);
+                    int cy = center_y + (int)(phase->offset_y * sprite_scale * fit_scale) - dh/2;
+
+                    SDL_Rect dst = { cx - dw/2, cy, dw, dh };
+
+                    SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
                     SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
                 }
             }
 
-            // Информация о фазе и координатах
+            // Информация о фазе, кадре, длительности и offset
+            float dur = (phase->frame_count > 0) ? phase->frame_durations[ed->anim_set.current_frame % phase->frame_count] : 0.0f;
             char phase_info[256];
-            snprintf(phase_info, sizeof(phase_info), "%s frame %d/%d  offset(%d, %d)",
-                     ed->anim_set.phases[ed->anim_set.current_phase].name,
+            snprintf(phase_info, sizeof(phase_info), "%s frame %d/%d  dur: %.2f  offset(%d, %d)",
+                     phase->name,
                      ed->anim_set.current_frame + 1,
                      phase->frame_count,
+                     dur,
                      phase->offset_x, phase->offset_y);
             draw_text_centered(ed->renderer, ed->font, phase_info,
                                PREVIEW_X + PREVIEW_W/2,
                                PREVIEW_Y + PREVIEW_H + 15, TEXT_COLOR);
+
+            // Подсказка управления
+            draw_text_centered(ed->renderer, ed->font,
+                "Arrows:nav  Ctrl+Arrows:offset  W/S:duration  SaveAnim:save",
+                PREVIEW_X + PREVIEW_W/2,
+                PREVIEW_Y + PREVIEW_H + 40,
+                (SDL_Color){180, 180, 200, 255});
         } else {
-            // Превью фона
-            if (ed->bg_tex) {
-                int tex_w, tex_h;
-                SDL_QueryTexture(ed->bg_tex, NULL, NULL, &tex_w, &tex_h);
-                float scale = fminf((float)PREVIEW_W / tex_w, (float)PREVIEW_H / tex_h);
-                int draw_w = (int)(tex_w * scale);
-                int draw_h = (int)(tex_h * scale);
-                SDL_Rect dst = {
-                    PREVIEW_X + (PREVIEW_W - draw_w)/2,
-                    PREVIEW_Y + (PREVIEW_H - draw_h)/2,
-                    draw_w, draw_h
-                };
-                SDL_RenderCopy(ed->renderer, ed->bg_tex, NULL, &dst);
-            } else {
-                draw_text_centered(ed->renderer, ed->font, "No background",
-                                   PREVIEW_X + PREVIEW_W/2, PREVIEW_Y + PREVIEW_H/2,
-                                   (SDL_Color){150,150,150,255});
+            if (entry->background[0]) {
+                const char *fname = strrchr(entry->background, '\\');
+                if (!fname) fname = strrchr(entry->background, '/');
+                if (fname) fname++; else fname = entry->background;
+                char bg_txt[1024];
+                snprintf(bg_txt, sizeof(bg_txt), "File: %s", fname);
+                draw_text_centered(ed->renderer, ed->font, bg_txt,
+                                   PREVIEW_X + PREVIEW_W/2,
+                                   PREVIEW_Y + PREVIEW_H + 20, TEXT_COLOR);
             }
         }
     } else {
@@ -508,26 +622,67 @@ void handle_input(Editor *ed, bool *running) {
         int mx = (int)((float)raw_mx * LOGICAL_W / win_w);
         int my = (int)((float)raw_my * LOGICAL_H / win_h);
 
-        // Навигация по анимации (стрелки)
-        if (ed->anim_set.loaded && e.type == SDL_KEYDOWN) {
-            if (e.key.keysym.sym == SDLK_LEFT) {
-                ed->anim_set.current_frame--;
-                if (ed->anim_set.current_frame < 0)
-                    ed->anim_set.current_frame = ed->anim_set.phases[ed->anim_set.current_phase].frame_count - 1;
-            }
-            else if (e.key.keysym.sym == SDLK_RIGHT) {
-                ed->anim_set.current_frame++;
-                if (ed->anim_set.current_frame >= ed->anim_set.phases[ed->anim_set.current_phase].frame_count)
-                    ed->anim_set.current_frame = 0;
-            }
-            else if (e.key.keysym.sym == SDLK_UP) {
-                ed->anim_set.current_phase--;
-                if (ed->anim_set.current_phase < 0) ed->anim_set.current_phase = 2;
-                ed->anim_set.current_frame = 0;
-            }
-            else if (e.key.keysym.sym == SDLK_DOWN) {
-                ed->anim_set.current_phase = (ed->anim_set.current_phase + 1) % 3;
-                ed->anim_set.current_frame = 0;
+        // Навигация и редактирование анимации (только если загружена)
+        if (ed->anim_set.loaded) {
+            AnimPhase *phase = &ed->anim_set.phases[ed->anim_set.current_phase];
+            bool ctrl = (SDL_GetModState() & KMOD_CTRL) != 0;
+
+            if (e.type == SDL_KEYDOWN) {
+                // Изменение offset стрелками с Ctrl
+                if (ctrl) {
+                    int step = (SDL_GetModState() & KMOD_SHIFT) ? 10 : 1;
+                    switch (e.key.keysym.sym) {
+                        case SDLK_UP:    phase->offset_y -= step; break;
+                        case SDLK_DOWN:  phase->offset_y += step; break;
+                        case SDLK_LEFT:  phase->offset_x -= step; break;
+                        case SDLK_RIGHT: phase->offset_x += step; break;
+                        default: break;
+                    }
+                }
+                // Навигация без Ctrl
+                else {
+                    switch (e.key.keysym.sym) {
+                        case SDLK_LEFT:
+                            ed->anim_set.current_frame--;
+                            if (ed->anim_set.current_frame < 0)
+                                ed->anim_set.current_frame = phase->frame_count - 1;
+                            break;
+                        case SDLK_RIGHT:
+                            ed->anim_set.current_frame++;
+                            if (ed->anim_set.current_frame >= phase->frame_count)
+                                ed->anim_set.current_frame = 0;
+                            break;
+                        case SDLK_UP:
+                            ed->anim_set.current_phase--;
+                            if (ed->anim_set.current_phase < 0) ed->anim_set.current_phase = 2;
+                            ed->anim_set.current_frame = 0;
+                            break;
+                        case SDLK_DOWN:
+                            ed->anim_set.current_phase = (ed->anim_set.current_phase + 1) % 3;
+                            ed->anim_set.current_frame = 0;
+                            break;
+                        // Изменение длительности кадра
+                        case SDLK_w: {
+                            if (phase->frame_count > 0) {
+                                int idx = ed->anim_set.current_frame % phase->frame_count;
+                                float step = (SDL_GetModState() & KMOD_SHIFT) ? 0.01f : 0.05f;
+                                phase->frame_durations[idx] += step;
+                                if (phase->frame_durations[idx] > 5.0f) phase->frame_durations[idx] = 5.0f;
+                            }
+                            break;
+                        }
+                        case SDLK_s: {
+                            if (phase->frame_count > 0) {
+                                int idx = ed->anim_set.current_frame % phase->frame_count;
+                                float step = (SDL_GetModState() & KMOD_SHIFT) ? 0.01f : 0.05f;
+                                phase->frame_durations[idx] -= step;
+                                if (phase->frame_durations[idx] < 0.01f) phase->frame_durations[idx] = 0.01f;
+                            }
+                            break;
+                        }
+                        default: break;
+                    }
+                }
             }
         }
 
@@ -542,7 +697,7 @@ void handle_input(Editor *ed, bool *running) {
 
         // Клик левой кнопкой
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-            // Save
+            // Save entries
             SDL_Rect btn_save = {10, LOGICAL_H - 40, 70, 28};
             if (mx >= btn_save.x && mx < btn_save.x+btn_save.w &&
                 my >= btn_save.y && my < btn_save.y+btn_save.h) {
@@ -603,6 +758,18 @@ void handle_input(Editor *ed, bool *running) {
                 continue;
             }
 
+            // Save Anim
+            SDL_Rect btn_save_anim = {420, LOGICAL_H - 40, 100, 28};
+            if (mx >= btn_save_anim.x && mx < btn_save_anim.x+btn_save_anim.w &&
+                my >= btn_save_anim.y && my < btn_save_anim.y+btn_save_anim.h) {
+                if (ed->anim_set.loaded) {
+                    save_animation_to_json(ed);
+                } else {
+                    printf("No animation loaded.\n");
+                }
+                continue;
+            }
+
             // Выбор элемента списка – сбрасывает анимацию
             int line_height = FONT_SIZE + 4;
             int max_vis = (LOGICAL_H - 60) / line_height;
@@ -615,7 +782,7 @@ void handle_input(Editor *ed, bool *running) {
                         if (idx != ed->current_index) {
                             ed->current_index = idx;
                             load_background_texture(ed, ed->entries[idx].background);
-                            free_animation_set(&ed->anim_set);  // сбрасываем анимацию
+                            free_animation_set(&ed->anim_set);
                         }
                         break;
                     }
