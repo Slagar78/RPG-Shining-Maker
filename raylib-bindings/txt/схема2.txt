@@ -1,0 +1,13 @@
+D:\RPG-Shinzo\RPG-Shinzo\
+├── game.rb
+├── map_editor.c
+├── lib/
+├── data/
+├── assets/
+│   ├── ui/
+│   │   └── message_panel.png
+│   ├── fonts/
+│       └── main.ttf
+└── TextEditor/
+    ├── main.c
+    └── Makefile (или просто компилируешь в IDE)

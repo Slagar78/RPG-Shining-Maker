@@ -1,0 +1,99 @@
+{
+	"items":	[{
+			"id":	0,
+			"name":	"Medical Herb",
+			"category":	"consumable",
+			"price":	10,
+			"range":	[0, 1],
+			"use_spell":	"Normale",
+			"spell_level":	1,
+			"icon":	"assets/items/Medical_Herb.png",
+			"description":	"Восстанавливает 10 HP",
+			"attack":	0,
+			"defense":	0
+		}, {
+			"id":	1,
+			"name":	"Healing Seed",
+			"category":	"consumable",
+			"price":	200,
+			"range":	[0, 1],
+			"use_spell":	"Heal",
+			"spell_level":	2,
+			"icon":	"assets/items/Healing_Seed.png",
+			"description":	"Восстанавливает 20 HP",
+			"attack":	0,
+			"defense":	0
+		}, {
+			"id":	2,
+			"name":	"Healing Drop",
+			"category":	"consumable",
+			"price":	300,
+			"range":	[0, 1],
+			"use_spell":	"HEAL",
+			"spell_level":	3,
+			"icon":	"assets/items/Healing_Drop.png",
+			"description":	"Восстанавливает 40 HP",
+			"attack":	0,
+			"defense":	0
+		}, {
+			"id":	3,
+			"name":	"Antidote",
+			"category":	"consumable",
+			"price":	20,
+			"range":	[0, 1],
+			"use_spell":	"DETOX",
+			"spell_level":	1,
+			"icon":	"assets/items/Antidote.png",
+			"description":	"Снимает отравление",
+			"attack":	0,
+			"defense":	0
+		}, {
+			"id":	4,
+			"name":	"Angel Wing",
+			"category":	"consumable",
+			"price":	40,
+			"range":	[0, 0],
+			"use_spell":	"EGRESS",
+			"spell_level":	1,
+			"icon":	"assets/items/Angel_Wing.png",
+			"description":	"Выход из битвы",
+			"attack":	0,
+			"defense":	0
+		}, {
+			"id":	5,
+			"name":	"Short Sword",
+			"category":	"Weapon",
+			"price":	140,
+			"range":	[1, 1],
+			"use_spell":	"NOTHING",
+			"spell_level":	0,
+			"icon":	"assets/items/Short_Sword.png",
+			"description":	"Короткий меч. Атака +5",
+			"attack":	50,
+			"defense":	-5
+		}, {
+			"id":	6,
+			"name":	"Black Ring",
+			"category":	"Ring",
+			"price":	5000,
+			"range":	[0, 0],
+			"use_spell":	"BLAZE",
+			"spell_level":	2,
+			"icon":	"assets/items/Black_Ring.png",
+			"description":	"Кольцо тьмы. Атака +10",
+			"attack":	20,
+			"defense":	5
+		}, {
+			"id":	7,
+			"name":	"Axe",
+			"category":	"Weapon",
+			"price":	100,
+			"range":	[1, 1],
+			"use_spell":	"NOTHING",
+			"spell_level":	0,
+			"icon":	"assets/items/Axe.png",
+			"description":	"Короткий меч. Атака +5",
+			"attack":	5,
+			"defense":	0
+		}]
+}

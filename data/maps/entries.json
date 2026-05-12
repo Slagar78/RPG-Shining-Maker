@@ -1,0 +1,16 @@
+[{
+		"folder":	"Granseal",
+		"name":	"Granseal",
+		"music":	"assets\\sounds\\SF_Feather.mp3",
+		"music_volume":	0.800000011920929
+	}, {
+		"folder":	"map00",
+		"name":	"map00",
+		"music":	"assets\\sounds\\Shinzo.mp3",
+		"music_volume":	0.800000011920929
+	}, {
+		"folder":	"map07",
+		"name":	"map07",
+		"music":	"../assets/sounds/SF_Feather.mp3",
+		"music_volume":	0.800000011920929
+	}]

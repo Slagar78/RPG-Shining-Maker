@@ -1,0 +1,30 @@
+{
+  "promotions": {
+    "regular": [
+      { "base": "SDMN", "promoted": "HERO" },
+      { "base": "KNTE", "promoted": "PLDN" },
+      { "base": "WARR", "promoted": "GLDT" },
+      { "base": "MAGE", "promoted": "WIZ" },
+      { "base": "PRST", "promoted": "VICR" },
+      { "base": "ACHR", "promoted": "SNIP" },
+      { "base": "BDMN", "promoted": "BDBT" },
+      { "base": "WFMN", "promoted": "WFBR" },
+      { "base": "RNGR", "promoted": "BWNT" },
+      { "base": "PHNK", "promoted": "PHNX" },
+      { "base": "THIF", "promoted": "NINJ" },
+      { "base": "TORT", "promoted": "MNST" }
+    ],
+    "special_items": [
+      { "item": "Pegasus Wing", "base": "KNTE", "promoted": "PGNT" },
+      { "item": "Warrior Pride", "base": "WARR", "promoted": "BRN" },
+      { "item": "Secret Book", "base": "MAGE", "promoted": "SORC" },
+      { "item": "Vigor Ball", "base": "PRST", "promoted": "MMNK" },
+      { "item": "Silver Tank", "base": "ACHR", "promoted": "BRGN" }
+    ]
+  },
+  "healer_classes": ["PRST", "VICR", "MMNK"],
+  "lose_all_spells": [
+    { "class": "SORC", "replacement_spell": "DAO" }
+  ],
+  "different_weapon_type": ["MMNK", "NINJ"]
+}

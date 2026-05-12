@@ -1,0 +1,11 @@
+RPG-Shinzo/
+├── constructor.rb       # Редактор (Gosu)
+├── game.rb              # Игра (Raylib) ← переименован
+├── lib/
+│   ├── database.rb
+│   ├── player.rb
+│   └── ui.rb
+├── data/
+│   └── *.json
+└── assets/
+    └── ...

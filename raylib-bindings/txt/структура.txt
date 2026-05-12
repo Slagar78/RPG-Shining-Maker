@@ -1,0 +1,11 @@
+RPG-Shinzo/
+├── main.rb              # ← главный файл (переименованный)
+├── editor.rb            # редактор карт
+├── lib/
+│   ├── database.rb
+│   ├── player.rb
+│   └── ui.rb
+├── data/
+│   └── *.json
+└── assets/
+    └── ...

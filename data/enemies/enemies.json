@@ -1,0 +1,95 @@
+{
+	"enemies":	[{
+			"id":	0,
+			"name":	"Gyasa",
+			"portrait":	"Gyasa",
+			"mapsprite":	"mapsprite090",
+			"battle_sprite_path": "assets/battles/battlesprites/enemies/Gyasa",
+			"race":	"Enterran",
+			"status":	"normal",
+			"level":	14,
+			"spell_power":	"enhanced",
+			"stats":	{
+				"max_hp":	52,
+				"max_mp":	0,
+				"base_att":	38,
+				"base_def":	30,
+				"base_agi":	29,
+				"base_mov":	7
+			},
+			"resistance":	{
+				"wind":	"none",
+				"lightning":	"minor",
+				"ice":	"none",
+				"fire":	"major",
+				"aqua":	"weakness",
+				"earth":	"none",
+				"neutral":	"none",
+				"affliction":	"immunity"
+			},
+			"prowess":	["critical150_1in8", "double_1in16", "counter_1in16"],
+			"items":	[{
+					"item":	"Laser Blade",
+					"equipped":	true
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}],
+			"spells":	["Nothing", "Nothing", "Nothing", "Nothing"],
+			"initial_status":	"none",
+			"move_type":	"flying",
+			"ai_bitfield":	["prioritymod_2", "bit4"]
+		}, {
+			"id":	1,
+			"name":	"Vary",
+			"portrait":	"Huper_Ryuma",
+			"mapsprite":	"mapsprite107",
+			"battle_sprite_path": "assets/battles/battlesprites/enemies/Vary",
+			"race":	"Cadrian",
+			"status":	"normal",
+			"level":	10,
+			"spell_power":	"regular",
+			"stats":	{
+				"max_hp":	40,
+				"max_mp":	12,
+				"base_att":	30,
+				"base_def":	22,
+				"base_agi":	18,
+				"base_mov":	4
+			},
+			"resistance":	{
+				"wind":	"none",
+				"lightning":	"minor",
+				"ice":	"none",
+				"fire":	"major",
+				"aqua":	"weakness",
+				"earth":	"none",
+				"neutral":	"none",
+				"affliction":	"immunity"
+			},
+			"prowess":	["critical_poison", "double_1in32", "counter_1in32"],
+			"items":	[{
+					"item":	"Nothing",
+					"equipped":	false
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}],
+			"spells":	["Drain", "Nothing", "Nothing", "Nothing"],
+			"initial_status":	"none",
+			"move_type":	"stealth",
+			"ai_bitfield":	["prioritymod_2", "bit5"]
+		}]
+}

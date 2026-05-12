@@ -1,0 +1,33 @@
+{
+  "tiles": [
+    {
+      "id": 0,
+      "name": "status",
+      "icon": "assets/ui/menu/Menu1.png",
+      "icon_anim": "assets/ui/menu/Menu1_Anim.png",
+      "action": "open_status"
+    },
+    {
+      "id": 1,
+      "name": "magic",
+      "icon": "assets/ui/menu/Menu2.png",
+      "icon_anim": "assets/ui/menu/Menu2_Anim.png",
+      "action": "open_magic"
+    },
+    {
+      "id": 2,
+      "name": "items",
+      "icon": "assets/ui/menu/Menu3.png",
+      "icon_anim": "assets/ui/menu/Menu3_Anim.png",
+      "action": "open_items"
+    },
+    {
+      "id": 3,
+      "name": "event",
+      "icon": "assets/ui/menu/Menu4.png",
+      "icon_anim": "assets/ui/menu/Menu4_Anim.png",
+      "action": "run_event",
+      "event_id": 1
+    }
+  ]
+}

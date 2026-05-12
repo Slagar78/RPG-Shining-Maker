@@ -1,0 +1,15 @@
+cd /d/RPG-Shinzo/RPG_Shinzo_Maker/TextEditor
+
+cd /d/RPG-Shinzo/RPG_Shinzo_Maker/Database
+
+cd /d/RPG-Shinzo/RPG_Shinzo_Maker/MapEditor
+
+cd /d/RPG-Shinzo/RPG_Shinzo_Maker/MapCreator
+
+cd /d/RPG-Shinzo/RPG_Shinzo_Maker/BattleEditor
+
+cd /d/RPG-Shinzo/RPG_Shinzo_Maker/Constructor
+
+cd /d/RPG-Shinzo/RPG_Shinzo_Maker/BattleScenes
+
+cd 

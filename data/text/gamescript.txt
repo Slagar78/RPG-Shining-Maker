@@ -1,0 +1,6 @@
+0000=Pass the {ITEM}{N}to whom?
+0001={DONOR} gave {ITEM} {N}to {TARGET}.
+0002={DONOR} gave {ITEM} {N}and received {RECEIVED_ITEM} {N}from {TARGET}.
+0003=The {ITEM} {N}will be discarded. OK ?
+0004=The {ITEM} {N}is discarded.
+0005={LEADER} investigated the area{N}Nothing was there.
