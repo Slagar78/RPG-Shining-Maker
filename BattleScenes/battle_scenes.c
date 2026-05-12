@@ -1,4 +1,4 @@
-// Battle Scenes Editor – редактор фона битв
+// Battle Scenes Editor – редактор фона битв и анимаций
 // Адаптивное окно 1024×768, загрузка и сохранение data/battles/entries.json
 
 #define SDL_MAIN_HANDLED
@@ -9,14 +9,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
 #include <windows.h>
 #include <commdlg.h>
 #include "cJSON.h"
 
-// Прототипы функций
+// Прототипы
 void safe_strcpy(char *dest, size_t size, const char *src);
 bool open_file_dialog(char *out, size_t out_len, const char *initial_dir);
 bool open_json_dialog(char *out, size_t out_len, const char *initial_dir);
+void get_relative_path(const char *abs_path, char *out, size_t out_len);
 
 // ─── Геометрия ───────────────────────────────
 #define LOGICAL_W          1024
@@ -50,6 +52,23 @@ typedef struct {
     char background[512];
 } BattleEntry;
 
+// ─── Анимация ────────────────────────────────
+#define MAX_ANIM_FRAMES 32
+typedef struct {
+    char name[32];
+    int frame_count;
+    SDL_Texture *frames[MAX_ANIM_FRAMES];
+    int offset_x;
+    int offset_y;
+} AnimPhase;
+
+typedef struct {
+    AnimPhase phases[3];    // 0:idle, 1:attack, 2:defense
+    int current_phase;      // 0..2
+    int current_frame;      // индекс в текущей фазе
+    bool loaded;
+} AnimationSet;
+
 typedef struct {
     BattleEntry *entries;
     int entry_count;
@@ -63,6 +82,8 @@ typedef struct {
     SDL_Texture  *bg_tex;          // предпросмотр фона
     char          bg_display_name[64];
     char          bg_full_path[256];
+
+    AnimationSet anim_set;         // загруженная анимация
 } Editor;
 
 // ─── Вспомогательные функции ──────────────────
@@ -204,6 +225,112 @@ void load_background_texture(Editor *ed, const char *rel_path) {
     SDL_FreeSurface(surf);
 }
 
+// ─── Загрузка анимаций из JSON ────────────────
+static void free_animation_set(AnimationSet *as) {
+    if (!as->loaded) return;
+    for (int p = 0; p < 3; p++) {
+        for (int f = 0; f < as->phases[p].frame_count; f++) {
+            if (as->phases[p].frames[f])
+                SDL_DestroyTexture(as->phases[p].frames[f]);
+        }
+        as->phases[p].frame_count = 0;
+    }
+    as->loaded = false;
+    as->current_phase = 0;
+    as->current_frame = 0;
+}
+
+static void extract_directory(const char *filepath, char *dir, size_t dir_size) {
+    safe_strcpy(dir, dir_size, filepath);
+    char *slash = strrchr(dir, '\\');
+    if (!slash) slash = strrchr(dir, '/');
+    if (slash) *(slash + 1) = '\0';  // оставляем слеш
+    else dir[0] = '\0';
+}
+
+bool load_animation_from_json(Editor *ed, const char *json_path) {
+    free_animation_set(&ed->anim_set);
+
+    FILE *f = fopen(json_path, "r");
+    if (!f) {
+        printf("Cannot open animation JSON: %s\n", json_path);
+        return false;
+    }
+    fseek(f, 0, SEEK_END);
+    long len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char *data = malloc(len + 1);
+    fread(data, 1, len, f);
+    data[len] = '\0';
+    fclose(f);
+
+    cJSON *root = cJSON_Parse(data);
+    free(data);
+    if (!root) {
+        printf("Failed to parse animation JSON: %s\n", json_path);
+        return false;
+    }
+
+    char base_dir[512];
+    extract_directory(json_path, base_dir, sizeof(base_dir));
+
+    const char *phase_keys[] = {"idle", "attack", "defense"};
+    for (int p = 0; p < 3; p++) {
+        cJSON *phase = cJSON_GetObjectItem(root, phase_keys[p]);
+        if (!phase) continue;
+
+        cJSON *frames = cJSON_GetObjectItem(phase, "frames");
+        if (!cJSON_IsArray(frames)) continue;
+
+        int n = cJSON_GetArraySize(frames);
+        if (n > MAX_ANIM_FRAMES) n = MAX_ANIM_FRAMES;
+
+        AnimPhase *ap = &ed->anim_set.phases[p];
+        safe_strcpy(ap->name, sizeof(ap->name), phase_keys[p]);
+        ap->frame_count = n;
+
+        for (int i = 0; i < n; i++) {
+            cJSON *frame = cJSON_GetArrayItem(frames, i);
+            cJSON *file_json = cJSON_GetObjectItem(frame, "file");
+            if (!file_json) continue;
+            const char *filename = file_json->valuestring;
+
+            char full_path[768];
+            snprintf(full_path, sizeof(full_path), "%s%s", base_dir, filename);
+
+            SDL_Surface *surf = IMG_Load(full_path);
+            if (surf) {
+                ap->frames[i] = SDL_CreateTextureFromSurface(ed->renderer, surf);
+                SDL_FreeSurface(surf);
+            } else {
+                printf("Failed to load animation frame: %s\n", full_path);
+                ap->frames[i] = NULL;
+            }
+        }
+
+        cJSON *ox = cJSON_GetObjectItem(phase, "offset_x");
+        cJSON *oy = cJSON_GetObjectItem(phase, "offset_y");
+        ap->offset_x = ox ? ox->valueint : 0;
+        ap->offset_y = oy ? oy->valueint : 0;
+    }
+
+    cJSON_Delete(root);
+
+    // Переходим к первой фазе, у которой есть кадры
+    ed->anim_set.current_phase = 0;
+    ed->anim_set.current_frame = 0;
+    for (int p = 0; p < 3; p++) {
+        if (ed->anim_set.phases[p].frame_count > 0) {
+            ed->anim_set.current_phase = p;
+            break;
+        }
+    }
+    ed->anim_set.loaded = true;
+
+    printf("Animation loaded: %s\n", json_path);
+    return true;
+}
+
 // ─── Отрисовка интерфейса ─────────────────────
 void draw_text_centered(SDL_Renderer *ren, TTF_Font *font, const char *text,
                         int cx, int cy, SDL_Color color) {
@@ -217,16 +344,14 @@ void draw_text_centered(SDL_Renderer *ren, TTF_Font *font, const char *text,
 }
 
 void draw_ui(Editor *ed) {
-    // Фон
     SDL_SetRenderDrawColor(ed->renderer, BG_COLOR.r, BG_COLOR.g, BG_COLOR.b, 255);
     SDL_RenderClear(ed->renderer);
 
-    // Левая панель (список битв)
+    // Левая панель
     SDL_Rect panel = {0, 0, LEFT_PANEL_W, LOGICAL_H};
     SDL_SetRenderDrawColor(ed->renderer, PANEL_BG.r, PANEL_BG.g, PANEL_BG.b, 255);
     SDL_RenderFillRect(ed->renderer, &panel);
 
-    // Заголовок
     draw_text_centered(ed->renderer, ed->font, "BATTLES",
                        LEFT_PANEL_W/2, 20, TEXT_COLOR);
 
@@ -245,7 +370,7 @@ void draw_ui(Editor *ed) {
                            LEFT_PANEL_W/2, y + line_height/2, color);
     }
 
-    // Кнопки
+    // Кнопки внизу левой панели
     SDL_Rect btn_save   = {10, LOGICAL_H - 40, 70, 28};
     SDL_Rect btn_bg     = {85, LOGICAL_H - 40, 100, 28};
     SDL_Rect btn_enemy  = {190, LOGICAL_H - 40, 110, 28};
@@ -276,7 +401,6 @@ void draw_ui(Editor *ed) {
     draw_text_centered(ed->renderer, ed->font, "Change BG",
                        btn_bg.x + btn_bg.w/2, btn_bg.y + btn_bg.h/2, TEXT_COLOR);
 
-    // Кнопка Enemy Anim
     SDL_Color enemy_col = BUTTON_COLOR;
     if (logical_mx >= btn_enemy.x && logical_mx < btn_enemy.x+btn_enemy.w &&
         logical_my >= btn_enemy.y && logical_my < btn_enemy.y+btn_enemy.h)
@@ -286,7 +410,6 @@ void draw_ui(Editor *ed) {
     draw_text_centered(ed->renderer, ed->font, "Enemy Anim",
                        btn_enemy.x + btn_enemy.w/2, btn_enemy.y + btn_enemy.h/2, TEXT_COLOR);
 
-    // Кнопка Ally Anim
     SDL_Color ally_col = BUTTON_COLOR;
     if (logical_mx >= btn_ally.x && logical_mx < btn_ally.x+btn_ally.w &&
         logical_my >= btn_ally.y && logical_my < btn_ally.y+btn_ally.h)
@@ -296,7 +419,7 @@ void draw_ui(Editor *ed) {
     draw_text_centered(ed->renderer, ed->font, "Ally Anim",
                        btn_ally.x + btn_ally.w/2, btn_ally.y + btn_ally.h/2, TEXT_COLOR);
 
-    // Правая сторона: информация и превью фона
+    // Правая область предпросмотра
     if (ed->entry_count > 0) {
         BattleEntry *entry = &ed->entries[ed->current_index];
 
@@ -311,33 +434,57 @@ void draw_ui(Editor *ed) {
         SDL_SetRenderDrawColor(ed->renderer, 200, 200, 200, 255);
         SDL_RenderDrawRect(ed->renderer, &preview_rect);
 
-        if (ed->bg_tex) {
-            int tex_w, tex_h;
-            SDL_QueryTexture(ed->bg_tex, NULL, NULL, &tex_w, &tex_h);
-            float scale = fminf((float)PREVIEW_W / tex_w, (float)PREVIEW_H / tex_h);
-            int draw_w = (int)(tex_w * scale);
-            int draw_h = (int)(tex_h * scale);
-            SDL_Rect dst = {
-                PREVIEW_X + (PREVIEW_W - draw_w)/2,
-                PREVIEW_Y + (PREVIEW_H - draw_h)/2,
-                draw_w, draw_h
-            };
-            SDL_RenderCopy(ed->renderer, ed->bg_tex, NULL, &dst);
-        } else {
-            draw_text_centered(ed->renderer, ed->font, "No background",
-                               PREVIEW_X + PREVIEW_W/2, PREVIEW_Y + PREVIEW_H/2,
-                               (SDL_Color){150,150,150,255});
-        }
+        if (ed->anim_set.loaded) {
+            // Показываем кадр анимации
+            AnimPhase *phase = &ed->anim_set.phases[ed->anim_set.current_phase];
+            if (phase->frame_count > 0) {
+                int idx = ed->anim_set.current_frame % phase->frame_count;
+                SDL_Texture *tex = phase->frames[idx];
+                if (tex) {
+                    int tw, th;
+                    SDL_QueryTexture(tex, NULL, NULL, &tw, &th);
+                    float scale = fminf((float)(PREVIEW_W - 20) / tw, (float)(PREVIEW_H - 60) / th);
+                    if (scale > 1.0f) scale = 1.0f;
+                    int dw = (int)(tw * scale);
+                    int dh = (int)(th * scale);
+                    SDL_Rect dst = {
+                        PREVIEW_X + (PREVIEW_W - dw)/2,
+                        PREVIEW_Y + (PREVIEW_H - dh)/2 - 10,
+                        dw, dh
+                    };
+                    SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
+                }
+            }
 
-        if (entry->background[0]) {
-            const char *fname = strrchr(entry->background, '\\');
-            if (!fname) fname = strrchr(entry->background, '/');
-            if (fname) fname++; else fname = entry->background;
-            char bg_txt[1024];
-            snprintf(bg_txt, sizeof(bg_txt), "File: %s", fname);
-            draw_text_centered(ed->renderer, ed->font, bg_txt,
+            // Информация о фазе и координатах
+            char phase_info[256];
+            snprintf(phase_info, sizeof(phase_info), "%s frame %d/%d  offset(%d, %d)",
+                     ed->anim_set.phases[ed->anim_set.current_phase].name,
+                     ed->anim_set.current_frame + 1,
+                     phase->frame_count,
+                     phase->offset_x, phase->offset_y);
+            draw_text_centered(ed->renderer, ed->font, phase_info,
                                PREVIEW_X + PREVIEW_W/2,
-                               PREVIEW_Y + PREVIEW_H + 20, TEXT_COLOR);
+                               PREVIEW_Y + PREVIEW_H + 15, TEXT_COLOR);
+        } else {
+            // Превью фона
+            if (ed->bg_tex) {
+                int tex_w, tex_h;
+                SDL_QueryTexture(ed->bg_tex, NULL, NULL, &tex_w, &tex_h);
+                float scale = fminf((float)PREVIEW_W / tex_w, (float)PREVIEW_H / tex_h);
+                int draw_w = (int)(tex_w * scale);
+                int draw_h = (int)(tex_h * scale);
+                SDL_Rect dst = {
+                    PREVIEW_X + (PREVIEW_W - draw_w)/2,
+                    PREVIEW_Y + (PREVIEW_H - draw_h)/2,
+                    draw_w, draw_h
+                };
+                SDL_RenderCopy(ed->renderer, ed->bg_tex, NULL, &dst);
+            } else {
+                draw_text_centered(ed->renderer, ed->font, "No background",
+                                   PREVIEW_X + PREVIEW_W/2, PREVIEW_Y + PREVIEW_H/2,
+                                   (SDL_Color){150,150,150,255});
+            }
         }
     } else {
         draw_text_centered(ed->renderer, ed->font, "No battles found",
@@ -361,6 +508,30 @@ void handle_input(Editor *ed, bool *running) {
         int mx = (int)((float)raw_mx * LOGICAL_W / win_w);
         int my = (int)((float)raw_my * LOGICAL_H / win_h);
 
+        // Навигация по анимации (стрелки)
+        if (ed->anim_set.loaded && e.type == SDL_KEYDOWN) {
+            if (e.key.keysym.sym == SDLK_LEFT) {
+                ed->anim_set.current_frame--;
+                if (ed->anim_set.current_frame < 0)
+                    ed->anim_set.current_frame = ed->anim_set.phases[ed->anim_set.current_phase].frame_count - 1;
+            }
+            else if (e.key.keysym.sym == SDLK_RIGHT) {
+                ed->anim_set.current_frame++;
+                if (ed->anim_set.current_frame >= ed->anim_set.phases[ed->anim_set.current_phase].frame_count)
+                    ed->anim_set.current_frame = 0;
+            }
+            else if (e.key.keysym.sym == SDLK_UP) {
+                ed->anim_set.current_phase--;
+                if (ed->anim_set.current_phase < 0) ed->anim_set.current_phase = 2;
+                ed->anim_set.current_frame = 0;
+            }
+            else if (e.key.keysym.sym == SDLK_DOWN) {
+                ed->anim_set.current_phase = (ed->anim_set.current_phase + 1) % 3;
+                ed->anim_set.current_frame = 0;
+            }
+        }
+
+        // Колесо мыши для прокрутки списка
         if (e.type == SDL_MOUSEWHEEL) {
             ed->list_scroll -= e.wheel.y;
             int max_vis = (LOGICAL_H - 60) / (FONT_SIZE + 4);
@@ -369,9 +540,9 @@ void handle_input(Editor *ed, bool *running) {
                 ed->list_scroll = ed->entry_count - max_vis;
         }
 
+        // Клик левой кнопкой
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-
-            // Кнопка Save
+            // Save
             SDL_Rect btn_save = {10, LOGICAL_H - 40, 70, 28};
             if (mx >= btn_save.x && mx < btn_save.x+btn_save.w &&
                 my >= btn_save.y && my < btn_save.y+btn_save.h) {
@@ -380,7 +551,7 @@ void handle_input(Editor *ed, bool *running) {
                 continue;
             }
 
-            // Кнопка Change BG
+            // Change BG
             SDL_Rect btn_bg = {85, LOGICAL_H - 40, 100, 28};
             if (mx >= btn_bg.x && mx < btn_bg.x+btn_bg.w &&
                 my >= btn_bg.y && my < btn_bg.y+btn_bg.h) {
@@ -400,7 +571,7 @@ void handle_input(Editor *ed, bool *running) {
                 continue;
             }
 
-            // Кнопка Enemy Anim
+            // Enemy Anim
             SDL_Rect btn_enemy = {190, LOGICAL_H - 40, 110, 28};
             if (mx >= btn_enemy.x && mx < btn_enemy.x+btn_enemy.w &&
                 my >= btn_enemy.y && my < btn_enemy.y+btn_enemy.h) {
@@ -409,13 +580,14 @@ void handle_input(Editor *ed, bool *running) {
                     char abs_initial[MAX_PATH];
                     GetFullPathNameA("../assets/battles/battlesprites/enemies", MAX_PATH, abs_initial, NULL);
                     if (open_json_dialog(path, sizeof(path), abs_initial)) {
-                        printf("Enemy animation file selected: %s\n", path);
+                        printf("Loading enemy animation: %s\n", path);
+                        load_animation_from_json(ed, path);
                     }
                 }
                 continue;
             }
 
-            // Кнопка Ally Anim
+            // Ally Anim
             SDL_Rect btn_ally = {305, LOGICAL_H - 40, 110, 28};
             if (mx >= btn_ally.x && mx < btn_ally.x+btn_ally.w &&
                 my >= btn_ally.y && my < btn_ally.y+btn_ally.h) {
@@ -424,13 +596,14 @@ void handle_input(Editor *ed, bool *running) {
                     char abs_initial[MAX_PATH];
                     GetFullPathNameA("../assets/battles/battlesprites/allies", MAX_PATH, abs_initial, NULL);
                     if (open_json_dialog(path, sizeof(path), abs_initial)) {
-                        printf("Ally animation file selected: %s\n", path);
+                        printf("Loading ally animation: %s\n", path);
+                        load_animation_from_json(ed, path);
                     }
                 }
                 continue;
             }
 
-            // Выбор элемента списка
+            // Выбор элемента списка – сбрасывает анимацию
             int line_height = FONT_SIZE + 4;
             int max_vis = (LOGICAL_H - 60) / line_height;
             if (mx >= 0 && mx < LEFT_PANEL_W) {
@@ -442,6 +615,7 @@ void handle_input(Editor *ed, bool *running) {
                         if (idx != ed->current_index) {
                             ed->current_index = idx;
                             load_background_texture(ed, ed->entries[idx].background);
+                            free_animation_set(&ed->anim_set);  // сбрасываем анимацию
                         }
                         break;
                     }
@@ -463,6 +637,7 @@ int main(int argc, char *argv[]) {
     ed.current_index = 0;
     ed.list_scroll = 0;
     ed.bg_tex = NULL;
+    ed.anim_set.loaded = false;
 
     RECT workArea;
     SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
@@ -507,6 +682,7 @@ int main(int argc, char *argv[]) {
         SDL_Delay(16);
     }
 
+    free_animation_set(&ed.anim_set);
     if (ed.bg_tex) SDL_DestroyTexture(ed.bg_tex);
     if (ed.font) TTF_CloseFont(ed.font);
     free(ed.entries);
