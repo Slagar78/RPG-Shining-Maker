@@ -1,15 +1,13 @@
-cd /d/RPG-Shinzo/RPG_Shinzo_Maker/TextEditor
+cd "/d/RPG-Shinzo/RPG Shining Maker/TextEditor"
 
-cd /d/RPG-Shinzo/RPG_Shinzo_Maker/Database
+cd "/d/RPG-Shinzo/RPG Shining Maker/Database"
 
-cd /d/RPG-Shinzo/RPG_Shinzo_Maker/MapEditor
+cd "/d/RPG-Shinzo/RPG Shining Maker/MapEditor"
 
-cd /d/RPG-Shinzo/RPG_Shinzo_Maker/MapCreator
+cd "/d/RPG-Shinzo/RPG Shining Maker/MapCreator"
 
-cd /d/RPG-Shinzo/RPG_Shinzo_Maker/BattleEditor
+cd "/d/RPG-Shinzo/RPG Shining Maker/BattleEditor"
 
-cd /d/RPG-Shinzo/RPG_Shinzo_Maker/Constructor
+cd "/d/RPG-Shinzo/RPG Shining Maker/Constructor"
 
-cd /d/RPG-Shinzo/RPG_Shinzo_Maker/BattleScenes
-
-cd 
+cd "/d/RPG-Shinzo/RPG Shining Maker/BattleScenes"

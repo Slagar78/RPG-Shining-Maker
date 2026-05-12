@@ -13,6 +13,11 @@
 #include <commdlg.h>
 #include "cJSON.h"
 
+// Прототипы функций
+void safe_strcpy(char *dest, size_t size, const char *src);
+bool open_file_dialog(char *out, size_t out_len, const char *initial_dir);
+bool open_json_dialog(char *out, size_t out_len, const char *initial_dir);
+
 // ─── Геометрия ───────────────────────────────
 #define LOGICAL_W          1024
 #define LOGICAL_H          768
@@ -75,7 +80,26 @@ bool open_file_dialog(char *out, size_t out_len, const char *initial_dir) {
     ofn.nMaxFile = sizeof(szFile);
     ofn.lpstrFilter = "PNG Images\0*.png\0All Files\0*.*\0";
     ofn.nFilterIndex = 1;
-    ofn.lpstrInitialDir = initial_dir;               // ← добавили
+    ofn.lpstrInitialDir = initial_dir;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+    if (GetOpenFileNameA(&ofn) == TRUE) {
+        safe_strcpy(out, out_len, ofn.lpstrFile);
+        return true;
+    }
+    return false;
+}
+
+bool open_json_dialog(char *out, size_t out_len, const char *initial_dir) {
+    OPENFILENAMEA ofn;
+    char szFile[260] = {0};
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = sizeof(szFile);
+    ofn.lpstrFilter = "Animation JSON\0animation.json\0All JSON\0*.json\0All Files\0*.*\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrInitialDir = initial_dir;
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
     if (GetOpenFileNameA(&ofn) == TRUE) {
         safe_strcpy(out, out_len, ofn.lpstrFile);
@@ -221,12 +245,14 @@ void draw_ui(Editor *ed) {
                            LEFT_PANEL_W/2, y + line_height/2, color);
     }
 
-    // Кнопки Save / Change BG
-    SDL_Rect btn_save = {10, LOGICAL_H - 40, 90, 28};
-    SDL_Rect btn_bg   = {110, LOGICAL_H - 40, 100, 28};
+    // Кнопки
+    SDL_Rect btn_save   = {10, LOGICAL_H - 40, 70, 28};
+    SDL_Rect btn_bg     = {85, LOGICAL_H - 40, 100, 28};
+    SDL_Rect btn_enemy  = {190, LOGICAL_H - 40, 110, 28};
+    SDL_Rect btn_ally   = {305, LOGICAL_H - 40, 110, 28};
 
     int mx, my;
-    SDL_GetMouseState(&mx, &my);  // реальные координаты, потом пересчитаем
+    SDL_GetMouseState(&mx, &my);
     int win_w, win_h;
     SDL_GetWindowSize(ed->window, &win_w, &win_h);
     int logical_mx = (int)((float)mx * LOGICAL_W / win_w);
@@ -250,17 +276,35 @@ void draw_ui(Editor *ed) {
     draw_text_centered(ed->renderer, ed->font, "Change BG",
                        btn_bg.x + btn_bg.w/2, btn_bg.y + btn_bg.h/2, TEXT_COLOR);
 
+    // Кнопка Enemy Anim
+    SDL_Color enemy_col = BUTTON_COLOR;
+    if (logical_mx >= btn_enemy.x && logical_mx < btn_enemy.x+btn_enemy.w &&
+        logical_my >= btn_enemy.y && logical_my < btn_enemy.y+btn_enemy.h)
+        enemy_col = BUTTON_HOVER;
+    SDL_SetRenderDrawColor(ed->renderer, enemy_col.r, enemy_col.g, enemy_col.b, 255);
+    SDL_RenderFillRect(ed->renderer, &btn_enemy);
+    draw_text_centered(ed->renderer, ed->font, "Enemy Anim",
+                       btn_enemy.x + btn_enemy.w/2, btn_enemy.y + btn_enemy.h/2, TEXT_COLOR);
+
+    // Кнопка Ally Anim
+    SDL_Color ally_col = BUTTON_COLOR;
+    if (logical_mx >= btn_ally.x && logical_mx < btn_ally.x+btn_ally.w &&
+        logical_my >= btn_ally.y && logical_my < btn_ally.y+btn_ally.h)
+        ally_col = BUTTON_HOVER;
+    SDL_SetRenderDrawColor(ed->renderer, ally_col.r, ally_col.g, ally_col.b, 255);
+    SDL_RenderFillRect(ed->renderer, &btn_ally);
+    draw_text_centered(ed->renderer, ed->font, "Ally Anim",
+                       btn_ally.x + btn_ally.w/2, btn_ally.y + btn_ally.h/2, TEXT_COLOR);
+
     // Правая сторона: информация и превью фона
     if (ed->entry_count > 0) {
         BattleEntry *entry = &ed->entries[ed->current_index];
 
-        // Имя битвы
         char info[128];
         snprintf(info, sizeof(info), "Battle: %s", entry->name);
         draw_text_centered(ed->renderer, ed->font, info,
                            PREVIEW_X + PREVIEW_W/2, PREVIEW_Y - 5, TEXT_COLOR);
 
-        // Превью фона
         SDL_Rect preview_rect = {PREVIEW_X, PREVIEW_Y, PREVIEW_W, PREVIEW_H};
         SDL_SetRenderDrawColor(ed->renderer, 50, 50, 50, 255);
         SDL_RenderFillRect(ed->renderer, &preview_rect);
@@ -285,7 +329,6 @@ void draw_ui(Editor *ed) {
                                (SDL_Color){150,150,150,255});
         }
 
-        // Имя файла фона
         if (entry->background[0]) {
             const char *fname = strrchr(entry->background, '\\');
             if (!fname) fname = strrchr(entry->background, '/');
@@ -311,7 +354,6 @@ void handle_input(Editor *ed, bool *running) {
         if (e.type == SDL_QUIT) { *running = false; return; }
         if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) { *running = false; return; }
 
-        // Получаем логические координаты мыши
         int raw_mx, raw_my;
         SDL_GetMouseState(&raw_mx, &raw_my);
         int win_w, win_h;
@@ -319,7 +361,6 @@ void handle_input(Editor *ed, bool *running) {
         int mx = (int)((float)raw_mx * LOGICAL_W / win_w);
         int my = (int)((float)raw_my * LOGICAL_H / win_h);
 
-        // Колесо мыши для прокрутки списка
         if (e.type == SDL_MOUSEWHEEL) {
             ed->list_scroll -= e.wheel.y;
             int max_vis = (LOGICAL_H - 60) / (FONT_SIZE + 4);
@@ -328,10 +369,10 @@ void handle_input(Editor *ed, bool *running) {
                 ed->list_scroll = ed->entry_count - max_vis;
         }
 
-        // Клик левой кнопкой
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+
             // Кнопка Save
-            SDL_Rect btn_save = {10, LOGICAL_H - 40, 90, 28};
+            SDL_Rect btn_save = {10, LOGICAL_H - 40, 70, 28};
             if (mx >= btn_save.x && mx < btn_save.x+btn_save.w &&
                 my >= btn_save.y && my < btn_save.y+btn_save.h) {
                 save_entries(ed);
@@ -340,26 +381,54 @@ void handle_input(Editor *ed, bool *running) {
             }
 
             // Кнопка Change BG
-            SDL_Rect btn_bg = {110, LOGICAL_H - 40, 100, 28};
-
-            // Кнопка Change BG
+            SDL_Rect btn_bg = {85, LOGICAL_H - 40, 100, 28};
             if (mx >= btn_bg.x && mx < btn_bg.x+btn_bg.w &&
                 my >= btn_bg.y && my < btn_bg.y+btn_bg.h) {
                 if (ed->entry_count > 0) {
-                char path[512];
-                char abs_initial[MAX_PATH];
-                GetFullPathNameA("../assets/battles/backgrounds", MAX_PATH, abs_initial, NULL);
-                if (open_file_dialog(path, sizeof(path), abs_initial)) {
-                char rel[512];
-            get_relative_path(path, rel, sizeof(rel));
-            safe_strcpy(ed->entries[ed->current_index].background,
-                        sizeof(ed->entries[ed->current_index].background), rel);
-            load_background_texture(ed, rel);
-            printf("Background changed to: %s\n", rel);
+                    char path[512];
+                    char abs_initial[MAX_PATH];
+                    GetFullPathNameA("../assets/battles/backgrounds", MAX_PATH, abs_initial, NULL);
+                    if (open_file_dialog(path, sizeof(path), abs_initial)) {
+                        char rel[512];
+                        get_relative_path(path, rel, sizeof(rel));
+                        safe_strcpy(ed->entries[ed->current_index].background,
+                                    sizeof(ed->entries[ed->current_index].background), rel);
+                        load_background_texture(ed, rel);
+                        printf("Background changed to: %s\n", rel);
+                    }
                 }
+                continue;
             }
-    continue;
-    }
+
+            // Кнопка Enemy Anim
+            SDL_Rect btn_enemy = {190, LOGICAL_H - 40, 110, 28};
+            if (mx >= btn_enemy.x && mx < btn_enemy.x+btn_enemy.w &&
+                my >= btn_enemy.y && my < btn_enemy.y+btn_enemy.h) {
+                if (ed->entry_count > 0) {
+                    char path[512];
+                    char abs_initial[MAX_PATH];
+                    GetFullPathNameA("../assets/battles/battlesprites/enemies", MAX_PATH, abs_initial, NULL);
+                    if (open_json_dialog(path, sizeof(path), abs_initial)) {
+                        printf("Enemy animation file selected: %s\n", path);
+                    }
+                }
+                continue;
+            }
+
+            // Кнопка Ally Anim
+            SDL_Rect btn_ally = {305, LOGICAL_H - 40, 110, 28};
+            if (mx >= btn_ally.x && mx < btn_ally.x+btn_ally.w &&
+                my >= btn_ally.y && my < btn_ally.y+btn_ally.h) {
+                if (ed->entry_count > 0) {
+                    char path[512];
+                    char abs_initial[MAX_PATH];
+                    GetFullPathNameA("../assets/battles/battlesprites/allies", MAX_PATH, abs_initial, NULL);
+                    if (open_json_dialog(path, sizeof(path), abs_initial)) {
+                        printf("Ally animation file selected: %s\n", path);
+                    }
+                }
+                continue;
+            }
 
             // Выбор элемента списка
             int line_height = FONT_SIZE + 4;
@@ -395,7 +464,6 @@ int main(int argc, char *argv[]) {
     ed.list_scroll = 0;
     ed.bg_tex = NULL;
 
-    // Адаптивный размер окна
     RECT workArea;
     SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
     int screenW = workArea.right - workArea.left;
@@ -420,7 +488,6 @@ int main(int argc, char *argv[]) {
     SDL_RenderSetLogicalSize(ed.renderer, LOGICAL_W, LOGICAL_H);
     SDL_SetWindowMinimumSize(ed.window, 800, 600);
 
-    // Шрифт
     ed.font = TTF_OpenFont("Font/NotoSans-Regular.ttf", FONT_SIZE);
     if (!ed.font) ed.font = TTF_OpenFont("Font/main.ttf", FONT_SIZE);
     if (!ed.font) ed.font = TTF_OpenFont("Font/arial.ttf", FONT_SIZE);
