@@ -1,8 +1,11 @@
+# lib/battleManager/ai.rb
+
 class EnemyAI
   def self.decide_moves(unit, allies, enemies, highlight_tiles)
     decide_moves_aggressive(unit, allies, enemies, highlight_tiles)
   end
 
+  # Агрессивный ИИ – идёт к ближайшему герою, но только на свободную клетку
   def self.decide_moves_aggressive(unit, allies, enemies, highlight_tiles)
     return [] if allies.empty?
 
@@ -10,26 +13,24 @@ class EnemyAI
     return [] unless target
     tx, ty = target[:x], target[:y]
 
-    # 1. Собираем все доступные клетки рядом с целью (соседние 4 клетки)
+    # 1. Соседние клетки, с которых можно атаковать, и они свободны
     attack_positions = []
     [[1,0],[-1,0],[0,1],[0,-1]].each do |dx, dy|
       nx = tx + dx
       ny = ty + dy
-      attack_positions << [nx, ny] if highlight_tiles.include?([nx, ny])
+      if highlight_tiles.include?([nx, ny]) &&
+         (allies + enemies).none? { |u| u != unit && u[:x] == nx && u[:y] == ny }
+        attack_positions << [nx, ny]
+      end
     end
 
-    # 2. Из них выбираем только свободные (не занятые другими врагами)
-    free_attack_positions = attack_positions.select do |pos|
-      (allies + enemies).none? { |u| u != unit && u[:x] == pos[0] && u[:y] == pos[1] }
-    end
-
-    # 3. Если есть свободная атакующая позиция, строим путь к ближайшей из них
-    unless free_attack_positions.empty?
-      target_cell = free_attack_positions.min_by { |pos| (pos[0] - unit[:x]).abs + (pos[1] - unit[:y]).abs }
+    if attack_positions.any?
+      # Выбираем ближайшую свободную клетку для атаки
+      target_cell = attack_positions.min_by { |pos| (pos[0] - unit[:x]).abs + (pos[1] - unit[:y]).abs }
       return build_path_to(unit, target_cell, highlight_tiles)
     end
 
-    # 4. Иначе идём к любой свободной клетке (дальше от цели, но чтобы приблизиться)
+    # 2. Если атаковать нельзя, идём к любой свободной клетке (приближаемся)
     free_tiles = highlight_tiles.select do |pos|
       (allies + enemies).none? { |u| u != unit && u[:x] == pos[0] && u[:y] == pos[1] }
     end
@@ -39,6 +40,7 @@ class EnemyAI
     build_path_to(unit, best, highlight_tiles)
   end
 
+  # Построение жадного пути от юнита к целевой клетке
   def self.build_path_to(unit, goal, highlight_tiles)
     path = []
     cx, cy = unit[:x], unit[:y]
