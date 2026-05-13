@@ -96,6 +96,8 @@ class BattleManager
     @cursor_hide_timer = 0
     @pending_menu = false
     @battle_scene = BattleScene.new(self)
+    @start_x = 0
+    @start_y = 0
 
     prepare_turn_order
 
@@ -282,6 +284,9 @@ class BattleManager
     @current_unit = @turn_order[@current_unit_index]
     return unless @current_unit
 
+    @start_x = @current_unit[:x]
+    @start_y = @current_unit[:y]
+
     @highlight_tiles = calculate_move_range(@current_unit)
     @highlight_timer = 0
     @enemy_move_queue.clear
@@ -315,32 +320,66 @@ class BattleManager
     @cursor.move_to(@current_unit[:x], @current_unit[:y])
   end
 
+
     def calculate_move_range(unit)
-    x = unit[:x]; y = unit[:y]; mov = unit[:mov]
-    tiles = []
-    map_w = @battle_w; map_h = @battle_h
-    tiles << [x, y]
-    (-mov..mov).each do |dx|
-      (-mov..mov).each do |dy|
-        next if dx == 0 && dy == 0
-        if (dx.abs + dy.abs) <= mov
-          nx = x + dx; ny = y + dy
-          next if nx < 0 || nx >= map_w || ny < 0 || ny >= map_h
+  start_x = unit[:x]
+  start_y = unit[:y]
+  move   = unit[:mov]
+  w      = @battle_w
+  h      = @battle_h
 
-          # перевод в глобальные координаты
-          global_x = nx + @battle_x
-          global_y = ny + @battle_y
-          next if global_y < 0 || global_y >= @terrain.size
-          next if global_x < 0 || global_x >= @terrain[global_y].size
-          terrain_val = @terrain[global_y][global_x]
-          next if terrain_val == -1   # блокированная клетка
+  # visited[y][x] – клетка достигнута
+  visited = Array.new(h) { Array.new(w, false) }
+  queue = []
+  visited[start_y][start_x] = true
+  queue.push([start_x, start_y, move])
 
-          tiles << [nx, ny]
-        end
-      end
-    end
-    tiles
+  # Определяем, какие юниты блокируют проход (противоположная команда)
+  is_ally = @allies.include?(unit)
+  if is_ally
+    blocking_positions = @enemies.map { |e| [e[:x], e[:y]] }
+    # свои не блокируют
+  else
+    blocking_positions = @allies.map { |a| [a[:x], a[:y]] }
+    # враги не блокируют друг друга
   end
+
+  # Проверка проходимости клетки (без учёта своих)
+  passable = lambda do |nx, ny|
+    return false if nx < 0 || nx >= w || ny < 0 || ny >= h
+    gx = nx + @battle_x
+    gy = ny + @battle_y
+    return false if gy < 0 || gy >= @terrain.size || gx < 0 || gx >= @terrain[gy].size
+    return false if @terrain[gy][gx] == -1             # стена
+    return false if blocking_positions.include?([nx, ny]) # чужой юнит блокирует
+    true
+  end
+
+  while queue.any?
+    x, y, steps = queue.shift
+    next if steps <= 0
+
+    [[0,1],[0,-1],[1,0],[-1,0]].each do |dx, dy|
+      nx = x + dx
+      ny = y + dy
+      next if visited[ny][nx]
+      next unless passable.call(nx, ny)
+
+      visited[ny][nx] = true
+      queue.push([nx, ny, steps - 1])
+    end
+  end
+
+  # Возвращаем все достигнутые клетки (включая занятые своими)
+  result = []
+  h.times do |y|
+    w.times do |x|
+      result << [x, y] if visited[y][x]
+    end
+  end
+  result
+end
+
 
   def cell_free?(x, y, except_unit = nil)
     (@allies + @enemies).none? { |u| u != except_unit && u[:x] == x && u[:y] == y }
@@ -368,22 +407,25 @@ class BattleManager
   end
 
   def end_current_turn
-    if @current_unit && @battle_player
-      new_x = @battle_player.x
-      new_y = @battle_player.y
-      if cell_free?(new_x, new_y, @current_unit)
-        @current_unit[:x] = new_x
-        @current_unit[:y] = new_y
-        puts "✅ #{@current_unit[:actor] ? 'Игрок' : 'Враг'} завершил ход на (#{new_x},#{new_y})"
-      else
-        puts "❌ Клетка (#{new_x},#{new_y}) занята! #{@current_unit[:actor] ? 'Игрок' : 'Враг'} остаётся на месте (#{@current_unit[:x]},#{@current_unit[:y]})"
-        @audio.play_sfx("error") if @audio
-      end
+  if @current_unit && @battle_player
+    new_x = @battle_player.x
+    new_y = @battle_player.y
+    if cell_free?(new_x, new_y, @current_unit)
+      @current_unit[:x] = new_x
+      @current_unit[:y] = new_y
+      puts "✅ #{@current_unit[:actor] ? 'Игрок' : 'Враг'} завершил ход на (#{new_x},#{new_y})"
+    else
+      @current_unit[:x] = @start_x
+      @current_unit[:y] = @start_y
+      @battle_player.teleport(@start_x, @start_y)
+      puts "❌ Клетка занята, возврат на (#{@start_x},#{@start_y})"
+      @audio.play_sfx("error") if @audio
     end
-    @battle_player = nil
-    nxt = next_unit
-    start_cursor_transition(@current_unit, nxt)
   end
+  @battle_player = nil
+  nxt = next_unit
+  start_cursor_transition(@current_unit, nxt)
+end
 
   def handle_input
     case @battle_state
@@ -433,7 +475,7 @@ class BattleManager
     end
   end
 
-  def update
+    def update
     @battle_menu.update
     @cursor.update
     update_units_animation
@@ -471,20 +513,16 @@ class BattleManager
       if @battle_player
         @battle_player.update
         unless @battle_player.moving
-          @current_unit[:x] = @battle_player.x
-          @current_unit[:y] = @battle_player.y
           sync_cursor_to_unit
-          # если ранее была нажата A/D, открываем меню сейчас
           if @pending_menu
             open_battle_menu
             @pending_menu = false
           end
         end
 
-        # обрабатываем нажатие A/D
         if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
           if @battle_player.moving
-            @pending_menu = true   # запомнить, что игрок хочет меню
+            @pending_menu = true
           else
             open_battle_menu
           end
@@ -510,8 +548,6 @@ class BattleManager
           end_current_turn
         else
           @enemy_move_index = 0
-          target = @enemy_move_queue[@enemy_move_index]
-          @battle_player.move_towards(target[0], target[1], self)
           @battle_state = :enemy_moving
         end
       end
@@ -519,22 +555,27 @@ class BattleManager
     when :enemy_moving
       @battle_player.update
       unless @battle_player.moving
-        @current_unit[:x] = @battle_player.x
-        @current_unit[:y] = @battle_player.y
-        @enemy_move_index += 1
         if @enemy_move_index < @enemy_move_queue.size
           target = @enemy_move_queue[@enemy_move_index]
           @battle_player.move_towards(target[0], target[1], self)
+          unless @battle_player.moving
+            if @battle_player.x == target[0] && @battle_player.y == target[1]
+              @enemy_move_index += 1
+            end
+          end
         else
           end_current_turn
         end
       end
+
     when :action_menu
-      @battle_player&.update_animation    
-      when :battle_scene
+      @battle_player&.update_animation
+
+    when :battle_scene
       @battle_scene.update
-      end
-    end
+    end  # конец case
+  end    # конец метода update
+
 
   def update_units_animation
     (@allies + @enemies).each do |unit|

@@ -73,6 +73,14 @@ class BattlePlayer
     try_move(dir, battle_manager)
   end
 
+def teleport(new_x, new_y)
+  @x = new_x
+  @y = new_y
+  @pixel_offset = 0
+  @moving = false
+  @move_dir = DIR_DOWN   # значение по умолчанию
+end
+
   def handle_input(battle_manager = nil)
     return if @moving
     dir = nil
