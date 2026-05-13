@@ -1,6 +1,7 @@
 // Battle Scenes Editor – финальная версия
-// Фон строго как в игре (пропорции 1152:672, фиолетовая заливка краёв)
-// Раздельные строки для idle/attack/defense, стабильное автопроигрывание, удержание кнопок
+// Масштаб персонажей строго соответствует фону (как в игре)
+// Раздельные строки для idle/attack/defense, чекбокс Anim справа в заголовке
+// Удержание кнопок для плавного изменения X/Y/Dur
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -20,9 +21,9 @@
 #define LOGICAL_H           768
 #define LEFT_PANEL_W        220
 #define PREVIEW_X           (LEFT_PANEL_W + 20)
-#define PREVIEW_Y           8                   // отступ сверху
+#define PREVIEW_Y           8
 #define PREVIEW_W           (LOGICAL_W - LEFT_PANEL_W - 40)
-#define PREVIEW_H           576                 // высота предпросмотра
+#define PREVIEW_H           576
 #define FONT_SIZE           16
 
 // ─── Цвета ────────────────────────────────────
@@ -30,10 +31,8 @@ static const SDL_Color BG_COLOR          = { 25, 25, 40, 255 };
 static const SDL_Color PANEL_BG          = { 35, 35, 55, 255 };
 static const SDL_Color BUTTON_COLOR      = { 70, 50, 120, 255 };
 static const SDL_Color BUTTON_HOVER      = { 110, 70, 180, 255 };
-static const SDL_Color BUTTON_ACTIVE     = { 150, 100, 200, 255 };
 static const SDL_Color TEXT_COLOR        = { 220, 220, 240, 255 };
 static const SDL_Color HIGHLIGHT_COLOR   = { 255, 255, 100, 255 };
-static const SDL_Color DARK_BG           = { 50, 50, 50, 255 };
 static const SDL_Color FIELD_BG          = { 40, 40, 60, 255 };
 static const SDL_Color CHECKBOX_ON       = { 100, 200, 100, 255 };
 static const SDL_Color CHECKBOX_OFF      = { 100, 100, 100, 255 };
@@ -62,12 +61,12 @@ typedef struct {
 } AnimPhase;
 
 typedef struct {
-    AnimPhase phases[3];           // 0:idle, 1:attack, 2:defense
-    int current_phase;             // активная фаза (показывается на экране)
-    int current_frame[3];          // выбранный кадр для каждой фазы (редактируемый)
+    AnimPhase phases[3];
+    int current_phase;
+    int current_frame[3];
     bool loaded;
     char json_path[512];
-    bool animate;                  // автопроигрывание активной фазы
+    bool animate;
     float anim_timer;
 } AnimationSet;
 
@@ -83,21 +82,19 @@ typedef struct Editor {
     TTF_Font     *font;
 
     SDL_Texture  *bg_tex;
-    char          bg_display_name[64];
-    char          bg_full_path[256];
 
     AnimationSet ally_anim;
     AnimationSet enemy_anim;
-    int active_slot;               // 0 – союзник, 1 – враг
-    int active_phase;              // 0:idle, 1:attack, 2:defense
+    int active_slot;
+    int active_phase;
 
-    // для автоповтора кнопок
+    // для автоповтора
     Uint32 repeat_timer;
     int repeat_button_id;
     SDL_Rect repeat_button_rect;
     AnimationSet *repeat_as;
     int repeat_phase;
-    int repeat_what;               // 0=X-,1=X+,2=Y-,3=Y+,4=Dur-,5=Dur+
+    int repeat_what; // 0=X-,1=X+,2=Y-,3=Y+,4=Dur-,5=Dur+
 } Editor;
 
 // ─── Вспомогательные функции ──────────────────
@@ -486,13 +483,14 @@ void draw_ui(Editor *ed) {
         SDL_Rect preview_rect = {PREVIEW_X, PREVIEW_Y, PREVIEW_W, PREVIEW_H};
 
         // === Фон как в игре ===
-        // Рабочая высота фона, сохраняющая пропорции 1152:672
-        int work_h = (int)(PREVIEW_W * 672.0f / 1152.0f);
+        // Масштаб, при котором ширина фона становится равна PREVIEW_W
+        float bg_scale = (float)PREVIEW_W / 1152.0f;
+        int work_h = (int)(672.0f * bg_scale);
         int bar_h = (PREVIEW_H - work_h) / 2;
         if (bar_h < 0) bar_h = 0;
 
         if (ed->bg_tex) {
-            // Фиолетовая заливка всей области (будет видна только там, где фон не покроет)
+            // Фиолетовая заливка всей области (будет видна по бокам, если фон уже)
             SDL_SetRenderDrawColor(ed->renderer, 255, 0, 255, 255);
             SDL_RenderFillRect(ed->renderer, &preview_rect);
 
@@ -503,12 +501,11 @@ void draw_ui(Editor *ed) {
             SDL_RenderFillRect(ed->renderer, &top_bar);
             SDL_RenderFillRect(ed->renderer, &bot_bar);
 
-            // Рисуем текстуру фона, вписывая в рабочую область между полосами
+            // Текстура фона вписывается в рабочую область (между полосами) с тем же масштабом
             int tex_w, tex_h;
             SDL_QueryTexture(ed->bg_tex, NULL, NULL, &tex_w, &tex_h);
-            float scale = fminf((float)PREVIEW_W / tex_w, (float)work_h / tex_h);
-            int draw_w = (int)(tex_w * scale);
-            int draw_h = (int)(tex_h * scale);
+            int draw_w = (int)(tex_w * bg_scale);
+            int draw_h = (int)(tex_h * bg_scale);
             SDL_Rect dst_bg = {
                 PREVIEW_X + (PREVIEW_W - draw_w) / 2,
                 PREVIEW_Y + bar_h + (work_h - draw_h) / 2,
@@ -526,16 +523,14 @@ void draw_ui(Editor *ed) {
         SDL_RenderDrawRect(ed->renderer, &preview_rect);
 
         // === Спрайты союзника и врага ===
-        float bg_scale = (float)work_h / 672.0f;   // масштаб относительно исходной высоты 672
-        float sprite_scale = 0.5f;                  // спрайты уменьшены в 2 раза
-
+        // Используем единый bg_scale, как в игре (персонажи уменьшаются вместе с фоном)
         int center_x = PREVIEW_X + PREVIEW_W/2;
         int center_y = PREVIEW_Y + bar_h + work_h/2;
 
-        // Базовые позиции из игры (1152×672):
-        // Ally: X=902, Y=480
-        // Enemy: X=200, Y=480
-        // Центр экрана в игре: 576,480
+        // Позиции из игры (1152×672):
+        // Ally: X = 1152 - 250 = 902, Y = 144 + 672/2 = 480
+        // Enemy: X = 200, Y = 480
+        // Центр экрана: 576, 480
         int ally_base_x = center_x + (int)((902 - 576) * bg_scale);
         int enemy_base_x = center_x + (int)((200 - 576) * bg_scale);
 
@@ -553,11 +548,11 @@ void draw_ui(Editor *ed) {
 
             int tw, th;
             SDL_QueryTexture(tex, NULL, NULL, &tw, &th);
-            int dw = (int)(tw * sprite_scale);
-            int dh = (int)(th * sprite_scale);
+            int dw = (int)(tw * bg_scale);   // <-- единый масштаб!
+            int dh = (int)(th * bg_scale);
 
-            int cx = base_x[s] + (int)(phase->offset_x * sprite_scale);
-            int cy = center_y + (int)(phase->offset_y * sprite_scale) - dh/2;
+            int cx = base_x[s] + (int)(phase->offset_x * bg_scale);
+            int cy = center_y + (int)(phase->offset_y * bg_scale) - dh/2;
             SDL_Rect dst = { cx - dw/2, cy, dw, dh };
             SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
             SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
@@ -575,25 +570,23 @@ void draw_ui(Editor *ed) {
     for (int s = 0; s < 2; s++) {
         AnimationSet *as = (s == 0) ? &ed->ally_anim : &ed->enemy_anim;
         bool is_ally = (s == 0);
-        // y-координата группы
-        int group_y = panel_y + s * (4 * row_h + 8);  // заголовок + 3 строки + промежутки
+        int group_y = panel_y + s * (4 * row_h + 8);
 
-        // Строка заголовка с именем и чекбоксом Anim
+        // Заголовок группы + чекбокс Anim справа
         SDL_Color group_color = (ed->active_slot == s) ? HIGHLIGHT_COLOR : TEXT_COLOR;
         draw_text_centered(ed->renderer, ed->font, is_ally ? "Ally" : "Enemy",
                            PREVIEW_X + 30, group_y + row_h/2, group_color);
 
-        SDL_Rect anim_box = {PREVIEW_X + 500, group_y + 4, row_h - 4, row_h - 4};  // справа
+        SDL_Rect anim_box = {PREVIEW_X + PREVIEW_W - 100, group_y + 4, row_h - 4, row_h - 4};
         draw_checkbox(ed->renderer, anim_box, as->animate, logical_mx, logical_my);
         draw_text_centered(ed->renderer, ed->font, "Anim", anim_box.x + anim_box.w + 5, group_y + row_h/2, TEXT_COLOR);
 
         // Три строки фаз
         for (int p = 0; p < 3; p++) {
-            int y = group_y + row_h + 4 + p * row_h;   // первая строка после заголовка
+            int y = group_y + row_h + 4 + p * row_h;
             AnimPhase *phase = &as->phases[p];
             bool active = (ed->active_slot == s && ed->active_phase == p);
 
-            // Подсветка активной строки
             if (active) {
                 SDL_Rect row_bg = {PREVIEW_X, y, PREVIEW_W, row_h};
                 SDL_SetRenderDrawColor(ed->renderer, 60, 60, 90, 255);
@@ -763,7 +756,7 @@ void handle_input(Editor *ed, bool *running) {
 
         // Клик левой кнопкой
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-            ed->repeat_button_id = 0;   // сброс автоповтора при новом клике
+            ed->repeat_button_id = 0;   // сброс автоповтора
 
             // Левая панель
             int btn_y_base = LOGICAL_H - 130;
@@ -842,13 +835,13 @@ void handle_input(Editor *ed, bool *running) {
             int row_h = 24;
             for (int s = 0; s < 2; s++) {
                 AnimationSet *as = (s == 0) ? &ed->ally_anim : &ed->enemy_anim;
-                int group_y = panel_y + s * (4 * row_h + 8);   // шаг как в отрисовке
+                int group_y = panel_y + s * (4 * row_h + 8);
 
-                // Чекбокс Anim (в заголовке)
-                SDL_Rect anim_box = {PREVIEW_X + 500, group_y + 4, row_h - 4, row_h - 4};
+                // Чекбокс Anim
+                SDL_Rect anim_box = {PREVIEW_X + PREVIEW_W - 100, group_y + 4, row_h - 4, row_h - 4};
                 if (mx >= anim_box.x && mx < anim_box.x+anim_box.w && my >= anim_box.y && my < anim_box.y+anim_box.h) {
                     as->animate = !as->animate;
-                    if (!as->animate) as->anim_timer = 0;   // сброс таймера
+                    if (!as->animate) as->anim_timer = 0;
                     continue;
                 }
 
@@ -857,12 +850,12 @@ void handle_input(Editor *ed, bool *running) {
                     int y = group_y + row_h + 4 + p * row_h;
                     if (my < y || my >= y + row_h) continue;
 
-                    // Клик по метке фазы (выбор активной фазы)
+                    // Клик по метке фазы
                     SDL_Rect phase_rect = {PREVIEW_X + 5, y, 55, row_h};
                     if (mx >= phase_rect.x && mx < phase_rect.x+phase_rect.w) {
                         ed->active_slot = s;
                         ed->active_phase = p;
-                        as->current_phase = p;   // меняем отображаемую фазу
+                        as->current_phase = p;
                         continue;
                     }
 
