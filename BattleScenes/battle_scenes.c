@@ -484,25 +484,21 @@ void draw_ui(Editor *ed) {
         SDL_Rect preview_rect = {PREVIEW_X, PREVIEW_Y, PREVIEW_W, PREVIEW_H};
 
         // === Фон как в игре ===
-        // Масштаб, при котором ширина фона становится равна PREVIEW_W
         float bg_scale = (float)PREVIEW_W / 1152.0f;
         int work_h = (int)(672.0f * bg_scale);
         int bar_h = (PREVIEW_H - work_h) / 2;
         if (bar_h < 0) bar_h = 0;
 
         if (ed->bg_tex) {
-            // Фиолетовая заливка всей области (будет видна по бокам, если фон уже)
             SDL_SetRenderDrawColor(ed->renderer, 255, 0, 255, 255);
             SDL_RenderFillRect(ed->renderer, &preview_rect);
 
-            // Чёрные полосы сверху и снизу
             SDL_Rect top_bar = {PREVIEW_X, PREVIEW_Y, PREVIEW_W, bar_h};
             SDL_Rect bot_bar = {PREVIEW_X, PREVIEW_Y + PREVIEW_H - bar_h, PREVIEW_W, bar_h};
             SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
             SDL_RenderFillRect(ed->renderer, &top_bar);
             SDL_RenderFillRect(ed->renderer, &bot_bar);
 
-            // Текстура фона вписывается в рабочую область (между полосами) с тем же масштабом
             int tex_w, tex_h;
             SDL_QueryTexture(ed->bg_tex, NULL, NULL, &tex_w, &tex_h);
             int draw_w = (int)(tex_w * bg_scale);
@@ -524,14 +520,9 @@ void draw_ui(Editor *ed) {
         SDL_RenderDrawRect(ed->renderer, &preview_rect);
 
         // === Спрайты союзника и врага ===
-        // Используем единый bg_scale, как в игре (персонажи уменьшаются вместе с фоном)
         int center_x = PREVIEW_X + PREVIEW_W/2;
         int center_y = PREVIEW_Y + bar_h + work_h/2;
 
-        // Позиции из игры (1152×672):
-        // Ally: X = 1152 - 250 = 902, Y = 144 + 672/2 = 480
-        // Enemy: X = 200, Y = 480
-        // Центр экрана: 576, 480
         int ally_base_x = center_x + (int)((902 - 576) * bg_scale);
         int enemy_base_x = center_x + (int)((200 - 576) * bg_scale);
 
@@ -549,7 +540,7 @@ void draw_ui(Editor *ed) {
 
             int tw, th;
             SDL_QueryTexture(tex, NULL, NULL, &tw, &th);
-            int dw = (int)(tw * bg_scale);   // <-- единый масштаб!
+            int dw = (int)(tw * bg_scale);
             int dh = (int)(th * bg_scale);
 
             int cx = base_x[s] + (int)(phase->offset_x * bg_scale);
@@ -563,7 +554,7 @@ void draw_ui(Editor *ed) {
                            PREVIEW_X + PREVIEW_W/2, PREVIEW_Y + PREVIEW_H/2, TEXT_COLOR);
     }
 
-    // Нижняя панель управления: 2 персонажа × (заголовок + 3 фазы)
+    // Нижняя панель управления
     int panel_y = PREVIEW_Y + PREVIEW_H + 4;
     int row_h = 24;
     const char *phase_names[] = {"Idle", "Attack", "Defense"};
@@ -573,29 +564,20 @@ void draw_ui(Editor *ed) {
         bool is_ally = (s == 0);
         int group_y = panel_y + s * (4 * row_h + 8);
 
-        // Заголовок группы
         SDL_Color group_color = (ed->active_slot == s) ? HIGHLIGHT_COLOR : TEXT_COLOR;
         draw_text_centered(ed->renderer, ed->font, is_ally ? "Ally" : "Enemy",
                            PREVIEW_X + 30, group_y + row_h/2, group_color);
 
-
-            // Три строки фаз
-            for (int p = 0; p < 3; p++) {
+        for (int p = 0; p < 3; p++) {
             int y = group_y + row_h + 4 + p * row_h;
             AnimPhase *phase = &as->phases[p];
             bool active = (ed->active_slot == s && ed->active_phase == p);
 
-            // Подсветка активной строки
             if (active) {
                 SDL_Rect row_bg = {PREVIEW_X, y, PREVIEW_W, row_h};
                 SDL_SetRenderDrawColor(ed->renderer, 60, 60, 90, 255);
                 SDL_RenderFillRect(ed->renderer, &row_bg);
             }
-
-            // Чекбокс Anim (всегда видимый, не зависит от active)
-            SDL_Rect anim_box = {PREVIEW_X + 520, y + (row_h - 14)/2, 14, 14};
-            draw_checkbox(ed->renderer, anim_box, phase->animate, logical_mx, logical_my);
-            draw_text_centered(ed->renderer, ed->font, "Anim", anim_box.x + anim_box.w + 5, y + row_h/2, TEXT_COLOR);
 
             // Метка фазы
             SDL_Rect phase_rect = {PREVIEW_X + 5, y, 55, row_h};
@@ -611,14 +593,14 @@ void draw_ui(Editor *ed) {
             snprintf(buf_x, sizeof(buf_x), "%d", ox);
             SDL_Rect x_label = {PREVIEW_X + 65, y, 20, row_h};
             draw_text_centered(ed->renderer, ed->font, "X:", x_label.x + x_label.w/2, y + row_h/2, TEXT_COLOR);
-            SDL_Rect x_val = {x_label.x + 20, y, 40, row_h};
+            SDL_Rect x_val = {PREVIEW_X + 90, y, 35, row_h};                     // сдвинуто правее
             SDL_SetRenderDrawColor(ed->renderer, FIELD_BG.r, FIELD_BG.g, FIELD_BG.b, 255);
             SDL_RenderFillRect(ed->renderer, &x_val);
             SDL_SetRenderDrawColor(ed->renderer, 150,150,150,255);
             SDL_RenderDrawRect(ed->renderer, &x_val);
             draw_text_centered(ed->renderer, ed->font, buf_x, x_val.x + x_val.w/2, y + row_h/2, TEXT_COLOR);
-            SDL_Rect x_dec = {x_val.x + x_val.w + 2, y, 16, row_h};
-            SDL_Rect x_inc = {x_dec.x + x_dec.w + 2, y, 16, row_h};
+            SDL_Rect x_dec = {PREVIEW_X + 130, y, 16, row_h};
+            SDL_Rect x_inc = {PREVIEW_X + 148, y, 16, row_h};
             draw_arrow_button(ed->renderer, ed->font, x_dec, "<", logical_mx, logical_my);
             draw_arrow_button(ed->renderer, ed->font, x_inc, ">", logical_mx, logical_my);
 
@@ -628,14 +610,14 @@ void draw_ui(Editor *ed) {
             snprintf(buf_y, sizeof(buf_y), "%d", oy);
             SDL_Rect y_label = {PREVIEW_X + 175, y, 20, row_h};
             draw_text_centered(ed->renderer, ed->font, "Y:", y_label.x + y_label.w/2, y + row_h/2, TEXT_COLOR);
-            SDL_Rect y_val = {y_label.x + 20, y, 40, row_h};
+            SDL_Rect y_val = {PREVIEW_X + 200, y, 35, row_h};
             SDL_SetRenderDrawColor(ed->renderer, FIELD_BG.r, FIELD_BG.g, FIELD_BG.b, 255);
             SDL_RenderFillRect(ed->renderer, &y_val);
             SDL_SetRenderDrawColor(ed->renderer, 150,150,150,255);
             SDL_RenderDrawRect(ed->renderer, &y_val);
             draw_text_centered(ed->renderer, ed->font, buf_y, y_val.x + y_val.w/2, y + row_h/2, TEXT_COLOR);
-            SDL_Rect y_dec = {y_val.x + y_val.w + 2, y, 16, row_h};
-            SDL_Rect y_inc = {y_dec.x + y_dec.w + 2, y, 16, row_h};
+            SDL_Rect y_dec = {PREVIEW_X + 240, y, 16, row_h};
+            SDL_Rect y_inc = {PREVIEW_X + 258, y, 16, row_h};
             draw_arrow_button(ed->renderer, ed->font, y_dec, "<", logical_mx, logical_my);
             draw_arrow_button(ed->renderer, ed->font, y_inc, ">", logical_mx, logical_my);
 
@@ -643,29 +625,34 @@ void draw_ui(Editor *ed) {
             char buf_dur[16];
             float dur = (phase->frame_count > 0) ? phase->frame_durations[as->current_frame[p] % phase->frame_count] : 0.0f;
             snprintf(buf_dur, sizeof(buf_dur), "%.2f", dur);
-            SDL_Rect dur_label = {PREVIEW_X + 285, y, 30, row_h};
+            SDL_Rect dur_label = {PREVIEW_X + 285, y, 35, row_h};                 // шире, чтобы слово Dur: влезло
             draw_text_centered(ed->renderer, ed->font, "Dur:", dur_label.x + dur_label.w/2, y + row_h/2, TEXT_COLOR);
-            SDL_Rect dur_val = {dur_label.x + 30, y, 50, row_h};
+            SDL_Rect dur_val = {PREVIEW_X + 325, y, 45, row_h};                   // поле значения
             SDL_SetRenderDrawColor(ed->renderer, FIELD_BG.r, FIELD_BG.g, FIELD_BG.b, 255);
             SDL_RenderFillRect(ed->renderer, &dur_val);
             SDL_SetRenderDrawColor(ed->renderer, 150,150,150,255);
             SDL_RenderDrawRect(ed->renderer, &dur_val);
             draw_text_centered(ed->renderer, ed->font, buf_dur, dur_val.x + dur_val.w/2, y + row_h/2, TEXT_COLOR);
-            SDL_Rect dur_dec = {dur_val.x + dur_val.w + 2, y, 16, row_h};
-            SDL_Rect dur_inc = {dur_dec.x + dur_dec.w + 2, y, 16, row_h};
+            SDL_Rect dur_dec = {PREVIEW_X + 375, y, 16, row_h};
+            SDL_Rect dur_inc = {PREVIEW_X + 393, y, 16, row_h};
             draw_arrow_button(ed->renderer, ed->font, dur_dec, "-", logical_mx, logical_my);
             draw_arrow_button(ed->renderer, ed->font, dur_inc, "+", logical_mx, logical_my);
 
             // Номер кадра и кнопки переключения
             char buf_frame[16];
             snprintf(buf_frame, sizeof(buf_frame), "%d/%d", as->current_frame[p] + 1, phase->frame_count);
-            SDL_Rect frame_rect = {PREVIEW_X + 395, y, 60, row_h};
+            SDL_Rect frame_rect = {PREVIEW_X + 430, y, 50, row_h};
             draw_text_centered(ed->renderer, ed->font, buf_frame, frame_rect.x + frame_rect.w/2, y + row_h/2, TEXT_COLOR);
 
-            SDL_Rect frame_dec = {PREVIEW_X + 460, y, 16, row_h};
-            SDL_Rect frame_inc = {PREVIEW_X + 478, y, 16, row_h};
+            SDL_Rect frame_dec = {PREVIEW_X + 485, y, 16, row_h};
+            SDL_Rect frame_inc = {PREVIEW_X + 503, y, 16, row_h};
             draw_arrow_button(ed->renderer, ed->font, frame_dec, "<", logical_mx, logical_my);
             draw_arrow_button(ed->renderer, ed->font, frame_inc, ">", logical_mx, logical_my);
+
+            // Чекбокс Anim (правее кнопок кадра, с отступом)
+            SDL_Rect anim_box = {PREVIEW_X + 535, y + (row_h - 14)/2, 14, 14};
+            draw_checkbox(ed->renderer, anim_box, phase->animate, logical_mx, logical_my);
+            draw_text_centered(ed->renderer, ed->font, "Anim", PREVIEW_X + 575, y + row_h/2, TEXT_COLOR);
         }
     }
 
@@ -676,7 +663,6 @@ void draw_ui(Editor *ed) {
 void handle_input(Editor *ed, bool *running) {
     SDL_Event e;
 
-    // Автоповтор при удержании кнопки
     if (ed->repeat_button_id != 0) {
         Uint32 now = SDL_GetTicks();
         int raw_mx, raw_my;
@@ -723,7 +709,7 @@ void handle_input(Editor *ed, bool *running) {
         }
     }
 
-    // Автопроигрывание анимаций – выполняется каждый кадр, независимо от событий
+    // Автопроигрывание анимаций – каждый кадр
     for (int s = 0; s < 2; s++) {
         AnimationSet *as = (s == 0) ? &ed->ally_anim : &ed->enemy_anim;
         if (!as->loaded) continue;
@@ -731,7 +717,7 @@ void handle_input(Editor *ed, bool *running) {
         if (cur->animate && cur->frame_count > 0) {
             int idx = as->current_frame[as->current_phase] % cur->frame_count;
             float dur = cur->frame_durations[idx];
-            as->anim_timer += 16.0f / 1000.0f;   // примерно 60 FPS
+            as->anim_timer += 16.0f / 1000.0f;
             if (as->anim_timer >= dur) {
                 as->anim_timer -= dur;
                 as->current_frame[as->current_phase] =
@@ -751,7 +737,6 @@ void handle_input(Editor *ed, bool *running) {
         int mx = (int)((float)raw_mx * LOGICAL_W / win_w);
         int my = (int)((float)raw_my * LOGICAL_H / win_h);
 
-        // Колесо мыши для списка битв
         if (e.type == SDL_MOUSEWHEEL) {
             ed->list_scroll -= e.wheel.y;
             int max_vis = (LOGICAL_H - 160) / (FONT_SIZE + 4);
@@ -760,9 +745,8 @@ void handle_input(Editor *ed, bool *running) {
                 ed->list_scroll = ed->entry_count - max_vis;
         }
 
-        // Клик левой кнопкой
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-            ed->repeat_button_id = 0;   // сброс автоповтора
+            ed->repeat_button_id = 0;
 
             // Левая панель
             int btn_y_base = LOGICAL_H - 130;
@@ -843,30 +827,26 @@ void handle_input(Editor *ed, bool *running) {
                 AnimationSet *as = (s == 0) ? &ed->ally_anim : &ed->enemy_anim;
                 int group_y = panel_y + s * (4 * row_h + 8);
 
-                // Строки фаз
                 for (int p = 0; p < 3; p++) {
                     int y = group_y + row_h + 4 + p * row_h;
                     if (my < y || my >= y + row_h) continue;
 
-                    // Обработка чекбокса Anim
-                    SDL_Rect anim_check = {PREVIEW_X + 520, y + (row_h - 14)/2, 14, 14};
+                    // Чекбокс Anim
+                    SDL_Rect anim_check = {PREVIEW_X + 535, y + (row_h - 14)/2, 14, 14};
                     if (mx >= anim_check.x && mx < anim_check.x + anim_check.w &&
                         my >= anim_check.y && my < anim_check.y + anim_check.h)
                     {
                         if (as->loaded) {
                             AnimPhase *phase = &as->phases[p];
                             if (phase->animate) {
-                                // Снять галочку
                                 phase->animate = false;
                             } else {
-                                // Снимаем галочки со всех фаз всех персонажей
                                 for (int ss = 0; ss < 2; ss++) {
                                     AnimationSet *other = (ss == 0) ? &ed->ally_anim : &ed->enemy_anim;
                                     for (int pp = 0; pp < 3; pp++) {
                                         other->phases[pp].animate = false;
                                     }
                                 }
-                                // Включаем только эту
                                 phase->animate = true;
                                 as->current_phase = p;
                                 ed->active_slot = s;
@@ -880,6 +860,13 @@ void handle_input(Editor *ed, bool *running) {
                     // Клик по метке фазы
                     SDL_Rect phase_rect = {PREVIEW_X + 5, y, 55, row_h};
                     if (mx >= phase_rect.x && mx < phase_rect.x+phase_rect.w) {
+                        bool any_anim = false;
+                        for (int pp = 0; pp < 3; pp++) {
+                            if (as->phases[pp].animate) { any_anim = true; break; }
+                        }
+                        if (any_anim && !as->phases[p].animate) {
+                            continue;
+                        }
                         ed->active_slot = s;
                         ed->active_phase = p;
                         as->current_phase = p;
@@ -888,11 +875,11 @@ void handle_input(Editor *ed, bool *running) {
 
                     if (!as->loaded) continue;
                     AnimPhase *phase = &as->phases[p];
-                    if (phase->animate) continue;  // при включённой анимации поля не редактируются
+                    if (phase->animate) continue;
 
                     // Offset X
-                    SDL_Rect x_dec = {PREVIEW_X + 127, y, 16, row_h};
-                    SDL_Rect x_inc = {PREVIEW_X + 145, y, 16, row_h};
+                    SDL_Rect x_dec = {PREVIEW_X + 130, y, 16, row_h};
+                    SDL_Rect x_inc = {PREVIEW_X + 148, y, 16, row_h};
                     int step = (SDL_GetModState() & KMOD_SHIFT) ? 10 : 1;
                     if (mx >= x_dec.x && mx < x_dec.x+x_dec.w) {
                         phase->offset_x -= step;
@@ -906,8 +893,8 @@ void handle_input(Editor *ed, bool *running) {
                     }
 
                     // Offset Y
-                    SDL_Rect y_dec = {PREVIEW_X + 237, y, 16, row_h};
-                    SDL_Rect y_inc = {PREVIEW_X + 255, y, 16, row_h};
+                    SDL_Rect y_dec = {PREVIEW_X + 240, y, 16, row_h};
+                    SDL_Rect y_inc = {PREVIEW_X + 258, y, 16, row_h};
                     if (mx >= y_dec.x && mx < y_dec.x+y_dec.w) {
                         phase->offset_y -= step;
                         ed->repeat_button_id = 1; ed->repeat_timer = SDL_GetTicks();
@@ -920,8 +907,8 @@ void handle_input(Editor *ed, bool *running) {
                     }
 
                     // Duration
-                    SDL_Rect dur_dec = {PREVIEW_X + 367, y, 16, row_h};
-                    SDL_Rect dur_inc = {PREVIEW_X + 385, y, 16, row_h};
+                    SDL_Rect dur_dec = {PREVIEW_X + 375, y, 16, row_h};
+                    SDL_Rect dur_inc = {PREVIEW_X + 393, y, 16, row_h};
                     if (phase->frame_count > 0) {
                         int idx = as->current_frame[p] % phase->frame_count;
                         float dur_step = (SDL_GetModState() & KMOD_SHIFT) ? 0.01f : 0.05f;
@@ -940,8 +927,8 @@ void handle_input(Editor *ed, bool *running) {
                     }
 
                     // Переключение кадров
-                    SDL_Rect frame_dec = {PREVIEW_X + 460, y, 16, row_h};
-                    SDL_Rect frame_inc = {PREVIEW_X + 478, y, 16, row_h};
+                    SDL_Rect frame_dec = {PREVIEW_X + 485, y, 16, row_h};
+                    SDL_Rect frame_inc = {PREVIEW_X + 503, y, 16, row_h};
                     if (mx >= frame_dec.x && mx < frame_dec.x+frame_dec.w) {
                         as->current_frame[p]--;
                         if (as->current_frame[p] < 0) as->current_frame[p] = phase->frame_count - 1;
@@ -953,7 +940,6 @@ void handle_input(Editor *ed, bool *running) {
             }
         }
 
-        // Отпускание левой кнопки – сброс автоповтора
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
             ed->repeat_button_id = 0;
         }
