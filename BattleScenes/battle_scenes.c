@@ -713,7 +713,7 @@ void handle_input(Editor *ed, bool *running) {
 
         if (mx >= ed->repeat_button_rect.x && mx < ed->repeat_button_rect.x+ed->repeat_button_rect.w &&
             my >= ed->repeat_button_rect.y && my < ed->repeat_button_rect.y+ed->repeat_button_rect.h) {
-            if (now - ed->repeat_timer > 80) {
+            if (now - ed->repeat_timer > 180) {
                 ed->repeat_timer = now;
                 AnimationSet *as = ed->repeat_as;
                 if (as && as->loaded) {
@@ -728,14 +728,14 @@ void handle_input(Editor *ed, bool *running) {
                             case 3: phase->offset_y[rep_idx] += step; break;
                             case 4: {
                                 int idx = as->current_frame[ed->repeat_phase] % phase->frame_count;
-                                float dur_step = (SDL_GetModState() & KMOD_SHIFT) ? 0.01f : 0.05f;
+                                float dur_step = 0.01f;
                                 phase->frame_durations[idx] -= dur_step;
                                 if (phase->frame_durations[idx] < 0.01f) phase->frame_durations[idx] = 0.01f;
                                 break;
                             }
                             case 5: {
                                 int idx = as->current_frame[ed->repeat_phase] % phase->frame_count;
-                                float dur_step = (SDL_GetModState() & KMOD_SHIFT) ? 0.01f : 0.05f;
+                                float dur_step = 0.01f;
                                 phase->frame_durations[idx] += dur_step;
                                 if (phase->frame_durations[idx] > 5.0f) phase->frame_durations[idx] = 5.0f;
                                 break;
@@ -953,7 +953,7 @@ void handle_input(Editor *ed, bool *running) {
                     SDL_Rect dur_inc = {PREVIEW_X + 393, y, 16, row_h};
                     if (phase->frame_count > 0) {
                         int idx = as->current_frame[p] % phase->frame_count;
-                        float dur_step = (SDL_GetModState() & KMOD_SHIFT) ? 0.01f : 0.05f;
+                        float dur_step = 0.01f;
                         if (mx >= dur_dec.x && mx < dur_dec.x+dur_dec.w) {
                             phase->frame_durations[idx] -= dur_step;
                             if (phase->frame_durations[idx] < 0.01f) phase->frame_durations[idx] = 0.01f;

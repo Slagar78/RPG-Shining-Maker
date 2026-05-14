@@ -2,12 +2,12 @@
 	"idle":	{
 		"frames":	[{
 				"file":	"idle_1.png",
-				"duration":	0.25,
+				"duration":	0.28,
 				"offset_x":	0,
 				"offset_y":	0
 			}, {
 				"file":	"idle_2.png",
-				"duration":	0.25,
+				"duration":	0.29,
 				"offset_x":	0,
 				"offset_y":	0
 			}],
