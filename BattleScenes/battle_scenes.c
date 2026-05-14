@@ -541,8 +541,7 @@ void draw_ui(Editor *ed) {
         int ally_base_x = center_x + (int)((902 - 576) * bg_scale);
         
         AnimationSet *sets[2] = {&ed->ally_anim, &ed->enemy_anim};
-        // Массив базовых X для ally (индекс 0), для enemy будет переопределён ниже
-        int base_x[2] = {ally_base_x, 0}; // enemy_base_x зададим внутри цикла
+        int base_x[2] = {ally_base_x, 0};
 
         for (int s = 0; s < 2; s++) {
             AnimationSet *as = sets[s];
@@ -561,19 +560,16 @@ void draw_ui(Editor *ed) {
 
             int cx, cy;
             if (s == 0) {
-                // Ally – старая позиция (центрирование по X и Y)
                 cx = base_x[s] + (int)(phase->offset_x[cur_frame] * bg_scale);
                 cy = center_y + (int)(phase->offset_y[cur_frame] * bg_scale) - dh / 2;
                 SDL_Rect dst = { cx - dw / 2, cy, dw, dh };
                 SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
                 SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
             } else {
-                // Enemy – игровые координаты (70, 410) от верхнего левого угла всей сцены (1152x960)
-                // Высота верхней чёрной полосы в игре = 144 пикселя
                 int enemy_game_x = 70;
                 int enemy_game_y = 410;
-                int top_bar_height = 144; // как в игре
-                int enemy_y_from_top_of_bg = enemy_game_y - top_bar_height; // 266
+                int top_bar_height = 144;
+                int enemy_y_from_top_of_bg = enemy_game_y - top_bar_height;
 
                 int enemy_base_x = PREVIEW_X + (int)(enemy_game_x * bg_scale);
                 int enemy_base_y = PREVIEW_Y + bar_h + (int)(enemy_y_from_top_of_bg * bg_scale);
@@ -581,7 +577,7 @@ void draw_ui(Editor *ed) {
                 cx = enemy_base_x + (int)(phase->offset_x[cur_frame] * bg_scale);
                 cy = enemy_base_y + (int)(phase->offset_y[cur_frame] * bg_scale);
 
-                SDL_Rect dst = { cx, cy, dw, dh }; // верхний левый угол
+                SDL_Rect dst = { cx, cy, dw, dh };
                 SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
                 SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
             }
@@ -593,7 +589,7 @@ void draw_ui(Editor *ed) {
 
     // Нижняя панель управления
     int panel_y = PREVIEW_Y + PREVIEW_H + 4;
-    int row_h = 24;
+    int row_h = 20;
     const char *phase_names[] = {"Idle", "Attack", "Defense"};
 
     for (int s = 0; s < 2; s++) {
@@ -608,9 +604,10 @@ void draw_ui(Editor *ed) {
         for (int p = 0; p < 3; p++) {
             int y = group_y + row_h + 4 + p * row_h;
             AnimPhase *phase = &as->phases[p];
-            if (phase->frame_count == 0) continue;
+            bool has_frames = (phase->frame_count > 0);
             bool active = (ed->active_slot == s && ed->active_phase == p);
 
+            // Подсветка активной строки (даже если фаза пустая)
             if (active) {
                 SDL_Rect row_bg = {PREVIEW_X, y, PREVIEW_W, row_h};
                 SDL_SetRenderDrawColor(ed->renderer, 60, 60, 90, 255);
@@ -625,10 +622,21 @@ void draw_ui(Editor *ed) {
             draw_text_centered(ed->renderer, ed->font, phase_names[p],
                                phase_rect.x + phase_rect.w/2, y + row_h/2, phase_col);
 
+            // Значения для отображения (нули, если нет кадров)
+            int cur_idx = 0;
+            int ox = 0, oy = 0;
+            float dur = 0.0f;
+            char buf_frame[16] = "0/0";
+            if (has_frames) {
+                cur_idx = as->current_frame[p] % phase->frame_count;
+                ox = phase->offset_x[cur_idx];
+                oy = phase->offset_y[cur_idx];
+                dur = phase->frame_durations[cur_idx];
+                snprintf(buf_frame, sizeof(buf_frame), "%d/%d", as->current_frame[p] + 1, phase->frame_count);
+            }
+
             // Offset X
             char buf_x[16];
-            int cur_idx = as->current_frame[p] % phase->frame_count;
-            int ox = phase->offset_x[cur_idx];
             snprintf(buf_x, sizeof(buf_x), "%d", ox);
             SDL_Rect x_label = {PREVIEW_X + 65, y, 20, row_h};
             draw_text_centered(ed->renderer, ed->font, "X:", x_label.x + x_label.w/2, y + row_h/2, TEXT_COLOR);
@@ -645,7 +653,6 @@ void draw_ui(Editor *ed) {
 
             // Offset Y
             char buf_y[16];
-            int oy = phase->offset_y[cur_idx];
             snprintf(buf_y, sizeof(buf_y), "%d", oy);
             SDL_Rect y_label = {PREVIEW_X + 175, y, 20, row_h};
             draw_text_centered(ed->renderer, ed->font, "Y:", y_label.x + y_label.w/2, y + row_h/2, TEXT_COLOR);
@@ -662,7 +669,6 @@ void draw_ui(Editor *ed) {
 
             // Duration
             char buf_dur[16];
-            float dur = (phase->frame_count > 0) ? phase->frame_durations[as->current_frame[p] % phase->frame_count] : 0.0f;
             snprintf(buf_dur, sizeof(buf_dur), "%.2f", dur);
             SDL_Rect dur_label = {PREVIEW_X + 285, y, 35, row_h};
             draw_text_centered(ed->renderer, ed->font, "Dur:", dur_label.x + dur_label.w/2, y + row_h/2, TEXT_COLOR);
@@ -678,8 +684,6 @@ void draw_ui(Editor *ed) {
             draw_arrow_button(ed->renderer, ed->font, dur_inc, "+", logical_mx, logical_my);
 
             // Номер кадра и кнопки переключения
-            char buf_frame[16];
-            snprintf(buf_frame, sizeof(buf_frame), "%d/%d", as->current_frame[p] + 1, phase->frame_count);
             SDL_Rect frame_rect = {PREVIEW_X + 430, y, 50, row_h};
             draw_text_centered(ed->renderer, ed->font, buf_frame, frame_rect.x + frame_rect.w/2, y + row_h/2, TEXT_COLOR);
 
@@ -688,7 +692,7 @@ void draw_ui(Editor *ed) {
             draw_arrow_button(ed->renderer, ed->font, frame_dec, "<", logical_mx, logical_my);
             draw_arrow_button(ed->renderer, ed->font, frame_inc, ">", logical_mx, logical_my);
 
-            // Чекбокс Anim (правее кнопок кадра, с отступом)
+            // Чекбокс Anim
             SDL_Rect anim_box = {PREVIEW_X + 535, y + (row_h - 14)/2, 14, 14};
             draw_checkbox(ed->renderer, anim_box, phase->animate, logical_mx, logical_my);
             draw_text_centered(ed->renderer, ed->font, "Anim", PREVIEW_X + 575, y + row_h/2, TEXT_COLOR);
@@ -862,7 +866,7 @@ void handle_input(Editor *ed, bool *running) {
 
             // Панель управления анимациями
             int panel_y = PREVIEW_Y + PREVIEW_H + 4;
-            int row_h = 24;
+            int row_h = 20;
             for (int s = 0; s < 2; s++) {
                 AnimationSet *as = (s == 0) ? &ed->ally_anim : &ed->enemy_anim;
                 int group_y = panel_y + s * (4 * row_h + 8);

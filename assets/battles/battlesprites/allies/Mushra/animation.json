@@ -1,10 +1,17 @@
 {
-  "idle": {
-    "frames": [
-      { "file": "idle_1.png", "duration": 0.4 },
-      { "file": "idle_2.png", "duration": 0.4 }
-    ],
-    "offset_x": 0,
-    "offset_y": 0
-  }
+	"idle":	{
+		"frames":	[{
+				"file":	"idle_1.png",
+				"duration":	0.3,
+				"offset_x":	0,
+				"offset_y":	165
+			}, {
+				"file":	"idle_2.png",
+				"duration":	0.3,
+				"offset_x":	0,
+				"offset_y":	165
+			}],
+		"offset_x":	0,
+		"offset_y":	0
+	}
 }
