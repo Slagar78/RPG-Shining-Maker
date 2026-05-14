@@ -440,6 +440,7 @@ void draw_checkbox(SDL_Renderer *ren, SDL_Rect rect, bool checked, int mx, int m
     }
 }
 
+
 void draw_ui(Editor *ed) {
     SDL_SetRenderDrawColor(ed->renderer, BG_COLOR.r, BG_COLOR.g, BG_COLOR.b, 255);
     SDL_RenderClear(ed->renderer);
@@ -537,12 +538,11 @@ void draw_ui(Editor *ed) {
         // === Спрайты союзника и врага ===
         int center_x = PREVIEW_X + PREVIEW_W/2;
         int center_y = PREVIEW_Y + bar_h + work_h/2;
-
         int ally_base_x = center_x + (int)((902 - 576) * bg_scale);
-        int enemy_base_x = center_x + (int)((200 - 576) * bg_scale);
-
+        
         AnimationSet *sets[2] = {&ed->ally_anim, &ed->enemy_anim};
-        int base_x[2] = {ally_base_x, enemy_base_x};
+        // Массив базовых X для ally (индекс 0), для enemy будет переопределён ниже
+        int base_x[2] = {ally_base_x, 0}; // enemy_base_x зададим внутри цикла
 
         for (int s = 0; s < 2; s++) {
             AnimationSet *as = sets[s];
@@ -558,11 +558,33 @@ void draw_ui(Editor *ed) {
             int dw = (int)(tw * bg_scale);
             int dh = (int)(th * bg_scale);
             int cur_frame = as->current_frame[as->current_phase] % phase->frame_count;
-            int cx = base_x[s] + (int)(phase->offset_x[cur_frame] * bg_scale);
-            int cy = center_y + (int)(phase->offset_y[cur_frame] * bg_scale) - dh/2;
-            SDL_Rect dst = { cx - dw/2, cy, dw, dh };
-            SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-            SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
+
+            int cx, cy;
+            if (s == 0) {
+                // Ally – старая позиция (центрирование по X и Y)
+                cx = base_x[s] + (int)(phase->offset_x[cur_frame] * bg_scale);
+                cy = center_y + (int)(phase->offset_y[cur_frame] * bg_scale) - dh / 2;
+                SDL_Rect dst = { cx - dw / 2, cy, dw, dh };
+                SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+                SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
+            } else {
+                // Enemy – игровые координаты (70, 410) от верхнего левого угла всей сцены (1152x960)
+                // Высота верхней чёрной полосы в игре = 144 пикселя
+                int enemy_game_x = 70;
+                int enemy_game_y = 410;
+                int top_bar_height = 144; // как в игре
+                int enemy_y_from_top_of_bg = enemy_game_y - top_bar_height; // 266
+
+                int enemy_base_x = PREVIEW_X + (int)(enemy_game_x * bg_scale);
+                int enemy_base_y = PREVIEW_Y + bar_h + (int)(enemy_y_from_top_of_bg * bg_scale);
+
+                cx = enemy_base_x + (int)(phase->offset_x[cur_frame] * bg_scale);
+                cy = enemy_base_y + (int)(phase->offset_y[cur_frame] * bg_scale);
+
+                SDL_Rect dst = { cx, cy, dw, dh }; // верхний левый угол
+                SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+                SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
+            }
         }
     } else {
         draw_text_centered(ed->renderer, ed->font, "No battles found",
@@ -586,7 +608,7 @@ void draw_ui(Editor *ed) {
         for (int p = 0; p < 3; p++) {
             int y = group_y + row_h + 4 + p * row_h;
             AnimPhase *phase = &as->phases[p];
-            if (phase->frame_count == 0) continue;   // пропускаем фазы без кадров
+            if (phase->frame_count == 0) continue;
             bool active = (ed->active_slot == s && ed->active_phase == p);
 
             if (active) {
@@ -610,7 +632,7 @@ void draw_ui(Editor *ed) {
             snprintf(buf_x, sizeof(buf_x), "%d", ox);
             SDL_Rect x_label = {PREVIEW_X + 65, y, 20, row_h};
             draw_text_centered(ed->renderer, ed->font, "X:", x_label.x + x_label.w/2, y + row_h/2, TEXT_COLOR);
-            SDL_Rect x_val = {PREVIEW_X + 90, y, 35, row_h};                     // сдвинуто правее
+            SDL_Rect x_val = {PREVIEW_X + 90, y, 35, row_h};
             SDL_SetRenderDrawColor(ed->renderer, FIELD_BG.r, FIELD_BG.g, FIELD_BG.b, 255);
             SDL_RenderFillRect(ed->renderer, &x_val);
             SDL_SetRenderDrawColor(ed->renderer, 150,150,150,255);
@@ -642,9 +664,9 @@ void draw_ui(Editor *ed) {
             char buf_dur[16];
             float dur = (phase->frame_count > 0) ? phase->frame_durations[as->current_frame[p] % phase->frame_count] : 0.0f;
             snprintf(buf_dur, sizeof(buf_dur), "%.2f", dur);
-            SDL_Rect dur_label = {PREVIEW_X + 285, y, 35, row_h};                 // шире, чтобы слово Dur: влезло
+            SDL_Rect dur_label = {PREVIEW_X + 285, y, 35, row_h};
             draw_text_centered(ed->renderer, ed->font, "Dur:", dur_label.x + dur_label.w/2, y + row_h/2, TEXT_COLOR);
-            SDL_Rect dur_val = {PREVIEW_X + 325, y, 45, row_h};                   // поле значения
+            SDL_Rect dur_val = {PREVIEW_X + 325, y, 45, row_h};
             SDL_SetRenderDrawColor(ed->renderer, FIELD_BG.r, FIELD_BG.g, FIELD_BG.b, 255);
             SDL_RenderFillRect(ed->renderer, &dur_val);
             SDL_SetRenderDrawColor(ed->renderer, 150,150,150,255);

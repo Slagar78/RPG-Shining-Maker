@@ -1,3 +1,5 @@
+# lib/battleManager/Battle_scenes.rb
+
 class BattleScene
   SCENE_DURATION      = 3.0
   DELAY_DURATION      = 0.4
@@ -8,9 +10,13 @@ class BattleScene
   WORK_WIDTH  = 1152
   WORK_HEIGHT = 960 - 2 * BAR_HEIGHT   # 672
 
-  ATTACKER_X = WORK_WIDTH - 250
-  DEFENDER_X = 200
-  UNIT_Y     = BAR_HEIGHT + WORK_HEIGHT / 2
+  ATTACKER_X = WORK_WIDTH - 250       # 902 (союзник)
+  DEFENDER_X = 200                    # больше не используется для врага
+  UNIT_Y     = BAR_HEIGHT + WORK_HEIGHT / 2   # 480
+
+  # Фиксированная позиция врага (верхний левый угол спрайта)
+  ENEMY_X = 70
+  ENEMY_Y = 410
 
   def initialize(battle_manager)
     @battle_manager = battle_manager
@@ -25,11 +31,9 @@ class BattleScene
     @defender = nil
     @anim_timer = 0.0
 
-    # Кадры для каждой анимации управляются независимо
     @attacker_current_frame = 0
     @defender_current_frame = 0
 
-    # Подфазы внутри :display
     @sub_phase = :idle_before
     @sub_phase_timer = 0.0
     @attack_duration = 0.0
@@ -63,7 +67,6 @@ class BattleScene
     @attacker_current_frame = 0
     @defender_current_frame = 0
 
-    # Вычисляем длительности анимаций под текущих юнитов
     attacker_anim = @attacker ? @attacker[:battle_anim] : nil
     defender_anim = @defender ? @defender[:battle_anim] : nil
 
@@ -71,12 +74,10 @@ class BattleScene
     @defense_duration = defender_anim ? defender_anim.total_duration(:defense) : 0.5
     @idle_duration = attacker_anim ? attacker_anim.total_duration(:idle) : 0.8
 
-    # Защита от слишком коротких анимаций
     @attack_duration = 0.5 if @attack_duration < 0.1
     @defense_duration = 0.5 if @defense_duration < 0.1
     @idle_duration = 0.8 if @idle_duration < 0.1
 
-    # Стартуем с idle перед атакой
     @sub_phase = :idle_before
     @sub_phase_timer = 0.0
 
@@ -141,13 +142,12 @@ class BattleScene
       Raylib.DrawRectangle(0, 0, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
       Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
 
-      # Определяем текущие анимации по подфазе
       if @sub_phase == :attack
         draw_unit(@attacker, :attack, ATTACKER_X, UNIT_Y, false, @attacker_current_frame)
-        draw_unit(@defender, :defense, DEFENDER_X, UNIT_Y, false, @defender_current_frame)
+        draw_unit(@defender, :defense, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       else
         draw_unit(@attacker, :idle, ATTACKER_X, UNIT_Y, false, @attacker_current_frame)
-        draw_unit(@defender, :idle, DEFENDER_X, UNIT_Y, false, @defender_current_frame)
+        draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       end
     end
 
@@ -171,7 +171,6 @@ class BattleScene
         @defender_current_frame = 0
       end
     when :attack
-      # Длится пока не проиграется полная атака атакующего
       if @sub_phase_timer >= @attack_duration
         @sub_phase = :idle_after
         @sub_phase_timer = 0.0
@@ -186,7 +185,6 @@ class BattleScene
   def update_animation(dt)
     @anim_timer += dt
 
-    # Обновляем кадры в зависимости от подфазы
     case @sub_phase
     when :idle_before, :idle_after
       @attacker_current_frame = advance_frame(@attacker, :idle, @attacker_current_frame)
@@ -197,7 +195,6 @@ class BattleScene
     end
   end
 
-  # Переключает кадр анимации, когда проходит duration текущего кадра
   def advance_frame(unit, anim_key, current_frame)
     return 0 unless unit
     anim = unit[:battle_anim]
@@ -214,7 +211,7 @@ class BattleScene
     end
   end
 
-  def draw_unit(unit, anim_key, base_x, base_y, flip_h, frame_idx = 0)
+  def draw_unit(unit, anim_key, base_x, base_y, flip_h, frame_idx = 0, use_top_left = false)
     return unless unit
 
     anim = unit[:battle_anim]
@@ -226,7 +223,11 @@ class BattleScene
         tex = frame_info[:tex]
 
         x = base_x + anim_data[:offset_x]
-        y = base_y + anim_data[:offset_y] - (tex.height / 2.0)
+        y = if use_top_left
+              base_y + anim_data[:offset_y]
+            else
+              base_y + anim_data[:offset_y] - (tex.height / 2.0)
+            end
 
         src = Raylib::Rectangle.create(0, 0, flip_h ? -tex.width : tex.width, tex.height)
         dst = Raylib::Rectangle.create(x, y, tex.width, tex.height)
