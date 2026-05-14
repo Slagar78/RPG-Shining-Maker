@@ -292,6 +292,12 @@ bool load_animation_from_json(AnimationSet *as, SDL_Renderer *renderer, const ch
         safe_strcpy(ap->name, sizeof(ap->name), phase_keys[p]);
         ap->frame_count = n;
 
+        // Значения по умолчанию из старого формата (общие на фазу)
+        cJSON *phase_ox = cJSON_GetObjectItem(phase, "offset_x");
+        cJSON *phase_oy = cJSON_GetObjectItem(phase, "offset_y");
+        int default_ox = phase_ox ? phase_ox->valueint : 0;
+        int default_oy = phase_oy ? phase_oy->valueint : 0;
+
         for (int i = 0; i < n; i++) {
             cJSON *frame = cJSON_GetArrayItem(frames, i);
             cJSON *file_json = cJSON_GetObjectItem(frame, "file");
@@ -299,10 +305,11 @@ bool load_animation_from_json(AnimationSet *as, SDL_Renderer *renderer, const ch
             if (!file_json) continue;
             const char *filename = file_json->valuestring;
             ap->frame_durations[i] = dur_json ? (float)dur_json->valuedouble : 0.3f;
+            
             cJSON *frame_ox = cJSON_GetObjectItem(frame, "offset_x");
             cJSON *frame_oy = cJSON_GetObjectItem(frame, "offset_y");
-            ap->offset_x[i] = frame_ox ? frame_ox->valueint : 0;
-            ap->offset_y[i] = frame_oy ? frame_oy->valueint : 0;
+            ap->offset_x[i] = frame_ox ? frame_ox->valueint : default_ox;
+            ap->offset_y[i] = frame_oy ? frame_oy->valueint : default_oy;
 
             char full_path[768];
             snprintf(full_path, sizeof(full_path), "%s%s", base_dir, filename);
@@ -364,10 +371,16 @@ void save_animation_to_json(AnimationSet *as) {
             for (int i = 0; i < n && i < ap->frame_count; i++) {
                 cJSON *frame = cJSON_GetArrayItem(frames, i);
                 if (frame) {
+                    // Удаляем старые значения и добавляем новые с округлением
                     double clean_dur = round(ap->frame_durations[i] * 100.0) / 100.0;
-                    cJSON_ReplaceItemInObject(frame, "duration", cJSON_CreateNumber(clean_dur));
-                    cJSON_ReplaceItemInObject(frame, "offset_x", cJSON_CreateNumber(ap->offset_x[i]));
-                    cJSON_ReplaceItemInObject(frame, "offset_y", cJSON_CreateNumber(ap->offset_y[i]));
+                    cJSON_DeleteItemFromObject(frame, "duration");
+                    cJSON_AddNumberToObject(frame, "duration", clean_dur);
+
+                    cJSON_DeleteItemFromObject(frame, "offset_x");
+                    cJSON_AddNumberToObject(frame, "offset_x", ap->offset_x[i]);
+
+                    cJSON_DeleteItemFromObject(frame, "offset_y");
+                    cJSON_AddNumberToObject(frame, "offset_y", ap->offset_y[i]);
                 }
             }
         }
