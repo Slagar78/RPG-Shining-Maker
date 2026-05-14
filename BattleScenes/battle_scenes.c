@@ -56,8 +56,8 @@ typedef struct {
     int frame_count;
     SDL_Texture *frames[MAX_ANIM_FRAMES];
     float frame_durations[MAX_ANIM_FRAMES];
-    int offset_x;
-    int offset_y;
+    int offset_x[MAX_ANIM_FRAMES];   // теперь массив
+    int offset_y[MAX_ANIM_FRAMES];   // теперь массив
     bool animate;
 } AnimPhase;
 
@@ -299,6 +299,10 @@ bool load_animation_from_json(AnimationSet *as, SDL_Renderer *renderer, const ch
             if (!file_json) continue;
             const char *filename = file_json->valuestring;
             ap->frame_durations[i] = dur_json ? (float)dur_json->valuedouble : 0.3f;
+            cJSON *frame_ox = cJSON_GetObjectItem(frame, "offset_x");
+            cJSON *frame_oy = cJSON_GetObjectItem(frame, "offset_y");
+            ap->offset_x[i] = frame_ox ? frame_ox->valueint : 0;
+            ap->offset_y[i] = frame_oy ? frame_oy->valueint : 0;
 
             char full_path[768];
             snprintf(full_path, sizeof(full_path), "%s%s", base_dir, filename);
@@ -311,10 +315,7 @@ bool load_animation_from_json(AnimationSet *as, SDL_Renderer *renderer, const ch
                 ap->frames[i] = NULL;
             }
         }
-        cJSON *ox = cJSON_GetObjectItem(phase, "offset_x");
-        cJSON *oy = cJSON_GetObjectItem(phase, "offset_y");
-        ap->offset_x = ox ? ox->valueint : 0;
-        ap->offset_y = oy ? oy->valueint : 0;
+
         ap->animate = false;
     }
     cJSON_Delete(root);
@@ -356,8 +357,6 @@ void save_animation_to_json(AnimationSet *as) {
             phase = cJSON_CreateObject();
             cJSON_AddItemToObject(root, phase_keys[p], phase);
         }
-        cJSON_ReplaceItemInObject(phase, "offset_x", cJSON_CreateNumber(ap->offset_x));
-        cJSON_ReplaceItemInObject(phase, "offset_y", cJSON_CreateNumber(ap->offset_y));
 
         cJSON *frames = cJSON_GetObjectItem(phase, "frames");
         if (cJSON_IsArray(frames)) {
@@ -365,7 +364,10 @@ void save_animation_to_json(AnimationSet *as) {
             for (int i = 0; i < n && i < ap->frame_count; i++) {
                 cJSON *frame = cJSON_GetArrayItem(frames, i);
                 if (frame) {
-                    cJSON_ReplaceItemInObject(frame, "duration", cJSON_CreateNumber(ap->frame_durations[i]));
+                    double clean_dur = round(ap->frame_durations[i] * 100.0) / 100.0;
+                    cJSON_ReplaceItemInObject(frame, "duration", cJSON_CreateNumber(clean_dur));
+                    cJSON_ReplaceItemInObject(frame, "offset_x", cJSON_CreateNumber(ap->offset_x[i]));
+                    cJSON_ReplaceItemInObject(frame, "offset_y", cJSON_CreateNumber(ap->offset_y[i]));
                 }
             }
         }
@@ -542,9 +544,9 @@ void draw_ui(Editor *ed) {
             SDL_QueryTexture(tex, NULL, NULL, &tw, &th);
             int dw = (int)(tw * bg_scale);
             int dh = (int)(th * bg_scale);
-
-            int cx = base_x[s] + (int)(phase->offset_x * bg_scale);
-            int cy = center_y + (int)(phase->offset_y * bg_scale) - dh/2;
+            int cur_frame = as->current_frame[as->current_phase] % phase->frame_count;
+            int cx = base_x[s] + (int)(phase->offset_x[cur_frame] * bg_scale);
+            int cy = center_y + (int)(phase->offset_y[cur_frame] * bg_scale) - dh/2;
             SDL_Rect dst = { cx - dw/2, cy, dw, dh };
             SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
             SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
@@ -571,6 +573,7 @@ void draw_ui(Editor *ed) {
         for (int p = 0; p < 3; p++) {
             int y = group_y + row_h + 4 + p * row_h;
             AnimPhase *phase = &as->phases[p];
+            if (phase->frame_count == 0) continue;   // пропускаем фазы без кадров
             bool active = (ed->active_slot == s && ed->active_phase == p);
 
             if (active) {
@@ -589,7 +592,8 @@ void draw_ui(Editor *ed) {
 
             // Offset X
             char buf_x[16];
-            int ox = phase->offset_x;
+            int cur_idx = as->current_frame[p] % phase->frame_count;
+            int ox = phase->offset_x[cur_idx];
             snprintf(buf_x, sizeof(buf_x), "%d", ox);
             SDL_Rect x_label = {PREVIEW_X + 65, y, 20, row_h};
             draw_text_centered(ed->renderer, ed->font, "X:", x_label.x + x_label.w/2, y + row_h/2, TEXT_COLOR);
@@ -606,7 +610,7 @@ void draw_ui(Editor *ed) {
 
             // Offset Y
             char buf_y[16];
-            int oy = phase->offset_y;
+            int oy = phase->offset_y[cur_idx];
             snprintf(buf_y, sizeof(buf_y), "%d", oy);
             SDL_Rect y_label = {PREVIEW_X + 175, y, 20, row_h};
             draw_text_centered(ed->renderer, ed->font, "Y:", y_label.x + y_label.w/2, y + row_h/2, TEXT_COLOR);
@@ -680,12 +684,13 @@ void handle_input(Editor *ed, bool *running) {
                 if (as && as->loaded) {
                     AnimPhase *phase = &as->phases[ed->repeat_phase];
                     if (phase->frame_count > 0) {
+                        int rep_idx = as->current_frame[ed->repeat_phase] % phase->frame_count;
                         int step = (SDL_GetModState() & KMOD_SHIFT) ? 10 : 1;
                         switch (ed->repeat_what) {
-                            case 0: phase->offset_x -= step; break;
-                            case 1: phase->offset_x += step; break;
-                            case 2: phase->offset_y -= step; break;
-                            case 3: phase->offset_y += step; break;
+                            case 0: phase->offset_x[rep_idx] -= step; break;
+                            case 1: phase->offset_x[rep_idx] += step; break;
+                            case 2: phase->offset_y[rep_idx] -= step; break;
+                            case 3: phase->offset_y[rep_idx] += step; break;
                             case 4: {
                                 int idx = as->current_frame[ed->repeat_phase] % phase->frame_count;
                                 float dur_step = (SDL_GetModState() & KMOD_SHIFT) ? 0.01f : 0.05f;
@@ -876,18 +881,20 @@ void handle_input(Editor *ed, bool *running) {
                     if (!as->loaded) continue;
                     AnimPhase *phase = &as->phases[p];
                     if (phase->animate) continue;
+                    if (phase->frame_count == 0) continue;   // <-- защита
+                    int idx = as->current_frame[p] % phase->frame_count;
 
                     // Offset X
                     SDL_Rect x_dec = {PREVIEW_X + 130, y, 16, row_h};
                     SDL_Rect x_inc = {PREVIEW_X + 148, y, 16, row_h};
                     int step = (SDL_GetModState() & KMOD_SHIFT) ? 10 : 1;
                     if (mx >= x_dec.x && mx < x_dec.x+x_dec.w) {
-                        phase->offset_x -= step;
+                        phase->offset_x[idx] -= step;
                         ed->repeat_button_id = 1; ed->repeat_timer = SDL_GetTicks();
                         ed->repeat_button_rect = x_dec; ed->repeat_as = as; ed->repeat_phase = p; ed->repeat_what = 0;
                     }
                     if (mx >= x_inc.x && mx < x_inc.x+x_inc.w) {
-                        phase->offset_x += step;
+                        phase->offset_x[idx] += step;
                         ed->repeat_button_id = 1; ed->repeat_timer = SDL_GetTicks();
                         ed->repeat_button_rect = x_inc; ed->repeat_as = as; ed->repeat_phase = p; ed->repeat_what = 1;
                     }
@@ -896,12 +903,12 @@ void handle_input(Editor *ed, bool *running) {
                     SDL_Rect y_dec = {PREVIEW_X + 240, y, 16, row_h};
                     SDL_Rect y_inc = {PREVIEW_X + 258, y, 16, row_h};
                     if (mx >= y_dec.x && mx < y_dec.x+y_dec.w) {
-                        phase->offset_y -= step;
+                        phase->offset_y[idx] -= step;
                         ed->repeat_button_id = 1; ed->repeat_timer = SDL_GetTicks();
                         ed->repeat_button_rect = y_dec; ed->repeat_as = as; ed->repeat_phase = p; ed->repeat_what = 2;
                     }
                     if (mx >= y_inc.x && mx < y_inc.x+y_inc.w) {
-                        phase->offset_y += step;
+                        phase->offset_y[idx] += step;
                         ed->repeat_button_id = 1; ed->repeat_timer = SDL_GetTicks();
                         ed->repeat_button_rect = y_inc; ed->repeat_as = as; ed->repeat_phase = p; ed->repeat_what = 3;
                     }
