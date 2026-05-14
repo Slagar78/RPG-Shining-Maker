@@ -1,14 +1,12 @@
-[
-  {
-    "folder": "battle01",
-    "name": "Battle #1",
-    "map_id": "map00",
-    "music": "assets\\sounds\\Shinzo.mp3",
-    "music_volume": 0.8,
-    "battle_x": 10,
-    "battle_y": 14,
-    "battle_width": 32,
-    "battle_height": 24,
-   "background": "assets/battles/backgrounds/background00.png"
-  }
-]
+[{
+		"folder":	"battle01",
+		"name":	"Battle #1",
+		"map_id":	"map00",
+		"music":	"assets\\sounds\\Shinzo.mp3",
+		"music_volume":	0.800000011920929,
+		"battle_x":	10,
+		"battle_y":	14,
+		"battle_width":	32,
+		"battle_height":	24,
+		"background":	"assets/battles/backgrounds/background00.png"
+	}]

@@ -1,28 +1,41 @@
 {
-  "idle": {
-    "frames": [
-      { "file": "idle_1.png", "duration": 0.4 },
-      { "file": "idle_2.png", "duration": 0.4 }
-    ],
-    "offset_x": 0,
-    "offset_y": 0
-  },
-  "attack": {
-    "frames": [
-      { "file": "frame_attack_1.png", "duration": 0.15 },
-      { "file": "frame_attack_2.png", "duration": 0.15 },
-      { "file": "frame_attack_3.png", "duration": 0.2 },
-      { "file": "frame_attack_2.png", "duration": 0.1 }
-    ],
-    "offset_x": 30,
-    "offset_y": -10
-  },
-  "defense": {
-    "frames": [
-      { "file": "frame_def_1.png", "duration": 0.3 },
-      { "file": "frame_def_2.png", "duration": 0.3 }
-    ],
-    "offset_x": 0,
-    "offset_y": 5
-  }
+	"idle":	{
+		"frames":	[{
+				"file":	"idle_1.png",
+				"duration":	0.24999998509883881
+			}, {
+				"file":	"idle_2.png",
+				"duration":	0.24999998509883881
+			}],
+		"offset_x":	0,
+		"offset_y":	0
+	},
+	"attack":	{
+		"frames":	[{
+				"file":	"frame_attack_1.png",
+				"duration":	0.15000000596046448
+			}, {
+				"file":	"frame_attack_2.png",
+				"duration":	0.15000000596046448
+			}, {
+				"file":	"frame_attack_3.png",
+				"duration":	0.20000000298023224
+			}, {
+				"file":	"frame_attack_2.png",
+				"duration":	0.10000000149011612
+			}],
+		"offset_x":	30,
+		"offset_y":	-10
+	},
+	"defense":	{
+		"frames":	[{
+				"file":	"frame_def_1.png",
+				"duration":	0.300000011920929
+			}, {
+				"file":	"frame_def_2.png",
+				"duration":	0.300000011920929
+			}],
+		"offset_x":	0,
+		"offset_y":	5
+	}
 }

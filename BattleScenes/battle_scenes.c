@@ -58,6 +58,7 @@ typedef struct {
     float frame_durations[MAX_ANIM_FRAMES];
     int offset_x;
     int offset_y;
+    bool animate;
 } AnimPhase;
 
 typedef struct {
@@ -66,7 +67,6 @@ typedef struct {
     int current_frame[3];
     bool loaded;
     char json_path[512];
-    bool animate;
     float anim_timer;
 } AnimationSet;
 
@@ -315,6 +315,7 @@ bool load_animation_from_json(AnimationSet *as, SDL_Renderer *renderer, const ch
         cJSON *oy = cJSON_GetObjectItem(phase, "offset_y");
         ap->offset_x = ox ? ox->valueint : 0;
         ap->offset_y = oy ? oy->valueint : 0;
+        ap->animate = false;
     }
     cJSON_Delete(root);
 
@@ -572,26 +573,29 @@ void draw_ui(Editor *ed) {
         bool is_ally = (s == 0);
         int group_y = panel_y + s * (4 * row_h + 8);
 
-        // Заголовок группы + чекбокс Anim справа
+        // Заголовок группы
         SDL_Color group_color = (ed->active_slot == s) ? HIGHLIGHT_COLOR : TEXT_COLOR;
         draw_text_centered(ed->renderer, ed->font, is_ally ? "Ally" : "Enemy",
                            PREVIEW_X + 30, group_y + row_h/2, group_color);
 
-        SDL_Rect anim_box = {PREVIEW_X + PREVIEW_W - 100, group_y + 4, row_h - 4, row_h - 4};
-        draw_checkbox(ed->renderer, anim_box, as->animate, logical_mx, logical_my);
-        draw_text_centered(ed->renderer, ed->font, "Anim", anim_box.x + anim_box.w + 5, group_y + row_h/2, TEXT_COLOR);
 
-        // Три строки фаз
-        for (int p = 0; p < 3; p++) {
+            // Три строки фаз
+            for (int p = 0; p < 3; p++) {
             int y = group_y + row_h + 4 + p * row_h;
             AnimPhase *phase = &as->phases[p];
             bool active = (ed->active_slot == s && ed->active_phase == p);
 
+            // Подсветка активной строки
             if (active) {
                 SDL_Rect row_bg = {PREVIEW_X, y, PREVIEW_W, row_h};
                 SDL_SetRenderDrawColor(ed->renderer, 60, 60, 90, 255);
                 SDL_RenderFillRect(ed->renderer, &row_bg);
             }
+
+            // Чекбокс Anim (всегда видимый, не зависит от active)
+            SDL_Rect anim_box = {PREVIEW_X + 520, y + (row_h - 14)/2, 14, 14};
+            draw_checkbox(ed->renderer, anim_box, phase->animate, logical_mx, logical_my);
+            draw_text_centered(ed->renderer, ed->font, "Anim", anim_box.x + anim_box.w + 5, y + row_h/2, TEXT_COLOR);
 
             // Метка фазы
             SDL_Rect phase_rect = {PREVIEW_X + 5, y, 55, row_h};
@@ -719,6 +723,23 @@ void handle_input(Editor *ed, bool *running) {
         }
     }
 
+    // Автопроигрывание анимаций – выполняется каждый кадр, независимо от событий
+    for (int s = 0; s < 2; s++) {
+        AnimationSet *as = (s == 0) ? &ed->ally_anim : &ed->enemy_anim;
+        if (!as->loaded) continue;
+        AnimPhase *cur = &as->phases[as->current_phase];
+        if (cur->animate && cur->frame_count > 0) {
+            int idx = as->current_frame[as->current_phase] % cur->frame_count;
+            float dur = cur->frame_durations[idx];
+            as->anim_timer += 16.0f / 1000.0f;   // примерно 60 FPS
+            if (as->anim_timer >= dur) {
+                as->anim_timer -= dur;
+                as->current_frame[as->current_phase] =
+                    (as->current_frame[as->current_phase] + 1) % cur->frame_count;
+            }
+        }
+    }
+
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) { *running = false; return; }
         if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) { *running = false; return; }
@@ -729,21 +750,6 @@ void handle_input(Editor *ed, bool *running) {
         SDL_GetWindowSize(ed->window, &win_w, &win_h);
         int mx = (int)((float)raw_mx * LOGICAL_W / win_w);
         int my = (int)((float)raw_my * LOGICAL_H / win_h);
-
-        // Автопроигрывание анимаций
-        for (int s = 0; s < 2; s++) {
-            AnimationSet *as = (s == 0) ? &ed->ally_anim : &ed->enemy_anim;
-            if (!as->loaded || !as->animate) continue;
-            AnimPhase *phase = &as->phases[as->current_phase];
-            if (phase->frame_count <= 0) continue;
-            int idx = as->current_frame[as->current_phase] % phase->frame_count;
-            float dur = phase->frame_durations[idx];
-            as->anim_timer += 16.0f / 1000.0f;
-            if (as->anim_timer >= dur) {
-                as->anim_timer -= dur;
-                as->current_frame[as->current_phase] = (as->current_frame[as->current_phase] + 1) % phase->frame_count;
-            }
-        }
 
         // Колесо мыши для списка битв
         if (e.type == SDL_MOUSEWHEEL) {
@@ -837,18 +843,39 @@ void handle_input(Editor *ed, bool *running) {
                 AnimationSet *as = (s == 0) ? &ed->ally_anim : &ed->enemy_anim;
                 int group_y = panel_y + s * (4 * row_h + 8);
 
-                // Чекбокс Anim
-                SDL_Rect anim_box = {PREVIEW_X + PREVIEW_W - 100, group_y + 4, row_h - 4, row_h - 4};
-                if (mx >= anim_box.x && mx < anim_box.x+anim_box.w && my >= anim_box.y && my < anim_box.y+anim_box.h) {
-                    as->animate = !as->animate;
-                    if (!as->animate) as->anim_timer = 0;
-                    continue;
-                }
-
                 // Строки фаз
                 for (int p = 0; p < 3; p++) {
                     int y = group_y + row_h + 4 + p * row_h;
                     if (my < y || my >= y + row_h) continue;
+
+                    // Обработка чекбокса Anim
+                    SDL_Rect anim_check = {PREVIEW_X + 520, y + (row_h - 14)/2, 14, 14};
+                    if (mx >= anim_check.x && mx < anim_check.x + anim_check.w &&
+                        my >= anim_check.y && my < anim_check.y + anim_check.h)
+                    {
+                        if (as->loaded) {
+                            AnimPhase *phase = &as->phases[p];
+                            if (phase->animate) {
+                                // Снять галочку
+                                phase->animate = false;
+                            } else {
+                                // Снимаем галочки со всех фаз всех персонажей
+                                for (int ss = 0; ss < 2; ss++) {
+                                    AnimationSet *other = (ss == 0) ? &ed->ally_anim : &ed->enemy_anim;
+                                    for (int pp = 0; pp < 3; pp++) {
+                                        other->phases[pp].animate = false;
+                                    }
+                                }
+                                // Включаем только эту
+                                phase->animate = true;
+                                as->current_phase = p;
+                                ed->active_slot = s;
+                                ed->active_phase = p;
+                                as->anim_timer = 0;
+                            }
+                        }
+                        continue;
+                    }
 
                     // Клик по метке фазы
                     SDL_Rect phase_rect = {PREVIEW_X + 5, y, 55, row_h};
@@ -861,6 +888,7 @@ void handle_input(Editor *ed, bool *running) {
 
                     if (!as->loaded) continue;
                     AnimPhase *phase = &as->phases[p];
+                    if (phase->animate) continue;  // при включённой анимации поля не редактируются
 
                     // Offset X
                     SDL_Rect x_dec = {PREVIEW_X + 127, y, 16, row_h};
