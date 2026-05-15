@@ -10,13 +10,13 @@ class BattleScene
   WORK_WIDTH  = 1152
   WORK_HEIGHT = 960 - 2 * BAR_HEIGHT   # 672
 
-  ATTACKER_X = WORK_WIDTH - 250       # 902 (союзник)
-  DEFENDER_X = 200                    # больше не используется для врага
-  UNIT_Y     = BAR_HEIGHT + WORK_HEIGHT / 2   # 480
-
   # Фиксированная позиция врага (верхний левый угол спрайта)
   ENEMY_X = 70
   ENEMY_Y = 410
+
+  # Фиксированная позиция союзника
+  ALLY_X = 750
+  ALLY_Y = 450
 
   def initialize(battle_manager)
     @battle_manager = battle_manager
@@ -143,10 +143,11 @@ class BattleScene
       Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
 
       if @sub_phase == :attack
-        draw_unit(@attacker, :attack, ATTACKER_X, UNIT_Y, false, @attacker_current_frame)
+        # Союзник – теперь с фиксированными ALLY_X, ALLY_Y и use_top_left = true
+        draw_unit(@attacker, :attack, ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, :defense, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       else
-        draw_unit(@attacker, :idle, ATTACKER_X, UNIT_Y, false, @attacker_current_frame)
+        draw_unit(@attacker, :idle,    ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       end
     end
