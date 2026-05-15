@@ -535,13 +535,8 @@ void draw_ui(Editor *ed) {
         SDL_SetRenderDrawColor(ed->renderer, 200, 200, 200, 255);
         SDL_RenderDrawRect(ed->renderer, &preview_rect);
 
-        // === Спрайты союзника и врага ===
-        int center_x = PREVIEW_X + PREVIEW_W/2;
-        int center_y = PREVIEW_Y + bar_h + work_h/2;
-        int ally_base_x = center_x + (int)((902 - 576) * bg_scale);
-        
+        // === Спрайты союзника и врага ===        
         AnimationSet *sets[2] = {&ed->ally_anim, &ed->enemy_anim};
-        int base_x[2] = {ally_base_x, 0};
 
         for (int s = 0; s < 2; s++) {
             AnimationSet *as = sets[s];
@@ -559,13 +554,26 @@ void draw_ui(Editor *ed) {
             int cur_frame = as->current_frame[as->current_phase] % phase->frame_count;
 
             int cx, cy;
+
             if (s == 0) {
-                cx = base_x[s] + (int)(phase->offset_x[cur_frame] * bg_scale);
-                cy = center_y + (int)(phase->offset_y[cur_frame] * bg_scale) - dh / 2;
-                SDL_Rect dst = { cx - dw / 2, cy, dw, dh };
-                SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-                SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
-            } else {
+            // Фиксированные координаты из Ruby: ALLY_X = 750, ALLY_Y = 450
+            int ally_game_x = 750;
+            int ally_game_y = 450;
+            int top_bar_height = 144;
+            int ally_y_from_top_of_bg = ally_game_y - top_bar_height;
+
+            int ally_base_x = PREVIEW_X + (int)(ally_game_x * bg_scale);
+            int ally_base_y = PREVIEW_Y + bar_h + (int)(ally_y_from_top_of_bg * bg_scale);
+
+            cx = ally_base_x + (int)(phase->offset_x[cur_frame] * bg_scale);
+            cy = ally_base_y + (int)(phase->offset_y[cur_frame] * bg_scale);
+
+            SDL_Rect dst = { cx, cy, dw, dh };
+            SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+            SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
+            }
+             else 
+            {
                 int enemy_game_x = 70;
                 int enemy_game_y = 410;
                 int top_bar_height = 144;
