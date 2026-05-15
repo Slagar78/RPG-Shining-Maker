@@ -10,11 +10,9 @@ class BattleScene
   WORK_WIDTH  = 1152
   WORK_HEIGHT = 960 - 2 * BAR_HEIGHT   # 672
 
-  # Фиксированная позиция врага (верхний левый угол спрайта)
   ENEMY_X = 70
   ENEMY_Y = 410
 
-  # Фиксированная позиция союзника
   ALLY_X = 750
   ALLY_Y = 450
 
@@ -26,6 +24,7 @@ class BattleScene
     @phase = nil
     @background_tex = nil
     @render_texture = nil
+    @panel_tex = nil   # текстура HpMpPanel.png (обычный размер)
 
     @attacker = nil
     @defender = nil
@@ -92,6 +91,10 @@ class BattleScene
     @phase = nil
     Raylib.UnloadRenderTexture(@render_texture) if @render_texture
     @render_texture = nil
+    if @panel_tex
+      Raylib.UnloadTexture(@panel_tex)
+      @panel_tex = nil
+    end
     @battle_manager.return_from_battle_scene
     puts "<<< Battle scene finished"
   end
@@ -143,14 +146,21 @@ class BattleScene
       Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
 
       if @sub_phase == :attack
-        # Союзник – теперь с фиксированными ALLY_X, ALLY_Y и use_top_left = true
         draw_unit(@attacker, :attack, ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, :defense, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       else
         draw_unit(@attacker, :idle,    ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       end
-    end
+
+      # === Панели HP/MP ===
+      if @attacker && @attacker[:max_hp]
+        draw_panel_with_sprite(@attacker, 1152 - 16, 16, true)   # правый верхний
+        end
+      if @defender && @defender[:max_hp]
+        draw_panel_with_sprite(@defender, 16, 764, false)         # левый нижний (отступ 20)
+        end
+      end
 
     Raylib.EndTextureMode()
 
@@ -161,6 +171,81 @@ class BattleScene
 
   private
 
+  # ---------- Загрузка текстуры панели ----------
+  def load_panel_texture
+    return if @panel_tex
+    path = "assets/ui/HpMpPanel.png"
+    if File.exist?(path)
+      img = Raylib.LoadImage(path)
+      @panel_tex = Raylib.LoadTextureFromImage(img)
+      Raylib.UnloadImage(img)
+      Raylib.SetTextureFilter(@panel_tex, Raylib::TEXTURE_FILTER_POINT)
+    else
+      puts "WARNING: #{path} not found, HP/MP panel disabled."
+    end
+  end
+
+  # ---------- Отрисовка панели с текстом ----------
+  def draw_panel_with_sprite(unit, x, y, right_aligned)
+    load_panel_texture
+    return unless @panel_tex
+
+    # ═══════════════════════════════════════════
+    # НАСТРОЙКИ – меняй только здесь
+    # ═══════════════════════════════════════════
+    scale               = 2.0
+font_size           = 40
+text_margin_x       = 15
+text_margin_y_name  = 12
+text_offset_y_hp    = 34
+text_offset_y_mp    = 56
+    # ═══════════════════════════════════════════
+
+    w = @panel_tex.width
+    h = @panel_tex.height
+    dw = (w * scale).to_i
+    dh = (h * scale).to_i
+
+    x -= dw if right_aligned
+
+    # Рисуем панель (растянутую)
+    src = Raylib::Rectangle.create(0, 0, w, h)
+    dst = Raylib::Rectangle.create(x, y, dw, dh)
+    Raylib.DrawTexturePro(@panel_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+
+    # Достаём шрифт из BattleManager
+    font = @battle_manager.instance_variable_get(:@font)
+
+    # Имя юнита
+    name = if unit[:actor]
+             unit[:actor]["name"] || "Ally"
+           elsif unit[:enemy]
+             unit[:enemy]["name"] || "Enemy"
+           else
+             "Unit"
+           end
+
+    # Вычисляем координаты текста с учётом scale
+    tx = x + text_margin_x * scale
+    ty_name = y + text_margin_y_name * scale
+    ty_hp   = y + text_offset_y_hp * scale
+    ty_mp   = y + text_offset_y_mp * scale
+
+    # Вывод текста
+    if font
+      Raylib.DrawTextEx(font, name, Raylib::Vector2.create(tx, ty_name), font_size, 1, Raylib::WHITE)
+      Raylib.DrawTextEx(font, "HP: #{unit[:hp].to_i}/#{unit[:max_hp].to_i}",
+                        Raylib::Vector2.create(tx, ty_hp), font_size, 1, Raylib::WHITE)
+      Raylib.DrawTextEx(font, "MP: #{unit[:mp].to_i}/#{unit[:max_mp].to_i}",
+                        Raylib::Vector2.create(tx, ty_mp), font_size, 1, Raylib::WHITE)
+    else
+      Raylib.DrawText(name, tx, ty_name, font_size, Raylib::WHITE)
+      Raylib.DrawText("HP: #{unit[:hp].to_i}/#{unit[:max_hp].to_i}", tx, ty_hp, font_size, Raylib::WHITE)
+      Raylib.DrawText("MP: #{unit[:mp].to_i}/#{unit[:max_mp].to_i}", tx, ty_mp, font_size, Raylib::WHITE)
+    end
+  end
+
+  # ─── Старые методы анимации (без изменений) ───
   def update_sub_phase(dt)
     @sub_phase_timer += dt
     case @sub_phase
@@ -179,13 +264,12 @@ class BattleScene
         @defender_current_frame = 0
       end
     when :idle_after
-      # остаёмся в idle до конца сцены
+      # idle до конца сцены
     end
   end
 
   def update_animation(dt)
     @anim_timer += dt
-
     case @sub_phase
     when :idle_before, :idle_after
       @attacker_current_frame = advance_frame(@attacker, :idle, @attacker_current_frame)
@@ -214,7 +298,6 @@ class BattleScene
 
   def draw_unit(unit, anim_key, base_x, base_y, flip_h, frame_idx = 0, use_top_left = false)
     return unless unit
-
     anim = unit[:battle_anim]
     if anim
       anim_data = anim.send(anim_key)
@@ -222,21 +305,18 @@ class BattleScene
         idx = frame_idx % anim_data[:frames].size
         frame_info = anim_data[:frames][idx]
         tex = frame_info[:tex]
-
         x = base_x + anim_data[:offset_x]
         y = if use_top_left
               base_y + anim_data[:offset_y]
             else
               base_y + anim_data[:offset_y] - (tex.height / 2.0)
             end
-
         src = Raylib::Rectangle.create(0, 0, flip_h ? -tex.width : tex.width, tex.height)
         dst = Raylib::Rectangle.create(x, y, tex.width, tex.height)
         Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
         return
       end
     end
-
     # Fallback: mapsprite
     tex = unit[:tex]
     return unless tex
