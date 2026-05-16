@@ -11,7 +11,7 @@ class HpMpPanel
   STICK_H = 18
   STICK_GAP = 4
   THRESHOLD = 20
-  MAX_DISPLAY_STICKS = 100
+  MAX_DISPLAY_STICKS = 100   # ширина шкалы в палочках
 
   LEFT_EDGE_W = 10
   RIGHT_EDGE_W = 10
@@ -20,10 +20,10 @@ class HpMpPanel
   def initialize(font = nil)
     @font = font
     @texture = load_texture("assets/ui/HpMpPanel.png")
-    @stick_tex      = load_texture("assets/ui/Hp_Mp_Points.png")   # уровень 0 (жёлтый)
-    @stick_tex_lvl1 = load_texture("assets/ui/Hp_Mp_Points_2.png") # уровень 1 (>100)
-    @stick_tex_lvl2 = load_texture("assets/ui/Hp_Mp_Points_3.png") # уровень 2 (>200)
-    @stick_tex_lvl3 = load_texture("assets/ui/Hp_Mp_Points_4.png") # уровень 3 (>300)
+    @stick_tex      = load_texture("assets/ui/Hp_Mp_Points.png")   # жёлтый
+    @stick_tex_lvl1 = load_texture("assets/ui/Hp_Mp_Points_2.png") # зелёный (>100)
+    @stick_tex_lvl2 = load_texture("assets/ui/Hp_Mp_Points_3.png") # фиолетовый (>200)
+    @stick_tex_lvl3 = load_texture("assets/ui/Hp_Mp_Points_4.png") # чёрный (>300)
     if @texture
       @tex_width = @texture.width
       @tex_height = @texture.height
@@ -61,7 +61,7 @@ class HpMpPanel
     mp     = unit[:mp]     || 0
     max_mp = unit[:max_mp] || 0
 
-    # ---------- 1. Вычисление ширины панели ----------
+    # 1. Расчёт ширины панели
     label_w = [measure_text("HP"), measure_text("MP")].max
     max_number_str_hp = "#{max_hp}/#{max_hp}"
     max_number_str_mp = "#{max_mp}/#{max_mp}"
@@ -82,7 +82,7 @@ class HpMpPanel
     x = 576 - panel_width - 8
     y = 8
 
-    # ---------- 2. Фон панели (рамка + тайлинг середины) ----------
+    # 2. Фон панели (без изменений)
     if @texture
       left_src = Rectangle.create(0, 0, LEFT_EDGE_W, @tex_height)
       left_dst = Rectangle.create(x, y, LEFT_EDGE_W, BASE_H)
@@ -103,7 +103,7 @@ class HpMpPanel
       DrawRectangleLines(x, y, panel_width, BASE_H, WHITE)
     end
 
-    # ---------- 3. Текст и палочки ----------
+    # 3. Текст и палочки
     tx = x + PADDING_LEFT
     ty = y + PADDING_TOP
     draw_text(name_line, tx, ty, WHITE)
@@ -118,76 +118,63 @@ class HpMpPanel
     draw_text(label, base_x, base_y, WHITE)
 
     bar_start_x = base_x + label_w + STICK_GAP
-
-    # Число
     number_str = "#{current}/#{maximum}"
     number_w = measure_text(number_str)
 
-    # Сколько палочек физически поместится
+    # Определяем, сколько палочек влезает физически
     available = panel_x + panel_width - PADDING_LEFT - bar_start_x - STICK_GAP - number_w
     total_positions = [(available / STICK_W).floor, MAX_DISPLAY_STICKS].min
     total_positions = 0 if total_positions < 0
 
-    # Сколько палочек надо нарисовать (не больше current и maximum)
-    sticks_to_draw = [current, maximum].min
-    sticks_to_draw = [sticks_to_draw, total_positions].min
-
+    # Сколько палочек надо отрисовать всего (с учётом макс. шкалы)
+    sticks_to_draw = [current, maximum, total_positions].min
     stick_y = base_y + (FONT_SIZE - STICK_H) / 2
 
-    # Массив слоёв: [порог, текстура]
-    layers = [
-      { threshold: 0,   tex: @stick_tex },       # жёлтый, рисуется всегда поверх предыдущего, если current > threshold
-      { threshold: 100, tex: @stick_tex_lvl1 },
-      { threshold: 200, tex: @stick_tex_lvl2 },
-      { threshold: 300, tex: @stick_tex_lvl3 }
-    ]
-
-    # Рисуем только нужное количество палочек, начиная с самого высокого слоя, который перекрывает
-    # Идём от последнего слоя к первому (чтобы верхние слои рисовались последними и перекрывали нижние)
-    # Но в рамках Shining Force порядок: сначала рисуются все палочки нижнего слоя, потом верхние накладываются.
-    # Поэтому сначала определяем для каждого слоя, сколько он должен занять, и рисуем последовательно.
-
-    # Для каждого слоя вычисляем, сколько позиций он занимает (с учётом того, что следующий слой перекрывает правую часть)
-    # Начинаем с самого высокого слоя (threshold = 300)
-    drawn = 0
-    (layers.length - 1).downto(1) do |i|
-      threshold = layers[i][:threshold]
-      if current > threshold
-        count = [current - threshold, total_positions - drawn].min
-        if count > 0
-          tex = layers[i][:tex]
-          start_idx = total_positions - drawn - count
-          count.times do |j|
-            stick_x = bar_start_x + (start_idx + j) * STICK_W
-            if tex
-              src = Rectangle.create(0, 0, tex.width, tex.height)
-              dst = Rectangle.create(stick_x, stick_y, STICK_W, STICK_H)
-              DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
-            end
-          end
-          drawn += count
-        end
+    # Вспомогательная функция для отрисовки текстуры на позиции
+    def draw_stick_at(index, tex, fallback_color)
+      x = @bar_start_x + index * STICK_W
+      if tex
+        src = Rectangle.create(0, 0, tex.width, tex.height)
+        dst = Rectangle.create(x, @stick_y, STICK_W, STICK_H)
+        DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
+      else
+        DrawRectangle(x, @stick_y, STICK_W, STICK_H, fallback_color)
       end
     end
 
-    # Оставшееся место рисуем базовым жёлтым, если нужно
-    remaining = sticks_to_draw - drawn
-    if remaining > 0
-      tex = layers[0][:tex]
-      remaining.times do |j|
-        stick_x = bar_start_x + j * STICK_W   # жёлтые всегда слева
+    # Сохраняем нужные переменные как локальные для замыкания
+    bar_start = bar_start_x
+    stk_y = stick_y
+
+    # Рисуем слои от нижнего к верхнему (жёлтый -> зелёный -> фиолетовый -> чёрный)
+    layers = [
+      { tex: @stick_tex,      start_idx: 0, count: [current, 100].min },
+      { tex: @stick_tex_lvl1, start_idx: 0, count: [current - 100, 100].min },
+      { tex: @stick_tex_lvl2, start_idx: 0, count: [current - 200, 100].min },
+      { tex: @stick_tex_lvl3, start_idx: 0, count: [current - 300, 100].min }
+    ]
+
+    layers.each do |layer|
+      count = layer[:count]
+      next if count <= 0
+      tex = layer[:tex]
+      (0...count).each do |i|
+        stick_x = bar_start + i * STICK_W
         if tex
           src = Rectangle.create(0, 0, tex.width, tex.height)
-          dst = Rectangle.create(stick_x, stick_y, STICK_W, STICK_H)
+          dst = Rectangle.create(stick_x, stk_y, STICK_W, STICK_H)
           DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
         else
           color = Color.new; color.r = 194; color.g = 178; color.b = 128; color.a = 255
-          DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, color)
+          DrawRectangle(stick_x, stk_y, STICK_W, STICK_H, color)
         end
       end
+      # Останавливаемся, если уже нарисовали все палочки (sticks_to_draw)
+      # Но в данном случае слои перекрывают друг друга, и мы должны дать верхним перекрыть нижние.
+      # Не останавливаемся, потому что верхний слой должен перекрыть нижний на тех же позициях.
     end
 
-    # Число (прижимаем к правому краю, если не влезает)
+    # Число
     numbers_x = bar_start_x + sticks_to_draw * STICK_W + STICK_GAP
     if numbers_x + number_w > panel_x + panel_width - PADDING_LEFT
       numbers_x = panel_x + panel_width - PADDING_LEFT - number_w
