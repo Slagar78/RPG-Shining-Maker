@@ -21,6 +21,7 @@ require_relative 'lib/battleManager/Battle_scenes'
 class BattleManager
   attr_reader :game_map, :battle_entry, :battle_state
   attr_accessor :audio
+  attr_accessor :battle_scene_font
 
   TILE_SIZE = 48
   CURSOR_SPEED = 6.0
@@ -700,16 +701,24 @@ if __FILE__ == $0
 
   db = Database.new
 
-  # Загрузка шрифта
+  # Загрузка шрифтов
   codepoints = []
   (32..126).each { |cp| codepoints << cp }
   (0x0400..0x04FF).each { |cp| codepoints << cp }
   cp_ptr = FFI::MemoryPointer.new(:int, codepoints.size)
   cp_ptr.write_array_of_int(codepoints)
+
+  # Основной шрифт
   battle_font = LoadFontEx("assets/ui/fonts/main.ttf", 20, cp_ptr, codepoints.size)
   SetTextureFilter(battle_font.texture, TEXTURE_FILTER_POINT)
 
+  # Шрифт для боевых сцен (Pic.ttf, размер 30)
+  battle_scene_font = LoadFontEx("assets/ui/fonts/Pic.ttf", 18, cp_ptr, codepoints.size)
+  SetTextureFilter(battle_scene_font.texture, TEXTURE_FILTER_POINT)
+
   battle = BattleManager.new(db, battle_font)
+  battle.battle_scene_font = battle_scene_font  # теперь переменная определена
+  
   audio = AudioManager.new
   battle.audio = audio
 
@@ -734,6 +743,7 @@ if __FILE__ == $0
 
   battle.unload
   UnloadFont(battle_font) if battle_font
+  UnloadFont(battle_scene_font) if battle_scene_font  # выгружаем и второй шрифт
   audio.stop
   CloseAudioDevice()
   CloseWindow()

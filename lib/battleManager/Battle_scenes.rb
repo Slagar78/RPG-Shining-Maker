@@ -24,7 +24,7 @@ class BattleScene
     @phase = nil
     @background_tex = nil
     @render_texture = nil
-    @panel_tex = nil   # текстура HpMpPanel.png (обычный размер)
+    @panel_tex = nil   # текстура HpMpPanel_x2.png (336x124)
 
     @attacker = nil
     @defender = nil
@@ -153,14 +153,31 @@ class BattleScene
         draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       end
 
-      # === Панели HP/MP ===
+      # === Панели HP/MP (новая текстура HpMpPanel_x2.png, 336x124, scale = 1.0) ===
       if @attacker && @attacker[:max_hp]
-        draw_panel_with_sprite(@attacker, 1152 - 16, 16, true)   # правый верхний
-        end
-      if @defender && @defender[:max_hp]
-        draw_panel_with_sprite(@defender, 16, 764, false)         # левый нижний (отступ 20)
+        load_panel_texture
+        if @panel_tex
+          panel_w = @panel_tex.width   # 336
+          panel_h = @panel_tex.height  # 124
+          # Верхняя панель: справа, вертикально по центру верхней полосы (144)
+          panel_x = WORK_WIDTH - 16 - panel_w
+          panel_y = (BAR_HEIGHT - panel_h) / 2   # (144 - 124) / 2 = 10
+          draw_panel_with_sprite(@attacker, panel_x + panel_w, panel_y, true)
         end
       end
+
+      if @defender && @defender[:max_hp]
+        load_panel_texture
+        if @panel_tex
+          panel_w = @panel_tex.width
+          panel_h = @panel_tex.height
+          # Нижняя панель: слева, вертикально по центру нижней полосы
+          panel_x = 16
+          panel_y = 960 - BAR_HEIGHT + (BAR_HEIGHT - panel_h) / 2
+          draw_panel_with_sprite(@defender, panel_x, panel_y, false)
+        end
+      end
+    end
 
     Raylib.EndTextureMode()
 
@@ -171,10 +188,10 @@ class BattleScene
 
   private
 
-  # ---------- Загрузка текстуры панели ----------
+  # ---------- Загрузка текстуры панели (новая) ----------
   def load_panel_texture
     return if @panel_tex
-    path = "assets/ui/HpMpPanel.png"
+    path = "assets/ui/HpMpPanel_x2.png"
     if File.exist?(path)
       img = Raylib.LoadImage(path)
       @panel_tex = Raylib.LoadTextureFromImage(img)
@@ -185,20 +202,19 @@ class BattleScene
     end
   end
 
-  # ---------- Отрисовка панели с текстом ----------
+  # ---------- Отрисовка панели с текстом (scale = 1.0) ----------
   def draw_panel_with_sprite(unit, x, y, right_aligned)
-    load_panel_texture
     return unless @panel_tex
 
     # ═══════════════════════════════════════════
-    # НАСТРОЙКИ – меняй только здесь
+    # НАСТРОЙКИ под текстуру 336×124
     # ═══════════════════════════════════════════
-    scale               = 2.0
-font_size           = 40
-text_margin_x       = 15
-text_margin_y_name  = 12
-text_offset_y_hp    = 34
-text_offset_y_mp    = 56
+    scale               = 1.0   # текстура уже нужного размера
+    font_size           = 36    # шрифт поменьше, чтобы влезло в 124 пикселя
+    text_margin_x       = 20
+    text_margin_y_name  = 10
+    text_offset_y_hp    = 44
+    text_offset_y_mp    = 76
     # ═══════════════════════════════════════════
 
     w = @panel_tex.width
@@ -208,13 +224,13 @@ text_offset_y_mp    = 56
 
     x -= dw if right_aligned
 
-    # Рисуем панель (растянутую)
+    # Рисуем панель
     src = Raylib::Rectangle.create(0, 0, w, h)
     dst = Raylib::Rectangle.create(x, y, dw, dh)
     Raylib.DrawTexturePro(@panel_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
 
     # Достаём шрифт из BattleManager
-    font = @battle_manager.instance_variable_get(:@font)
+    font = @battle_manager.battle_scene_font || @battle_manager.instance_variable_get(:@font)
 
     # Имя юнита
     name = if unit[:actor]
@@ -225,23 +241,23 @@ text_offset_y_mp    = 56
              "Unit"
            end
 
-    # Вычисляем координаты текста с учётом scale
-    tx = x + text_margin_x * scale
-    ty_name = y + text_margin_y_name * scale
-    ty_hp   = y + text_offset_y_hp * scale
-    ty_mp   = y + text_offset_y_mp * scale
+    # Координаты текста (scale = 1.0, поэтому просто прибавляем отступы)
+    tx = x + text_margin_x
+    ty_name = y + text_margin_y_name
+    ty_hp   = y + text_offset_y_hp
+    ty_mp   = y + text_offset_y_mp
 
     # Вывод текста
     if font
       Raylib.DrawTextEx(font, name, Raylib::Vector2.create(tx, ty_name), font_size, 1, Raylib::WHITE)
-      Raylib.DrawTextEx(font, "HP: #{unit[:hp].to_i}/#{unit[:max_hp].to_i}",
+      Raylib.DrawTextEx(font, "HP #{unit[:hp].to_i}/#{unit[:max_hp].to_i}",
                         Raylib::Vector2.create(tx, ty_hp), font_size, 1, Raylib::WHITE)
-      Raylib.DrawTextEx(font, "MP: #{unit[:mp].to_i}/#{unit[:max_mp].to_i}",
+      Raylib.DrawTextEx(font, "MP #{unit[:mp].to_i}/#{unit[:max_mp].to_i}",
                         Raylib::Vector2.create(tx, ty_mp), font_size, 1, Raylib::WHITE)
     else
       Raylib.DrawText(name, tx, ty_name, font_size, Raylib::WHITE)
-      Raylib.DrawText("HP: #{unit[:hp].to_i}/#{unit[:max_hp].to_i}", tx, ty_hp, font_size, Raylib::WHITE)
-      Raylib.DrawText("MP: #{unit[:mp].to_i}/#{unit[:max_mp].to_i}", tx, ty_mp, font_size, Raylib::WHITE)
+      Raylib.DrawText("HP #{unit[:hp].to_i}/#{unit[:max_hp].to_i}", tx, ty_hp, font_size, Raylib::WHITE)
+      Raylib.DrawText("MP #{unit[:mp].to_i}/#{unit[:max_mp].to_i}", tx, ty_mp, font_size, Raylib::WHITE)
     end
   end
 
