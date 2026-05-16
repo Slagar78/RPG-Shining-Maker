@@ -10,8 +10,8 @@
 			"level":	14,
 			"spell_power":	"enhanced",
 			"stats":	{
-				"max_hp":	112,
-				"max_mp":	0,
+				"max_hp":	230,
+				"max_mp":	50,
 				"base_att":	38,
 				"base_def":	30,
 				"base_agi":	29,
