@@ -558,7 +558,7 @@ void draw_ui(Editor *ed) {
             if (s == 0) {
             // Фиксированные координаты из Ruby: ALLY_X = 750, ALLY_Y = 450
             int ally_game_x = 750;
-            int ally_game_y = 450;
+            int ally_game_y = 480;
             int top_bar_height = 144;
             int ally_y_from_top_of_bg = ally_game_y - top_bar_height;
 

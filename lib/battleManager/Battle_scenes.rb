@@ -18,8 +18,12 @@ class BattleScene
 
   # ─── Настройки отрисовки земли (ground) ───
   GROUND_SCALE   = 2.0    # ×2 для рендера 1152×960 → на экране 576×480
-  GROUND_OFFSET_X = 136   # сдвиг вправо/влево
-  GROUND_OFFSET_Y = 422   # сдвиг вниз/вверх
+  GROUND_OFFSET_X = 136
+  GROUND_OFFSET_Y = 422
+
+  # ─── Анимация выезда игрока и панели ───
+  SLIDE_IN_DURATION  = 0.5   # секунд
+  SLIDE_IN_OFFSET_X  = 500   # на сколько пикселей правее стартуют
 
   def initialize(battle_manager)
     @battle_manager = battle_manager
@@ -45,8 +49,10 @@ class BattleScene
     @defense_duration = 0.0
     @idle_duration = 0.0
 
+    @slide_in = false
+    @slide_in_timer = 0.0
+
     load_background
-    # ground загружается в start (каждый раз)
   end
 
   # ---------- Загрузка фона битвы ----------
@@ -98,10 +104,12 @@ class BattleScene
     @defense_duration = 0.5 if @defense_duration < 0.1
     @idle_duration = 0.8 if @idle_duration < 0.1
 
-    @sub_phase = :idle_before
+    @sub_phase = :slide_in           # начинаем с выезда
     @sub_phase_timer = 0.0
+    @slide_in = true
+    @slide_in_timer = 0.0
 
-    load_ground   # <-- загружаем землю для каждой битвы
+    load_ground
 
     puts ">>> Battle scene starting: #{attacker_unit[:enemy] ? 'Enemy' : 'Ally'} vs #{defender_unit[:enemy] ? 'Enemy' : 'Ally'}"
     puts "    attack: #{@attack_duration.round(2)}s, defense: #{@defense_duration.round(2)}s, idle: #{@idle_duration.round(2)}s"
@@ -178,6 +186,16 @@ class BattleScene
       Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
 
       # ──────────────────────────────────────
+      #  Вычисляем смещение для анимации выезда (только для союзника и его земли)
+      # ──────────────────────────────────────
+      slide_offset = 0
+      if @sub_phase == :slide_in
+        t = (@sub_phase_timer / SLIDE_IN_DURATION).clamp(0.0, 1.0)
+        ease = 1.0 - (1.0 - t) ** 2   # ease out quad
+        slide_offset = SLIDE_IN_OFFSET_X * (1.0 - ease)
+      end
+
+      # ──────────────────────────────────────
       #  GROUND – только под союзником, ×2
       # ──────────────────────────────────────
       if @attacker && !@attacker[:enemy] && @ground_tex
@@ -186,7 +204,7 @@ class BattleScene
         scaled_w = gw * GROUND_SCALE
         scaled_h = gh * GROUND_SCALE
 
-        gx = ALLY_X - scaled_w / 2 + GROUND_OFFSET_X
+        gx = ALLY_X - scaled_w / 2 + GROUND_OFFSET_X + slide_offset   # земля тоже сдвигается
         gy = ALLY_Y - scaled_h + GROUND_OFFSET_Y
 
         src = Raylib::Rectangle.create(0, 0, gw, gh)
@@ -194,27 +212,30 @@ class BattleScene
         Raylib.DrawTexturePro(@ground_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
       end
 
-      # ── Рисуем юнитов ──
+      # ── Рисуем юнитов (враг без смещения, союзник с учётом slide_offset) ──
+      ally_draw_x = ALLY_X + slide_offset
       if @sub_phase == :attack
-        draw_unit(@attacker, :attack, ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
+        draw_unit(@attacker, :attack, ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, :defense, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       else
-        draw_unit(@attacker, :idle,    ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
+        draw_unit(@attacker, :idle,    ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       end
 
       # === Панели HP/MP ===
+      # Панель союзника — без выезда (фиксированная позиция)
       if @attacker && @attacker[:max_hp]
         load_panel_texture
         if @panel_tex
           panel_w = @panel_tex.width
           panel_h = @panel_tex.height
-          panel_x = WORK_WIDTH - 16 - panel_w
+          panel_x = WORK_WIDTH - 16 - panel_w               # базовая позиция без slide_offset
           panel_y = (BAR_HEIGHT - panel_h) / 2
           draw_panel_with_sprite(@attacker, panel_x + panel_w, panel_y, true)
         end
       end
 
+      # Панель врага — как и раньше, без смещения
       if @defender && @defender[:max_hp]
         load_panel_texture
         if @panel_tex
@@ -301,10 +322,16 @@ class BattleScene
     end
   end
 
-  # ─── Методы анимации ───
+  # ─── Методы анимации (обновлённые с поддержкой slide_in) ───
   def update_sub_phase(dt)
     @sub_phase_timer += dt
     case @sub_phase
+    when :slide_in
+      if @sub_phase_timer >= SLIDE_IN_DURATION
+        @sub_phase = :idle_before
+        @sub_phase_timer = 0.0
+        @slide_in = false
+      end
     when :idle_before
       if @sub_phase_timer >= @idle_duration
         @sub_phase = :attack
@@ -327,7 +354,7 @@ class BattleScene
   def update_animation(dt)
     @anim_timer += dt
     case @sub_phase
-    when :idle_before, :idle_after
+    when :slide_in, :idle_before, :idle_after
       @attacker_current_frame = advance_frame(@attacker, :idle, @attacker_current_frame)
       @defender_current_frame = advance_frame(@defender, :idle, @defender_current_frame)
     when :attack
