@@ -11,14 +11,19 @@ class HpMpPanel
   STICK_H = 18
   STICK_GAP = 4
   THRESHOLD = 20
+  MAX_DISPLAY_STICKS = 100
 
-  # Ширина неизменных краёв панели (левого и правого, с закруглениями)
-  LEFT_EDGE_W = 8
-  RIGHT_EDGE_W = 8
+  # Настоящая ширина рамки (неизменных краёв)
+  LEFT_EDGE_W = 10
+  RIGHT_EDGE_W = 10
+  # Тайл для середины (берём небольшой кусок из середины панели, без рисунка)
+  MID_TILE_W = 8
 
   def initialize(font = nil)
     @font = font
     @texture = load_texture("assets/ui/HpMpPanel.png")
+    @stick_tex = load_texture("assets/ui/Hp_Mp_Points.png")
+    @stick_tex_overflow = load_texture("assets/ui/Hp_Mp_Points_2.png")
     if @texture
       @tex_width = @texture.width
       @tex_height = @texture.height
@@ -56,45 +61,57 @@ class HpMpPanel
     mp     = unit[:mp]     || 0
     max_mp = unit[:max_mp] || 0
 
-    # Вычисляем требуемую ширину панели (после порога – по 3px за единицу)
-    max_val = [max_hp, max_mp].max
-    extra = max_val > THRESHOLD ? max_val - THRESHOLD : 0
-    panel_width = BASE_W + extra * STICK_W
+    # 1. Вычисляем требуемую ширину
+    label_w = [measure_text("HP"), measure_text("MP")].max
+    max_number_str_hp = "#{max_hp}/#{max_hp}"
+    max_number_str_mp = "#{max_mp}/#{max_mp}"
+    max_number_w = [measure_text(max_number_str_hp), measure_text(max_number_str_mp)].max
+
+    max_sticks = [[max_hp, max_mp].max, MAX_DISPLAY_STICKS].min
+    sticks_width = max_sticks * STICK_W
+
+    content_width = PADDING_LEFT + label_w + STICK_GAP + sticks_width + STICK_GAP + max_number_w + PADDING_LEFT
+    raw_width = [BASE_W, content_width].max
+
+    # Ширина панели должна быть кратна MID_TILE_W для целого числа тайлов
+    mid_area = raw_width - LEFT_EDGE_W - RIGHT_EDGE_W
+    tiles = (mid_area.to_f / MID_TILE_W).ceil
+    panel_width = LEFT_EDGE_W + RIGHT_EDGE_W + tiles * MID_TILE_W
 
     name_line = "#{name}  LV #{lvl}"
 
-    # Правый край фиксирован, левый сдвигается влево
     x = 576 - panel_width - 8
     y = 8
 
-    # Отрисовка фона панели из трёх частей (только если текстура загружена)
+    # 2. Фон панели (рамка + тайловая середина)
     if @texture
-      # 1. Левый край (скруглённый) – фиксированной ширины
+      # Левый край (рамка) – неизменный
       left_src = Rectangle.create(0, 0, LEFT_EDGE_W, @tex_height)
       left_dst = Rectangle.create(x, y, LEFT_EDGE_W, BASE_H)
       DrawTexturePro(@texture, left_src, left_dst, Vector2.create(0, 0), 0, WHITE)
 
-      # 2. Правый край (скруглённый) – фиксированной ширины
+      # Правый край (рамка) – неизменный
       right_src = Rectangle.create(@tex_width - RIGHT_EDGE_W, 0, RIGHT_EDGE_W, @tex_height)
       right_dst = Rectangle.create(x + panel_width - RIGHT_EDGE_W, y, RIGHT_EDGE_W, BASE_H)
       DrawTexturePro(@texture, right_src, right_dst, Vector2.create(0, 0), 0, WHITE)
 
-      # 3. Середина – растягивается на всю оставшуюся ширину
-      middle_src = Rectangle.create(LEFT_EDGE_W, 0, @tex_width - LEFT_EDGE_W - RIGHT_EDGE_W, @tex_height)
-      middle_dst = Rectangle.create(x + LEFT_EDGE_W, y, panel_width - LEFT_EDGE_W - RIGHT_EDGE_W, BASE_H)
-      DrawTexturePro(@texture, middle_src, middle_dst, Vector2.create(0, 0), 0, WHITE)
+      # Тайлы середины (без рамки, берём из центра исходной панели)
+      # Берём тайл из середины текстуры: например, с пикселя LEFT_EDGE_W + 2, чтобы не захватить рамку
+      tile_src = Rectangle.create(LEFT_EDGE_W + 2, 0, MID_TILE_W, @tex_height)
+      tiles.times do |i|
+        tile_x = x + LEFT_EDGE_W + i * MID_TILE_W
+        tile_dst = Rectangle.create(tile_x, y, MID_TILE_W, BASE_H)
+        DrawTexturePro(@texture, tile_src, tile_dst, Vector2.create(0, 0), 0, WHITE)
+      end
     else
-      # Запасной вариант, если текстура не загружена
       DrawRectangle(x, y, panel_width, BASE_H, Fade(BLACK, 0.8))
       DrawRectangleLines(x, y, panel_width, BASE_H, WHITE)
     end
 
+    # 3. Текст и палочки
     tx = x + PADDING_LEFT
     ty = y + PADDING_TOP
     draw_text(name_line, tx, ty, WHITE)
-
-    # Фиксированная ширина подписей «HP» / «MP» для выравнивания палочек
-    label_w = [measure_text("HP"), measure_text("MP")].max
 
     draw_hpmp_bar(x, y, panel_width, tx, ty + LINE_HEIGHT, "HP", hp, max_hp, label_w)
     draw_hpmp_bar(x, y, panel_width, tx, ty + LINE_HEIGHT * 2, "MP", mp, max_mp, label_w)
@@ -106,28 +123,47 @@ class HpMpPanel
     draw_text(label, base_x, base_y, WHITE)
 
     bar_start_x = base_x + label_w + STICK_GAP
-    max_possible_sticks = ((panel_x + panel_width - PADDING_LEFT - bar_start_x) / STICK_W).floor
-    sticks = [current, maximum].min
-    sticks = [sticks, max_possible_sticks].min
-
-    color = Color.new
-    color.r = 194; color.g = 178; color.b = 128; color.a = 255
-    stick_y = base_y + (FONT_SIZE - STICK_H) / 2
-
-    sticks.times do |i|
-      stick_x = bar_start_x + i * STICK_W
-      DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, color)
-    end
 
     number_str = "#{current}/#{maximum}"
     number_w = measure_text(number_str)
+    available = panel_x + panel_width - PADDING_LEFT - bar_start_x - STICK_GAP - number_w
+    max_possible_sticks = [0, (available / STICK_W).floor].max
 
-    if sticks > 0
-      numbers_x = bar_start_x + sticks * STICK_W + STICK_GAP
-    else
-      numbers_x = bar_start_x
+    sticks_to_draw = [current, maximum].min
+    sticks_to_draw = [sticks_to_draw, max_possible_sticks].min
+
+    normal_sticks = [sticks_to_draw, MAX_DISPLAY_STICKS].min
+    overflow = current - MAX_DISPLAY_STICKS
+    overflow = 0 if overflow < 0
+    overflow = [overflow, max_possible_sticks].min
+
+    stick_y = base_y + (FONT_SIZE - STICK_H) / 2
+
+    # Жёлтые палочки
+    normal_sticks.times do |i|
+      stick_x = bar_start_x + i * STICK_W
+      if @stick_tex
+        src = Rectangle.create(0, 0, @stick_tex.width, @stick_tex.height)
+        dst = Rectangle.create(stick_x, stick_y, STICK_W, STICK_H)
+        DrawTexturePro(@stick_tex, src, dst, Vector2.create(0, 0), 0, WHITE)
+      else
+        color = Color.new; color.r = 194; color.g = 178; color.b = 128; color.a = 255
+        DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, color)
+      end
     end
 
+    # Зелёные палочки поверх жёлтых
+    if overflow > 0 && @stick_tex_overflow
+      start_idx = [normal_sticks - overflow, 0].max
+      overflow.times do |i|
+        stick_x = bar_start_x + (start_idx + i) * STICK_W
+        src = Rectangle.create(0, 0, @stick_tex_overflow.width, @stick_tex_overflow.height)
+        dst = Rectangle.create(stick_x, stick_y, STICK_W, STICK_H)
+        DrawTexturePro(@stick_tex_overflow, src, dst, Vector2.create(0, 0), 0, WHITE)
+      end
+    end
+
+    numbers_x = bar_start_x + sticks_to_draw * STICK_W + STICK_GAP
     if numbers_x + number_w > panel_x + panel_width - PADDING_LEFT
       numbers_x = panel_x + panel_width - PADDING_LEFT - number_w
     end
