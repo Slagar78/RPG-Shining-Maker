@@ -14,7 +14,12 @@ class BattleScene
   ENEMY_Y = 410
 
   ALLY_X = 750
-  ALLY_Y = 450
+  ALLY_Y = 480
+
+  # ─── Настройки отрисовки земли (ground) ───
+  GROUND_SCALE   = 2.0    # ×2 для рендера 1152×960 → на экране 576×480
+  GROUND_OFFSET_X = 136   # сдвиг вправо/влево
+  GROUND_OFFSET_Y = 422   # сдвиг вниз/вверх
 
   def initialize(battle_manager)
     @battle_manager = battle_manager
@@ -24,7 +29,8 @@ class BattleScene
     @phase = nil
     @background_tex = nil
     @render_texture = nil
-    @panel_tex = nil   # текстура HpMpPanel_x2.png (336x124)
+    @panel_tex = nil
+    @ground_tex = nil
 
     @attacker = nil
     @defender = nil
@@ -40,8 +46,10 @@ class BattleScene
     @idle_duration = 0.0
 
     load_background
+    # ground загружается в start (каждый раз)
   end
 
+  # ---------- Загрузка фона битвы ----------
   def load_background
     bg_path = @battle_manager.battle_entry["background"]
     return unless bg_path && !bg_path.empty? && File.exist?(bg_path)
@@ -51,6 +59,19 @@ class BattleScene
     Raylib.SetTextureFilter(@background_tex, Raylib::TEXTURE_FILTER_POINT)
   rescue => e
     puts "Failed to load battle background: #{e.message}"
+  end
+
+  # ---------- Загрузка земли (ground) ----------
+  def load_ground
+    ground_path = @battle_manager.battle_entry["ground"]
+    return unless ground_path && !ground_path.empty? && File.exist?(ground_path)
+
+    img = Raylib.LoadImage(ground_path)
+    @ground_tex = Raylib.LoadTextureFromImage(img)
+    Raylib.UnloadImage(img)
+    Raylib.SetTextureFilter(@ground_tex, Raylib::TEXTURE_FILTER_POINT)
+  rescue => e
+    puts "Failed to load ground texture: #{e.message}"
   end
 
   def start(attacker_unit, defender_unit)
@@ -80,6 +101,8 @@ class BattleScene
     @sub_phase = :idle_before
     @sub_phase_timer = 0.0
 
+    load_ground   # <-- загружаем землю для каждой битвы
+
     puts ">>> Battle scene starting: #{attacker_unit[:enemy] ? 'Enemy' : 'Ally'} vs #{defender_unit[:enemy] ? 'Enemy' : 'Ally'}"
     puts "    attack: #{@attack_duration.round(2)}s, defense: #{@defense_duration.round(2)}s, idle: #{@idle_duration.round(2)}s"
   end
@@ -91,10 +114,17 @@ class BattleScene
     @phase = nil
     Raylib.UnloadRenderTexture(@render_texture) if @render_texture
     @render_texture = nil
+
+    if @ground_tex
+      Raylib.UnloadTexture(@ground_tex)
+      @ground_tex = nil
+    end
+
     if @panel_tex
       Raylib.UnloadTexture(@panel_tex)
       @panel_tex = nil
     end
+
     @battle_manager.return_from_battle_scene
     puts "<<< Battle scene finished"
   end
@@ -136,15 +166,35 @@ class BattleScene
     when :display
       Raylib.ClearBackground(Raylib::BLACK)
 
+      # Фон битвы
       if @background_tex
         src = Raylib::Rectangle.create(0, 0, @background_tex.width, @background_tex.height)
         dst = Raylib::Rectangle.create(0, BAR_HEIGHT, WORK_WIDTH, WORK_HEIGHT)
         Raylib.DrawTexturePro(@background_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
       end
 
+      # Чёрные полосы сверху и снизу (под панели)
       Raylib.DrawRectangle(0, 0, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
       Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
 
+      # ──────────────────────────────────────
+      #  GROUND – только под союзником, ×2
+      # ──────────────────────────────────────
+      if @attacker && !@attacker[:enemy] && @ground_tex
+        gw = @ground_tex.width
+        gh = @ground_tex.height
+        scaled_w = gw * GROUND_SCALE
+        scaled_h = gh * GROUND_SCALE
+
+        gx = ALLY_X - scaled_w / 2 + GROUND_OFFSET_X
+        gy = ALLY_Y - scaled_h + GROUND_OFFSET_Y
+
+        src = Raylib::Rectangle.create(0, 0, gw, gh)
+        dst = Raylib::Rectangle.create(gx, gy, scaled_w, scaled_h)
+        Raylib.DrawTexturePro(@ground_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+      end
+
+      # ── Рисуем юнитов ──
       if @sub_phase == :attack
         draw_unit(@attacker, :attack, ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, :defense, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
@@ -153,15 +203,14 @@ class BattleScene
         draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       end
 
-      # === Панели HP/MP (новая текстура HpMpPanel_x2.png, 336x124, scale = 1.0) ===
+      # === Панели HP/MP ===
       if @attacker && @attacker[:max_hp]
         load_panel_texture
         if @panel_tex
-          panel_w = @panel_tex.width   # 336
-          panel_h = @panel_tex.height  # 124
-          # Верхняя панель: справа, вертикально по центру верхней полосы (144)
+          panel_w = @panel_tex.width
+          panel_h = @panel_tex.height
           panel_x = WORK_WIDTH - 16 - panel_w
-          panel_y = (BAR_HEIGHT - panel_h) / 2   # (144 - 124) / 2 = 10
+          panel_y = (BAR_HEIGHT - panel_h) / 2
           draw_panel_with_sprite(@attacker, panel_x + panel_w, panel_y, true)
         end
       end
@@ -171,7 +220,6 @@ class BattleScene
         if @panel_tex
           panel_w = @panel_tex.width
           panel_h = @panel_tex.height
-          # Нижняя панель: слева, вертикально по центру нижней полосы
           panel_x = 16
           panel_y = 960 - BAR_HEIGHT + (BAR_HEIGHT - panel_h) / 2
           draw_panel_with_sprite(@defender, panel_x, panel_y, false)
@@ -181,6 +229,7 @@ class BattleScene
 
     Raylib.EndTextureMode()
 
+    # Масштабирование в окно 576x480
     src = Raylib::Rectangle.create(0, 0, 1152, -960)
     dst = Raylib::Rectangle.create(0, 0, 576, 480)
     Raylib.DrawTexturePro(@render_texture.texture, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
@@ -188,7 +237,7 @@ class BattleScene
 
   private
 
-  # ---------- Загрузка текстуры панели (новая) ----------
+  # ---------- Загрузка текстуры панели ----------
   def load_panel_texture
     return if @panel_tex
     path = "assets/ui/HpMpPanel_x2.png"
@@ -202,20 +251,16 @@ class BattleScene
     end
   end
 
-  # ---------- Отрисовка панели с текстом (scale = 1.0) ----------
+  # ---------- Отрисовка панели с текстом ----------
   def draw_panel_with_sprite(unit, x, y, right_aligned)
     return unless @panel_tex
 
-    # ═══════════════════════════════════════════
-    # НАСТРОЙКИ под текстуру 336×124
-    # ═══════════════════════════════════════════
-    scale               = 1.0   # текстура уже нужного размера
-    font_size           = 36    # шрифт поменьше, чтобы влезло в 124 пикселя
+    scale               = 1.0
+    font_size           = 36
     text_margin_x       = 20
     text_margin_y_name  = 10
     text_offset_y_hp    = 44
     text_offset_y_mp    = 76
-    # ═══════════════════════════════════════════
 
     w = @panel_tex.width
     h = @panel_tex.height
@@ -224,15 +269,12 @@ class BattleScene
 
     x -= dw if right_aligned
 
-    # Рисуем панель
     src = Raylib::Rectangle.create(0, 0, w, h)
     dst = Raylib::Rectangle.create(x, y, dw, dh)
     Raylib.DrawTexturePro(@panel_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
 
-    # Достаём шрифт из BattleManager
     font = @battle_manager.battle_scene_font || @battle_manager.instance_variable_get(:@font)
 
-    # Имя юнита
     name = if unit[:actor]
              unit[:actor]["name"] || "Ally"
            elsif unit[:enemy]
@@ -241,13 +283,11 @@ class BattleScene
              "Unit"
            end
 
-    # Координаты текста (scale = 1.0, поэтому просто прибавляем отступы)
     tx = x + text_margin_x
     ty_name = y + text_margin_y_name
     ty_hp   = y + text_offset_y_hp
     ty_mp   = y + text_offset_y_mp
 
-    # Вывод текста
     if font
       Raylib.DrawTextEx(font, name, Raylib::Vector2.create(tx, ty_name), font_size, 1, Raylib::WHITE)
       Raylib.DrawTextEx(font, "HP #{unit[:hp].to_i}/#{unit[:max_hp].to_i}",
@@ -261,7 +301,7 @@ class BattleScene
     end
   end
 
-  # ─── Старые методы анимации (без изменений) ───
+  # ─── Методы анимации ───
   def update_sub_phase(dt)
     @sub_phase_timer += dt
     case @sub_phase
@@ -333,7 +373,7 @@ class BattleScene
         return
       end
     end
-    # Fallback: mapsprite
+    # Fallback: карта/спрайт
     tex = unit[:tex]
     return unless tex
     x = base_x
