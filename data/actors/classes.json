@@ -7,7 +7,7 @@
 			"move":	6,
 			"move_type":	"REGULAR",
 			"hp_growth":	{
-				"start":	20,
+				"start":	1,
 				"projected":	58,
 				"curve":	"LATE"
 			},

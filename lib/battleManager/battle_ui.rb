@@ -114,8 +114,8 @@ class BattleMenu
 
     # Рисуем панель Commands.png и текст на ней
     if @commands_tex
-      panel_x = center_x + @offset + @tile_size/2 + 12   # справа от кнопок с отступом
-      panel_y = center_y - @commands_h/2                 # вертикально по центру
+      panel_x = center_x + @offset + @tile_size/2 + 16   # справа от кнопок с отступом
+      panel_y = center_y - @commands_h/2 + 24            # вертикально
 
       src = Raylib::Rectangle.create(0, 0, @commands_w, @commands_h)
       dst = Raylib::Rectangle.create(panel_x, panel_y, @commands_w, @commands_h)
