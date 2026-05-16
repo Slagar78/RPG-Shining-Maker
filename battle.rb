@@ -19,7 +19,7 @@ require_relative 'lib/battleManager/camera_battle'
 require_relative 'lib/battleManager/Battle_scenes'
 
 class BattleManager
-  attr_reader :game_map, :battle_entry, :battle_state
+  attr_reader :game_map, :battle_entry, :battle_state, :battle_menu
   attr_accessor :audio
   attr_accessor :battle_scene_font
 
@@ -74,6 +74,7 @@ class BattleManager
     load_terrain
 
     @battle_menu = BattleMenu.new
+	@battle_menu.font = @font
     @hp_mp_panel = HpMpPanel.new(@font)
     @battle_state = :cursor_moving
 
@@ -708,17 +709,22 @@ if __FILE__ == $0
   cp_ptr = FFI::MemoryPointer.new(:int, codepoints.size)
   cp_ptr.write_array_of_int(codepoints)
 
-  # Основной шрифт
+  # Основной шрифт (20px)
   battle_font = LoadFontEx("assets/ui/fonts/main.ttf", 20, cp_ptr, codepoints.size)
   SetTextureFilter(battle_font.texture, TEXTURE_FILTER_POINT)
 
-  # Шрифт для боевых сцен (Pic.ttf, размер 30)
+  # Шрифт для боевых сцен (18px)
   battle_scene_font = LoadFontEx("assets/ui/fonts/Pic.ttf", 18, cp_ptr, codepoints.size)
   SetTextureFilter(battle_scene_font.texture, TEXTURE_FILTER_POINT)
 
+  # Шрифт для меню (30px, чёткий)
+  menu_font = LoadFontEx("assets/ui/fonts/main.ttf", 30, cp_ptr, codepoints.size)
+  SetTextureFilter(menu_font.texture, TEXTURE_FILTER_POINT)
+
   battle = BattleManager.new(db, battle_font)
-  battle.battle_scene_font = battle_scene_font  # теперь переменная определена
-  
+  battle.battle_scene_font = battle_scene_font
+  battle.battle_menu.font = menu_font   # заменяем шрифт в меню на 30px
+
   audio = AudioManager.new
   battle.audio = audio
 
@@ -743,7 +749,8 @@ if __FILE__ == $0
 
   battle.unload
   UnloadFont(battle_font) if battle_font
-  UnloadFont(battle_scene_font) if battle_scene_font  # выгружаем и второй шрифт
+  UnloadFont(battle_scene_font) if battle_scene_font
+  UnloadFont(menu_font) if menu_font    # выгружаем и этот шрифт
   audio.stop
   CloseAudioDevice()
   CloseWindow()
