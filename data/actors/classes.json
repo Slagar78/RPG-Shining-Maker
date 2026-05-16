@@ -3,11 +3,11 @@
 			"id":	0,
 			"name":	"SDMN",
 			"full_name":	"SDMN",
-			"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
+			"battle_sprite_path":	"assets/battles/battlesprites/allies/Mushra",
 			"move":	6,
 			"move_type":	"REGULAR",
 			"hp_growth":	{
-				"start":	12,
+				"start":	20,
 				"projected":	58,
 				"curve":	"LATE"
 			},
