@@ -2,12 +2,12 @@
 	"idle":	{
 		"frames":	[{
 				"file":	"idle_1.png",
-				"duration":	0.28,
+				"duration":	0.22,
 				"offset_x":	0,
 				"offset_y":	0
 			}, {
 				"file":	"idle_2.png",
-				"duration":	0.29,
+				"duration":	0.22,
 				"offset_x":	0,
 				"offset_y":	0
 			}],
@@ -18,40 +18,40 @@
 		"frames":	[{
 				"file":	"frame_attack_1.png",
 				"duration":	0.15,
-				"offset_x":	30,
-				"offset_y":	-10
+				"offset_x":	0,
+				"offset_y":	0
 			}, {
 				"file":	"frame_attack_2.png",
 				"duration":	0.15,
-				"offset_x":	30,
-				"offset_y":	-10
+				"offset_x":	0,
+				"offset_y":	0
 			}, {
 				"file":	"frame_attack_3.png",
 				"duration":	0.2,
-				"offset_x":	30,
-				"offset_y":	-10
+				"offset_x":	0,
+				"offset_y":	0
 			}, {
 				"file":	"frame_attack_2.png",
 				"duration":	0.1,
-				"offset_x":	30,
-				"offset_y":	-10
+				"offset_x":	0,
+				"offset_y":	0
 			}],
-		"offset_x":	30,
-		"offset_y":	-10
+		"offset_x":	0,
+		"offset_y":	0
 	},
 	"defense":	{
 		"frames":	[{
 				"file":	"frame_def_1.png",
-				"duration":	0.3,
+				"duration":	0.31,
 				"offset_x":	0,
-				"offset_y":	5
+				"offset_y":	0
 			}, {
 				"file":	"frame_def_2.png",
 				"duration":	0.3,
 				"offset_x":	0,
-				"offset_y":	5
+				"offset_y":	0
 			}],
 		"offset_x":	0,
-		"offset_y":	5
+		"offset_y":	0
 	}
 }

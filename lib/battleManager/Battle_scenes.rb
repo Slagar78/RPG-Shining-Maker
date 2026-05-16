@@ -10,8 +10,8 @@ class BattleScene
   WORK_WIDTH  = 1152
   WORK_HEIGHT = 960 - 2 * BAR_HEIGHT   # 672
 
-  ENEMY_X = 70
-  ENEMY_Y = 410
+  ENEMY_X = 124
+  ENEMY_Y = 370
 
   ALLY_X = 750
   ALLY_Y = 480

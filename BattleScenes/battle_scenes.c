@@ -574,8 +574,8 @@ void draw_ui(Editor *ed) {
             }
              else 
             {
-                int enemy_game_x = 70;
-                int enemy_game_y = 410;
+                int enemy_game_x = 124;
+                int enemy_game_y = 370;
                 int top_bar_height = 144;
                 int enemy_y_from_top_of_bg = enemy_game_y - top_bar_height;
 
