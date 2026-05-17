@@ -612,16 +612,27 @@ end
         Vector2.create(0, 0), 0, WHITE)
     end
 
-    if @highlight_tiles.any? && @current_unit
-      ally_faction = @current_unit[:actor] != nil
-      base_color = ally_faction ? BLUE : RED
-      @highlight_tiles.each do |tx, ty|
-        alpha = (Math.sin(@highlight_timer * 0.08) * 64 + 128).to_i.clamp(0, 255)
-        color = Raylib::Fade(base_color, alpha / 255.0)
-        dst = Rectangle.create(tx * TILE_SIZE + cam_x, ty * TILE_SIZE + cam_y, TILE_SIZE, TILE_SIZE)
-        DrawRectangleRec(dst, color)
-      end
+  if @highlight_tiles.any? && @current_unit
+    # Ледяной холодный оттенок (почти белый, с голубизной)
+    base_color = Raylib::Color.new
+    base_color.r = 220
+    base_color.g = 240
+    base_color.b = 255   # холодный голубоватый
+    base_color.a = 50    # очень прозрачный, как лёд
+
+    @highlight_tiles.each do |tx, ty|
+    # Лёгкое мерцание: альфа гуляет около 50–120
+    alpha = (Math.sin(@highlight_timer * 0.2) * 35 + 85).to_i.clamp(0, 255)
+    color = Raylib::Color.new
+    color.r = base_color.r
+    color.g = base_color.g
+    color.b = base_color.b
+    color.a = alpha
+
+    dst = Rectangle.create(tx * TILE_SIZE + cam_x, ty * TILE_SIZE + cam_y, TILE_SIZE, TILE_SIZE)
+    DrawRectangleRec(dst, color)
     end
+  end
 
     @cursor.draw(cam_x, cam_y)
 
