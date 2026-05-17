@@ -370,68 +370,61 @@ class BattleScene
     draw_stick_bar(bar_area_x, ty_mp, bar_area_width, mp, max_mp, font, font_size, "MP")
   end
 
-  # ---------- Рисование одной шкалы (HP или MP) ----------
-      def draw_stick_bar(base_x, base_y, area_width, current, max_val, font, font_size, label)
-    # Метка "HP" или "MP"
-    if font
-      Raylib.DrawTextEx(font, label, Raylib::Vector2.create(base_x, base_y), font_size, 1, Raylib::WHITE)
-    else
-      Raylib.DrawText(label, base_x, base_y, font_size, Raylib::WHITE)
-    end
+  # ---------- Рисование шкалы (HP или MP) ----------
+ def draw_stick_bar(base_x, base_y, area_width, current, max_val, font, font_size, label)
+  # Метка "HP"/"MP"
+  if font
+    Raylib.DrawTextEx(font, label, Raylib::Vector2.create(base_x, base_y), font_size, 1, Raylib::WHITE)
+  else
+    Raylib.DrawText(label, base_x, base_y, font_size, Raylib::WHITE)
+  end
 
-    # Ширина метки и числа
-    label_w = measure_text_ex(label, font, font_size)
-    number_str = "#{current}/#{max_val}"
-    number_w = measure_text_ex(number_str, font, font_size)
+  label_w = measure_text_ex(label, font, font_size)
+  number_str = "#{current}/#{max_val}"
+  number_w = measure_text_ex(number_str, font, font_size)
 
-    # Доступное пространство для палочек (метка + палочки + число)
-    gap = 8  # отступ между меткой и палочками, и между палочками и числом
-    available_sticks_w = area_width - label_w - number_w - gap * 2
-    total_positions = [(available_sticks_w / STICK_W).floor, 100].min
-    total_positions = 0 if total_positions < 0
+  gap = 8
+  available_sticks_w = area_width - label_w - number_w - gap * 2
+  total_positions = [(available_sticks_w / STICK_W).floor, 100].min
+  total_positions = 0 if total_positions < 0
 
-    # Сколько палочек нужно нарисовать
-    sticks_to_draw = [current, max_val, total_positions].min
+  # Сколько всего палочек можем нарисовать (но не больше current/max)
+  sticks_to_draw = [current, max_val, total_positions].min
 
-    bar_start_x = base_x + label_w + gap
-    stick_y = base_y + (font_size - STICK_H) / 2
+  bar_start_x = base_x + label_w + gap
+  stick_y = base_y + (font_size - STICK_H) / 2
 
-    # Слои: жёлтый, зелёный, фиолетовый, чёрный
-    layers = [
-      { tex: @stick_textures[0], range: 0...100 },
-      { tex: @stick_textures[1], range: 100...200 },
-      { tex: @stick_textures[2], range: 200...300 },
-      { tex: @stick_textures[3], range: 300...9999 }
-    ]
+  # Слои: жёлтый (0-100), зелёный (100-200), фиолетовый (200-300), чёрный (>300)
+  limits = [100, 200, 300, 9999]
+  prev_limit = 0
 
-    layers.each do |layer|
-      tex = layer[:tex]
-      range = layer[:range]
-      layer_start = [range.first, current].min
-      layer_end   = [range.last, current].min
-      count = [layer_end - layer_start, 0].max
-      next if count <= 0
+  limits.each_with_index do |limit, idx|
+    # Сколько палочек этого слоя: от 0 до min(current, limit) минус уже нарисованные
+    layer_max = [current, limit].min - prev_limit
+    layer_max = 0 if layer_max < 0
+    count = [sticks_to_draw, layer_max].min
+    next if count <= 0
 
-      start_index = range.first
-      (0...count).each do |i|
-        stick_x = bar_start_x + (start_index + i) * STICK_W   # вплотную!
-        break if stick_x + STICK_W > base_x + area_width
-        if tex
-          src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
-          dst = Raylib::Rectangle.create(stick_x, stick_y, STICK_W, STICK_H)
-          Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-        end
+    tex = @stick_textures[idx]
+    (0...count).each do |i|
+      stick_x = bar_start_x + i * STICK_W   # рисуем всегда с начала, перекрывая предыдущий слой
+      if tex
+        src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
+        dst = Raylib::Rectangle.create(stick_x, stick_y, STICK_W, STICK_H)
+        Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
       end
     end
-
-    # Число справа
-    number_x = bar_start_x + total_positions * STICK_W + gap
-    if font
-      Raylib.DrawTextEx(font, number_str, Raylib::Vector2.create(number_x, base_y), font_size, 1, Raylib::WHITE)
-    else
-      Raylib.DrawText(number_str, number_x, base_y, font_size, Raylib::WHITE)
-    end
+    prev_limit = limit
   end
+
+  # Число справа от палочек
+  number_x = bar_start_x + total_positions * STICK_W + gap
+  if font
+    Raylib.DrawTextEx(font, number_str, Raylib::Vector2.create(number_x, base_y), font_size, 1, Raylib::WHITE)
+  else
+    Raylib.DrawText(number_str, number_x, base_y, font_size, Raylib::WHITE)
+  end
+end
 
   # ─── Методы анимации (обновлённые с поддержкой slide_in) ───
   def update_sub_phase(dt)
