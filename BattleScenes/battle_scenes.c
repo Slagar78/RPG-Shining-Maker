@@ -419,6 +419,59 @@ void save_animation_to_json(AnimationSet *as) {
     cJSON_Delete(root);
 }
 
+void rescan_frames(AnimationSet *as, SDL_Renderer *renderer) {
+    if (!as->loaded || !as->json_path[0]) {
+        printf("No animation loaded, cannot rescan.\n");
+        return;
+    }
+    char folder[512];
+    safe_strcpy(folder, sizeof(folder), as->json_path);
+    char *slash = strrchr(folder, '\\');
+    if (!slash) slash = strrchr(folder, '/');
+    if (slash) *(slash + 1) = '\0';
+    else folder[0] = '\0';
+
+    // Очищаем старые текстуры, но сохраняем путь
+    char saved_path[512];
+    safe_strcpy(saved_path, sizeof(saved_path), as->json_path);
+    free_animation_set(as);
+    safe_strcpy(as->json_path, sizeof(as->json_path), saved_path);
+    as->loaded = true;
+
+    const char *prefix[3] = {"idle", "frame_attack", "frame_def"};
+    const char *phase_keys[3] = {"idle", "attack", "defense"};
+
+    for (int p = 0; p < 3; p++) {
+        AnimPhase *ap = &as->phases[p];
+        safe_strcpy(ap->name, sizeof(ap->name), phase_keys[p]);
+        int max_frames = 0;
+        for (int n = 1; n < MAX_ANIM_FRAMES; n++) {
+            char filename[256];
+            snprintf(filename, sizeof(filename), "%s%s_%d.png", folder, prefix[p], n);
+            FILE *test = fopen(filename, "rb");
+            if (!test) break;
+            fclose(test);
+            max_frames = n;
+        }
+        ap->frame_count = max_frames;
+        for (int i = 0; i < max_frames; i++) {
+            char filename[256];
+            snprintf(filename, sizeof(filename), "%s%s_%d.png", folder, prefix[p], i + 1);
+            SDL_Surface *surf = IMG_Load(filename);
+            if (surf) {
+                ap->frames[i] = SDL_CreateTextureFromSurface(renderer, surf);
+                SDL_FreeSurface(surf);
+            } else {
+                ap->frames[i] = NULL;
+            }
+            ap->frame_durations[i] = 0.3f;   // по умолчанию
+            ap->offset_x[i] = 0;
+            ap->offset_y[i] = 0;
+        }
+    }
+    printf("Frames rescanned for %s\n", as->json_path);
+}
+
 // ─── Отрисовка интерфейса ─────────────────────
 void draw_text_centered(SDL_Renderer *ren, TTF_Font *font, const char *text, int cx, int cy, SDL_Color color) {
     SDL_Surface *s = TTF_RenderUTF8_Blended(font, text, color);
@@ -500,6 +553,7 @@ void draw_ui(Editor *ed) {
     SDL_Rect btn_load_enemy = {110,btn_y_base+32, 105, 26};
     SDL_Rect btn_save_ally = {5,  btn_y_base+64, 100, 26};
     SDL_Rect btn_save_enemy= {110,btn_y_base+64, 105, 26};
+    SDL_Rect btn_rescan = {5, btn_y_base+96, 210, 26};  // шире, чтобы вместить "Rescan Frames"
 
     int mx, my;
     SDL_GetMouseState(&mx, &my);
@@ -514,6 +568,7 @@ void draw_ui(Editor *ed) {
     draw_button(ed->renderer, ed->font, btn_load_enemy, "Load Enemy", logical_mx, logical_my);
     draw_button(ed->renderer, ed->font, btn_save_ally, "Save Ally", logical_mx, logical_my);
     draw_button(ed->renderer, ed->font, btn_save_enemy, "Save Enemy", logical_mx, logical_my);
+    draw_button(ed->renderer, ed->font, btn_rescan, "Rescan Frames", logical_mx, logical_my);
 
     // Правая область предпросмотра
     if (ed->entry_count > 0) {
@@ -1033,6 +1088,22 @@ void handle_input(Editor *ed, bool *running) {
             }
             if (mx >= btn_save_enemy.x && mx < btn_save_enemy.x+btn_save_enemy.w && my >= btn_save_enemy.y && my < btn_save_enemy.y+btn_save_enemy.h) {
                 save_animation_to_json(&ed->enemy_anim);
+                continue;
+            }
+
+            SDL_Rect btn_rescan = {5, btn_y_base+96, 210, 26};
+            if (mx >= btn_rescan.x && mx < btn_rescan.x+btn_rescan.w &&
+                my >= btn_rescan.y && my < btn_rescan.y+btn_rescan.h) {
+                AnimationSet *as = (ed->active_slot == 0) ? &ed->ally_anim : &ed->enemy_anim;
+                if (as->loaded) {
+                    rescan_frames(as, ed->renderer);
+                    as->current_frame[0] = 0;
+                    as->current_frame[1] = 0;
+                    as->current_frame[2] = 0;
+                    as->current_phase = 0;
+                } else {
+                    printf("Load an animation first.\n");
+                }
                 continue;
             }
 
