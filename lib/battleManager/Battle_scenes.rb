@@ -34,6 +34,9 @@ class BattleScene
     "assets/ui/Hp_Mp_Points_3_big.png",    # фиолетовый (200-300)
     "assets/ui/Hp_Mp_Points_4_big.png"     # чёрный (300+)
   ]
+  LEFT_EDGE_W  = 12   # левый край панели (как в  hp_mp_panel)
+  RIGHT_EDGE_W = 12   # правый край панели
+  MID_TILE_W   = 8    # ширина тайла для растягивания середины
 
   def initialize(battle_manager)
     @battle_manager = battle_manager
@@ -311,26 +314,12 @@ class BattleScene
   end
 
   # ---------- Отрисовка панели с текстом и полосками ----------
-  def draw_panel_with_sprite(unit, x, y, right_aligned)
+    def draw_panel_with_sprite(unit, x, y, right_aligned)
     return unless @panel_tex
 
-    scale               = 1.0
-    font_size           = 36
-    text_margin_x       = 20
-    text_margin_y_name  = 10
-    text_offset_y_hp    = 44
-    text_offset_y_mp    = 78
-
-    w = @panel_tex.width
-    h = @panel_tex.height
-    dw = (w * scale).to_i
-    dh = (h * scale).to_i
-
-    x -= dw if right_aligned
-
-    src = Raylib::Rectangle.create(0, 0, w, h)
-    dst = Raylib::Rectangle.create(x, y, dw, dh)
-    Raylib.DrawTexturePro(@panel_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+    font_size = 36
+    text_margin_x = 20
+    text_margin_y_name = 10
 
     font = @battle_manager.battle_scene_font || @battle_manager.instance_variable_get(:@font)
 
@@ -342,32 +331,81 @@ class BattleScene
              "Unit"
            end
 
-    tx = x + text_margin_x
-    ty_name = y + text_margin_y_name
-    ty_hp   = y + text_offset_y_hp
-    ty_mp   = y + text_offset_y_mp
+    hp = unit[:hp].to_i
+    max_hp = unit[:max_hp].to_i
+    mp = unit[:mp].to_i
+    max_mp = unit[:max_mp].to_i
 
-    # Рисуем имя
+    # ─── Расчёт ширины панели под содержимое ───
+    label_w = [measure_text_ex("HP", font, font_size), measure_text_ex("MP", font, font_size)].max
+    max_hp_str = "#{max_hp}/#{max_hp}"
+    max_mp_str = "#{max_mp}/#{max_mp}"
+    max_number_w = [measure_text_ex(max_hp_str, font, font_size), measure_text_ex(max_mp_str, font, font_size)].max
+
+    max_sticks = [[hp, mp].max, 100].min
+    sticks_w = max_sticks * STICK_W
+
+    # Ширина содержимого: метка + палочки + число + отступы
+    content_w = text_margin_x + label_w + 8 + sticks_w + 8 + max_number_w + text_margin_x
+
+    # Ширина панели с учётом тайлов (как в старом hp_mp_panel.rb)
+    base_w = 170
+    raw_w = [base_w, content_w].max
+    mid_area = raw_w - LEFT_EDGE_W - RIGHT_EDGE_W
+    tiles = (mid_area.to_f / MID_TILE_W).ceil
+    panel_w = LEFT_EDGE_W + RIGHT_EDGE_W + tiles * MID_TILE_W
+
+    # Позиция панели 
+    if right_aligned
+      px = x - panel_w
+    else
+      px = x
+    end
+    py = y
+
+    # ─── Рисуем фон панели (тайлинг) ───
+    tex = @panel_tex
+    if tex
+      # Левый край
+      left_src = Raylib::Rectangle.create(0, 0, LEFT_EDGE_W, tex.height)
+      left_dst = Raylib::Rectangle.create(px, py, LEFT_EDGE_W, tex.height)
+      Raylib.DrawTexturePro(tex, left_src, left_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+
+      # Правый край (сдвинут на panel_w - RIGHT_EDGE_W)
+      right_src = Raylib::Rectangle.create(tex.width - RIGHT_EDGE_W, 0, RIGHT_EDGE_W, tex.height)
+      right_dst = Raylib::Rectangle.create(px + panel_w - RIGHT_EDGE_W, py, RIGHT_EDGE_W, tex.height)
+      Raylib.DrawTexturePro(tex, right_src, right_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+
+      # Середина (повторяем тайл)
+      mid_src = Raylib::Rectangle.create(LEFT_EDGE_W + 2, 0, MID_TILE_W, tex.height)  # +2 чтобы избежать швов
+      tiles.times do |i|
+        tile_x = px + LEFT_EDGE_W + i * MID_TILE_W
+        tile_dst = Raylib::Rectangle.create(tile_x, py, MID_TILE_W, tex.height)
+        Raylib.DrawTexturePro(tex, mid_src, tile_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+      end
+    else
+      # Если текстура не загружена – фон
+      Raylib.DrawRectangle(px, py, panel_w, tex.height, Raylib::Fade(Raylib::BLACK, 0.8))
+    end
+
+    # ─── Рисуем текст и палочки ───
+    tx = px + text_margin_x
+    ty_name = py + text_margin_y_name
+    ty_hp   = py + 44   # те же значения, что и раньше
+    ty_mp   = py + 78   # MP на 78 (без изменений)
+
+    # Имя
     if font
       Raylib.DrawTextEx(font, name, Raylib::Vector2.create(tx, ty_name), font_size, 1, Raylib::WHITE)
     else
       Raylib.DrawText(name, tx, ty_name, font_size, Raylib::WHITE)
     end
 
-    # Рисуем палочки HP/MP
-    hp = unit[:hp].to_i
-    max_hp = unit[:max_hp].to_i
-    mp = unit[:mp].to_i
-    max_mp = unit[:max_mp].to_i
-
-    # Ширина области для палочек (от левого края панели + отступ до правого края панели - отступ)
+    # HP и MP
     bar_area_x = tx
-    bar_area_width = dw - text_margin_x * 2
-
-    # HP
-    draw_stick_bar(bar_area_x, ty_hp, bar_area_width, hp, max_hp, font, font_size, "HP")
-    # MP
-    draw_stick_bar(bar_area_x, ty_mp, bar_area_width, mp, max_mp, font, font_size, "MP")
+    bar_area_w = panel_w - text_margin_x * 2
+    draw_stick_bar(bar_area_x, ty_hp, bar_area_w, hp, max_hp, font, font_size, "HP")
+    draw_stick_bar(bar_area_x, ty_mp, bar_area_w, mp, max_mp, font, font_size, "MP")
   end
 
   # ---------- Рисование шкалы (HP или MP) ----------
