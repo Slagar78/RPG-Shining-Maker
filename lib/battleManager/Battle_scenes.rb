@@ -25,6 +25,16 @@ class BattleScene
   SLIDE_IN_DURATION  = 0.5   # секунд
   SLIDE_IN_OFFSET_X  = 500   # на сколько пикселей правее стартуют
 
+  # ─── Текстуры и параметры палочек HP/MP (sticks) ───
+  STICK_W = 6
+  STICK_H = 26
+  STICK_TEXTURE_PATHS = [
+    "assets/ui/Hp_Mp_Points_big.png",      # жёлтый (0-100)
+    "assets/ui/Hp_Mp_Points_2_big.png",    # зелёный (100-200)
+    "assets/ui/Hp_Mp_Points_3_big.png",    # фиолетовый (200-300)
+    "assets/ui/Hp_Mp_Points_4_big.png"     # чёрный (300+)
+  ]
+
   def initialize(battle_manager)
     @battle_manager = battle_manager
     @timer = 0.0
@@ -52,6 +62,10 @@ class BattleScene
     @slide_in = false
     @slide_in_timer = 0.0
 
+    # Палочки HP/MP
+    @stick_textures = []
+    load_stick_textures
+
     load_background
   end
 
@@ -78,6 +92,22 @@ class BattleScene
     Raylib.SetTextureFilter(@ground_tex, Raylib::TEXTURE_FILTER_POINT)
   rescue => e
     puts "Failed to load ground texture: #{e.message}"
+  end
+
+  # ---------- Загрузка палочек HP/MP ----------
+  def load_stick_textures
+    STICK_TEXTURE_PATHS.each do |path|
+      if File.exist?(path)
+        img = Raylib.LoadImage(path)
+        tex = Raylib.LoadTextureFromImage(img)
+        Raylib.UnloadImage(img)
+        Raylib.SetTextureFilter(tex, Raylib::TEXTURE_FILTER_POINT)
+        @stick_textures << tex
+      else
+        @stick_textures << nil
+        puts "WARNING: stick texture not found: #{path}"
+      end
+    end
   end
 
   def start(attacker_unit, defender_unit)
@@ -272,7 +302,15 @@ class BattleScene
     end
   end
 
-  # ---------- Отрисовка панели с текстом ----------
+  def measure_text_ex(text, font, font_size)
+    if font
+      Raylib.MeasureTextEx(font, text, font_size, 1).x
+    else
+      Raylib.MeasureText(text, font_size)
+    end
+  end
+
+  # ---------- Отрисовка панели с текстом и полосками ----------
   def draw_panel_with_sprite(unit, x, y, right_aligned)
     return unless @panel_tex
 
@@ -281,7 +319,7 @@ class BattleScene
     text_margin_x       = 20
     text_margin_y_name  = 10
     text_offset_y_hp    = 44
-    text_offset_y_mp    = 76
+    text_offset_y_mp    = 78
 
     w = @panel_tex.width
     h = @panel_tex.height
@@ -309,16 +347,89 @@ class BattleScene
     ty_hp   = y + text_offset_y_hp
     ty_mp   = y + text_offset_y_mp
 
+    # Рисуем имя
     if font
       Raylib.DrawTextEx(font, name, Raylib::Vector2.create(tx, ty_name), font_size, 1, Raylib::WHITE)
-      Raylib.DrawTextEx(font, "HP #{unit[:hp].to_i}/#{unit[:max_hp].to_i}",
-                        Raylib::Vector2.create(tx, ty_hp), font_size, 1, Raylib::WHITE)
-      Raylib.DrawTextEx(font, "MP #{unit[:mp].to_i}/#{unit[:max_mp].to_i}",
-                        Raylib::Vector2.create(tx, ty_mp), font_size, 1, Raylib::WHITE)
     else
       Raylib.DrawText(name, tx, ty_name, font_size, Raylib::WHITE)
-      Raylib.DrawText("HP #{unit[:hp].to_i}/#{unit[:max_hp].to_i}", tx, ty_hp, font_size, Raylib::WHITE)
-      Raylib.DrawText("MP #{unit[:mp].to_i}/#{unit[:max_mp].to_i}", tx, ty_mp, font_size, Raylib::WHITE)
+    end
+
+    # Рисуем палочки HP/MP
+    hp = unit[:hp].to_i
+    max_hp = unit[:max_hp].to_i
+    mp = unit[:mp].to_i
+    max_mp = unit[:max_mp].to_i
+
+    # Ширина области для палочек (от левого края панели + отступ до правого края панели - отступ)
+    bar_area_x = tx
+    bar_area_width = dw - text_margin_x * 2
+
+    # HP
+    draw_stick_bar(bar_area_x, ty_hp, bar_area_width, hp, max_hp, font, font_size, "HP")
+    # MP
+    draw_stick_bar(bar_area_x, ty_mp, bar_area_width, mp, max_mp, font, font_size, "MP")
+  end
+
+  # ---------- Рисование одной шкалы (HP или MP) ----------
+      def draw_stick_bar(base_x, base_y, area_width, current, max_val, font, font_size, label)
+    # Метка "HP" или "MP"
+    if font
+      Raylib.DrawTextEx(font, label, Raylib::Vector2.create(base_x, base_y), font_size, 1, Raylib::WHITE)
+    else
+      Raylib.DrawText(label, base_x, base_y, font_size, Raylib::WHITE)
+    end
+
+    # Ширина метки и числа
+    label_w = measure_text_ex(label, font, font_size)
+    number_str = "#{current}/#{max_val}"
+    number_w = measure_text_ex(number_str, font, font_size)
+
+    # Доступное пространство для палочек (метка + палочки + число)
+    gap = 8  # отступ между меткой и палочками, и между палочками и числом
+    available_sticks_w = area_width - label_w - number_w - gap * 2
+    total_positions = [(available_sticks_w / STICK_W).floor, 100].min
+    total_positions = 0 if total_positions < 0
+
+    # Сколько палочек нужно нарисовать
+    sticks_to_draw = [current, max_val, total_positions].min
+
+    bar_start_x = base_x + label_w + gap
+    stick_y = base_y + (font_size - STICK_H) / 2
+
+    # Слои: жёлтый, зелёный, фиолетовый, чёрный
+    layers = [
+      { tex: @stick_textures[0], range: 0...100 },
+      { tex: @stick_textures[1], range: 100...200 },
+      { tex: @stick_textures[2], range: 200...300 },
+      { tex: @stick_textures[3], range: 300...9999 }
+    ]
+
+    layers.each do |layer|
+      tex = layer[:tex]
+      range = layer[:range]
+      layer_start = [range.first, current].min
+      layer_end   = [range.last, current].min
+      count = [layer_end - layer_start, 0].max
+      next if count <= 0
+
+      start_index = range.first
+      (0...count).each do |i|
+        stick_x = bar_start_x + (start_index + i) * STICK_W   # вплотную!
+        break if stick_x + STICK_W > base_x + area_width
+        if tex
+          src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
+          dst = Raylib::Rectangle.create(stick_x, stick_y, STICK_W, STICK_H)
+          Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+        end
+      end
+    end
+
+    # Число справа
+    number_x = bar_start_x + total_positions * STICK_W + gap
+    if font
+      Raylib.DrawTextEx(font, number_str, Raylib::Vector2.create(number_x, base_y), font_size, 1, Raylib::WHITE)
+    else
+      Raylib.DrawText(number_str, number_x, base_y, font_size, Raylib::WHITE)
     end
   end
 
