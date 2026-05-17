@@ -2,6 +2,7 @@
 // Масштаб персонажей строго соответствует фону (как в игре)
 // Раздельные строки для idle/attack/defense, чекбокс Anim справа в заголовке
 // Удержание кнопок для плавного изменения X/Y/Dur
+// Добавлена поддержка ground (земли) для союзника
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -47,6 +48,7 @@ typedef struct {
     int battle_x, battle_y;
     int battle_width, battle_height;
     char background[512];
+    char ground[512];   // +++ GROUND
 } BattleEntry;
 
 // ─── Анимация ────────────────────────────────
@@ -56,8 +58,8 @@ typedef struct {
     int frame_count;
     SDL_Texture *frames[MAX_ANIM_FRAMES];
     float frame_durations[MAX_ANIM_FRAMES];
-    int offset_x[MAX_ANIM_FRAMES];   // теперь массив
-    int offset_y[MAX_ANIM_FRAMES];   // теперь массив
+    int offset_x[MAX_ANIM_FRAMES];
+    int offset_y[MAX_ANIM_FRAMES];
     bool animate;
 } AnimPhase;
 
@@ -82,6 +84,7 @@ typedef struct Editor {
     TTF_Font     *font;
 
     SDL_Texture  *bg_tex;
+    SDL_Texture  *ground_tex;   // +++ GROUND
 
     AnimationSet ally_anim;
     AnimationSet enemy_anim;
@@ -194,6 +197,8 @@ static void load_entries(Editor *ed) {
         be->battle_height = cJSON_GetObjectItem(item, "battle_height")->valueint;
         cJSON *bg = cJSON_GetObjectItem(item, "background");
         safe_strcpy(be->background, sizeof(be->background), bg ? bg->valuestring : "");
+        cJSON *gr = cJSON_GetObjectItem(item, "ground");   // +++ GROUND
+        safe_strcpy(be->ground, sizeof(be->ground), gr ? gr->valuestring : "");
     }
     cJSON_Delete(arr);
 }
@@ -213,6 +218,7 @@ static void save_entries(Editor *ed) {
         cJSON_AddNumberToObject(item, "battle_width", be->battle_width);
         cJSON_AddNumberToObject(item, "battle_height", be->battle_height);
         cJSON_AddStringToObject(item, "background", be->background);
+        cJSON_AddStringToObject(item, "ground", be->ground);   // +++ GROUND
         cJSON_AddItemToArray(arr, item);
     }
     char *str = cJSON_Print(arr);
@@ -231,6 +237,18 @@ void load_background_texture(Editor *ed, const char *rel_path) {
     SDL_Surface *surf = IMG_Load(full);
     if (!surf) return;
     ed->bg_tex = SDL_CreateTextureFromSurface(ed->renderer, surf);
+    SDL_FreeSurface(surf);
+}
+
+// ─── Загрузка ground ─────────────────────────
+void load_ground_texture(Editor *ed, const char *rel_path) {
+    if (ed->ground_tex) { SDL_DestroyTexture(ed->ground_tex); ed->ground_tex = NULL; }
+    if (!rel_path || !rel_path[0]) return;
+    char full[512];
+    snprintf(full, sizeof(full), "../%s", rel_path);
+    SDL_Surface *surf = IMG_Load(full);
+    if (!surf) return;
+    ed->ground_tex = SDL_CreateTextureFromSurface(ed->renderer, surf);
     SDL_FreeSurface(surf);
 }
 
@@ -440,7 +458,6 @@ void draw_checkbox(SDL_Renderer *ren, SDL_Rect rect, bool checked, int mx, int m
     }
 }
 
-
 void draw_ui(Editor *ed) {
     SDL_SetRenderDrawColor(ed->renderer, BG_COLOR.r, BG_COLOR.g, BG_COLOR.b, 255);
     SDL_RenderClear(ed->renderer);
@@ -535,6 +552,38 @@ void draw_ui(Editor *ed) {
         SDL_SetRenderDrawColor(ed->renderer, 200, 200, 200, 255);
         SDL_RenderDrawRect(ed->renderer, &preview_rect);
 
+        // === GROUND (только под союзником, если текстура загружена) ===
+        if (ed->ground_tex) {
+            // Параметры из игры (Ruby BattleScene)
+            const int ALLY_X = 750;
+            const int ALLY_Y = 480;
+            const float GROUND_SCALE = 2.0f;
+            const int GROUND_OFFSET_X = 136;
+            const int GROUND_OFFSET_Y = 422;
+            const int TOP_BAR_H = 144;
+
+            int gw, gh;
+            SDL_QueryTexture(ed->ground_tex, NULL, NULL, &gw, &gh);
+            int scaled_w = (int)(gw * GROUND_SCALE);
+            int scaled_h = (int)(gh * GROUND_SCALE);
+
+            // Позиция земли в игровых координатах
+            int game_gx = ALLY_X - scaled_w / 2 + GROUND_OFFSET_X;
+            int game_gy = ALLY_Y - scaled_h + GROUND_OFFSET_Y;
+
+            // Пересчёт в координаты предпросмотра (с учётом bar_h)
+            int preview_gx = PREVIEW_X + (int)(game_gx * bg_scale);
+            int preview_gy = PREVIEW_Y + bar_h + (int)((game_gy - TOP_BAR_H) * bg_scale);
+
+            SDL_Rect ground_rect = {
+                preview_gx,
+                preview_gy,
+                (int)(scaled_w * bg_scale),
+                (int)(scaled_h * bg_scale)
+            };
+            SDL_RenderCopy(ed->renderer, ed->ground_tex, NULL, &ground_rect);
+        }
+
         // === Спрайты союзника и врага ===        
         AnimationSet *sets[2] = {&ed->ally_anim, &ed->enemy_anim};
 
@@ -556,24 +605,24 @@ void draw_ui(Editor *ed) {
             int cx, cy;
 
             if (s == 0) {
-            // Фиксированные координаты из Ruby: ALLY_X = 750, ALLY_Y = 450
-            int ally_game_x = 750;
-            int ally_game_y = 480;
-            int top_bar_height = 144;
-            int ally_y_from_top_of_bg = ally_game_y - top_bar_height;
+                // Союзник: используем координаты из Ruby (ALLY_X=750, ALLY_Y=480)
+                int ally_game_x = 750;
+                int ally_game_y = 480;
+                int top_bar_height = 144;
+                int ally_y_from_top_of_bg = ally_game_y - top_bar_height;
 
-            int ally_base_x = PREVIEW_X + (int)(ally_game_x * bg_scale);
-            int ally_base_y = PREVIEW_Y + bar_h + (int)(ally_y_from_top_of_bg * bg_scale);
+                int ally_base_x = PREVIEW_X + (int)(ally_game_x * bg_scale);
+                int ally_base_y = PREVIEW_Y + bar_h + (int)(ally_y_from_top_of_bg * bg_scale);
 
-            cx = ally_base_x + (int)(phase->offset_x[cur_frame] * bg_scale);
-            cy = ally_base_y + (int)(phase->offset_y[cur_frame] * bg_scale);
+                cx = ally_base_x + (int)(phase->offset_x[cur_frame] * bg_scale);
+                cy = ally_base_y + (int)(phase->offset_y[cur_frame] * bg_scale);
 
-            SDL_Rect dst = { cx, cy, dw, dh };
-            SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-            SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
+                SDL_Rect dst = { cx, cy, dw, dh };
+                SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+                SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
             }
-             else 
-            {
+            else {
+                // Враг: фиксированные координаты (70, 410)
                 int enemy_game_x = 124;
                 int enemy_game_y = 370;
                 int top_bar_height = 144;
@@ -595,7 +644,7 @@ void draw_ui(Editor *ed) {
                            PREVIEW_X + PREVIEW_W/2, PREVIEW_Y + PREVIEW_H/2, TEXT_COLOR);
     }
 
-    // Нижняя панель управления
+    // Нижняя панель управления (без изменений)
     int panel_y = PREVIEW_Y + PREVIEW_H + 4;
     int row_h = 20;
     const char *phase_names[] = {"Idle", "Attack", "Defense"};
@@ -615,14 +664,12 @@ void draw_ui(Editor *ed) {
             bool has_frames = (phase->frame_count > 0);
             bool active = (ed->active_slot == s && ed->active_phase == p);
 
-            // Подсветка активной строки (даже если фаза пустая)
             if (active) {
                 SDL_Rect row_bg = {PREVIEW_X, y, PREVIEW_W, row_h};
                 SDL_SetRenderDrawColor(ed->renderer, 60, 60, 90, 255);
                 SDL_RenderFillRect(ed->renderer, &row_bg);
             }
 
-            // Метка фазы
             SDL_Rect phase_rect = {PREVIEW_X + 5, y, 55, row_h};
             bool hover_phase = (logical_mx >= phase_rect.x && logical_mx < phase_rect.x+phase_rect.w &&
                                 logical_my >= phase_rect.y && logical_my < phase_rect.y+phase_rect.h);
@@ -630,7 +677,6 @@ void draw_ui(Editor *ed) {
             draw_text_centered(ed->renderer, ed->font, phase_names[p],
                                phase_rect.x + phase_rect.w/2, y + row_h/2, phase_col);
 
-            // Значения для отображения (нули, если нет кадров)
             int cur_idx = 0;
             int ox = 0, oy = 0;
             float dur = 0.0f;
@@ -643,7 +689,6 @@ void draw_ui(Editor *ed) {
                 snprintf(buf_frame, sizeof(buf_frame), "%d/%d", as->current_frame[p] + 1, phase->frame_count);
             }
 
-            // Offset X
             char buf_x[16];
             snprintf(buf_x, sizeof(buf_x), "%d", ox);
             SDL_Rect x_label = {PREVIEW_X + 65, y, 20, row_h};
@@ -659,7 +704,6 @@ void draw_ui(Editor *ed) {
             draw_arrow_button(ed->renderer, ed->font, x_dec, "<", logical_mx, logical_my);
             draw_arrow_button(ed->renderer, ed->font, x_inc, ">", logical_mx, logical_my);
 
-            // Offset Y
             char buf_y[16];
             snprintf(buf_y, sizeof(buf_y), "%d", oy);
             SDL_Rect y_label = {PREVIEW_X + 175, y, 20, row_h};
@@ -675,7 +719,6 @@ void draw_ui(Editor *ed) {
             draw_arrow_button(ed->renderer, ed->font, y_dec, "<", logical_mx, logical_my);
             draw_arrow_button(ed->renderer, ed->font, y_inc, ">", logical_mx, logical_my);
 
-            // Duration
             char buf_dur[16];
             snprintf(buf_dur, sizeof(buf_dur), "%.2f", dur);
             SDL_Rect dur_label = {PREVIEW_X + 285, y, 35, row_h};
@@ -691,16 +734,13 @@ void draw_ui(Editor *ed) {
             draw_arrow_button(ed->renderer, ed->font, dur_dec, "-", logical_mx, logical_my);
             draw_arrow_button(ed->renderer, ed->font, dur_inc, "+", logical_mx, logical_my);
 
-            // Номер кадра и кнопки переключения
             SDL_Rect frame_rect = {PREVIEW_X + 430, y, 50, row_h};
             draw_text_centered(ed->renderer, ed->font, buf_frame, frame_rect.x + frame_rect.w/2, y + row_h/2, TEXT_COLOR);
-
             SDL_Rect frame_dec = {PREVIEW_X + 485, y, 16, row_h};
             SDL_Rect frame_inc = {PREVIEW_X + 503, y, 16, row_h};
             draw_arrow_button(ed->renderer, ed->font, frame_dec, "<", logical_mx, logical_my);
             draw_arrow_button(ed->renderer, ed->font, frame_inc, ">", logical_mx, logical_my);
 
-            // Чекбокс Anim
             SDL_Rect anim_box = {PREVIEW_X + 535, y + (row_h - 14)/2, 14, 14};
             draw_checkbox(ed->renderer, anim_box, phase->animate, logical_mx, logical_my);
             draw_text_centered(ed->renderer, ed->font, "Anim", PREVIEW_X + 575, y + row_h/2, TEXT_COLOR);
@@ -866,6 +906,7 @@ void handle_input(Editor *ed, bool *running) {
                         if (idx != ed->current_index) {
                             ed->current_index = idx;
                             load_background_texture(ed, ed->entries[idx].background);
+                            load_ground_texture(ed, ed->entries[idx].ground);   // <-- загрузка земли при смене битвы
                         }
                         break;
                     }
@@ -883,31 +924,29 @@ void handle_input(Editor *ed, bool *running) {
                     int y = group_y + row_h + 4 + p * row_h;
                     if (my < y || my >= y + row_h) continue;
 
-                    // Чекбокс Anim
-                    SDL_Rect anim_check = {PREVIEW_X + 535, y + (row_h - 14)/2, 14, 14};
-                    if (mx >= anim_check.x && mx < anim_check.x + anim_check.w &&
-                        my >= anim_check.y && my < anim_check.y + anim_check.h)
-                    {
-                        if (as->loaded) {
-                            AnimPhase *phase = &as->phases[p];
-                            if (phase->animate) {
-                                phase->animate = false;
-                            } else {
-                                for (int ss = 0; ss < 2; ss++) {
-                                    AnimationSet *other = (ss == 0) ? &ed->ally_anim : &ed->enemy_anim;
-                                    for (int pp = 0; pp < 3; pp++) {
-                                        other->phases[pp].animate = false;
-                                    }
-                                }
-                                phase->animate = true;
-                                as->current_phase = p;
-                                ed->active_slot = s;
-                                ed->active_phase = p;
-                                as->anim_timer = 0;
-                            }
-                        }
-                        continue;
-                    }
+            // Чекбокс Anim
+            SDL_Rect anim_check = {PREVIEW_X + 535, y + (row_h - 14)/2, 14, 14};
+            if (mx >= anim_check.x && mx < anim_check.x + anim_check.w &&
+                my >= anim_check.y && my < anim_check.y + anim_check.h)
+        {
+            if (as->loaded) {
+            AnimPhase *phase = &as->phases[p];
+            if (phase->animate) {
+            phase->animate = false;
+        } else {
+            // Снимаем анимацию с других фаз этого же юнита
+            for (int pp = 0; pp < 3; pp++) {
+                if (pp != p) as->phases[pp].animate = false;
+            }
+            phase->animate = true;
+            as->current_phase = p;
+            ed->active_slot = s;
+            ed->active_phase = p;
+            as->anim_timer = 0;
+            }
+        }
+        continue;
+    }
 
                     // Клик по метке фазы
                     SDL_Rect phase_rect = {PREVIEW_X + 5, y, 55, row_h};
@@ -928,7 +967,7 @@ void handle_input(Editor *ed, bool *running) {
                     if (!as->loaded) continue;
                     AnimPhase *phase = &as->phases[p];
                     if (phase->animate) continue;
-                    if (phase->frame_count == 0) continue;   // <-- защита
+                    if (phase->frame_count == 0) continue;
                     int idx = as->current_frame[p] % phase->frame_count;
 
                     // Offset X
@@ -1011,6 +1050,7 @@ int main(int argc, char *argv[]) {
     ed.current_index = 0;
     ed.list_scroll = 0;
     ed.bg_tex = NULL;
+    ed.ground_tex = NULL;
     ed.active_slot = 0;
     ed.repeat_button_id = 0;
 
@@ -1048,6 +1088,7 @@ int main(int argc, char *argv[]) {
     if (ed.entry_count > 0) {
         ed.current_index = 0;
         load_background_texture(&ed, ed.entries[0].background);
+        load_ground_texture(&ed, ed.entries[0].ground);   // загружаем землю для первой битвы
     }
 
     bool running = true;
@@ -1060,6 +1101,7 @@ int main(int argc, char *argv[]) {
     free_animation_set(&ed.ally_anim);
     free_animation_set(&ed.enemy_anim);
     if (ed.bg_tex) SDL_DestroyTexture(ed.bg_tex);
+    if (ed.ground_tex) SDL_DestroyTexture(ed.ground_tex);
     if (ed.font) TTF_CloseFont(ed.font);
     free(ed.entries);
     SDL_DestroyRenderer(ed.renderer);
