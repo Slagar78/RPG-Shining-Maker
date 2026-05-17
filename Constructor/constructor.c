@@ -23,6 +23,7 @@ typedef enum {
     MODE_MAP_EDITOR,
     MODE_MAP_CREATOR,
     MODE_BATTLE_EDITOR,
+    MODE_BATTLE_SCENES,   // новая кнопка
     MODE_TEXT_EDITOR,
     MODE_DATABASE,
     MODE_COUNT
@@ -88,6 +89,9 @@ void run_program_with_dll(const char *exe_name) {
 }
 
 int main(int argc, char *argv[]) {
+    // Скрываем консольное окно (если запущено с консолью)
+    FreeConsole();
+
     // Unicode-поиск папки dll
     wchar_t baseW[MAX_PATH];
     GetModuleFileNameW(NULL, baseW, MAX_PATH);
@@ -143,8 +147,11 @@ int main(int argc, char *argv[]) {
 
     if (!font || !font_bold) { printf("Font error\n"); return 1; }
 
+    // Иконки: теперь 6 штук
     const char *iconFilenames[MODE_COUNT] = {
-        "map.png", "terrain.png", "battle.png", "text.png", "database.png"
+        "map.png", "terrain.png", "battle.png",
+        "battle_scenes.png",   // новая иконка
+        "text.png", "database.png"
     };
     SDL_Texture *icons[MODE_COUNT] = { NULL };
 
@@ -169,8 +176,9 @@ int main(int argc, char *argv[]) {
         { {20, 35, 48, 48}, MODE_MAP_EDITOR,    icons[0], 0.0f, "Maker/MapEditor.exe" },
         { {80, 35, 48, 48}, MODE_MAP_CREATOR,   icons[1], 0.0f, "Maker/MapCreator.exe" },
         { {140,35, 48, 48}, MODE_BATTLE_EDITOR, icons[2], 0.0f, "Maker/BattleEditor.exe" },
-        { {200,35, 48, 48}, MODE_TEXT_EDITOR,   icons[3], 0.0f, "Maker/text_editor.exe" },
-        { {260,35, 48, 48}, MODE_DATABASE,      icons[4], 0.0f, "Maker/Database.exe" },
+        { {200,35, 48, 48}, MODE_BATTLE_SCENES, icons[3], 0.0f, "Maker/BattleScenes.exe" },
+        { {260,35, 48, 48}, MODE_TEXT_EDITOR,   icons[4], 0.0f, "Maker/text_editor.exe" },
+        { {320,35, 48, 48}, MODE_DATABASE,      icons[5], 0.0f, "Maker/Database.exe" },
     };
 
     EditorMode currentMode = MODE_MAP_EDITOR;
