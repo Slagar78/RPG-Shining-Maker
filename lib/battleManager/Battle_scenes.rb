@@ -26,7 +26,7 @@ class BattleScene
   SLIDE_IN_OFFSET_X  = 500   # на сколько пикселей правее стартуют
 
   # ─── Текстуры и параметры палочек HP/MP (sticks) ───
-  STICK_W = 6
+  STICK_W = 3
   STICK_H = 26
   STICK_TEXTURE_PATHS = [
     "assets/ui/Hp_Mp_Points_big.png",      # жёлтый (0-100)

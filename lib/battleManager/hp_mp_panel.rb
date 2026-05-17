@@ -7,7 +7,7 @@ class HpMpPanel
   LINE_HEIGHT = 22
   FONT_SIZE = 20
 
-  STICK_W = 3
+  STICK_W = 2
   STICK_H = 18
   STICK_GAP = 4
   THRESHOLD = 20
