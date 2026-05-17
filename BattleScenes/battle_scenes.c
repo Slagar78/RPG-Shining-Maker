@@ -98,6 +98,14 @@ typedef struct Editor {
     AnimationSet *repeat_as;
     int repeat_phase;
     int repeat_what; // 0=X-,1=X+,2=Y-,3=Y+,4=Dur-,5=Dur+
+
+    // для текстового ввода
+    char input_buffer[16];
+    int input_len;
+    bool input_active;          // true – редактируем поле
+    int input_target;           // 0=X, 1=Y
+    AnimationSet *input_as;
+    int input_phase;
 } Editor;
 
 // ─── Вспомогательные функции ──────────────────
@@ -693,32 +701,59 @@ void draw_ui(Editor *ed) {
             snprintf(buf_x, sizeof(buf_x), "%d", ox);
             SDL_Rect x_label = {PREVIEW_X + 65, y, 20, row_h};
             draw_text_centered(ed->renderer, ed->font, "X:", x_label.x + x_label.w/2, y + row_h/2, TEXT_COLOR);
+
+
+            // Offset X (редактируемый)
             SDL_Rect x_val = {PREVIEW_X + 90, y, 35, row_h};
             SDL_SetRenderDrawColor(ed->renderer, FIELD_BG.r, FIELD_BG.g, FIELD_BG.b, 255);
             SDL_RenderFillRect(ed->renderer, &x_val);
-            SDL_SetRenderDrawColor(ed->renderer, 150,150,150,255);
+            if (ed->input_active && ed->input_target == 0 &&
+                ed->input_as == as && ed->input_phase == p) {
+                SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 255);
+            } else {
+                SDL_SetRenderDrawColor(ed->renderer, 150,150,150,255);
+            }
             SDL_RenderDrawRect(ed->renderer, &x_val);
-            draw_text_centered(ed->renderer, ed->font, buf_x, x_val.x + x_val.w/2, y + row_h/2, TEXT_COLOR);
+            char show_x[16];
+            if (ed->input_active && ed->input_target == 0 &&
+                ed->input_as == as && ed->input_phase == p) {
+                snprintf(show_x, sizeof(show_x), "%s", ed->input_buffer);
+            } else {
+                snprintf(show_x, sizeof(show_x), "%d", ox);
+            }
+            draw_text_centered(ed->renderer, ed->font, show_x,
+                               x_val.x + x_val.w/2, y + row_h/2, TEXT_COLOR);
             SDL_Rect x_dec = {PREVIEW_X + 130, y, 16, row_h};
             SDL_Rect x_inc = {PREVIEW_X + 148, y, 16, row_h};
             draw_arrow_button(ed->renderer, ed->font, x_dec, "<", logical_mx, logical_my);
             draw_arrow_button(ed->renderer, ed->font, x_inc, ">", logical_mx, logical_my);
 
-            char buf_y[16];
-            snprintf(buf_y, sizeof(buf_y), "%d", oy);
-            SDL_Rect y_label = {PREVIEW_X + 175, y, 20, row_h};
-            draw_text_centered(ed->renderer, ed->font, "Y:", y_label.x + y_label.w/2, y + row_h/2, TEXT_COLOR);
+            // Offset Y (редактируемый)
             SDL_Rect y_val = {PREVIEW_X + 200, y, 35, row_h};
             SDL_SetRenderDrawColor(ed->renderer, FIELD_BG.r, FIELD_BG.g, FIELD_BG.b, 255);
             SDL_RenderFillRect(ed->renderer, &y_val);
-            SDL_SetRenderDrawColor(ed->renderer, 150,150,150,255);
+            if (ed->input_active && ed->input_target == 1 &&
+                ed->input_as == as && ed->input_phase == p) {
+                SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 255);
+            } else {
+                SDL_SetRenderDrawColor(ed->renderer, 150,150,150,255);
+            }
             SDL_RenderDrawRect(ed->renderer, &y_val);
-            draw_text_centered(ed->renderer, ed->font, buf_y, y_val.x + y_val.w/2, y + row_h/2, TEXT_COLOR);
+            char show_y[16];
+            if (ed->input_active && ed->input_target == 1 &&
+                ed->input_as == as && ed->input_phase == p) {
+                snprintf(show_y, sizeof(show_y), "%s", ed->input_buffer);
+            } else {
+                snprintf(show_y, sizeof(show_y), "%d", oy);
+            }
+            draw_text_centered(ed->renderer, ed->font, show_y,
+                               y_val.x + y_val.w/2, y + row_h/2, TEXT_COLOR);
             SDL_Rect y_dec = {PREVIEW_X + 240, y, 16, row_h};
             SDL_Rect y_inc = {PREVIEW_X + 258, y, 16, row_h};
             draw_arrow_button(ed->renderer, ed->font, y_dec, "<", logical_mx, logical_my);
             draw_arrow_button(ed->renderer, ed->font, y_inc, ">", logical_mx, logical_my);
 
+            // Duration
             char buf_dur[16];
             snprintf(buf_dur, sizeof(buf_dur), "%.2f", dur);
             SDL_Rect dur_label = {PREVIEW_X + 285, y, 35, row_h};
@@ -820,8 +855,115 @@ void handle_input(Editor *ed, bool *running) {
 
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) { *running = false; return; }
-        if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) { *running = false; return; }
+        if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
+            if (ed->input_active) {
+                ed->input_active = false;
+                SDL_StopTextInput();
+                continue;
+            } else {
+                *running = false; return;
+            }
+        }
 
+        // Если активен ввод чисел – обрабатываем текст, клавиши и выход по клику/колёсику
+        if (ed->input_active) {
+            // Мышь: если кликнули вне текущего поля ввода – автоприменение и выход из ввода
+            if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+                // Определяем слот по input_as
+                int s = (ed->input_as == &ed->ally_anim) ? 0 : 1;
+                // Вычисляем group_y и row_h (как в draw_ui)
+                int panel_y = PREVIEW_Y + PREVIEW_H + 4;
+                int row_h = 20;
+                int group_y = panel_y + s * (4 * row_h + 8);
+                // Прямоугольник активного поля
+                SDL_Rect active_field;
+                if (ed->input_target == 0) {
+                    active_field = (SDL_Rect){PREVIEW_X + 90, group_y + row_h + 4 + ed->input_phase * row_h, 35, row_h};
+                } else {
+                    active_field = (SDL_Rect){PREVIEW_X + 200, group_y + row_h + 4 + ed->input_phase * row_h, 35, row_h};
+                }
+                // Координаты мыши
+                int raw_mx, raw_my;
+                SDL_GetMouseState(&raw_mx, &raw_my);
+                int win_w, win_h;
+                SDL_GetWindowSize(ed->window, &win_w, &win_h);
+                int mx = (int)((float)raw_mx * LOGICAL_W / win_w);
+                int my = (int)((float)raw_my * LOGICAL_H / win_h);
+                if (!(mx >= active_field.x && mx < active_field.x+active_field.w &&
+                      my >= active_field.y && my < active_field.y+active_field.h)) {
+                    // Клик вне поля – сохраняем число и выходим
+                    int val = atoi(ed->input_buffer);
+                    AnimPhase *ph = &ed->input_as->phases[ed->input_phase];
+                    if (ph->frame_count > 0) {
+                        int idx = ed->input_as->current_frame[ed->input_phase] % ph->frame_count;
+                        if (ed->input_target == 0) ph->offset_x[idx] = val;
+                        else                         ph->offset_y[idx] = val;
+                    }
+                    ed->input_active = false;
+                    SDL_StopTextInput();
+                    // не делаем continue, чтобы клик обработался дальше (можно сразу нажать кнопку)
+                } else {
+                    continue; // клик внутри поля – остаёмся в вводе
+                }
+            }
+            // Колёсико мыши – выход с сохранением
+            else if (e.type == SDL_MOUSEWHEEL) {
+                int val = atoi(ed->input_buffer);
+                AnimPhase *ph = &ed->input_as->phases[ed->input_phase];
+                if (ph->frame_count > 0) {
+                    int idx = ed->input_as->current_frame[ed->input_phase] % ph->frame_count;
+                    if (ed->input_target == 0) ph->offset_x[idx] = val;
+                    else                         ph->offset_y[idx] = val;
+                }
+                ed->input_active = false;
+                SDL_StopTextInput();
+                // не делаем continue – событие колеса пойдёт в обычную обработку (прокрутка списка)
+            }
+            // Текстовый ввод
+            else if (e.type == SDL_TEXTINPUT) {
+                const char *text = e.text.text;
+                bool valid = true;
+                for (const char *c = text; *c; ++c) {
+                    if (*c == '-') {
+                        if (ed->input_len != 0) { valid = false; break; }
+                    } else if (*c < '0' || *c > '9') {
+                        valid = false; break;
+                    }
+                }
+                if (valid) {
+                    int add_len = strlen(text);
+                    if (ed->input_len + add_len <= 4) {
+                        strcat(ed->input_buffer, text);
+                        ed->input_len += add_len;
+                    }
+                }
+                continue;
+            }
+            // Клавиши
+            else if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER) {
+                    int val = atoi(ed->input_buffer);
+                    AnimPhase *ph = &ed->input_as->phases[ed->input_phase];
+                    if (ph->frame_count > 0) {
+                        int idx = ed->input_as->current_frame[ed->input_phase] % ph->frame_count;
+                        if (ed->input_target == 0) ph->offset_x[idx] = val;
+                        else                         ph->offset_y[idx] = val;
+                    }
+                    ed->input_active = false;
+                    SDL_StopTextInput();
+                } else if (e.key.keysym.sym == SDLK_BACKSPACE && ed->input_len > 0) {
+                    ed->input_buffer[--ed->input_len] = '\0';
+                } else if (e.key.keysym.sym == SDLK_ESCAPE) {
+                    ed->input_active = false;
+                    SDL_StopTextInput();
+                }
+                continue;
+            }
+            // Остальные события игнорируем
+            continue;
+        }
+
+        // Обычная обработка (как было раньше)
         int raw_mx, raw_my;
         SDL_GetMouseState(&raw_mx, &raw_my);
         int win_w, win_h;
@@ -906,7 +1048,7 @@ void handle_input(Editor *ed, bool *running) {
                         if (idx != ed->current_index) {
                             ed->current_index = idx;
                             load_background_texture(ed, ed->entries[idx].background);
-                            load_ground_texture(ed, ed->entries[idx].ground);   // <-- загрузка земли при смене битвы
+                            load_ground_texture(ed, ed->entries[idx].ground);
                         }
                         break;
                     }
@@ -924,29 +1066,27 @@ void handle_input(Editor *ed, bool *running) {
                     int y = group_y + row_h + 4 + p * row_h;
                     if (my < y || my >= y + row_h) continue;
 
-            // Чекбокс Anim
-            SDL_Rect anim_check = {PREVIEW_X + 535, y + (row_h - 14)/2, 14, 14};
-            if (mx >= anim_check.x && mx < anim_check.x + anim_check.w &&
-                my >= anim_check.y && my < anim_check.y + anim_check.h)
-        {
-            if (as->loaded) {
-            AnimPhase *phase = &as->phases[p];
-            if (phase->animate) {
-            phase->animate = false;
-        } else {
-            // Снимаем анимацию с других фаз этого же юнита
-            for (int pp = 0; pp < 3; pp++) {
-                if (pp != p) as->phases[pp].animate = false;
-            }
-            phase->animate = true;
-            as->current_phase = p;
-            ed->active_slot = s;
-            ed->active_phase = p;
-            as->anim_timer = 0;
-            }
-        }
-        continue;
-    }
+                    // Чекбокс Anim
+                    SDL_Rect anim_check = {PREVIEW_X + 535, y + (row_h - 14)/2, 14, 14};
+                    if (mx >= anim_check.x && mx < anim_check.x + anim_check.w &&
+                        my >= anim_check.y && my < anim_check.y + anim_check.h) {
+                        if (as->loaded) {
+                            AnimPhase *phase = &as->phases[p];
+                            if (phase->animate) {
+                                phase->animate = false;
+                            } else {
+                                for (int pp = 0; pp < 3; pp++) {
+                                    if (pp != p) as->phases[pp].animate = false;
+                                }
+                                phase->animate = true;
+                                as->current_phase = p;
+                                ed->active_slot = s;
+                                ed->active_phase = p;
+                                as->anim_timer = 0;
+                            }
+                        }
+                        continue;
+                    }
 
                     // Клик по метке фазы
                     SDL_Rect phase_rect = {PREVIEW_X + 5, y, 55, row_h};
@@ -970,7 +1110,32 @@ void handle_input(Editor *ed, bool *running) {
                     if (phase->frame_count == 0) continue;
                     int idx = as->current_frame[p] % phase->frame_count;
 
-                    // Offset X
+                    // Клик по полю X (начало ввода)
+                    SDL_Rect x_val = {PREVIEW_X + 90, y, 35, row_h};
+                    if (mx >= x_val.x && mx < x_val.x+x_val.w && my >= y && my < y+row_h) {
+                        ed->input_active = true;
+                        ed->input_target = 0;
+                        ed->input_as = as;
+                        ed->input_phase = p;
+                        snprintf(ed->input_buffer, sizeof(ed->input_buffer), "%d", phase->offset_x[idx]);
+                        ed->input_len = strlen(ed->input_buffer);
+                        SDL_StartTextInput();
+                        continue;
+                    }
+                    // Клик по полю Y
+                    SDL_Rect y_val = {PREVIEW_X + 200, y, 35, row_h};
+                    if (mx >= y_val.x && mx < y_val.x+y_val.w && my >= y && my < y+row_h) {
+                        ed->input_active = true;
+                        ed->input_target = 1;
+                        ed->input_as = as;
+                        ed->input_phase = p;
+                        snprintf(ed->input_buffer, sizeof(ed->input_buffer), "%d", phase->offset_y[idx]);
+                        ed->input_len = strlen(ed->input_buffer);
+                        SDL_StartTextInput();
+                        continue;
+                    }
+
+                    // Offset X (кнопки)
                     SDL_Rect x_dec = {PREVIEW_X + 130, y, 16, row_h};
                     SDL_Rect x_inc = {PREVIEW_X + 148, y, 16, row_h};
                     int step = (SDL_GetModState() & KMOD_SHIFT) ? 10 : 1;
@@ -985,7 +1150,7 @@ void handle_input(Editor *ed, bool *running) {
                         ed->repeat_button_rect = x_inc; ed->repeat_as = as; ed->repeat_phase = p; ed->repeat_what = 1;
                     }
 
-                    // Offset Y
+                    // Offset Y (кнопки)
                     SDL_Rect y_dec = {PREVIEW_X + 240, y, 16, row_h};
                     SDL_Rect y_inc = {PREVIEW_X + 258, y, 16, row_h};
                     if (mx >= y_dec.x && mx < y_dec.x+y_dec.w) {
