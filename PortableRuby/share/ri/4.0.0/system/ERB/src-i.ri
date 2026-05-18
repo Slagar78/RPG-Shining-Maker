@@ -1,29 +1,0 @@
-U:RDoc::Attr[iI"src:ETI"ERB#src;TI"R;T:privateo:RDoc::Markup::Document:@parts[o:RDoc::Markup::Paragraph;	[I"ŸReturns the Ruby code that, when executed, generates the result;
-the code is executed by method #result,
-and by its wrapper methods #result_with_hash and #run:;To:RDoc::Markup::Verbatim;	[I"template = 'The time is <%= Time.now %>.'
-erb = ERB.new(template)
-erb.src
-# => "#coding:UTF-8\n_erbout = +''; _erbout.<< \"The time is \".freeze; _erbout.<<(( Time.now ).to_s); _erbout.<< \".\".freeze; _erbout"
-erb.result
-# => "The time is 2025-09-18 15:58:08 -0500."
-;T:@format0o;
-;	[I"In a more readable format:;To;;	[I"¬# puts erb.src.split('; ')
-  # #coding:UTF-8
-  # _erbout = +''
-  # _erbout.<< "The time is ".freeze
-  # _erbout.<<(( Time.now ).to_s)
-  # _erbout.<< ".".freeze
-  # _erbout
-;T;0o;
-;	[I"ËVariable <code>_erbout</code> is used to store the intermediate results in the code;
-the name <code>_erbout</code> is the default in ERB.new,
-and can be changed via keyword argument <code>eoutvar</code>:;To;;	[I"±erb = ERB.new(template, eoutvar: '_foo')
-puts template.src.split('; ')
-#coding:UTF-8
-_foo = +''
-_foo.<< "The time is ".freeze
-_foo.<<(( Time.now ).to_s)
-_foo.<< ".".freeze
-_foo
-;T;0:
-@fileI"lib/erb.rb;T:0@omit_headings_from_table_of_contents_below0F@I"ERB;TcRDoc::NormalClass0

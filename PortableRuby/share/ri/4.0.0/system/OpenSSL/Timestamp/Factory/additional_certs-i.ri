@@ -1,2 +1,0 @@
-U:RDoc::Attr[iI"additional_certs:ETI"1OpenSSL::Timestamp::Factory#additional_certs;TI"RW;T:privateo:RDoc::Markup::Document:@parts[o:RDoc::Markup::Paragraph;	[I"HAdditional certificates apart from the timestamp certificate (e.g. ;TI"=intermediate certificates) to be added to the Response. ;TI">Must be an Array of OpenSSL::X509::Certificate, or +nil+.;T:
-@fileI"ext/openssl/ossl_ts.c;T:0@omit_headings_from_table_of_contents_below0F@I" OpenSSL::Timestamp::Factory;TcRDoc::NormalClass0

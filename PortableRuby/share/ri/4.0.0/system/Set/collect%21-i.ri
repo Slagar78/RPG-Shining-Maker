@@ -1,4 +1,0 @@
-U:RDoc::AnyMethod[iI"collect!:ETI"Set#collect!;TF:privateo:RDoc::Markup::Document:@parts[o:RDoc::Markup::Paragraph;	[I"<Replaces the elements with ones returned by +collect+. ;TI"0Returns an enumerator if no block is given.;T:
-@fileI"
-set.c;T:0@omit_headings_from_table_of_contents_below0I"8collect! { |o| ... } -> self
-collect! -> enumerator;T0[[I"	map!;T@	I"();T@FI"Set;TcRDoc::NormalClass00

@@ -1,109 +1,0 @@
-U:RDoc::AnyMethod[iI"	each:ETI"StringIO#each;TF:privateo:RDoc::Markup::Document:@parts[4o:RDoc::Markup::Paragraph;	[I"|With a block given calls the block with each remaining line (see "Position" below) in the stream;
-returns <code>self</code>.;To;
-;	[I"-Leaves stream position at end-of-stream.;To;
-;	[I"<b>No Arguments</b>;To;
-;	[I"�With no arguments given,
-reads lines using the default record separator
-(global variable <code>$/</code>, whose initial value is <code>"\n"</code>).;To:RDoc::Markup::Verbatim;	[I"Vstrio = StringIO.new(TEXT)
-strio.each_line {|line| p line }
-strio.eof? # => true
-;T:@format:	rubyo;
-;	[I"Output:;To;;	[I"H"First line\n"
-"Second line\n"
-"\n"
-"Fourth line\n"
-"Fifth line\n"
-;T;0o;
-;	[I"%<b>Argument <code>sep</code></b>;To;
-;	[I"mWith only string argument <code>sep</code> given,
-reads lines using that string as the record separator:;To;;	[I"Fstrio = StringIO.new(TEXT)
-strio.each_line(' ') {|line| p line }
-;T;;o;
-;	[I"Output:;To;;	[I"H"First "
-"line\nSecond "
-"line\n\nFourth "
-"line\nFifth "
-"line\n"
-;T;0o;
-;	[I"'<b>Argument <code>limit</code></b>;To;
-;	[I"�With only integer argument <code>limit</code> given,
-reads lines using the default record separator;
-also limits the size (in characters) of each line to the given limit:;To;;	[I"Estrio = StringIO.new(TEXT)
-strio.each_line(10) {|line| p line }
-;T;;o;
-;	[I"Output:;To;;	[I"T"First line"
-"\n"
-"Second lin"
-"e\n"
-"\n"
-"Fourth lin"
-"e\n"
-"Fifth line"
-"\n"
-;T;0o;
-;	[I"=<b>Arguments <code>sep</code> and <code>limit</code></b>;To;
-;	[I"TWith arguments <code>sep</code> and <code>limit</code> both given,
-honors both:;To;;	[I"Jstrio = StringIO.new(TEXT)
-strio.each_line(' ', 10) {|line| p line }
-;T;;o;
-;	[I"Output:;To;;	[I"Q"First "
-"line\nSecon"
-"d "
-"line\n\nFour"
-"th "
-"line\nFifth"
-" "
-"line\n"
-;T;0o;
-;	[I"*Position*;To;
-;	[I"NAs stated above, method <code>each</code> _remaining_ line in the stream.;To;
-;	[I"�In the examples above each <code>strio</code> object starts with its position at beginning-of-stream;
-but in other cases the position may be anywhere (see StringIO#pos):;To;;	[I"wstrio = StringIO.new(TEXT)
-strio.pos = 30 # Set stream position to character 30.
-strio.each_line {|line| p line }
-;T;;o;
-;	[I"Output:;To;;	[I"" line\n"
-"Fifth line\n"
-;T;0o;
-;	[I"|In all the examples above, the stream position is at the beginning of a character;
-in other cases, that need not be so:;To;;	[I"Ks = 'こんにちは'  # Five 3-byte characters.
-strio = StringIO.new(s)
-strio.pos = 3   # At beginning of second character.
-strio.each_line {|line| p line }
-strio.pos = 4   # At second byte of second character.
-strio.each_line {|line| p line }
-strio.pos = 5   # At third byte of second character.
-strio.each_line {|line| p line }
-;T;;o;
-;	[I"Output:;To;;	[I"8"んにちは"
-"\x82\x93にちは"
-"\x93にちは"
-;T;0o;
-;	[I"%<b>Special Record Separators</b>;To;
-;	[I"�Like some methods in class <code>IO</code>, StringIO.each honors two special record separators;
-see {Special Line Separators}[https://docs.ruby-lang.org/en/master/IO.html#class-IO-label-Special+Line+Separator+Values].;To;;	[I"vstrio = StringIO.new(TEXT)
-strio.each_line('') {|line| p line } # Read as paragraphs (separated by blank lines).
-;T;;o;
-;	[I"Output:;To;;	[I"?"First line\nSecond line\n\n"
-"Fourth line\nFifth line\n"
-;T;0o;;	[I"^strio = StringIO.new(TEXT)
-strio.each_line(nil) {|line| p line } # "Slurp"; read it all.
-;T;;o;
-;	[I"Output:;To;;	[I"<"First line\nSecond line\n\nFourth line\nFifth line\n"
-;T;0o;
-;	[I"/<b>Keyword Argument <code>chomp</code></b>;To;
-;	[I"�With keyword argument <code>chomp</code> given as <code>true</code> (the default is <code>false</code>),
-removes trailing newline (if any) from each line:;To;;	[I"Nstrio = StringIO.new(TEXT)
-strio.each_line(chomp: true) {|line| p line }
-;T;;o;
-;	[I"Output:;To;;	[I">"First line"
-"Second line"
-""
-"Fourth line"
-"Fifth line"
-;T;0o;
-;	[I"kWith no block given, returns a new {Enumerator}[https://docs.ruby-lang.org/en/master/Enumerator.html].;To;
-;	[I"NRelated: StringIO.each_byte, StringIO.each_char, StringIO.each_codepoint.;T:
-@fileI"ext/stringio/stringio.c;T:0@omit_headings_from_table_of_contents_below0I"�each_line(sep = $/, chomp: false) {|line| ... }   -> self
-each_line(limit, chomp: false) {|line| ... }      -> self
-each_line(sep, limit, chomp: false) {|line| ... } -> self;T0[[I"each_line;T@	I"(*args);T@�FI"StringIO;TcRDoc::NormalClass00

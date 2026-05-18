@@ -1,3 +1,0 @@
-U:RDoc::AnyMethod[iI"	to_s:ETI"Pathname#to_s;TF:privateo:RDoc::Markup::Document:@parts[o:RDoc::Markup::Paragraph;	[I"!Return the path as a String.;T:
-@fileI"pathname_builtin.rb;T:0@omit_headings_from_table_of_contents_below000[[I"to_path;To;;	[o;
-;	[I"Oto_path is implemented so Pathname objects are usable with File.open, etc.;T;@;0I"();T@FI"Pathname;TcRDoc::NormalClass00
