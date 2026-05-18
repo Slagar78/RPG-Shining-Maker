@@ -308,6 +308,17 @@ def find_adjacent_enemies(unit)
   end
 end
 
+def sort_targets_by_angle(targets, from_x, from_y)
+  targets.sort_by do |t|
+    dx = t[:x] - from_x
+    dy = t[:y] - from_y
+    # Вычисляем угол от оси X (вправо) в диапазоне [0, 2*PI)
+    rad = Math.atan2(dy, dx)
+    angle = rad >= 0 ? rad : rad + 2 * Math::PI
+    angle
+  end
+end
+
   def start_current_turn
     @current_unit = @turn_order[@current_unit_index]
     return unless @current_unit
@@ -478,12 +489,12 @@ def handle_input
       case @battle_menu.selected_index
 
   when 0  # Attack
-  targets = find_adjacent_enemies(@current_unit)
+    targets = find_adjacent_enemies(@current_unit)
   if targets.any?
-    @attack_targets = targets
+    @attack_targets = sort_targets_by_angle(targets, @current_unit[:x], @current_unit[:y])
     @attack_target_index = 0
-    @attack_target = targets[0]
-    @target_highlight = targets[0]
+    @attack_target = @attack_targets[0]          # ← теперь берём из отсортированного
+    @target_highlight = @attack_targets[0]       # ← и подсветку тоже
     @battle_menu.close
     @battle_state = :attack_targeting
     @audio.play_sfx("cursor") if @audio
@@ -821,7 +832,7 @@ end
 end
 
 if __FILE__ == $0
-  InitWindow(576, 480, "Battle Test")
+  InitWindow(576, 480, "Battle")
   SetTargetFPS(60)
   InitAudioDevice()
 
