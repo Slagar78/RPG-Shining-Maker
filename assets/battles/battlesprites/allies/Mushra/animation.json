@@ -18,13 +18,13 @@
 		"frames":	[{
 				"file":	"frame_attack_1.png",
 				"duration":	0.3,
-				"offset_x":	-200,
-				"offset_y":	-60
+				"offset_x":	-260,
+				"offset_y":	-240
 			}, {
 				"file":	"frame_attack_2.png",
 				"duration":	0.3,
-				"offset_x":	-300,
-				"offset_y":	-50
+				"offset_x":	-500,
+				"offset_y":	-100
 			}],
 		"offset_x":	0,
 		"offset_y":	0
