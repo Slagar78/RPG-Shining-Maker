@@ -115,6 +115,81 @@ class HpMpPanel
     draw_hpmp_bar(x, y, panel_width, tx, ty + LINE_HEIGHT * 2, "MP", mp, max_mp, label_w)
   end
 
+  # Рисует панель в правом нижнем углу (для цели атаки)
+  def draw_bottom_right(unit, db)
+    return unless unit
+
+    if unit[:actor]
+      name = unit[:actor]["name"] || "???"
+      lvl  = unit[:actor]["level"] || 1
+    elsif unit[:enemy]
+      e = unit[:enemy]
+      name = e.respond_to?(:name) ? e.name : e["name"] || "???"
+      lvl  = e.respond_to?(:level) ? e.level : e["level"] || 1
+    else
+      return
+    end
+
+    hp     = unit[:hp]     || 0
+    max_hp = unit[:max_hp] || 0
+    mp     = unit[:mp]     || 0
+    max_mp = unit[:max_mp] || 0
+
+    # 1. Расчёт ширины панели (аналогично обычному draw)
+    label_w = [measure_text("HP"), measure_text("MP")].max
+    max_number_str_hp = "#{max_hp}/#{max_hp}"
+    max_number_str_mp = "#{max_mp}/#{max_mp}"
+    max_number_w = [measure_text(max_number_str_hp), measure_text(max_number_str_mp)].max
+
+    max_sticks = [[max_hp, max_mp].max, MAX_DISPLAY_STICKS].min
+    sticks_width = max_sticks * STICK_W
+
+    content_width = PADDING_LEFT + label_w + STICK_GAP + sticks_width + STICK_GAP + max_number_w + PADDING_LEFT
+
+    name_line = "#{name}  LV #{lvl}"
+    name_line_w = measure_text(name_line)
+    name_content_width = name_line_w + PADDING_LEFT * 2
+
+    raw_width = [BASE_W, content_width, name_content_width].max
+
+    mid_area = raw_width - LEFT_EDGE_W - RIGHT_EDGE_W
+    tiles = (mid_area.to_f / MID_TILE_W).ceil
+    panel_width = LEFT_EDGE_W + RIGHT_EDGE_W + tiles * MID_TILE_W
+
+    # === ОТЛИЧИЕ: координаты для правого нижнего угла ===
+    x = 576 - panel_width - 8
+    y = 480 - BASE_H - 8
+
+    # 2. Фон панели (рисуем точно так же)
+    if @texture
+      left_src = Rectangle.create(0, 0, LEFT_EDGE_W, @tex_height)
+      left_dst = Rectangle.create(x, y, LEFT_EDGE_W, BASE_H)
+      DrawTexturePro(@texture, left_src, left_dst, Vector2.create(0, 0), 0, WHITE)
+
+      right_src = Rectangle.create(@tex_width - RIGHT_EDGE_W, 0, RIGHT_EDGE_W, @tex_height)
+      right_dst = Rectangle.create(x + panel_width - RIGHT_EDGE_W, y, RIGHT_EDGE_W, BASE_H)
+      DrawTexturePro(@texture, right_src, right_dst, Vector2.create(0, 0), 0, WHITE)
+
+      tile_src = Rectangle.create(LEFT_EDGE_W + 2, 0, MID_TILE_W, @tex_height)
+      tiles.times do |i|
+        tile_x = x + LEFT_EDGE_W + i * MID_TILE_W
+        tile_dst = Rectangle.create(tile_x, y, MID_TILE_W, BASE_H)
+        DrawTexturePro(@texture, tile_src, tile_dst, Vector2.create(0, 0), 0, WHITE)
+      end
+    else
+      DrawRectangle(x, y, panel_width, BASE_H, Fade(BLACK, 0.8))
+      DrawRectangleLines(x, y, panel_width, BASE_H, WHITE)
+    end
+
+    # 3. Текст и палочки
+    tx = x + PADDING_LEFT
+    ty = y + PADDING_TOP
+    draw_text(name_line, tx, ty, WHITE)
+
+    draw_hpmp_bar(x, y, panel_width, tx, ty + LINE_HEIGHT, "HP", hp, max_hp, label_w)
+    draw_hpmp_bar(x, y, panel_width, tx, ty + LINE_HEIGHT * 2, "MP", mp, max_mp, label_w)
+  end
+
   private
 
   def draw_hpmp_bar(panel_x, panel_y, panel_width, base_x, base_y, label, current, maximum, label_w)

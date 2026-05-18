@@ -166,7 +166,7 @@ class BattleScene
       @panel_tex = nil
     end
 
-    @battle_manager.return_from_battle_scene
+    @battle_manager.end_current_turn
     puts "<<< Battle scene finished"
   end
 

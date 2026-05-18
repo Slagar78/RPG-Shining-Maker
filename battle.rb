@@ -77,6 +77,7 @@ class BattleManager
     @battle_menu = BattleMenu.new
 	@battle_menu.font = @font
     @hp_mp_panel = HpMpPanel.new(@font)
+    @target_hp_panel = HpMpPanel.new(@font)
     @battle_state = :cursor_moving
 
     @cursor = BattleCursor.new(TILE_SIZE)
@@ -621,17 +622,17 @@ when :attack_targeting
   @battle_player&.update_animation  # только анимация, без движения
   if @attack_targets.any?
     # Переключение цели стрелками
-    if IsKeyPressed(KEY_LEFT)
-      @attack_target_index = (@attack_target_index - 1) % @attack_targets.size
-      @attack_target = @attack_targets[@attack_target_index]
-      @target_highlight = @attack_target
-      @audio.play_sfx("cursor") if @audio
-    elsif IsKeyPressed(KEY_RIGHT)
-      @attack_target_index = (@attack_target_index + 1) % @attack_targets.size
-      @attack_target = @attack_targets[@attack_target_index]
-      @target_highlight = @attack_target
-      @audio.play_sfx("cursor") if @audio
-    end
+  if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_UP)
+  @attack_target_index = (@attack_target_index - 1) % @attack_targets.size
+  @attack_target = @attack_targets[@attack_target_index]
+  @target_highlight = @attack_target
+  @audio.play_sfx("cursor") if @audio
+elsif IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_DOWN)
+  @attack_target_index = (@attack_target_index + 1) % @attack_targets.size
+  @attack_target = @attack_targets[@attack_target_index]
+  @target_highlight = @attack_target
+  @audio.play_sfx("cursor") if @audio
+end
 
     # Ждём отпускания A/D, чтобы избежать мгновенного срабатывания
     if IsKeyUp(KEY_A) && IsKeyUp(KEY_D)
@@ -772,6 +773,11 @@ when :attack_targeting
 
     # Панель HP/MP поверх карты, но под меню
     @hp_mp_panel.draw(@current_unit, @db) if @current_unit
+
+    # Панель цели атаки в правом нижнем углу
+    if @battle_state == :attack_targeting && @attack_target
+      @target_hp_panel.draw_bottom_right(@attack_target, @db)
+    end
 
     @battle_menu.draw
     @battle_scene.draw
