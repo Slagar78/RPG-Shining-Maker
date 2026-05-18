@@ -26,6 +26,10 @@ set "PATH=%PORTABLE_BIN%;%PATH%"
 set "RELEASE=%BASE%Release"
 set "LOG=%RELEASE%\build_log.txt"
 
+:: ---------- Icon ----------
+set "ICON_SRC=%BASE%assets\icons\ruby.ico"
+set "ICON_FILE=ruby.ico"
+
 :: Check portable Ruby
 if not exist "%RUBY_EXE%" (
     echo [ERROR] Portable Ruby not found: %RUBY_EXE%
@@ -52,6 +56,14 @@ copy "%PORTABLE_ROOT%\dll\libraylib.dll" "%RELEASE%\"
 copy "%PORTABLE_ROOT%\dll\zlib1.dll" "%RELEASE%\"
 copy "%PORTABLE_ROOT%\dll\libwinpthread-1.dll" "%RELEASE%\"
 
+:: Copy icon
+if exist "%ICON_SRC%" (
+    copy "%ICON_SRC%" "%RELEASE%\%ICON_FILE%"
+    echo [OK] Icon copied
+) else (
+    echo [WARNING] Icon not found: %ICON_SRC%
+)
+
 if errorlevel 1 (
     echo [ERROR] Copy failed
     goto END
@@ -64,7 +76,7 @@ echo [2/3] Building autonomous EXE...
 
 cd /d "%RELEASE%"
 
-"%RUBY_EXE%" -S ocran game.rb --output Game.exe --no-enc --gem-full --no-lzma --windows --dll libraylib.dll
+"%RUBY_EXE%" -S ocran game.rb --output Game.exe --no-enc --gem-full --no-lzma --windows --dll libraylib.dll --icon "%ICON_FILE%"
 
 if errorlevel 1 (
     echo [ERROR] Ocran failed
