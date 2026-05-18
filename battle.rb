@@ -100,6 +100,11 @@ class BattleManager
     @battle_scene = BattleScene.new(self)
     @start_x = 0
     @start_y = 0
+    @attack_target = nil
+    @target_highlight = nil
+    @attack_confirm_ready = false
+    @attack_targets = []
+    @attack_target_index = 0
 
     prepare_turn_order
 
@@ -282,6 +287,17 @@ class BattleManager
     occupied
   end
 
+
+def find_adjacent_enemies(unit)
+  ux = unit[:x]
+  uy = unit[:y]
+  @enemies.select do |enemy|
+    ex = enemy[:x]
+    ey = enemy[:y]
+    (ex - ux).abs + (ey - uy).abs == 1
+  end
+end
+
   def start_current_turn
     @current_unit = @turn_order[@current_unit_index]
     return unless @current_unit
@@ -429,53 +445,64 @@ end
   start_cursor_transition(@current_unit, nxt)
 end
 
-  def handle_input
-    case @battle_state
-    when :cursor_moving
+def handle_input
+  case @battle_state
+  when :cursor_moving
+    # ничего не делаем — движение обрабатывается в update
 
-        when :player_turn
-      @battle_player.handle_input(self) if @battle_player
-      if @battle_player.moving
-        @cursor.visible = false
-      end
-      @camera.follow_unit(@current_unit)
+  when :player_turn
+    @battle_player.handle_input(self) if @battle_player
+    if @battle_player.moving
+      @cursor.visible = false
+    end
+    @camera.follow_unit(@current_unit)
 
-    when :action_menu
-      prev_index = @battle_menu.selected_index
-      @battle_menu.handle_input
-      if @battle_menu.selected_index != prev_index && @audio
-        @audio.play_sfx("cursor")
-      end
+  when :action_menu
+    prev_index = @battle_menu.selected_index
+    @battle_menu.handle_input
+    if @battle_menu.selected_index != prev_index && @audio
+      @audio.play_sfx("cursor")
+    end
 
-      # Подтверждение выбора (A или D)
-      if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-        case @battle_menu.selected_index
-        when 0  # Attack
-        target = @enemies.first   # пока атакуем первого врага (позже будет выбор цели)
-        @battle_scene.start(@current_unit, target)
-          @battle_state = :battle_scene
-          @battle_menu.close
-          @audio.play_sfx("confirm") if @audio
-        when 3  # Stay
-          end_current_turn
-        else
-          @battle_menu.close
-          @battle_state = :player_turn
-          @cursor.visible = true
-          sync_cursor_to_unit
-          @audio.play_sfx("cancel_menu") if @audio
-        end
-      # Отмена (S)
-      elsif IsKeyPressed(KEY_S)
+    if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+      case @battle_menu.selected_index
+
+  when 0  # Attack
+  targets = find_adjacent_enemies(@current_unit)
+  if targets.any?
+    @attack_targets = targets
+    @attack_target_index = 0
+    @attack_target = targets[0]
+    @target_highlight = targets[0]
+    @battle_menu.close
+    @battle_state = :attack_targeting
+    @audio.play_sfx("cursor") if @audio
+  else
+    @battle_menu.close
+    @battle_state = :player_turn
+    @cursor.visible = true
+    sync_cursor_to_unit
+    @audio.play_sfx("error") if @audio
+  end
+
+      when 3  # Stay
+        end_current_turn
+      else
         @battle_menu.close
         @battle_state = :player_turn
         @cursor.visible = true
         sync_cursor_to_unit
         @audio.play_sfx("cancel_menu") if @audio
       end
-
+    elsif IsKeyPressed(KEY_S)
+      @battle_menu.close
+      @battle_state = :player_turn
+      @cursor.visible = true
+      sync_cursor_to_unit
+      @audio.play_sfx("cancel_menu") if @audio
     end
   end
+end
 
     def update
     @battle_menu.update
@@ -514,7 +541,15 @@ end
     when :player_turn
       if @battle_player
         @battle_player.update
+        
         unless @battle_player.moving
+          # Синхронизация реальной позиции юнита с визуальной
+          if @current_unit[:x] != @battle_player.x || @current_unit[:y] != @battle_player.y
+            if cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+              @current_unit[:x] = @battle_player.x
+              @current_unit[:y] = @battle_player.y
+            end
+          end
           sync_cursor_to_unit
           if @pending_menu
             open_battle_menu
@@ -572,6 +607,52 @@ end
 
     when :action_menu
       @battle_player&.update_animation
+
+when :attack_targeting
+  @battle_player&.update_animation  # только анимация, без движения
+  if @attack_targets.any?
+    # Переключение цели стрелками
+    if IsKeyPressed(KEY_LEFT)
+      @attack_target_index = (@attack_target_index - 1) % @attack_targets.size
+      @attack_target = @attack_targets[@attack_target_index]
+      @target_highlight = @attack_target
+      @audio.play_sfx("cursor") if @audio
+    elsif IsKeyPressed(KEY_RIGHT)
+      @attack_target_index = (@attack_target_index + 1) % @attack_targets.size
+      @attack_target = @attack_targets[@attack_target_index]
+      @target_highlight = @attack_target
+      @audio.play_sfx("cursor") if @audio
+    end
+
+    # Ждём отпускания A/D, чтобы избежать мгновенного срабатывания
+    if IsKeyUp(KEY_A) && IsKeyUp(KEY_D)
+      @attack_confirm_ready = true
+    end
+
+    if @attack_confirm_ready && (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D))
+      @battle_scene.start(@current_unit, @attack_target)
+      @battle_state = :battle_scene
+      @attack_target = nil
+      @target_highlight = nil
+      @attack_targets.clear
+      @cursor.visible = false
+      @attack_confirm_ready = false
+      @audio.play_sfx("confirm") if @audio
+    elsif IsKeyPressed(KEY_S)
+      @attack_target = nil
+      @target_highlight = nil
+      @attack_targets.clear
+      @battle_state = :player_turn
+      @cursor.visible = true
+      sync_cursor_to_unit
+      @attack_confirm_ready = false
+      @audio.play_sfx("cancel_menu") if @audio
+    end
+  else
+    @battle_state = :player_turn
+    @cursor.visible = true
+    sync_cursor_to_unit
+  end
 
     when :battle_scene
       @battle_scene.update
@@ -650,6 +731,17 @@ end
       src = Rectangle.create(enemy[:sprite_frame] * TILE_SIZE, 2 * TILE_SIZE, TILE_SIZE, TILE_SIZE)
       dst = Rectangle.create(enemy[:x] * TILE_SIZE + cam_x, enemy[:y] * TILE_SIZE + cam_y - 16, TILE_SIZE, TILE_SIZE)
       DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
+    end
+
+    if @battle_state == :attack_targeting && @target_highlight
+      tx = @target_highlight[:x] * TILE_SIZE + cam_x
+      ty = @target_highlight[:y] * TILE_SIZE + cam_y
+      color = Raylib::Color.new
+      color.r = 255
+      color.g = 60
+      color.b = 60
+      color.a = 180
+      Raylib.DrawRectangleLines(tx, ty, TILE_SIZE, TILE_SIZE, color)
     end
 
     if @battle_player
