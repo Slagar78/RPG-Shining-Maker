@@ -107,6 +107,7 @@ class BattleManager
     @attack_confirm_ready = false
     @attack_targets = []
     @attack_target_index = 0
+    @highlight_tex = load_highlight_texture
 
     prepare_turn_order
 
@@ -238,6 +239,17 @@ class BattleManager
   def unit_at?(pos)
     (@allies + @enemies).any? { |u| u[:x] == pos[0] && u[:y] == pos[1] }
   end
+
+  def load_highlight_texture
+    path = "assets/ui/menu/target_frame.png"
+    return nil unless File.exist?(path)
+    img = LoadImage(path)
+    tex = LoadTextureFromImage(img)
+    UnloadImage(img)
+    SetTextureFilter(tex, TEXTURE_FILTER_POINT)
+    tex
+  end
+
 
   def load_mapsprite(name)
     return nil if name.nil? || name.empty?
@@ -699,7 +711,7 @@ end
     end
   end
 
-  def draw
+def draw
     cam_x = -@camera.x
     cam_y = -@camera.y
     
@@ -753,16 +765,13 @@ end
       DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
     end
 
-    # СНАЧАЛА рамка (под спрайтами врагов)
-    if @battle_state == :attack_targeting && @target_highlight
+    # РАМКА ЦЕЛИ (из текстуры, под врагами)
+    if @battle_state == :attack_targeting && @target_highlight && @highlight_tex
       tx = @target_highlight[:x] * TILE_SIZE + cam_x
       ty = @target_highlight[:y] * TILE_SIZE + cam_y
-      color = Raylib::Color.new
-      color.r = 255
-      color.g = 60
-      color.b = 60
-      color.a = 180
-      Raylib.DrawRectangleLines(tx, ty, TILE_SIZE, TILE_SIZE, color)
+      src = Rectangle.create(0, 0, @highlight_tex.width, @highlight_tex.height)
+      dst = Rectangle.create(tx, ty, TILE_SIZE, TILE_SIZE)
+      DrawTexturePro(@highlight_tex, src, dst, Vector2.create(0,0), 0, WHITE)
     end
 
     # ПОТОМ враги (они будут нарисованы поверх рамки)
@@ -794,7 +803,7 @@ end
 
     @battle_menu.draw
     @battle_scene.draw
-  end
+end
 
   def draw_active_unit_with_camera(cam_x, cam_y)
     bp = @battle_player
@@ -830,6 +839,7 @@ end
     UnloadRenderTexture(@static_bg) if @static_bg
     UnloadRenderTexture(@top_layer) if @top_layer
     UnloadRenderTexture(@layer2) if @layer2
+    UnloadTexture(@highlight_tex) if @highlight_tex
   end
 end
 
