@@ -753,14 +753,7 @@ end
       DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
     end
 
-    @enemies.each do |enemy|
-      next if enemy == @current_unit && @battle_player
-      tex = enemy[:tex]; next unless tex
-      src = Rectangle.create(enemy[:sprite_frame] * TILE_SIZE, 2 * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-      dst = Rectangle.create(enemy[:x] * TILE_SIZE + cam_x, enemy[:y] * TILE_SIZE + cam_y - 16, TILE_SIZE, TILE_SIZE)
-      DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
-    end
-
+    # СНАЧАЛА рамка (под спрайтами врагов)
     if @battle_state == :attack_targeting && @target_highlight
       tx = @target_highlight[:x] * TILE_SIZE + cam_x
       ty = @target_highlight[:y] * TILE_SIZE + cam_y
@@ -770,6 +763,15 @@ end
       color.b = 60
       color.a = 180
       Raylib.DrawRectangleLines(tx, ty, TILE_SIZE, TILE_SIZE, color)
+    end
+
+    # ПОТОМ враги (они будут нарисованы поверх рамки)
+    @enemies.each do |enemy|
+      next if enemy == @current_unit && @battle_player
+      tex = enemy[:tex]; next unless tex
+      src = Rectangle.create(enemy[:sprite_frame] * TILE_SIZE, 2 * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+      dst = Rectangle.create(enemy[:x] * TILE_SIZE + cam_x, enemy[:y] * TILE_SIZE + cam_y - 16, TILE_SIZE, TILE_SIZE)
+      DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
     end
 
     if @battle_player
