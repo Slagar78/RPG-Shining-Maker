@@ -24,6 +24,7 @@ class HpMpPanel
     @stick_tex_lvl1 = load_texture("assets/ui/Hp_Mp_Points_2.png") # зелёный (>100)
     @stick_tex_lvl2 = load_texture("assets/ui/Hp_Mp_Points_3.png") # фиолетовый (>200)
     @stick_tex_lvl3 = load_texture("assets/ui/Hp_Mp_Points_4.png") # чёрный (>300)
+	@edging_tex = load_texture("assets/ui/Panel_Edging.png")
     if @texture
       @tex_width = @texture.width
       @tex_height = @texture.height
@@ -199,23 +200,24 @@ class HpMpPanel
     number_str = "#{current}/#{maximum}"
     number_w = measure_text(number_str)
 
-    # Определяем, сколько палочек влезает физически
     available = panel_x + panel_width - PADDING_LEFT - bar_start_x - STICK_GAP - number_w
     total_positions = [(available / STICK_W).floor, MAX_DISPLAY_STICKS].min
     total_positions = 0 if total_positions < 0
 
     stick_y = base_y + (FONT_SIZE - STICK_H) / 2
 
-    # Красные палочки ТОЛЬКО для потерянного HP (от current до maximum, но не больше total_positions)
-    max_visible = [maximum, total_positions].min
-    (current...max_visible).each do |i|
-      stick_x = bar_start_x + i * STICK_W
-      red = Color.new
-      red.r = 220; red.g = 40; red.b = 40; red.a = 200
-      DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, red)
+    # Красные палочки ТОЛЬКО для HP (потерянное здоровье)
+    if label == "HP"
+      max_visible = [maximum, total_positions].min
+      (current...max_visible).each do |i|
+        stick_x = bar_start_x + i * STICK_W
+        red = Color.new
+        red.r = 220; red.g = 40; red.b = 40; red.a = 200
+        DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, red)
+      end
     end
 
-    # Затем рисуем цветные палочки текущего здоровья (поверх красных)
+    # Цветные палочки текущего здоровья / маны
     layers = [
       { tex: @stick_tex,      count: [current, 100].min },
       { tex: @stick_tex_lvl1, count: [current - 100, 100].min },
@@ -241,13 +243,50 @@ class HpMpPanel
       end
     end
 
+    # ---------- Окантовка поверх полосок ----------
+    if @edging_tex
+      # Определяем, сколько палочек реально занимает шкала
+      if label == "HP"
+        # Для HP – до максимума (включая красные)
+        actual_positions = [maximum, total_positions].min
+      else
+        # Для MP – только до текущего значения
+        actual_positions = [current, total_positions].min
+      end
+
+      total_w = actual_positions * STICK_W
+
+      if total_w > 0
+        edging_h = STICK_H
+
+        # Левый колпачок
+        left_src = Rectangle.create(0, 0, 1, @edging_tex.height)
+        left_dst = Rectangle.create(bar_start_x - 1, stick_y, 1, edging_h)
+        DrawTexturePro(@edging_tex, left_src, left_dst, Vector2.create(0,0), 0, WHITE)
+
+        # Середина (если шкала длиннее 1 пикселя)
+        if total_w > 1
+          mid_src = Rectangle.create(1, 0, 1, @edging_tex.height)
+          (0...total_w - 1).each do |i|
+            mid_dst = Rectangle.create(bar_start_x + i, stick_y, 1, edging_h)
+            DrawTexturePro(@edging_tex, mid_src, mid_dst, Vector2.create(0,0), 0, WHITE)
+          end
+        end
+
+        # Правый колпачок (зеркальный левый)
+        right_src = Rectangle.create(0, 0, -1, @edging_tex.height)
+        right_dst = Rectangle.create(bar_start_x + total_w - 1, stick_y, 1, edging_h)
+        DrawTexturePro(@edging_tex, right_src, right_dst, Vector2.create(0,0), 0, WHITE)
+      end
+    end
+
     # Число справа
     number_x = bar_start_x + total_positions * STICK_W + STICK_GAP
     if number_x + number_w > panel_x + panel_width - PADDING_LEFT
       number_x = panel_x + panel_width - PADDING_LEFT - number_w
     end
     draw_text(number_str, number_x, base_y, WHITE)
-  end
+end
 
   def measure_text(text)
     if @font
