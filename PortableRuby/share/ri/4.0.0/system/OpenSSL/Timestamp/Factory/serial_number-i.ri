@@ -1,0 +1,2 @@
+U:RDoc::Attr[iI"serial_number:ETI".OpenSSL::Timestamp::Factory#serial_number;TI"RW;T:privateo:RDoc::Markup::Document:@parts[o:RDoc::Markup::Paragraph;	[I"NThe serial number to be used for timestamp creation. Must be present for ;TI"Gtimestamp creation. Must be an instance of OpenSSL::BN or Integer.;T:
+@fileI"ext/openssl/ossl_ts.c;T:0@omit_headings_from_table_of_contents_below0F@I" OpenSSL::Timestamp::Factory;TcRDoc::NormalClass0

@@ -1,0 +1,52 @@
+current directory: D:/MyRPG/PortableRuby/gems/gems/fiddle-1.1.8/ext/fiddle
+D:/MyRPG/PortableRuby/bin/ruby.exe extconf.rb
+checking for --enable-debug-build option... no
+checking for pkg-config for libffi... ["-Ic:/msys64/ucrt64/bin/../include ", "-Lc:/msys64/ucrt64/bin/../lib/../lib", "-lffi"]
+checking for pkg-config for libffi... "3.5.2"
+checking for ffi.h... yes
+checking for -lffi... yes
+libffi_version: 3.5.2
+checking for sys/mman.h... no
+checking for link.h... no
+checking for dlfcn.h... no
+checking for windows.h... yes
+checking for LoadLibrary()... yes
+checking for FreeLibrary()... yes
+checking for GetProcAddress()... yes
+checking for GetModuleFileName()... yes
+checking for -lws2_32... yes
+checking for FFI_STDCALL in ffi.h... no
+checking signedness of size_t... unsigned
+checking for rb_str_to_interned_str()... yes
+creating Makefile
+
+current directory: D:/MyRPG/PortableRuby/gems/gems/fiddle-1.1.8/ext/fiddle
+make -j5 DESTDIR\= sitearchdir\=./.gem.20260504-11428-559sev sitelibdir\=./.gem.20260504-11428-559sev clean
+
+current directory: D:/MyRPG/PortableRuby/gems/gems/fiddle-1.1.8/ext/fiddle
+make -j5 DESTDIR\= sitearchdir\=./.gem.20260504-11428-559sev sitelibdir\=./.gem.20260504-11428-559sev
+generating fiddle-x64-mingw-ucrt.def
+compiling closure.c
+compiling conversions.c
+In file included from closure.c:1:
+./fiddle.h:4:10: fatal error: ruby.h: No such file or directory
+    4 | #include <ruby.h>
+      |          ^~~~~~~~
+compilation terminated.
+compiling fiddle.c
+make: *** [Makefile:252: closure.o] Error 1
+make: *** Waiting for unfinished jobs....
+In file included from conversions.c:3:
+./fiddle.h:4:10: fatal error: ruby.h: No such file or directory
+    4 | #include <ruby.h>
+      |          ^~~~~~~~
+compilation terminated.
+make: *** [Makefile:252: conversions.o] Error 1
+In file included from fiddle.c:3:
+./fiddle.h:4:10: fatal error: ruby.h: No such file or directory
+    4 | #include <ruby.h>
+      |          ^~~~~~~~
+compilation terminated.
+make: *** [Makefile:252: fiddle.o] Error 1
+
+make failed, exit code 2

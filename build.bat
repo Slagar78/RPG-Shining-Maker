@@ -33,9 +33,9 @@ xcopy "%BASE%assets" "%RELEASE%\assets\" /E /I /Y
 xcopy "%BASE%lib"    "%RELEASE%\lib\"    /E /I /Y
 
 copy "%BASE%game.rb" "%RELEASE%\"
-copy "%BASE%dll\libraylib.dll" "%RELEASE%\"
-copy "%BASE%dll\zlib1.dll" "%RELEASE%\"
-copy "%BASE%dll\libwinpthread-1.dll" "%RELEASE%\"
+copy "%BASE%PortableRuby\dll\libraylib.dll" "%RELEASE%\"
+copy "%BASE%PortableRuby\dll\zlib1.dll" "%RELEASE%\"
+copy "%BASE%PortableRuby\dll\libwinpthread-1.dll" "%RELEASE%\"
 
 if errorlevel 1 (
     echo.

@@ -1,0 +1,2 @@
+U:RDoc::Attr[iI"gen_time:ETI")OpenSSL::Timestamp::Factory#gen_time;TI"RW;T:privateo:RDoc::Markup::Document:@parts[o:RDoc::Markup::Paragraph;	[I"NThe Time value to be used in the Response. Must be present for timestamp ;TI"creation.;T:
+@fileI"ext/openssl/ossl_ts.c;T:0@omit_headings_from_table_of_contents_below0F@I" OpenSSL::Timestamp::Factory;TcRDoc::NormalClass0

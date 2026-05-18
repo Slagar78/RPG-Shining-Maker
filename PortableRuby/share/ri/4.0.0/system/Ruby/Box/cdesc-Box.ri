@@ -1,0 +1,174 @@
+U:RDoc::NormalClass[iI"Box:ETI"Ruby::Box;TI"Module;To:RDoc::Markup::Document:@parts[o;;[ho:RDoc::Markup::Heading:@leveli:
+@textI"CRuby Box - Ruby's in-process separation of Classes and Modules;To:RDoc::Markup::Paragraph;[I"Ruby Box is designed to provide separated spaces in a Ruby process, to isolate application codes, libraries and monkey patches.;To;	;
+i;I"Known issues;To:RDoc::Markup::List:
+@type:BULLET:@items[	o:RDoc::Markup::ListItem:@label0;[o;;[I"áExperimental warning is shown when ruby starts with <code>RUBY_BOX=1</code> (specify <code>-W:no-experimental</code> option to hide it);To;;0;[o;;[I"vInstalling native extensions may fail under <code>RUBY_BOX=1</code> because of stack level too deep in extconf.rb;To;;0;[o;;[I"Z<code>require 'active_support/core_ext'</code> may fail under <code>RUBY_BOX=1</code>;To;;0;[o;;[I"UDefined methods in a box may not be referred by built-in methods written in Ruby;To;	;
+i;I"
+TODOs;To;;;;[
+o;;0;[o;;[I"uAdd the loaded box on iseq to check if another box tries running the iseq (add a field only when VM_CHECK_MODE?);To;;0;[o;;[I"-Assign its own TOPLEVEL_BINDING in boxes;To;;0;[o;;[I"sFix calling <code>warn</code> in boxes to refer <code>$VERBOSE</code> and <code>Warning.warn</code> in the box;To;;0;[o;;[I"RMake an internal data container class <code>Ruby::Box::Entry</code> invisible;To;;0;[o;;[I"TMore test cases about <code>$LOAD_PATH</code> and <code>$LOADED_FEATURES</code>;To;	;
+i;I"How to use;To;	;
+i;I"Enabling Ruby Box;To;;[I""First, an environment variable should be set at the ruby process bootup: <code>RUBY_BOX=1</code>.
+The only valid value is <code>1</code> to enable Ruby Box. Other values (or unset <code>RUBY_BOX</code>) means disabling Ruby Box. And setting the value after Ruby program starts doesn't work.;To;	;
+i;I"Using Ruby Box;To;;[I"@<code>Ruby::Box</code> class is the entrypoint of Ruby Box.;To:RDoc::Markup::Verbatim;[I"Nbox = Ruby::Box.new
+box.require('something') # or require_relative, load
+;T:@format:	rubyo;;[I"ΩThe required file (either .rb or .so/.dll/.bundle) is loaded in the box (<code>box</code> here). The required/loaded files from <code>something</code> will be loaded in the box recursively.;To;;[I"O# something.rb
+
+X = 1
+
+class Something
+  def self.x = X
+  def x = ::X
+end
+;T;;o;;[I"qClasses/modules, those methods and constants defined in the box can be accessed via <code>box</code> object.;To;;[I"kX = 2
+p X                 # 2
+p ::X               # 2
+p box::Something.x  # 1
+p box::X            # 1
+;T;;o;;[I"NInstance methods defined in the box also run with definitions in the box.;To;;[I"(s = box::Something.new
+
+p s.x  # 1
+;T;;o;	;
+i;I"Specifications;To;	;
+i;I"Ruby Box types;To;;[I"There are two box types:;To;;;;[o;;0;[o;;[I"Root box;To;;0;[o;;[I"User boxes;To;;[I"¬There is the root box, just a single box in a Ruby process. Ruby bootstrap runs in the root box, and all builtin classes/modules are defined in the root box. (See "Builtin classes and modules".);To;;[I"*User boxes are to run user-written programs and libraries loaded from user programs. The user's main program (specified by the <code>ruby</code> command line argument) is executed in the "main" box, which is a user box automatically created at the end of Ruby's bootstrap, copied from the root box.;To;;[I"¨When <code>Ruby::Box.new</code> is called, an "optional" box (a user, non-main box) is created, copied from the root box. All user boxes are flat, copied from the root box.;To;	;
+i;I"!Ruby Box class and instances;To;;[I"å<code>Ruby::Box</code> is a class, as a subclass of <code>Module</code>. <code>Ruby::Box</code> instances are a kind of <code>Module</code>.;To;	;
+i;I")Classes and modules defined in boxes;To;;[I"ÓThe classes and modules, newly defined in a box <code>box</code>, are accessible via <code>box</code>. For example, if a class <code>A</code> is defined in <code>box</code>, it is accessible as <code>box::A</code> from outside of the box.;To;;[I"mIn the box <code>box</code>, <code>A</code> can be referred to as <code>A</code> (and <code>::A</code>).;To;	;
+i;I"3Built-in classes and modules reopened in boxes;To;;[I"ŒIn boxes, builtin classes/modules are visible and can be reopened. Those classes/modules can be reopened using <code>class</code> or <code>module</code> clauses, and class/module definitions can be changed.;To;;[I"íThe changed definitions are visible only in the box. In other boxes, builtin classes/modules and those instances work without changed definitions.;To;;[I"©# in foo.rb
+class String
+  BLANK_PATTERN = /\A\s*\z/
+  def blank?
+    self =~ BLANK_PATTERN
+  end
+end
+
+module Foo
+  def self.foo = "foo"
+
+  def self.foo_is_blank?
+    foo.blank?
+  end
+end
+
+Foo.foo.blank? #=> false
+"foo".blank?   #=> false
+
+# in main.rb
+box = Ruby::Box.new
+box.require('foo')
+
+box::Foo.foo_is_blank? #=> false   (#blank? called in box)
+
+"foo".blank?          # NoMethodError
+String::BLANK_PATTERN # NameError
+;T;;o;;[I"}The main box and <code>box</code> are different boxes, so monkey patches in main are also invisible in <code>box</code>.;To;	;
+i;I" Builtin classes and modules;To;;[I"OIn the box context, "builtin" classes and modules are classes and modules:;To;;;;[o;;0;[o;;[I"FAccessible without any <code>require</code> calls in user scripts;To;;0;[o;;[I"2Defined before any user program start running;To;;0;[o;;[I"sIncluding classes/modules loaded by <code>prelude.rb</code> (including RubyGems <code>Gem</code>, for example);To;;[I"\Hereafter, "builtin classes and modules" will be referred to as just "builtin classes".;To;	;
+i;I"-Builtin classes referred via box objects;To;;[I"(Builtin classes in a box <code>box</code> can be referred from other boxes. For example, <code>box::String</code> is a valid reference, and <code>String</code> and <code>box::String</code> are identical (<code>String == box::String</code>, <code>String.object_id == box::String.object_id</code>).;To;;[I"¨<code>box::String</code>-like reference returns just a <code>String</code> in the current box, so its definition is <code>String</code> in the box, not in <code>box</code>.;To;;[I"Ö# foo.rb
+class String
+  def self.foo = "foo"
+end
+
+# main.rb
+box = Ruby::Box.new
+box.require('foo')
+
+box::String.foo  # NoMethodError
+;T;;o;	;
+i;I"9Class instance variables, class variables, constants;To;;[I"vBuiltin classes can have different sets of class instance variables, class variables and constants between boxes.;To;;[I"|# foo.rb
+class Array
+  @v = "foo"
+  @@v = "_foo_"
+  V = "FOO"
+end
+
+Array.instance_variable_get(:@v) #=> "foo"
+Array.class_variable_get(:@@v)   #=> "_foo_"
+Array.const_get(:V)              #=> "FOO"
+
+# main.rb
+box = Ruby::Box.new
+box.require('foo')
+
+Array.instance_variable_get(:@v) #=> nil
+Array.class_variable_get(:@@v)   # NameError
+Array.const_get(:V)              # NameError
+;T;;o;	;
+i;I"Global variables;To;;[I"èIn boxes, changes on global variables are also isolated in the boxes. Changes on global variables in a box are visible/applied only in the box.;To;;[I"Ê# foo.rb
+$foo = "foo"
+$VERBOSE = nil
+
+puts "This appears: '#{$foo}'"
+
+# main.rb
+p $foo      #=> nil
+p $VERBOSE  #=> false
+
+box = Ruby::Box.new
+box.require('foo')  # "This appears: 'foo'"
+
+p $foo      #=> nil
+p $VERBOSE  #=> false
+;T;;o;	;
+i;I"Top level constants;To;;[I"Usually, top level constants are defined as constants of <code>Object</code>. In boxes, top level constants are constants of <code>Object</code> in the box. And the box object <code>box</code>'s constants are strictly equal to constants of <code>Object</code>.;To;;[I"∏# foo.rb
+FOO = 100
+
+FOO         #=> 100
+Object::FOO #=> 100
+
+# main.rb
+box = Ruby::Box.new
+box.require('foo')
+
+box::FOO      #=> 100
+
+FOO          # NameError
+Object::FOO  # NameError
+;T;;o;	;
+i;I"Top level methods;To;;[I"XTop level methods are private instance methods of <code>Object</code>, in each box.;To;;[I"√# foo.rb
+def yay = "foo"
+
+class Foo
+  def self.say = yay
+end
+
+Foo.say #=> "foo"
+yay     #=> "foo"
+
+# main.rb
+box = Ruby::Box.new
+box.require('foo')
+
+box::Foo.say  #=> "foo"
+
+yay  # NoMethodError
+;T;;o;;[I"ùThere is no way to expose top level methods in boxes to others.
+(See "Expose top level methods as a method of the box object" in "Discussions" section below);To;	;
+i;I"Ruby Box scopes;To;;[I"RRuby Box works in file scope. One <code>.rb</code> file runs in a single box.;To;;[I"|Once a file is loaded in a box <code>box</code>, all methods/procs defined/created in the file run in <code>box</code>.;To;	;
+i;I"Utility methods;To;;[I"?Several methods are available for trying/testing Ruby Box.;To;;;;[
+o;;0;[o;;[I";<code>Ruby::Box.current</code> returns the current box;To;;0;[o;;[I"p<code>Ruby::Box.enabled?</code> returns true/false to represent <code>RUBY_BOX=1</code> is specified or not;To;;0;[o;;[I"5<code>Ruby::Box.root</code> returns the root box;To;;0;[o;;[I"5<code>Ruby::Box.main</code> returns the main box;To;;0;[o;;[I"Ä<code>Ruby::Box#eval</code> evaluates a Ruby code (String) in the receiver box, just like calling <code>#load</code> with a file;To;	;
+i;I"Implementation details;To;	;
+i	;I"&ISeq inline method/constant cache;To;;[I"áAs described above in "Ruby Box scopes", an ".rb" file runs in a box. So method/constant resolution will be done in a box consistently.;To;;[I"TThat means ISeq inline caches work well even with boxes. Otherwise, it's a bug.;To;	;
+i	;I"%Method call global cache (gccct);To;;[I"á<code>rb_funcall()</code> C function refers to the global cc cache table (gccct), and the cache key is calculated with the current box.;To;;[I"]So, <code>rb_funcall()</code> calls have a performance penalty when Ruby Box is enabled.;To;	;
+i	;I" Current box and loading box;To;;[I"}The current box is the box that the executing code is in. <code>Ruby::Box.current</code> returns the current box object.;To;;[I"«The loading box is an internally managed box to determine the box to load newly required/loaded files. For example, <code>box</code> is the loading box when <code>box.require("foo")</code> is called.;To;	;
+i;I"Discussions;To;	;
+i	;I")More builtin methods written in Ruby;To;;[I"ÕIf Ruby Box is enabled by default, builtin methods can be written in Ruby because it can't be overridden by users' monkey patches. Builtin Ruby methods can be JIT-ed, and it could bring performance reward.;To;	;
+i	;I"6Monkey patching methods called by builtin methods;To;;[I"Builtin methods sometimes call other builtin methods. For example, <code>Hash#map</code> calls <code>Hash#each</code> to retrieve entries to be mapped. Without Ruby Box, Ruby users can overwrite <code>Hash#each</code> and expect the behavior change of <code>Hash#map</code> as a result.;To;;[I"=But with boxes, <code>Hash#map</code> runs in the root box. Ruby users can define <code>Hash#each</code> only in user boxes, so users cannot change <code>Hash#map</code>'s behavior in this case. To achieve it, users should override both<code>Hash#map</code> and <code>Hash#each</code> (or only <code>Hash#map</code>).;To;;[I"It is a breaking change.;To;;[I"jUsers can define methods using <code>Ruby::Box.root.eval(...)</code>, but it's clearly not ideal API.;To;	;
+i	;I"AAssigning values to global variables used by builtin methods;To;;[I"¬Similar to monkey patching methods, global variables assigned in a box is separated from the root box. Methods defined in the root box referring a global variable can't find the re-assigned one.;To;	;
+i	;I"IContext of <code>$LOAD_PATH</code> and <code>$LOADED_FEATURES</code>;To;;[I" Global variables <code>$LOAD_PATH</code> and <code>$LOADED_FEATURES</code> control <code>require</code> method behaviors. So those variables are determined by the loading box instead of the current box.;To;;[I"_This could potentially conflict with the user's expectations. We should find the solution.;To;	;
+i	;I";Expose top level methods as a method of the box object;To;;[I"ñCurrently, top level methods in boxes are not accessible from outside of the box. But there might be a use case to call other box's top level methods.;To;	;
+i	;I"Split root and builtin box;To;;[I"‰Currently, the single "root" box is the source of classext CoW. And also, the "root" box can load additional files after starting main script evaluation by calling methods which contain lines like <code>require "openssl"</code>.;To;;[I"cThat means, user boxes can have different sets of definitions according to when it is created.;To;;[I"≠[root]
+ |
+ |----[main]
+ |
+ |(require "openssl" called in root)
+ |
+ |----[box1] having OpenSSL
+ |
+ |(remove_const called for OpenSSL in root)
+ |
+ |----[box2] without OpenSSL
+;T;0o;;[I"òThis could cause unexpected behavior differences between user boxes. It should NOT be a problem because user scripts which refer to <code>OpenSSL</code> should call <code>require "openssl"</code> by themselves.
+But in the worst case, a script (without <code>require "openssl"</code>) runs well in <code>box1</code>, but doesn't run in <code>box2</code>. This situation looks like a "random failure" to users.;To;;[I"XAn option possible to prevent this situation is to have "root" and "builtin" boxes.;To;;;;[o;;0;[o;;[I"	root;To;;0;[o;;[I"CThe box for the Ruby process bootstrap, then the source of CoW;To;;0;[o;;[I":After starting the main box, no code runs in this box;To;;0;[o;;[I"builtin;To;;0;[o;;[I"BThe box copied from the root box at the same time with "main";To;;0;[o;;[I"@Methods and procs defined in the "root" box run in this box;To;;0;[o;;[I"<Classes and modules required will be loaded in this box;To;;[I"9This design realizes a consistent source of box CoW.;To;	;
+i	;I"mSeparate <code>cc_tbl</code> and <code>callable_m_tbl</code>, <code>cvc_tbl</code> for less classext CoW;To;;[I"ÏThe fields of <code>rb_classext_t</code> contains several cache(-like) data, <code>cc_tbl</code>(callcache table), <code>callable_m_tbl</code>(table of resolved complemented methods) and <code>cvc_tbl</code>(class variable cache table).;To;;[I"aThe classext CoW is triggered when the contents of <code>rb_classext_t</code> are changed, including <code>cc_tbl</code>, <code>callable_m_tbl</code>, and <code>cvc_tbl</code>. But those three tables are changed by just calling methods or referring class variables. So, currently, classext CoW is triggered much more times than the original expectation.;To;;[I"´If we can move those three tables outside of <code>rb_classext_t</code>, the number of copied <code>rb_classext_t</code> will be much less than the current implementation.;T:
+@fileI"
+box.c;T:0@omit_headings_from_table_of_contents_below0;0;0[ [ [ [[I"
+class;T[[:public[ [:protected[ [:private[[I"current;TI"
+box.c;T[I"enabled?;T@ü[I"new;T@ü[I"instance;T[[;[ [;[ [;[[I"	eval;T@ü[I"inspect;T@ü[I"	load;T@ü[I"load_path;T@ü[I"require;T@ü[I"require_relative;T@ü[ [U:RDoc::Context::Section[i 0o;;[ ;0;0[I"
+box.c;TI"	Ruby;TcRDoc::NormalModule

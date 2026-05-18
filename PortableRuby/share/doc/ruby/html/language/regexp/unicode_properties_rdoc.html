@@ -1,0 +1,2582 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>unicode_properties - Documentation for Ruby 4.0</title>
+
+
+  <meta name="keywords" content="ruby,documentation,unicode_properties">
+  <meta
+    name="description"
+    content="unicode_properties: Regexps Based on Unicode Properties The properties shown here are those currently supported in Ruby. Older versions may not support all of these."
+  >
+
+
+
+  
+  <link rel="canonical" href="https://docs.ruby-lang.org/en/master/language/regexp/unicode_properties_rdoc.html">
+
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="unicode_properties - Documentation for Ruby 4.0">
+
+
+
+    <meta property="og:description" content="Regexps Based on Unicode Properties The properties shown here are those currently supported in Ruby. Older versions may not support all of these.">
+
+
+
+
+  
+  <meta property="og:url" content="https://docs.ruby-lang.org/en/master/language/regexp/unicode_properties_rdoc.html">
+
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="unicode_properties - Documentation for Ruby 4.0">
+
+
+
+    <meta name="twitter:description" content="Regexps Based on Unicode Properties The properties shown here are those currently supported in Ruby. Older versions may not support all of these.">
+
+
+
+<script type="text/javascript">
+  var rdoc_rel_prefix = "../../";
+  var index_rel_prefix = "../../";
+</script>
+
+<script
+  src="../../js/theme-toggle.js?v=7.0.3"
+></script>
+
+<script
+  src="../../js/search_navigation.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="../../js/search_data.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="../../js/search_ranker.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="../../js/search_controller.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="../../js/c_highlighter.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="../../js/aliki.js?v=7.0.3"
+  defer
+></script>
+
+<link
+  href="../../css/rdoc.css?v=7.0.3"
+  rel="stylesheet"
+>
+
+
+
+
+<body role="document" class="file has-toc">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <!-- Chevron (right arrow) - used for expand/collapse -->
+  <symbol
+    id="icon-chevron"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <polyline points="9 18 15 12 9 6"></polyline>
+  </symbol>
+
+  <!-- File/Document - Pages section -->
+  <symbol
+    id="icon-file"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path
+      d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+    ></path>
+
+    <polyline points="14 2 14 8 20 8"></polyline>
+  </symbol>
+
+  <!-- Layers/Stack - Classes and Modules section -->
+  <symbol
+    id="icon-layers"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+    <polyline points="2 17 12 22 22 17"></polyline>
+    <polyline points="2 12 12 17 22 12"></polyline>
+  </symbol>
+
+  <!-- Curly braces with C - Class Methods section -->
+  <symbol
+    id="icon-class-methods"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M6 3C3.5 3 2 4.5 2 7v3c0 1.5-1 2-1 2s1 .5 1 2v5c0 2.5 1.5 4 4 4"></path>
+    <path d="M18 3c2.5 0 4 1.5 4 4v3c0 1.5 1 2 1 2s-1 .5-1 2v5c0 2.5-1.5 4-4 4"></path>
+
+    <text
+      x="12"
+      y="17"
+      text-anchor="middle"
+      font-size="13"
+      font-weight="bold"
+      fill="currentColor"
+      stroke="none"
+    >
+      C
+    </text>
+  </symbol>
+
+  <!-- Curly braces with I - Instance Methods section -->
+  <symbol
+    id="icon-instance-methods"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M6 3C3.5 3 2 4.5 2 7v3c0 1.5-1 2-1 2s1 .5 1 2v5c0 2.5 1.5 4 4 4"></path>
+    <path d="M18 3c2.5 0 4 1.5 4 4v3c0 1.5 1 2 1 2s-1 .5-1 2v5c0 2.5-1.5 4-4 4"></path>
+
+    <text
+      x="12"
+      y="17"
+      text-anchor="middle"
+      font-size="13"
+      font-weight="bold"
+      fill="currentColor"
+      stroke="none"
+    >
+      I
+    </text>
+  </symbol>
+
+  <!-- Double chevrons up - Ancestors section -->
+  <symbol
+    id="icon-ancestors"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <polyline points="17 11 12 6 7 11"></polyline>
+    <polyline points="17 18 12 13 7 18"></polyline>
+  </symbol>
+
+  <!-- User with plus - Included Modules section -->
+  <symbol
+    id="icon-includes"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="8.5" cy="7" r="4"></circle>
+
+    <line
+      x1="20"
+      y1="8"
+      x2="20"
+      y2="14"
+    ></line>
+
+    <line
+      x1="23"
+      y1="11"
+      x2="17"
+      y2="11"
+    ></line>
+  </symbol>
+
+  <!-- User with check - Extended Modules section -->
+  <symbol
+    id="icon-extends"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="8.5" cy="7" r="4"></circle>
+    <polyline points="17 11 19 13 23 9"></polyline>
+  </symbol>
+
+  <!-- List - Sections section -->
+  <symbol
+    id="icon-list"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <line
+      x1="8"
+      y1="6"
+      x2="21"
+      y2="6"
+    ></line>
+
+    <line
+      x1="8"
+      y1="12"
+      x2="21"
+      y2="12"
+    ></line>
+
+    <line
+      x1="8"
+      y1="18"
+      x2="21"
+      y2="18"
+    ></line>
+
+    <line
+      x1="3"
+      y1="6"
+      x2="3.01"
+      y2="6"
+    ></line>
+
+    <line
+      x1="3"
+      y1="12"
+      x2="3.01"
+      y2="12"
+    ></line>
+
+    <line
+      x1="3"
+      y1="18"
+      x2="3.01"
+      y2="18"
+    ></line>
+  </symbol>
+</svg>
+
+<header class="top-navbar">
+  <a href="../../index.html" class="navbar-brand">
+    Documentation for Ruby 4.0
+  </a>
+
+  <!-- Desktop search bar -->
+  <div class="navbar-search navbar-search-desktop" role="search">
+    <form action="#" method="get" accept-charset="utf-8">
+      <input id="search-field" role="combobox" aria-label="Search"
+             aria-autocomplete="list" aria-controls="search-results-desktop"
+             type="text" name="search" placeholder="Search (/) for a class, method..."
+             spellcheck="false" autocomplete="off"
+             title="Type to search, Up and Down to navigate, Enter to load">
+      <ul id="search-results-desktop" aria-label="Search Results"
+          aria-busy="false" aria-expanded="false"
+          aria-atomic="false" class="initially-hidden search-results"></ul>
+    </form>
+  </div>
+
+  <!-- Mobile search icon button -->
+  <button id="search-toggle" class="navbar-search-mobile" aria-label="Open search" type="button">
+    <span aria-hidden="true">🔍</span>
+  </button>
+
+  <!-- Theme toggle button -->
+  <button id="theme-toggle" class="theme-toggle" aria-label="Switch to dark mode" type="button">
+    <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
+  </button>
+</header>
+
+<!-- Search Modal (Mobile) -->
+<div id="search-modal" class="search-modal" hidden aria-modal="true" role="dialog" aria-label="Search">
+  <div class="search-modal-backdrop"></div>
+  <div class="search-modal-content">
+    <div class="search-modal-header">
+      <form class="search-modal-form" action="#" method="get" accept-charset="utf-8">
+        <span class="search-modal-icon" aria-hidden="true">🔍</span>
+        <input id="search-field-mobile" role="combobox" aria-label="Search"
+               aria-autocomplete="list" aria-controls="search-results-mobile"
+               type="text" name="search" placeholder="Search documentation"
+               spellcheck="false" autocomplete="off">
+        <button type="button" class="search-modal-close" aria-label="Close search" id="search-modal-close">
+          <span aria-hidden="true">esc</span>
+        </button>
+      </form>
+    </div>
+    <div class="search-modal-body">
+      <ul id="search-results-mobile" aria-label="Search Results"
+          aria-busy="false" aria-expanded="false"
+          aria-atomic="false" class="search-results search-modal-results initially-hidden"></ul>
+      <div class="search-modal-empty">
+        <p>No recent searches</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="navigation-toggle" role="button" tabindex="0" aria-label="Toggle sidebar" aria-expanded="true" aria-controls="navigation">
+  <span aria-hidden="true">&#9776;</span>
+</div>
+
+
+<nav id="navigation" role="navigation" hidden>
+  
+
+
+
+
+
+
+  <div id="fileindex-section" class="nav-section">
+    <details class="nav-section-collapsible" open>
+      <summary class="nav-section-header">
+        <span class="nav-section-icon">
+          <svg>
+            <use href="#icon-file"></use>
+          </svg>
+        </span>
+
+        <span class="nav-section-title">Pages</span>
+
+        <span class="nav-section-chevron">
+          <svg>
+            <use href="#icon-chevron"></use>
+          </svg>
+        </span>
+      </summary>
+
+      <ul class="nav-list">
+
+
+
+
+
+
+            <li>
+              <a href="../../COPYING.html">
+                COPYING
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="../../COPYING_ja.html">
+                COPYING.ja
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="../../LEGAL.html">
+                LEGAL
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  <a href="../../NEWS_md.html">NEWS</a>
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../../NEWS/NEWS-1_8_7.html">
+                      NEWS-1.8.7
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-1_9_1.html">
+                      NEWS-1.9.1
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-1_9_2.html">
+                      NEWS-1.9.2
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-1_9_3.html">
+                      NEWS-1.9.3
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-2_0_0.html">
+                      NEWS-2.0.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-2_1_0.html">
+                      NEWS-2.1.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-2_2_0.html">
+                      NEWS-2.2.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-2_3_0.html">
+                      NEWS-2.3.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-2_4_0.html">
+                      NEWS-2.4.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-2_5_0.html">
+                      NEWS-2.5.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-2_6_0.html">
+                      NEWS-2.6.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-2_7_0.html">
+                      NEWS-2.7.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-3_0_0_md.html">
+                      NEWS-3.0.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-3_1_0_md.html">
+                      NEWS-3.1.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-3_2_0_md.html">
+                      NEWS-3.2.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-3_3_0_md.html">
+                      NEWS-3.3.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../NEWS/NEWS-3_4_0_md.html">
+                      NEWS-3.4.0
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="../../README_ja_md.html">
+                README.ja
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="../../README_md.html">
+                README
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  contributing
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../../contributing/bug_triaging_rdoc.html">
+                      bug_triaging
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/building_ruby_md.html">
+                      building_ruby
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/concurrency_guide_md.html">
+                      concurrency_guide
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/contributing_md.html">
+                      contributing
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/documentation_guide_md.html">
+                      documentation_guide
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/dtrace_probes_rdoc.html">
+                      dtrace_probes
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/glossary_md.html">
+                      glossary
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/making_changes_to_ruby_md.html">
+                      making_changes_to_ruby
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/making_changes_to_stdlibs_md.html">
+                      making_changes_to_stdlibs
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/memory_view_md.html">
+                      memory_view
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/reporting_issues_md.html">
+                      reporting_issues
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/testing_ruby_md.html">
+                      testing_ruby
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../contributing/vm_stack_and_frames_md.html">
+                      vm_stack_and_frames
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  <a href="../../distribution/distribution_md.html">distribution</a>
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../../distribution/windows_md.html">
+                      windows
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="../../extension_ja_rdoc.html">
+                extension.ja
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="../../extension_rdoc.html">
+                extension
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="../../index_md.html">
+                index
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  jit
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../../jit/yjit_md.html">
+                      yjit
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../jit/zjit_md.html">
+                      zjit
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+
+          <li>
+            <details  open>
+              <summary>
+                
+                  language
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../../language/box_md.html">
+                      box
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/bsearch_rdoc.html">
+                      bsearch
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/calendars_rdoc.html">
+                      calendars
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/case_mapping_rdoc.html">
+                      case_mapping
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/character_selectors_rdoc.html">
+                      character_selectors
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/dig_methods_rdoc.html">
+                      dig_methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/encodings_rdoc.html">
+                      encodings
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/exceptions_md.html">
+                      exceptions
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/fiber_md.html">
+                      fiber
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/format_specifications_rdoc.html">
+                      format_specifications
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/globals_md.html">
+                      globals
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/hash_inclusion_rdoc.html">
+                      hash_inclusion
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/implicit_conversion_rdoc.html">
+                      implicit_conversion
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/marshal_rdoc.html">
+                      marshal
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/option_dump_md.html">
+                      option_dump
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/options_md.html">
+                      options
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/packed_data_rdoc.html">
+                      packed_data
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/ractor_md.html">
+                      ractor
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/regexp/methods_rdoc.html">
+                      methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/regexp/unicode_properties_rdoc.html">
+                      unicode_properties
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/signals_rdoc.html">
+                      signals
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../language/strftime_formatting_rdoc.html">
+                      strftime_formatting
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="../../maintainers_md.html">
+                maintainers
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  optparse
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../../optparse/argument_converters_rdoc.html">
+                      argument_converters
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../optparse/creates_option_rdoc.html">
+                      creates_option
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../optparse/option_params_rdoc.html">
+                      option_params
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../optparse/tutorial_rdoc.html">
+                      tutorial
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  security
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../../security/command_injection_rdoc.html">
+                      command_injection
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../security/security_rdoc.html">
+                      security
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="../../standard_library_md.html">
+                standard_library
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  <a href="../../syntax_rdoc.html">syntax</a>
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../../syntax/assignment_rdoc.html">
+                      assignment
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/calling_methods_rdoc.html">
+                      calling_methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/comments_rdoc.html">
+                      comments
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/control_expressions_rdoc.html">
+                      control_expressions
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/exceptions_rdoc.html">
+                      exceptions
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/keywords_rdoc.html">
+                      keywords
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/layout_rdoc.html">
+                      layout
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/literals_rdoc.html">
+                      literals
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/methods_rdoc.html">
+                      methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/miscellaneous_rdoc.html">
+                      miscellaneous
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/modules_and_classes_rdoc.html">
+                      modules_and_classes
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/operators_rdoc.html">
+                      operators
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/pattern_matching_rdoc.html">
+                      pattern_matching
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/precedence_rdoc.html">
+                      precedence
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../../syntax/refinements_rdoc.html">
+                      refinements
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+      </ul>
+    </details>
+  </div>
+
+
+  <div id="classindex-section" class="nav-section">
+  <details class="nav-section-collapsible" open>
+    <summary class="nav-section-header">
+      <span class="nav-section-icon">
+        <svg><use href="#icon-layers"></use></svg>
+      </span>
+      <span class="nav-section-title">Classes and Modules</span>
+      <span class="nav-section-chevron">
+        <svg><use href="#icon-chevron"></use></svg>
+      </span>
+    </summary>
+
+    <ul class="link-list nav-list"><li><code><a href="../../ARGF.html">ARGF</a></code></li><li><code><a href="../../Addrinfo.html">Addrinfo</a></code></li><li><code><a href="../../ArgumentError.html">ArgumentError</a></code></li><li><code><a href="../../Array.html">Array</a></code></li><li><code><a href="../../BasicObject.html">BasicObject</a></code></li><li><code><a href="../../BasicSocket.html">BasicSocket</a></code></li><li><code><a href="../../BigDecimal.html">BigDecimal</a></code></li><li><code><a href="../../Binding.html">Binding</a></code></li><li><code><a href="../../Bundler.html">Bundler</a></code></li><li><details><summary><code><a href="../../CGI.html">CGI</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../CGI/Escape.html">Escape</a></code></li><li><code><a href="../../CGI/EscapeExt.html">EscapeExt</a></code></li></ul></details></li><li><code><a href="../../Class.html">Class</a></code></li><li><code><a href="../../ClosedQueueError.html">ClosedQueueError</a></code></li><li><code><a href="../../Comparable.html">Comparable</a></code></li><li><code><a href="../../Complex.html">Complex</a></code></li><li><code><a href="../../Continuation.html">Continuation</a></code></li><li><details><summary><code><a href="../../CoreExtensions.html">CoreExtensions</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../CoreExtensions/TCPSocketExt.html">TCPSocketExt</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../CoreExtensions/TCPSocketExt/Initializer.html">Initializer</a></code></li></ul></details></li></ul></details></li><li><code><a href="../../Coverage.html">Coverage</a></code></li><li><code><a href="../../Data.html">Data</a></code></li><li><details><summary><code><a href="../../Date.html">Date</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Date/Error.html">Error</a></code></li></ul></details></li><li><code><a href="../../DateTime.html">DateTime</a></code></li><li><code><a href="../../Delegator.html">Delegator</a></code></li><li><details><summary><code><a href="../../DidYouMean.html">DidYouMean</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../DidYouMean/ClassNameChecker.html">ClassNameChecker</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../DidYouMean/ClassNameChecker/ClassName.html">ClassName</a></code></li></ul></details></li><li><code><a href="../../DidYouMean/Correctable.html">Correctable</a></code></li><li><code><a href="../../DidYouMean/Formatter.html">Formatter</a></code></li><li><code><a href="../../DidYouMean/Jaro.html">Jaro</a></code></li><li><code><a href="../../DidYouMean/JaroWinkler.html">JaroWinkler</a></code></li><li><code><a href="../../DidYouMean/KeyErrorChecker.html">KeyErrorChecker</a></code></li><li><code><a href="../../DidYouMean/MethodNameChecker.html">MethodNameChecker</a></code></li><li><code><a href="../../DidYouMean/NameErrorCheckers.html">NameErrorCheckers</a></code></li><li><code><a href="../../DidYouMean/NullChecker.html">NullChecker</a></code></li><li><code><a href="../../DidYouMean/PatternKeyNameChecker.html">PatternKeyNameChecker</a></code></li><li><code><a href="../../DidYouMean/Formatter.html">PlainFormatter</a></code></li><li><code><a href="../../DidYouMean/RequirePathChecker.html">RequirePathChecker</a></code></li><li><code><a href="../../DidYouMean/SpellChecker.html">SpellChecker</a></code></li><li><code><a href="../../DidYouMean/TreeSpellChecker.html">TreeSpellChecker</a></code></li><li><code><a href="../../DidYouMean/VariableNameChecker.html">VariableNameChecker</a></code></li><li><code><a href="../../DidYouMean/Formatter.html">VerboseFormatter</a></code></li></ul></details></li><li><details><summary><code><a href="../../Digest.html">Digest</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Digest/Base.html">Base</a></code></li><li><code><a href="../../Digest/Class.html">Class</a></code></li><li><code><a href="../../Digest/Instance.html">Instance</a></code></li><li><code><a href="../../Digest/MD5.html">MD5</a></code></li><li><code><a href="../../Digest/RMD160.html">RMD160</a></code></li><li><code><a href="../../Digest/SHA1.html">SHA1</a></code></li><li><code><a href="../../Digest/SHA2.html">SHA2</a></code></li><li><code><a href="../../Digest/SHA256.html">SHA256</a></code></li><li><code><a href="../../Digest/SHA384.html">SHA384</a></code></li><li><code><a href="../../Digest/SHA512.html">SHA512</a></code></li></ul></details></li><li><code><a href="../../Dir.html">Dir</a></code></li><li><code><a href="../../ENV.html">ENV</a></code></li><li><code><a href="../../EOFError.html">EOFError</a></code></li><li><details><summary><code><a href="../../ERB.html">ERB</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../ERB/DefMethod.html">DefMethod</a></code></li><li><code><a href="../../ERB/Escape.html">Escape</a></code></li><li><code><a href="../../ERB/Util.html">Util</a></code></li></ul></details></li><li><details><summary><code><a href="../../Encoding.html">Encoding</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Encoding/CompatibilityError.html">CompatibilityError</a></code></li><li><code><a href="../../Encoding/Converter.html">Converter</a></code></li><li><code><a href="../../Encoding/ConverterNotFoundError.html">ConverterNotFoundError</a></code></li><li><code><a href="../../Encoding/InvalidByteSequenceError.html">InvalidByteSequenceError</a></code></li><li><code><a href="../../Encoding/UndefinedConversionError.html">UndefinedConversionError</a></code></li></ul></details></li><li><code><a href="../../EncodingError.html">EncodingError</a></code></li><li><code><a href="../../English.html">English</a></code></li><li><code><a href="../../Enumerable.html">Enumerable</a></code></li><li><details><summary><code><a href="../../Enumerator.html">Enumerator</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Enumerator/ArithmeticSequence.html">ArithmeticSequence</a></code></li><li><code><a href="../../Enumerator/Chain.html">Chain</a></code></li><li><code><a href="../../Enumerator/Generator.html">Generator</a></code></li><li><code><a href="../../Enumerator/Lazy.html">Lazy</a></code></li><li><code><a href="../../Enumerator/Producer.html">Producer</a></code></li><li><code><a href="../../Enumerator/Product.html">Product</a></code></li><li><code><a href="../../Enumerator/Yielder.html">Yielder</a></code></li></ul></details></li><li><code><a href="../../Errno.html">Errno</a></code></li><li><details><summary><code><a href="../../ErrorHighlight.html">ErrorHighlight</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../ErrorHighlight/CoreExt.html">CoreExt</a></code></li><li><code><a href="../../ErrorHighlight/DefaultFormatter.html">DefaultFormatter</a></code></li><li><details><summary><code><a href="../../ErrorHighlight/Spotter.html">Spotter</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../ErrorHighlight/Spotter/NonAscii.html">NonAscii</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="../../Etc.html">Etc</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Etc/Group.html">Group</a></code></li><li><code><a href="../../Etc/Passwd.html">Passwd</a></code></li></ul></details></li><li><code><a href="../../Exception.html">Exception</a></code></li><li><code><a href="../../FalseClass.html">FalseClass</a></code></li><li><code><a href="../../Fcntl.html">Fcntl</a></code></li><li><details><summary><code><a href="../../Fiber.html">Fiber</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Fiber/Scheduler.html">Scheduler</a></code></li></ul></details></li><li><code><a href="../../FiberError.html">FiberError</a></code></li><li><details><summary><code><a href="../../File.html">File</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../File/Constants.html">Constants</a></code></li><li><code><a href="../../File/Stat.html">Stat</a></code></li></ul></details></li><li><code><a href="../../FileTest.html">FileTest</a></code></li><li><details><summary><code><a href="../../FileUtils.html">FileUtils</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../FileUtils/DryRun.html">DryRun</a></code></li><li><code><a href="../../FileUtils/NoWrite.html">NoWrite</a></code></li><li><code><a href="../../FileUtils/Verbose.html">Verbose</a></code></li></ul></details></li><li><code><a href="../../Find.html">Find</a></code></li><li><code><a href="../../Float.html">Float</a></code></li><li><code><a href="../../FloatDomainError.html">FloatDomainError</a></code></li><li><code><a href="../../Forwardable.html">Forwardable</a></code></li><li><code><a href="../../FrozenError.html">FrozenError</a></code></li><li><code><a href="../../GC.html">GC</a></code></li><li><details><summary><code>Gem</code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/AvailableSet.html">AvailableSet</a></code></li><li><code><a href="../../Gem/BasicSpecification.html">BasicSpecification</a></code></li><li><code><a href="../../Gem/BundlerVersionFinder.html">BundlerVersionFinder</a></code></li><li><code><a href="../../Gem/CIDetector.html">CIDetector</a></code></li><li><code><a href="../../Gem/Command.html">Command</a></code></li><li><code><a href="../../Gem/CommandLineError.html">CommandLineError</a></code></li><li><code><a href="../../Gem/CommandManager.html">CommandManager</a></code></li><li><details><summary><code><a href="../../Gem/Commands.html">Commands</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Commands/BuildCommand.html">BuildCommand</a></code></li><li><code><a href="../../Gem/Commands/CertCommand.html">CertCommand</a></code></li><li><code><a href="../../Gem/Commands/CheckCommand.html">CheckCommand</a></code></li><li><code><a href="../../Gem/Commands/CleanupCommand.html">CleanupCommand</a></code></li><li><code><a href="../../Gem/Commands/ContentsCommand.html">ContentsCommand</a></code></li><li><code><a href="../../Gem/Commands/DependencyCommand.html">DependencyCommand</a></code></li><li><code><a href="../../Gem/Commands/EnvironmentCommand.html">EnvironmentCommand</a></code></li><li><code><a href="../../Gem/Commands/ExecCommand.html">ExecCommand</a></code></li><li><code><a href="../../Gem/Commands/FetchCommand.html">FetchCommand</a></code></li><li><details><summary><code><a href="../../Gem/Commands/GenerateIndexCommand.html">GenerateIndexCommand</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Commands/GenerateIndexCommand/RubygemsTrampoline.html">RubygemsTrampoline</a></code></li></ul></details></li><li><code><a href="../../Gem/Commands/HelpCommand.html">HelpCommand</a></code></li><li><code><a href="../../Gem/Commands/InfoCommand.html">InfoCommand</a></code></li><li><code><a href="../../Gem/Commands/InstallCommand.html">InstallCommand</a></code></li><li><code><a href="../../Gem/Commands/ListCommand.html">ListCommand</a></code></li><li><code><a href="../../Gem/Commands/LockCommand.html">LockCommand</a></code></li><li><code><a href="../../Gem/Commands/MirrorCommand.html">MirrorCommand</a></code></li><li><code><a href="../../Gem/Commands/OpenCommand.html">OpenCommand</a></code></li><li><code><a href="../../Gem/Commands/OutdatedCommand.html">OutdatedCommand</a></code></li><li><code><a href="../../Gem/Commands/OwnerCommand.html">OwnerCommand</a></code></li><li><code><a href="../../Gem/Commands/PristineCommand.html">PristineCommand</a></code></li><li><code><a href="../../Gem/Commands/PushCommand.html">PushCommand</a></code></li><li><code><a href="../../Gem/Commands/RdocCommand.html">RdocCommand</a></code></li><li><code><a href="../../Gem/Commands/RebuildCommand.html">RebuildCommand</a></code></li><li><code><a href="../../Gem/Commands/SearchCommand.html">SearchCommand</a></code></li><li><code><a href="../../Gem/Commands/ServerCommand.html">ServerCommand</a></code></li><li><details><summary><code><a href="../../Gem/Commands/SetupCommand.html">SetupCommand</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Commands/SetupCommand/MakeDirs.html">MakeDirs</a></code></li></ul></details></li><li><code><a href="../../Gem/Commands/SigninCommand.html">SigninCommand</a></code></li><li><code><a href="../../Gem/Commands/SignoutCommand.html">SignoutCommand</a></code></li><li><code><a href="../../Gem/Commands/SourcesCommand.html">SourcesCommand</a></code></li><li><code><a href="../../Gem/Commands/SpecificationCommand.html">SpecificationCommand</a></code></li><li><code><a href="../../Gem/Commands/StaleCommand.html">StaleCommand</a></code></li><li><code><a href="../../Gem/Commands/UninstallCommand.html">UninstallCommand</a></code></li><li><code><a href="../../Gem/Commands/UnpackCommand.html">UnpackCommand</a></code></li><li><code><a href="../../Gem/Commands/UpdateCommand.html">UpdateCommand</a></code></li><li><code><a href="../../Gem/Commands/WhichCommand.html">WhichCommand</a></code></li><li><code><a href="../../Gem/Commands/YankCommand.html">YankCommand</a></code></li></ul></details></li><li><code><a href="../../Gem/ConfigFile.html">ConfigFile</a></code></li><li><code><a href="../../Gem/ConflictError.html">ConflictError</a></code></li><li><code><a href="../../Gem/ConsoleUI.html">ConsoleUI</a></code></li><li><code><a href="../../Gem/DefaultUserInteraction.html">DefaultUserInteraction</a></code></li><li><code><a href="../../Gem/Dependency.html">Dependency</a></code></li><li><code><a href="../../Gem/DependencyError.html">DependencyError</a></code></li><li><code><a href="../../Gem/DependencyInstaller.html">DependencyInstaller</a></code></li><li><code><a href="../../Gem/DependencyList.html">DependencyList</a></code></li><li><code><a href="../../Gem/DependencyRemovalException.html">DependencyRemovalException</a></code></li><li><code><a href="../../Gem/DependencyResolutionError.html">DependencyResolutionError</a></code></li><li><code><a href="../../Gem/Deprecate.html">Deprecate</a></code></li><li><code><a href="../../Gem/Doctor.html">Doctor</a></code></li><li><code><a href="../../Gem/DocumentError.html">DocumentError</a></code></li><li><code><a href="../../Gem/EndOfYAMLException.html">EndOfYAMLException</a></code></li><li><code><a href="../../Gem/ErrorReason.html">ErrorReason</a></code></li><li><code><a href="../../Gem/Exception.html">Exception</a></code></li><li><details><summary><code><a href="../../Gem/Ext.html">Ext</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Ext/BuildError.html">BuildError</a></code></li><li><details><summary><code><a href="../../Gem/Ext/Builder.html">Builder</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Ext/Builder/NoMakefileError.html">NoMakefileError</a></code></li></ul></details></li><li><details><summary><code><a href="../../Gem/Ext/CargoBuilder.html">CargoBuilder</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Ext/CargoBuilder/DylibNotFoundError.html">DylibNotFoundError</a></code></li><li><code><a href="../../Gem/Ext/CargoBuilder/LinkFlagConverter.html">LinkFlagConverter</a></code></li></ul></details></li><li><code><a href="../../Gem/Ext/CmakeBuilder.html">CmakeBuilder</a></code></li><li><code><a href="../../Gem/Ext/ConfigureBuilder.html">ConfigureBuilder</a></code></li><li><code><a href="../../Gem/Ext/ExtConfBuilder.html">ExtConfBuilder</a></code></li><li><code><a href="../../Gem/Ext/RakeBuilder.html">RakeBuilder</a></code></li></ul></details></li><li><code><a href="../../Gem/FilePermissionError.html">FilePermissionError</a></code></li><li><code><a href="../../Gem/FormatException.html">FormatException</a></code></li><li><code><a href="../../Gem/GemNotFoundException.html">GemNotFoundException</a></code></li><li><code><a href="../../Gem/GemNotInHomeException.html">GemNotInHomeException</a></code></li><li><code><a href="../../Gem/GemRunner.html">GemRunner</a></code></li><li><details><summary><code><a href="../../Gem/GemcutterUtilities.html">GemcutterUtilities</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../Gem/GemcutterUtilities/WebauthnListener.html">WebauthnListener</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/GemcutterUtilities/WebauthnListener/BadRequestResponse.html">BadRequestResponse</a></code></li><li><code><a href="../../Gem/GemcutterUtilities/WebauthnListener/MethodNotAllowedResponse.html">MethodNotAllowedResponse</a></code></li><li><code><a href="../../Gem/GemcutterUtilities/WebauthnListener/NoContentResponse.html">NoContentResponse</a></code></li><li><code><a href="../../Gem/GemcutterUtilities/WebauthnListener/NotFoundResponse.html">NotFoundResponse</a></code></li><li><code><a href="../../Gem/GemcutterUtilities/WebauthnListener/OkResponse.html">OkResponse</a></code></li><li><code><a href="../../Gem/GemcutterUtilities/WebauthnListener/Response.html">Response</a></code></li><li><code><a href="../../Gem/GemcutterUtilities/WebauthnListener/SocketResponder.html">SocketResponder</a></code></li></ul></details></li><li><code><a href="../../Gem/GemcutterUtilities/WebauthnPoller.html">WebauthnPoller</a></code></li></ul></details></li><li><code><a href="../../Gem/GemspecHelpers.html">GemspecHelpers</a></code></li><li><code><a href="../../Gem/ImpossibleDependenciesError.html">ImpossibleDependenciesError</a></code></li><li><code><a href="../../Gem/InstallError.html">InstallError</a></code></li><li><code><a href="../../Gem/InstallUpdateOptions.html">InstallUpdateOptions</a></code></li><li><details><summary><code><a href="../../Gem/Installer.html">Installer</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Installer/FakePackage.html">FakePackage</a></code></li></ul></details></li><li><code><a href="../../Gem/InstallerUninstallerUtils.html">InstallerUninstallerUtils</a></code></li><li><code><a href="../../Gem/InvalidSpecificationException.html">InvalidSpecificationException</a></code></li><li><code><a href="../../Gem/Licenses.html">Licenses</a></code></li><li><code><a href="../../Gem/LoadError.html">LoadError</a></code></li><li><code><a href="../../Gem/LocalRemoteOptions.html">LocalRemoteOptions</a></code></li><li><code><a href="../../Gem/MissingSpecError.html">MissingSpecError</a></code></li><li><code><a href="../../Gem/MissingSpecVersionError.html">MissingSpecVersionError</a></code></li><li><code><a href="../../Gem/NameTuple.html">NameTuple</a></code></li><li><code><a href="../../Gem/NoAliasYAMLTree.html">NoAliasYAMLTree</a></code></li><li><code><a href="../../Gem/OperationNotSupportedError.html">OperationNotSupportedError</a></code></li><li><details><summary><code><a href="../../Gem/Package.html">Package</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Package/DigestIO.html">DigestIO</a></code></li><li><code><a href="../../Gem/Package/Error.html">Error</a></code></li><li><code><a href="../../Gem/Package/FormatError.html">FormatError</a></code></li><li><code><a href="../../Gem/Package/NonSeekableIO.html">NonSeekableIO</a></code></li><li><code><a href="../../Gem/Package/Old.html">Old</a></code></li><li><code><a href="../../Gem/Package/PathError.html">PathError</a></code></li><li><code><a href="../../Gem/Package/SymlinkError.html">SymlinkError</a></code></li><li><code><a href="../../Gem/Package/TarHeader.html">TarHeader</a></code></li><li><code><a href="../../Gem/Package/TarInvalidError.html">TarInvalidError</a></code></li><li><details><summary><code><a href="../../Gem/Package/TarReader.html">TarReader</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Package/TarReader/Entry.html">Entry</a></code></li></ul></details></li><li><details><summary><code><a href="../../Gem/Package/TarWriter.html">TarWriter</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Package/TarWriter/BoundedStream.html">BoundedStream</a></code></li><li><code><a href="../../Gem/Package/TarWriter/FileOverflow.html">FileOverflow</a></code></li><li><code><a href="../../Gem/Package/TarWriter/RestrictedStream.html">RestrictedStream</a></code></li></ul></details></li><li><code><a href="../../Gem/Package/TooLongFileName.html">TooLongFileName</a></code></li></ul></details></li><li><code><a href="../../Gem/PackageTask.html">PackageTask</a></code></li><li><code><a href="../../Gem/PathSupport.html">PathSupport</a></code></li><li><code><a href="../../Gem/Platform.html">Platform</a></code></li><li><code><a href="../../Gem/PlatformMismatch.html">PlatformMismatch</a></code></li><li><code><a href="../../Gem/QueryUtils.html">QueryUtils</a></code></li><li><code><a href="../../Gem/RemoteError.html">RemoteError</a></code></li><li><details><summary><code><a href="../../Gem/RemoteFetcher.html">RemoteFetcher</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/RemoteFetcher/FetchError.html">FetchError</a></code></li><li><code><a href="../../Gem/RemoteFetcher/UnknownHostError.html">UnknownHostError</a></code></li></ul></details></li><li><code><a href="../../Gem/RemoteInstallationCancelled.html">RemoteInstallationCancelled</a></code></li><li><code><a href="../../Gem/RemoteInstallationSkipped.html">RemoteInstallationSkipped</a></code></li><li><code><a href="../../Gem/RemoteSourceException.html">RemoteSourceException</a></code></li><li><details><summary><code><a href="../../Gem/RequestSet.html">RequestSet</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/RequestSet/GemDependencyAPI.html">GemDependencyAPI</a></code></li><li><details><summary><code><a href="../../Gem/RequestSet/Lockfile.html">Lockfile</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/RequestSet/Lockfile/ParseError.html">ParseError</a></code></li><li><code><a href="../../Gem/RequestSet/Lockfile/Parser.html">Parser</a></code></li><li><code><a href="../../Gem/RequestSet/Lockfile/Tokenizer.html">Tokenizer</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="../../Gem/Requirement.html">Requirement</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Requirement/BadRequirementError.html">BadRequirementError</a></code></li></ul></details></li><li><details><summary><code><a href="../../Gem/Resolver.html">Resolver</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../Gem/Resolver/APISet.html">APISet</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Resolver/APISet/GemParser.html">GemParser</a></code></li></ul></details></li><li><code><a href="../../Gem/Resolver/APISpecification.html">APISpecification</a></code></li><li><code><a href="../../Gem/Resolver/ActivationRequest.html">ActivationRequest</a></code></li><li><code><a href="../../Gem/Resolver/BestSet.html">BestSet</a></code></li><li><code><a href="../../Gem/Resolver/ComposedSet.html">ComposedSet</a></code></li><li><code><a href="../../Gem/Resolver/Conflict.html">Conflict</a></code></li><li><code><a href="../../Gem/Resolver/CurrentSet.html">CurrentSet</a></code></li><li><code><a href="../../Gem/Resolver/DependencyRequest.html">DependencyRequest</a></code></li><li><code><a href="../../Gem/Resolver/GitSet.html">GitSet</a></code></li><li><code><a href="../../Gem/Resolver/GitSpecification.html">GitSpecification</a></code></li><li><code><a href="../../Gem/Resolver/IndexSet.html">IndexSet</a></code></li><li><code><a href="../../Gem/Resolver/IndexSpecification.html">IndexSpecification</a></code></li><li><code><a href="../../Gem/Resolver/InstalledSpecification.html">InstalledSpecification</a></code></li><li><code><a href="../../Gem/Resolver/InstallerSet.html">InstallerSet</a></code></li><li><code><a href="../../Gem/Resolver/LocalSpecification.html">LocalSpecification</a></code></li><li><code><a href="../../Gem/Resolver/LockSet.html">LockSet</a></code></li><li><code><a href="../../Gem/Resolver/LockSpecification.html">LockSpecification</a></code></li><li><code><a href="../../Gem/Resolver/RequirementList.html">RequirementList</a></code></li><li><code><a href="../../Gem/Resolver/Set.html">Set</a></code></li><li><code><a href="../../Gem/Resolver/SourceSet.html">SourceSet</a></code></li><li><code><a href="../../Gem/Resolver/SpecSpecification.html">SpecSpecification</a></code></li><li><code><a href="../../Gem/Resolver/Specification.html">Specification</a></code></li><li><code><a href="../../Gem/Resolver/Stats.html">Stats</a></code></li><li><code><a href="../../Gem/Resolver/VendorSet.html">VendorSet</a></code></li><li><code><a href="../../Gem/Resolver/VendorSpecification.html">VendorSpecification</a></code></li></ul></details></li><li><code><a href="../../Gem/RubyVersionMismatch.html">RubyVersionMismatch</a></code></li><li><code><a href="../../Gem/RuntimeRequirementNotMetError.html">RuntimeRequirementNotMetError</a></code></li><li><details><summary><code><a href="../../Gem/S3URISigner.html">S3URISigner</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/S3URISigner/ConfigurationError.html">ConfigurationError</a></code></li><li><code><a href="../../Gem/S3URISigner/InstanceProfileError.html">InstanceProfileError</a></code></li></ul></details></li><li><details><summary><code><a href="../../Gem/SafeMarshal.html">SafeMarshal</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../Gem/SafeMarshal/Elements.html">Elements</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/SafeMarshal/Elements/Array.html">Array</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/Bignum.html">Bignum</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/Element.html">Element</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/False.html">False</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/Float.html">Float</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/Hash.html">Hash</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/HashWithDefaultValue.html">HashWithDefaultValue</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/Integer.html">Integer</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/Nil.html">Nil</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/Object.html">Object</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/ObjectLink.html">ObjectLink</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/String.html">String</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/Symbol.html">Symbol</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/SymbolLink.html">SymbolLink</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/True.html">True</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/UserClass.html">UserClass</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/UserDefined.html">UserDefined</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/UserMarshal.html">UserMarshal</a></code></li><li><code><a href="../../Gem/SafeMarshal/Elements/WithIvars.html">WithIvars</a></code></li></ul></details></li><li><details><summary><code><a href="../../Gem/SafeMarshal/Reader.html">Reader</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/SafeMarshal/Reader/DataTooShortError.html">DataTooShortError</a></code></li><li><code><a href="../../Gem/SafeMarshal/Reader/EOFError.html">EOFError</a></code></li><li><code><a href="../../Gem/SafeMarshal/Reader/Error.html">Error</a></code></li><li><code><a href="../../Gem/SafeMarshal/Reader/NegativeLengthError.html">NegativeLengthError</a></code></li><li><code><a href="../../Gem/SafeMarshal/Reader/NotImplementedError.html">NotImplementedError</a></code></li><li><code><a href="../../Gem/SafeMarshal/Reader/UnconsumedBytesError.html">UnconsumedBytesError</a></code></li><li><code><a href="../../Gem/SafeMarshal/Reader/UnsupportedVersionError.html">UnsupportedVersionError</a></code></li></ul></details></li><li><details><summary><code><a href="../../Gem/SafeMarshal/Visitors.html">Visitors</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/SafeMarshal/Visitors/StreamPrinter.html">StreamPrinter</a></code></li><li><details><summary><code><a href="../../Gem/SafeMarshal/Visitors/ToRuby.html">ToRuby</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/SafeMarshal/Visitors/ToRuby/Error.html">Error</a></code></li><li><code><a href="../../Gem/SafeMarshal/Visitors/ToRuby/FormatError.html">FormatError</a></code></li><li><code><a href="../../Gem/SafeMarshal/Visitors/ToRuby/MethodCallError.html">MethodCallError</a></code></li><li><code><a href="../../Gem/SafeMarshal/Visitors/ToRuby/RationalCompat.html">RationalCompat</a></code></li><li><code><a href="../../Gem/SafeMarshal/Visitors/ToRuby/TimeTooLargeError.html">TimeTooLargeError</a></code></li><li><code><a href="../../Gem/SafeMarshal/Visitors/ToRuby/UnpermittedClassError.html">UnpermittedClassError</a></code></li><li><code><a href="../../Gem/SafeMarshal/Visitors/ToRuby/UnpermittedIvarError.html">UnpermittedIvarError</a></code></li><li><code><a href="../../Gem/SafeMarshal/Visitors/ToRuby/UnpermittedSymbolError.html">UnpermittedSymbolError</a></code></li><li><code><a href="../../Gem/SafeMarshal/Visitors/ToRuby/UnsupportedError.html">UnsupportedError</a></code></li></ul></details></li><li><code><a href="../../Gem/SafeMarshal/Visitors/Visitor.html">Visitor</a></code></li></ul></details></li></ul></details></li><li><code><a href="../../Gem/SafeYAML.html">SafeYAML</a></code></li><li><details><summary><code><a href="../../Gem/Security.html">Security</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Security/Exception.html">Exception</a></code></li><li><code><a href="../../Gem/Security/Policy.html">Policy</a></code></li><li><code><a href="../../Gem/Security/Signer.html">Signer</a></code></li><li><code><a href="../../Gem/Security/TrustDir.html">TrustDir</a></code></li></ul></details></li><li><code><a href="../../Gem/SecurityOption.html">SecurityOption</a></code></li><li><details><summary><code><a href="../../Gem/SilentUI.html">SilentUI</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/SilentUI/NullIO.html">NullIO</a></code></li></ul></details></li><li><details><summary><code><a href="../../Gem/Source.html">Source</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/Source/Git.html">Git</a></code></li><li><code><a href="../../Gem/Source/Installed.html">Installed</a></code></li><li><code><a href="../../Gem/Source/Local.html">Local</a></code></li><li><code><a href="../../Gem/Source/Lock.html">Lock</a></code></li><li><code><a href="../../Gem/Source/SpecificFile.html">SpecificFile</a></code></li><li><code><a href="../../Gem/Source/Vendor.html">Vendor</a></code></li></ul></details></li><li><code><a href="../../Gem/SourceFetchProblem.html">SourceFetchProblem</a></code></li><li><code><a href="../../Gem/SourceList.html">SourceList</a></code></li><li><code><a href="../../Gem/SpecFetcher.html">SpecFetcher</a></code></li><li><code><a href="../../Gem/SpecificGemNotFoundException.html">SpecificGemNotFoundException</a></code></li><li><code><a href="../../Gem/Specification.html">Specification</a></code></li><li><code><a href="../../Gem/SpecificationPolicy.html">SpecificationPolicy</a></code></li><li><code><a href="../../Gem/SpecificationRecord.html">SpecificationRecord</a></code></li><li><details><summary><code><a href="../../Gem/StreamUI.html">StreamUI</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Gem/StreamUI/SilentDownloadReporter.html">SilentDownloadReporter</a></code></li><li><code><a href="../../Gem/StreamUI/SilentProgressReporter.html">SilentProgressReporter</a></code></li><li><code><a href="../../Gem/StreamUI/SimpleProgressReporter.html">SimpleProgressReporter</a></code></li><li><code><a href="../../Gem/StreamUI/ThreadedDownloadReporter.html">ThreadedDownloadReporter</a></code></li><li><code><a href="../../Gem/StreamUI/VerboseProgressReporter.html">VerboseProgressReporter</a></code></li></ul></details></li><li><code><a href="../../Gem/StubSpecification.html">StubSpecification</a></code></li><li><code><a href="../../Gem/SystemExitException.html">SystemExitException</a></code></li><li><code><a href="../../Gem/TargetRbConfig.html">TargetRbConfig</a></code></li><li><code><a href="../../Gem/Text.html">Text</a></code></li><li><code><a href="../../Gem/UninstallError.html">UninstallError</a></code></li><li><code><a href="../../Gem/Uninstaller.html">Uninstaller</a></code></li><li><code><a href="../../Gem/UnknownCommandError.html">UnknownCommandError</a></code></li><li><code><a href="../../Gem/UnknownCommandSpellChecker.html">UnknownCommandSpellChecker</a></code></li><li><code><a href="../../Gem/UnsatisfiableDependencyError.html">UnsatisfiableDependencyError</a></code></li><li><code><a href="../../Gem/UpdateSuggestion.html">UpdateSuggestion</a></code></li><li><code><a href="../../Gem/Uri.html">Uri</a></code></li><li><code><a href="../../Gem/UriFormatter.html">UriFormatter</a></code></li><li><code><a href="../../Gem/UserInteraction.html">UserInteraction</a></code></li><li><code><a href="../../Gem/Util.html">Util</a></code></li><li><code><a href="../../Gem/Validator.html">Validator</a></code></li><li><code><a href="../../Gem/VerificationError.html">VerificationError</a></code></li><li><code><a href="../../Gem/Version.html">Version</a></code></li><li><code><a href="../../Gem/VersionOption.html">VersionOption</a></code></li><li><code><a href="../../Gem/WebauthnVerificationError.html">WebauthnVerificationError</a></code></li><li><code><a href="../../Gem/YAMLSerializer.html">YAMLSerializer</a></code></li></ul></details></li><li><code><a href="../../Hash.html">Hash</a></code></li><li><details><summary><code><a href="../../IO.html">IO</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../IO/Buffer.html">Buffer</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../IO/Buffer/AccessError.html">AccessError</a></code></li><li><code><a href="../../IO/Buffer/AllocationError.html">AllocationError</a></code></li><li><code><a href="../../IO/Buffer/InvalidatedError.html">InvalidatedError</a></code></li><li><code><a href="../../IO/Buffer/LockedError.html">LockedError</a></code></li><li><code><a href="../../IO/Buffer/MaskError.html">MaskError</a></code></li></ul></details></li><li><code><a href="../../IO/EAGAINWaitReadable.html">EAGAINWaitReadable</a></code></li><li><code><a href="../../IO/EAGAINWaitWritable.html">EAGAINWaitWritable</a></code></li><li><code><a href="../../IO/EINPROGRESSWaitReadable.html">EINPROGRESSWaitReadable</a></code></li><li><code><a href="../../IO/EINPROGRESSWaitWritable.html">EINPROGRESSWaitWritable</a></code></li><li><code><a href="../../IO/EWOULDBLOCKWaitReadable.html">EWOULDBLOCKWaitReadable</a></code></li><li><code><a href="../../IO/EWOULDBLOCKWaitWritable.html">EWOULDBLOCKWaitWritable</a></code></li><li><code><a href="../../IO/TimeoutError.html">TimeoutError</a></code></li><li><code><a href="../../IO/WaitReadable.html">WaitReadable</a></code></li><li><code><a href="../../IO/WaitWritable.html">WaitWritable</a></code></li></ul></details></li><li><code><a href="../../IOError.html">IOError</a></code></li><li><details><summary><code><a href="../../IPAddr.html">IPAddr</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../IPAddr/AddressFamilyError.html">AddressFamilyError</a></code></li><li><code><a href="../../IPAddr/Error.html">Error</a></code></li><li><code><a href="../../IPAddr/InvalidAddressError.html">InvalidAddressError</a></code></li><li><code><a href="../../IPAddr/InvalidPrefixError.html">InvalidPrefixError</a></code></li></ul></details></li><li><code><a href="../../IPSocket.html">IPSocket</a></code></li><li><code><a href="../../IndexError.html">IndexError</a></code></li><li><code><a href="../../Integer.html">Integer</a></code></li><li><code><a href="../../Interrupt.html">Interrupt</a></code></li><li><details><summary><code><a href="../../JSON.html">JSON</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../JSON/Coder.html">Coder</a></code></li><li><details><summary><code><a href="../../JSON/Ext.html">Ext</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../JSON/Ext/Generator.html">Generator</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../JSON/Ext/Generator/State.html">State</a></code></li></ul></details></li><li><code><a href="../../JSON/Ext/Parser.html">Parser</a></code></li><li><code><a href="../../JSON/Ext/ParserConfig.html">ParserConfig</a></code></li></ul></details></li><li><code><a href="../../JSON/GeneratorError.html">GeneratorError</a></code></li><li><code><a href="../../JSON/GenericObject.html">GenericObject</a></code></li><li><code><a href="../../JSON/JSONError.html">JSONError</a></code></li><li><code><a href="../../JSON/NestingError.html">NestingError</a></code></li><li><code><a href="../../JSON/ParserError.html">ParserError</a></code></li></ul></details></li><li><code><a href="../../Kernel.html">Kernel</a></code></li><li><code><a href="../../KeyError.html">KeyError</a></code></li><li><code><a href="../../LoadError.html">LoadError</a></code></li><li><code><a href="../../LocalJumpError.html">LocalJumpError</a></code></li><li><details><summary><code><a href="../../MakeMakefile.html">MakeMakefile</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../RbConfig.html">RbConfig</a></code></li></ul></details></li><li><code><a href="../../Marshal.html">Marshal</a></code></li><li><code><a href="../../MatchData.html">MatchData</a></code></li><li><details><summary><code><a href="../../Math.html">Math</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Math/DomainError.html">DomainError</a></code></li></ul></details></li><li><code><a href="../../Method.html">Method</a></code></li><li><code><a href="../../Module.html">Module</a></code></li><li><code><a href="../../Monitor.html">Monitor</a></code></li><li><details><summary><code><a href="../../MonitorMixin.html">MonitorMixin</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../MonitorMixin/ConditionVariable.html">ConditionVariable</a></code></li></ul></details></li><li><code><a href="../../NameError.html">NameError</a></code></li><li><details><summary><code><a href="../../Net.html">Net</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../Net/HTTP.html">HTTP</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Net/HTTP/Copy.html">Copy</a></code></li><li><code><a href="../../Net/HTTP/Delete.html">Delete</a></code></li><li><code><a href="../../Net/HTTP/Get.html">Get</a></code></li><li><code><a href="../../Net/HTTP/Head.html">Head</a></code></li><li><code><a href="../../Net/HTTP/Lock.html">Lock</a></code></li><li><code><a href="../../Net/HTTP/Mkcol.html">Mkcol</a></code></li><li><code><a href="../../Net/HTTP/Move.html">Move</a></code></li><li><code><a href="../../Net/HTTP/Options.html">Options</a></code></li><li><code><a href="../../Net/HTTP/Patch.html">Patch</a></code></li><li><code><a href="../../Net/HTTP/Post.html">Post</a></code></li><li><code><a href="../../Net/HTTP/Propfind.html">Propfind</a></code></li><li><code><a href="../../Net/HTTP/Proppatch.html">Proppatch</a></code></li><li><code><a href="../../Net/HTTP/Put.html">Put</a></code></li><li><code><a href="../../Net/HTTP/Trace.html">Trace</a></code></li><li><code><a href="../../Net/HTTP/Unlock.html">Unlock</a></code></li></ul></details></li><li><code><a href="../../Net/HTTPAccepted.html">HTTPAccepted</a></code></li><li><code><a href="../../Net/HTTPAlreadyReported.html">HTTPAlreadyReported</a></code></li><li><code><a href="../../Net/HTTPBadGateway.html">HTTPBadGateway</a></code></li><li><code><a href="../../Net/HTTPBadRequest.html">HTTPBadRequest</a></code></li><li><code><a href="../../Net/HTTPClientError.html">HTTPClientError</a></code></li><li><code><a href="../../Net/HTTPConflict.html">HTTPConflict</a></code></li><li><code><a href="../../Net/HTTPContinue.html">HTTPContinue</a></code></li><li><code><a href="../../Net/HTTPCreated.html">HTTPCreated</a></code></li><li><code><a href="../../Net/HTTPEarlyHints.html">HTTPEarlyHints</a></code></li><li><code><a href="../../Net/HTTPExpectationFailed.html">HTTPExpectationFailed</a></code></li><li><code><a href="../../Net/HTTPFailedDependency.html">HTTPFailedDependency</a></code></li><li><code><a href="../../Net/HTTPForbidden.html">HTTPForbidden</a></code></li><li><code><a href="../../Net/HTTPFound.html">HTTPFound</a></code></li><li><code><a href="../../Net/HTTPGatewayTimeout.html">HTTPGatewayTimeOut</a></code></li><li><code><a href="../../Net/HTTPGatewayTimeout.html">HTTPGatewayTimeout</a></code></li><li><code><a href="../../Net/HTTPGenericRequest.html">HTTPGenericRequest</a></code></li><li><code><a href="../../Net/HTTPGone.html">HTTPGone</a></code></li><li><code><a href="../../Net/HTTPHeader.html">HTTPHeader</a></code></li><li><code><a href="../../Net/HTTPIMUsed.html">HTTPIMUsed</a></code></li><li><code><a href="../../Net/HTTPInformation.html">HTTPInformation</a></code></li><li><code><a href="../../Net/HTTPInsufficientStorage.html">HTTPInsufficientStorage</a></code></li><li><code><a href="../../Net/HTTPInternalServerError.html">HTTPInternalServerError</a></code></li><li><code><a href="../../Net/HTTPLengthRequired.html">HTTPLengthRequired</a></code></li><li><code><a href="../../Net/HTTPLocked.html">HTTPLocked</a></code></li><li><code><a href="../../Net/HTTPLoopDetected.html">HTTPLoopDetected</a></code></li><li><code><a href="../../Net/HTTPMethodNotAllowed.html">HTTPMethodNotAllowed</a></code></li><li><code><a href="../../Net/HTTPMisdirectedRequest.html">HTTPMisdirectedRequest</a></code></li><li><code><a href="../../Net/HTTPMovedPermanently.html">HTTPMovedPermanently</a></code></li><li><code><a href="../../Net/HTTPFound.html">HTTPMovedTemporarily</a></code></li><li><code><a href="../../Net/HTTPMultiStatus.html">HTTPMultiStatus</a></code></li><li><code><a href="../../Net/HTTPMultipleChoices.html">HTTPMultipleChoice</a></code></li><li><code><a href="../../Net/HTTPMultipleChoices.html">HTTPMultipleChoices</a></code></li><li><code><a href="../../Net/HTTPNetworkAuthenticationRequired.html">HTTPNetworkAuthenticationRequired</a></code></li><li><code><a href="../../Net/HTTPNoContent.html">HTTPNoContent</a></code></li><li><code><a href="../../Net/HTTPNonAuthoritativeInformation.html">HTTPNonAuthoritativeInformation</a></code></li><li><code><a href="../../Net/HTTPNotAcceptable.html">HTTPNotAcceptable</a></code></li><li><code><a href="../../Net/HTTPNotExtended.html">HTTPNotExtended</a></code></li><li><code><a href="../../Net/HTTPNotFound.html">HTTPNotFound</a></code></li><li><code><a href="../../Net/HTTPNotImplemented.html">HTTPNotImplemented</a></code></li><li><code><a href="../../Net/HTTPNotModified.html">HTTPNotModified</a></code></li><li><code><a href="../../Net/HTTPOK.html">HTTPOK</a></code></li><li><code><a href="../../Net/HTTPPartialContent.html">HTTPPartialContent</a></code></li><li><code><a href="../../Net/HTTPPayloadTooLarge.html">HTTPPayloadTooLarge</a></code></li><li><code><a href="../../Net/HTTPPaymentRequired.html">HTTPPaymentRequired</a></code></li><li><code><a href="../../Net/HTTPPermanentRedirect.html">HTTPPermanentRedirect</a></code></li><li><code><a href="../../Net/HTTPPreconditionFailed.html">HTTPPreconditionFailed</a></code></li><li><code><a href="../../Net/HTTPPreconditionRequired.html">HTTPPreconditionRequired</a></code></li><li><code><a href="../../Net/HTTPProcessing.html">HTTPProcessing</a></code></li><li><code><a href="../../Net/HTTPProxyAuthenticationRequired.html">HTTPProxyAuthenticationRequired</a></code></li><li><code><a href="../../Net/HTTPRangeNotSatisfiable.html">HTTPRangeNotSatisfiable</a></code></li><li><code><a href="../../Net/HTTPRedirection.html">HTTPRedirection</a></code></li><li><code><a href="../../Net/HTTPRequest.html">HTTPRequest</a></code></li><li><code><a href="../../Net/HTTPPayloadTooLarge.html">HTTPRequestEntityTooLarge</a></code></li><li><code><a href="../../Net/HTTPRequestHeaderFieldsTooLarge.html">HTTPRequestHeaderFieldsTooLarge</a></code></li><li><code><a href="../../Net/HTTPRequestTimeout.html">HTTPRequestTimeOut</a></code></li><li><code><a href="../../Net/HTTPRequestTimeout.html">HTTPRequestTimeout</a></code></li><li><code><a href="../../Net/HTTPURITooLong.html">HTTPRequestURITooLong</a></code></li><li><code><a href="../../Net/HTTPRangeNotSatisfiable.html">HTTPRequestedRangeNotSatisfiable</a></code></li><li><code><a href="../../Net/HTTPResetContent.html">HTTPResetContent</a></code></li><li><code><a href="../../Net/HTTPResponse.html">HTTPResponse</a></code></li><li><code><a href="../../Net/HTTPSeeOther.html">HTTPSeeOther</a></code></li><li><code><a href="../../Net/HTTPServerError.html">HTTPServerError</a></code></li><li><code><a href="../../Net/HTTPServiceUnavailable.html">HTTPServiceUnavailable</a></code></li><li><code><a href="../../Net/HTTP.html">HTTPSession</a></code></li><li><code><a href="../../Net/HTTPSuccess.html">HTTPSuccess</a></code></li><li><code><a href="../../Net/HTTPSwitchProtocol.html">HTTPSwitchProtocol</a></code></li><li><code><a href="../../Net/HTTPTemporaryRedirect.html">HTTPTemporaryRedirect</a></code></li><li><code><a href="../../Net/HTTPTooManyRequests.html">HTTPTooManyRequests</a></code></li><li><code><a href="../../Net/HTTPURITooLong.html">HTTPURITooLong</a></code></li><li><code><a href="../../Net/HTTPUnauthorized.html">HTTPUnauthorized</a></code></li><li><code><a href="../../Net/HTTPUnavailableForLegalReasons.html">HTTPUnavailableForLegalReasons</a></code></li><li><code><a href="../../Net/HTTPUnknownResponse.html">HTTPUnknownResponse</a></code></li><li><code><a href="../../Net/HTTPUnprocessableEntity.html">HTTPUnprocessableEntity</a></code></li><li><code><a href="../../Net/HTTPUnsupportedMediaType.html">HTTPUnsupportedMediaType</a></code></li><li><code><a href="../../Net/HTTPUpgradeRequired.html">HTTPUpgradeRequired</a></code></li><li><code><a href="../../Net/HTTPUseProxy.html">HTTPUseProxy</a></code></li><li><code><a href="../../Net/HTTPVariantAlsoNegotiates.html">HTTPVariantAlsoNegotiates</a></code></li><li><code><a href="../../Net/HTTPVersionNotSupported.html">HTTPVersionNotSupported</a></code></li><li><code><a href="../../Net/OpenTimeout.html">OpenTimeout</a></code></li><li><code><a href="../../Net/ReadTimeout.html">ReadTimeout</a></code></li><li><code><a href="../../Net/WriteAdapter.html">WriteAdapter</a></code></li><li><code><a href="../../Net/WriteTimeout.html">WriteTimeout</a></code></li></ul></details></li><li><code><a href="../../NilClass.html">NilClass</a></code></li><li><code><a href="../../NoMatchingPatternError.html">NoMatchingPatternError</a></code></li><li><code><a href="../../NoMatchingPatternKeyError.html">NoMatchingPatternKeyError</a></code></li><li><code><a href="../../NoMemoryError.html">NoMemoryError</a></code></li><li><code><a href="../../NoMethodError.html">NoMethodError</a></code></li><li><code><a href="../../NotImplementedError.html">NotImplementedError</a></code></li><li><code><a href="../../Numeric.html">Numeric</a></code></li><li><code><a href="../../Object.html">Object</a></code></li><li><details><summary><code><a href="../../ObjectSpace.html">ObjectSpace</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../ObjectSpace/InternalObjectWrapper.html">InternalObjectWrapper</a></code></li><li><code><a href="../../ObjectSpace/WeakKeyMap.html">WeakKeyMap</a></code></li><li><code><a href="../../ObjectSpace/WeakMap.html">WeakMap</a></code></li></ul></details></li><li><code><a href="../../Open3.html">Open3</a></code></li><li><details><summary><code><a href="../../OpenSSL.html">OpenSSL</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../OpenSSL/ASN1.html">ASN1</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/ASN1/ASN1Data.html">ASN1Data</a></code></li><li><code><a href="../../OpenSSL/ASN1/ASN1Error.html">ASN1Error</a></code></li><li><code><a href="../../OpenSSL/ASN1/Constructive.html">Constructive</a></code></li><li><code><a href="../../OpenSSL/ASN1/ObjectId.html">ObjectId</a></code></li><li><code><a href="../../OpenSSL/ASN1/Primitive.html">Primitive</a></code></li></ul></details></li><li><code><a href="../../OpenSSL/BN.html">BN</a></code></li><li><code><a href="../../OpenSSL/BNError.html">BNError</a></code></li><li><details><summary><code><a href="../../OpenSSL/Buffering.html">Buffering</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/Buffering/Buffer.html">Buffer</a></code></li></ul></details></li><li><details><summary><code><a href="../../OpenSSL/Cipher.html">Cipher</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/Cipher/AuthTagError.html">AuthTagError</a></code></li><li><code><a href="../../OpenSSL/Cipher/Cipher.html">Cipher</a></code></li><li><code><a href="../../OpenSSL/Cipher/CipherError.html">CipherError</a></code></li></ul></details></li><li><code><a href="../../OpenSSL/Config.html">Config</a></code></li><li><code><a href="../../OpenSSL/ConfigError.html">ConfigError</a></code></li><li><details><summary><code><a href="../../OpenSSL/Digest.html">Digest</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/Digest/DigestError.html">DigestError</a></code></li></ul></details></li><li><details><summary><code><a href="../../OpenSSL/Engine.html">Engine</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/Engine/EngineError.html">EngineError</a></code></li></ul></details></li><li><code><a href="../../OpenSSL/HMAC.html">HMAC</a></code></li><li><code><a href="../../OpenSSL/HMACError.html">HMACError</a></code></li><li><details><summary><code><a href="../../OpenSSL/KDF.html">KDF</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/KDF/KDFError.html">KDFError</a></code></li></ul></details></li><li><details><summary><code><a href="../../OpenSSL/Marshal.html">Marshal</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/Marshal/ClassMethods.html">ClassMethods</a></code></li></ul></details></li><li><details><summary><code><a href="../../OpenSSL/Netscape.html">Netscape</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/Netscape/SPKI.html">SPKI</a></code></li><li><code><a href="../../OpenSSL/Netscape/SPKIError.html">SPKIError</a></code></li></ul></details></li><li><details><summary><code><a href="../../OpenSSL/OCSP.html">OCSP</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/OCSP/BasicResponse.html">BasicResponse</a></code></li><li><code><a href="../../OpenSSL/OCSP/CertificateId.html">CertificateId</a></code></li><li><code><a href="../../OpenSSL/OCSP/OCSPError.html">OCSPError</a></code></li><li><code><a href="../../OpenSSL/OCSP/Request.html">Request</a></code></li><li><code><a href="../../OpenSSL/OCSP/Response.html">Response</a></code></li><li><code><a href="../../OpenSSL/OCSP/SingleResponse.html">SingleResponse</a></code></li></ul></details></li><li><code><a href="../../OpenSSL/OpenSSLError.html">OpenSSLError</a></code></li><li><details><summary><code><a href="../../OpenSSL/PKCS12.html">PKCS12</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/PKCS12/PKCS12Error.html">PKCS12Error</a></code></li></ul></details></li><li><code><a href="../../OpenSSL/PKCS5.html">PKCS5</a></code></li><li><details><summary><code><a href="../../OpenSSL/PKCS7.html">PKCS7</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/PKCS7/PKCS7Error.html">PKCS7Error</a></code></li><li><code><a href="../../OpenSSL/PKCS7/RecipientInfo.html">RecipientInfo</a></code></li><li><code><a href="../../OpenSSL/PKCS7/SignerInfo.html">SignerInfo</a></code></li></ul></details></li><li><details><summary><code><a href="../../OpenSSL/PKey.html">PKey</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/PKey/DH.html">DH</a></code></li><li><code><a href="../../OpenSSL/PKey/DSA.html">DSA</a></code></li><li><details><summary><code><a href="../../OpenSSL/PKey/EC.html">EC</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../OpenSSL/PKey/EC/Group.html">Group</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/PKey/EC/Group/Error.html">Error</a></code></li></ul></details></li><li><details><summary><code><a href="../../OpenSSL/PKey/EC/Point.html">Point</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/PKey/EC/Point/Error.html">Error</a></code></li></ul></details></li></ul></details></li><li><code><a href="../../OpenSSL/PKey/PKey.html">PKey</a></code></li><li><code><a href="../../OpenSSL/PKey/PKeyError.html">PKeyError</a></code></li><li><code><a href="../../OpenSSL/PKey/RSA.html">RSA</a></code></li><li><code><a href="../../OpenSSL/PKey/PKeyError.html">RSAError</a></code></li></ul></details></li><li><details><summary><code><a href="../../OpenSSL/Random.html">Random</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/Random/RandomError.html">RandomError</a></code></li></ul></details></li><li><details><summary><code><a href="../../OpenSSL/SSL.html">SSL</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/SSL/SSLContext.html">SSLContext</a></code></li><li><code><a href="../../OpenSSL/SSL/SSLError.html">SSLError</a></code></li><li><code><a href="../../OpenSSL/SSL/SSLErrorWaitReadable.html">SSLErrorWaitReadable</a></code></li><li><code><a href="../../OpenSSL/SSL/SSLErrorWaitWritable.html">SSLErrorWaitWritable</a></code></li><li><code><a href="../../OpenSSL/SSL/SSLServer.html">SSLServer</a></code></li><li><code><a href="../../OpenSSL/SSL/SSLSocket.html">SSLSocket</a></code></li><li><details><summary><code><a href="../../OpenSSL/SSL/Session.html">Session</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/SSL/Session/SessionError.html">SessionError</a></code></li></ul></details></li><li><code><a href="../../OpenSSL/SSL/SocketForwarder.html">SocketForwarder</a></code></li></ul></details></li><li><details><summary><code><a href="../../OpenSSL/Timestamp.html">Timestamp</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/Timestamp/Factory.html">Factory</a></code></li><li><code><a href="../../OpenSSL/Timestamp/Request.html">Request</a></code></li><li><code><a href="../../OpenSSL/Timestamp/Response.html">Response</a></code></li><li><code><a href="../../OpenSSL/Timestamp/TimestampError.html">TimestampError</a></code></li><li><code><a href="../../OpenSSL/Timestamp/TokenInfo.html">TokenInfo</a></code></li></ul></details></li><li><details><summary><code><a href="../../OpenSSL/X509.html">X509</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/X509/Attribute.html">Attribute</a></code></li><li><code><a href="../../OpenSSL/X509/AttributeError.html">AttributeError</a></code></li><li><code><a href="../../OpenSSL/X509/CRL.html">CRL</a></code></li><li><code><a href="../../OpenSSL/X509/CRLError.html">CRLError</a></code></li><li><code><a href="../../OpenSSL/X509/Certificate.html">Certificate</a></code></li><li><code><a href="../../OpenSSL/X509/CertificateError.html">CertificateError</a></code></li><li><details><summary><code><a href="../../OpenSSL/X509/Extension.html">Extension</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/X509/Extension/AuthorityInfoAccess.html">AuthorityInfoAccess</a></code></li><li><code><a href="../../OpenSSL/X509/Extension/AuthorityKeyIdentifier.html">AuthorityKeyIdentifier</a></code></li><li><code><a href="../../OpenSSL/X509/Extension/CRLDistributionPoints.html">CRLDistributionPoints</a></code></li><li><code><a href="../../OpenSSL/X509/Extension/Helpers.html">Helpers</a></code></li><li><code><a href="../../OpenSSL/X509/Extension/SubjectKeyIdentifier.html">SubjectKeyIdentifier</a></code></li></ul></details></li><li><code><a href="../../OpenSSL/X509/ExtensionError.html">ExtensionError</a></code></li><li><code><a href="../../OpenSSL/X509/ExtensionFactory.html">ExtensionFactory</a></code></li><li><details><summary><code><a href="../../OpenSSL/X509/Name.html">Name</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenSSL/X509/Name/RFC2253DN.html">RFC2253DN</a></code></li></ul></details></li><li><code><a href="../../OpenSSL/X509/NameError.html">NameError</a></code></li><li><code><a href="../../OpenSSL/X509/Request.html">Request</a></code></li><li><code><a href="../../OpenSSL/X509/RequestError.html">RequestError</a></code></li><li><code><a href="../../OpenSSL/X509/Revoked.html">Revoked</a></code></li><li><code><a href="../../OpenSSL/X509/RevokedError.html">RevokedError</a></code></li><li><code><a href="../../OpenSSL/X509/Store.html">Store</a></code></li><li><code><a href="../../OpenSSL/X509/StoreContext.html">StoreContext</a></code></li><li><code><a href="../../OpenSSL/X509/StoreError.html">StoreError</a></code></li></ul></details></li></ul></details></li><li><code><a href="../../OpenStruct.html">OpenStruct</a></code></li><li><details><summary><code><a href="../../OpenURI.html">OpenURI</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OpenURI/HTTPError.html">HTTPError</a></code></li><li><code><a href="../../OpenURI/HTTPRedirect.html">HTTPRedirect</a></code></li><li><code><a href="../../OpenURI/Meta.html">Meta</a></code></li><li><code><a href="../../OpenURI/OpenRead.html">OpenRead</a></code></li><li><code><a href="../../OpenURI/TooManyRedirects.html">TooManyRedirects</a></code></li></ul></details></li><li><details><summary><code><a href="../../OptionParser.html">OptionParser</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OptionParser/AC.html">AC</a></code></li><li><code><a href="../../OptionParser/Acceptables.html">Acceptables</a></code></li><li><code><a href="../../OptionParser/AmbiguousArgument.html">AmbiguousArgument</a></code></li><li><code><a href="../../OptionParser/AmbiguousOption.html">AmbiguousOption</a></code></li><li><code><a href="../../OptionParser/Arguable.html">Arguable</a></code></li><li><code><a href="../../OptionParser/CompletingHash.html">CompletingHash</a></code></li><li><code><a href="../../OptionParser/Completion.html">Completion</a></code></li><li><code><a href="../../OptionParser/InvalidArgument.html">InvalidArgument</a></code></li><li><code><a href="../../OptionParser/InvalidOption.html">InvalidOption</a></code></li><li><code><a href="../../OptionParser/List.html">List</a></code></li><li><code><a href="../../OptionParser/MissingArgument.html">MissingArgument</a></code></li><li><code><a href="../../OptionParser/NeedlessArgument.html">NeedlessArgument</a></code></li><li><code><a href="../../OptionParser/OptionMap.html">OptionMap</a></code></li><li><code><a href="../../OptionParser/ParseError.html">ParseError</a></code></li><li><details><summary><code><a href="../../OptionParser/Switch.html">Switch</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../OptionParser/Switch/NoArgument.html">NoArgument</a></code></li><li><code><a href="../../OptionParser/Switch/OptionalArgument.html">OptionalArgument</a></code></li><li><code><a href="../../OptionParser/Switch/PlacedArgument.html">PlacedArgument</a></code></li><li><code><a href="../../OptionParser/Switch/RequiredArgument.html">RequiredArgument</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="../../PP.html">PP</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../PP/PPMethods.html">PPMethods</a></code></li></ul></details></li><li><details><summary><code><a href="../../PTY.html">PTY</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../PTY/ChildExited.html">ChildExited</a></code></li></ul></details></li><li><code><a href="../../Pathname.html">Pathname</a></code></li><li><details><summary><code><a href="../../PrettyPrint.html">PrettyPrint</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../PrettyPrint/SingleLine.html">SingleLine</a></code></li></ul></details></li><li><details><summary><code><a href="../../Prism.html">Prism</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/ASCIISource.html">ASCIISource</a></code></li><li><code><a href="../../Prism/AliasGlobalVariableNode.html">AliasGlobalVariableNode</a></code></li><li><code><a href="../../Prism/AliasMethodNode.html">AliasMethodNode</a></code></li><li><code><a href="../../Prism/AlternationPatternNode.html">AlternationPatternNode</a></code></li><li><code><a href="../../Prism/AndNode.html">AndNode</a></code></li><li><code><a href="../../Prism/ArgumentsNode.html">ArgumentsNode</a></code></li><li><code><a href="../../Prism/ArgumentsNodeFlags.html">ArgumentsNodeFlags</a></code></li><li><code><a href="../../Prism/ArrayNode.html">ArrayNode</a></code></li><li><code><a href="../../Prism/ArrayNodeFlags.html">ArrayNodeFlags</a></code></li><li><code><a href="../../Prism/ArrayPatternNode.html">ArrayPatternNode</a></code></li><li><code><a href="../../Prism/AssocNode.html">AssocNode</a></code></li><li><code><a href="../../Prism/AssocSplatNode.html">AssocSplatNode</a></code></li><li><code><a href="../../Prism/BackReferenceReadNode.html">BackReferenceReadNode</a></code></li><li><code><a href="../../Prism/BasicVisitor.html">BasicVisitor</a></code></li><li><code><a href="../../Prism/BeginNode.html">BeginNode</a></code></li><li><code><a href="../../Prism/BlockArgumentNode.html">BlockArgumentNode</a></code></li><li><code><a href="../../Prism/BlockLocalVariableNode.html">BlockLocalVariableNode</a></code></li><li><code><a href="../../Prism/BlockNode.html">BlockNode</a></code></li><li><code><a href="../../Prism/BlockParameterNode.html">BlockParameterNode</a></code></li><li><code><a href="../../Prism/BlockParametersNode.html">BlockParametersNode</a></code></li><li><code><a href="../../Prism/BreakNode.html">BreakNode</a></code></li><li><code><a href="../../Prism/CallAndWriteNode.html">CallAndWriteNode</a></code></li><li><code><a href="../../Prism/CallNode.html">CallNode</a></code></li><li><code><a href="../../Prism/CallNodeFlags.html">CallNodeFlags</a></code></li><li><code><a href="../../Prism/CallOperatorWriteNode.html">CallOperatorWriteNode</a></code></li><li><code><a href="../../Prism/CallOrWriteNode.html">CallOrWriteNode</a></code></li><li><code><a href="../../Prism/CallTargetNode.html">CallTargetNode</a></code></li><li><code><a href="../../Prism/CapturePatternNode.html">CapturePatternNode</a></code></li><li><code><a href="../../Prism/CaseMatchNode.html">CaseMatchNode</a></code></li><li><code><a href="../../Prism/CaseNode.html">CaseNode</a></code></li><li><code><a href="../../Prism/ClassNode.html">ClassNode</a></code></li><li><code><a href="../../Prism/ClassVariableAndWriteNode.html">ClassVariableAndWriteNode</a></code></li><li><code><a href="../../Prism/ClassVariableOperatorWriteNode.html">ClassVariableOperatorWriteNode</a></code></li><li><code><a href="../../Prism/ClassVariableOrWriteNode.html">ClassVariableOrWriteNode</a></code></li><li><code><a href="../../Prism/ClassVariableReadNode.html">ClassVariableReadNode</a></code></li><li><code><a href="../../Prism/ClassVariableTargetNode.html">ClassVariableTargetNode</a></code></li><li><code><a href="../../Prism/ClassVariableWriteNode.html">ClassVariableWriteNode</a></code></li><li><code><a href="../../Prism/CodeUnitsCache.html">CodeUnitsCache</a></code></li><li><code><a href="../../Prism/Comment.html">Comment</a></code></li><li><code><a href="../../Prism/Compiler.html">Compiler</a></code></li><li><code><a href="../../Prism/ConstantAndWriteNode.html">ConstantAndWriteNode</a></code></li><li><code><a href="../../Prism/ConstantOperatorWriteNode.html">ConstantOperatorWriteNode</a></code></li><li><code><a href="../../Prism/ConstantOrWriteNode.html">ConstantOrWriteNode</a></code></li><li><code><a href="../../Prism/ConstantPathAndWriteNode.html">ConstantPathAndWriteNode</a></code></li><li><details><summary><code><a href="../../Prism/ConstantPathNode.html">ConstantPathNode</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/ConstantPathNode/DynamicPartsInConstantPathError.html">DynamicPartsInConstantPathError</a></code></li><li><code><a href="../../Prism/ConstantPathNode/MissingNodesInConstantPathError.html">MissingNodesInConstantPathError</a></code></li></ul></details></li><li><code><a href="../../Prism/ConstantPathOperatorWriteNode.html">ConstantPathOperatorWriteNode</a></code></li><li><code><a href="../../Prism/ConstantPathOrWriteNode.html">ConstantPathOrWriteNode</a></code></li><li><code><a href="../../Prism/ConstantPathTargetNode.html">ConstantPathTargetNode</a></code></li><li><code><a href="../../Prism/ConstantPathWriteNode.html">ConstantPathWriteNode</a></code></li><li><code><a href="../../Prism/ConstantReadNode.html">ConstantReadNode</a></code></li><li><code><a href="../../Prism/ConstantTargetNode.html">ConstantTargetNode</a></code></li><li><code><a href="../../Prism/ConstantWriteNode.html">ConstantWriteNode</a></code></li><li><code><a href="../../Prism/CurrentVersionError.html">CurrentVersionError</a></code></li><li><code><a href="../../Prism/DSL.html">DSL</a></code></li><li><code><a href="../../Prism/DefNode.html">DefNode</a></code></li><li><code><a href="../../Prism/DefinedNode.html">DefinedNode</a></code></li><li><code><a href="../../Prism/DesugarCompiler.html">DesugarCompiler</a></code></li><li><code><a href="../../Prism/Dispatcher.html">Dispatcher</a></code></li><li><code><a href="../../Prism/DotVisitor.html">DotVisitor</a></code></li><li><code><a href="../../Prism/ElseNode.html">ElseNode</a></code></li><li><code><a href="../../Prism/EmbDocComment.html">EmbDocComment</a></code></li><li><code><a href="../../Prism/EmbeddedStatementsNode.html">EmbeddedStatementsNode</a></code></li><li><code><a href="../../Prism/EmbeddedVariableNode.html">EmbeddedVariableNode</a></code></li><li><code><a href="../../Prism/EncodingFlags.html">EncodingFlags</a></code></li><li><code><a href="../../Prism/EnsureNode.html">EnsureNode</a></code></li><li><code><a href="../../Prism/FalseNode.html">FalseNode</a></code></li><li><code><a href="../../Prism/FindPatternNode.html">FindPatternNode</a></code></li><li><code><a href="../../Prism/FlipFlopNode.html">FlipFlopNode</a></code></li><li><code><a href="../../Prism/FloatNode.html">FloatNode</a></code></li><li><code><a href="../../Prism/ForNode.html">ForNode</a></code></li><li><code><a href="../../Prism/ForwardingArgumentsNode.html">ForwardingArgumentsNode</a></code></li><li><code><a href="../../Prism/ForwardingParameterNode.html">ForwardingParameterNode</a></code></li><li><code><a href="../../Prism/ForwardingSuperNode.html">ForwardingSuperNode</a></code></li><li><code><a href="../../Prism/GlobalVariableAndWriteNode.html">GlobalVariableAndWriteNode</a></code></li><li><code><a href="../../Prism/GlobalVariableOperatorWriteNode.html">GlobalVariableOperatorWriteNode</a></code></li><li><code><a href="../../Prism/GlobalVariableOrWriteNode.html">GlobalVariableOrWriteNode</a></code></li><li><code><a href="../../Prism/GlobalVariableReadNode.html">GlobalVariableReadNode</a></code></li><li><code><a href="../../Prism/GlobalVariableTargetNode.html">GlobalVariableTargetNode</a></code></li><li><code><a href="../../Prism/GlobalVariableWriteNode.html">GlobalVariableWriteNode</a></code></li><li><code><a href="../../Prism/HashNode.html">HashNode</a></code></li><li><code><a href="../../Prism/HashPatternNode.html">HashPatternNode</a></code></li><li><code><a href="../../Prism/IfNode.html">IfNode</a></code></li><li><code><a href="../../Prism/ImaginaryNode.html">ImaginaryNode</a></code></li><li><code><a href="../../Prism/ImplicitNode.html">ImplicitNode</a></code></li><li><code><a href="../../Prism/ImplicitRestNode.html">ImplicitRestNode</a></code></li><li><code><a href="../../Prism/InNode.html">InNode</a></code></li><li><code><a href="../../Prism/IndexAndWriteNode.html">IndexAndWriteNode</a></code></li><li><code><a href="../../Prism/IndexOperatorWriteNode.html">IndexOperatorWriteNode</a></code></li><li><code><a href="../../Prism/IndexOrWriteNode.html">IndexOrWriteNode</a></code></li><li><code><a href="../../Prism/IndexTargetNode.html">IndexTargetNode</a></code></li><li><code><a href="../../Prism/InlineComment.html">InlineComment</a></code></li><li><code><a href="../../Prism/InspectVisitor.html">InspectVisitor</a></code></li><li><code><a href="../../Prism/InstanceVariableAndWriteNode.html">InstanceVariableAndWriteNode</a></code></li><li><code><a href="../../Prism/InstanceVariableOperatorWriteNode.html">InstanceVariableOperatorWriteNode</a></code></li><li><code><a href="../../Prism/InstanceVariableOrWriteNode.html">InstanceVariableOrWriteNode</a></code></li><li><code><a href="../../Prism/InstanceVariableReadNode.html">InstanceVariableReadNode</a></code></li><li><code><a href="../../Prism/InstanceVariableTargetNode.html">InstanceVariableTargetNode</a></code></li><li><code><a href="../../Prism/InstanceVariableWriteNode.html">InstanceVariableWriteNode</a></code></li><li><code><a href="../../Prism/IntegerBaseFlags.html">IntegerBaseFlags</a></code></li><li><code><a href="../../Prism/IntegerNode.html">IntegerNode</a></code></li><li><code><a href="../../Prism/InterpolatedMatchLastLineNode.html">InterpolatedMatchLastLineNode</a></code></li><li><code><a href="../../Prism/InterpolatedRegularExpressionNode.html">InterpolatedRegularExpressionNode</a></code></li><li><code><a href="../../Prism/InterpolatedStringNode.html">InterpolatedStringNode</a></code></li><li><code><a href="../../Prism/InterpolatedStringNodeFlags.html">InterpolatedStringNodeFlags</a></code></li><li><code><a href="../../Prism/InterpolatedSymbolNode.html">InterpolatedSymbolNode</a></code></li><li><code><a href="../../Prism/InterpolatedXStringNode.html">InterpolatedXStringNode</a></code></li><li><code><a href="../../Prism/ItLocalVariableReadNode.html">ItLocalVariableReadNode</a></code></li><li><code><a href="../../Prism/ItParametersNode.html">ItParametersNode</a></code></li><li><code><a href="../../Prism/KeywordHashNode.html">KeywordHashNode</a></code></li><li><code><a href="../../Prism/KeywordHashNodeFlags.html">KeywordHashNodeFlags</a></code></li><li><code><a href="../../Prism/KeywordRestParameterNode.html">KeywordRestParameterNode</a></code></li><li><code><a href="../../Prism/LambdaNode.html">LambdaNode</a></code></li><li><details><summary><code><a href="../../Prism/LexCompat.html">LexCompat</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/LexCompat/EndContentToken.html">EndContentToken</a></code></li><li><code><a href="../../Prism/LexCompat/IdentToken.html">IdentToken</a></code></li><li><code><a href="../../Prism/LexCompat/IgnoreStateToken.html">IgnoreStateToken</a></code></li><li><code><a href="../../Prism/LexCompat/IgnoredNewlineToken.html">IgnoredNewlineToken</a></code></li><li><code><a href="../../Prism/LexCompat/ParamToken.html">ParamToken</a></code></li><li><code><a href="../../Prism/LexCompat/Result.html">Result</a></code></li><li><code><a href="../../Prism/LexCompat/Token.html">Token</a></code></li></ul></details></li><li><code><a href="../../Prism/LexResult.html">LexResult</a></code></li><li><code><a href="../../Prism/LocalVariableAndWriteNode.html">LocalVariableAndWriteNode</a></code></li><li><code><a href="../../Prism/LocalVariableOperatorWriteNode.html">LocalVariableOperatorWriteNode</a></code></li><li><code><a href="../../Prism/LocalVariableOrWriteNode.html">LocalVariableOrWriteNode</a></code></li><li><code><a href="../../Prism/LocalVariableReadNode.html">LocalVariableReadNode</a></code></li><li><code><a href="../../Prism/LocalVariableTargetNode.html">LocalVariableTargetNode</a></code></li><li><code><a href="../../Prism/LocalVariableWriteNode.html">LocalVariableWriteNode</a></code></li><li><code><a href="../../Prism/Location.html">Location</a></code></li><li><code><a href="../../Prism/LoopFlags.html">LoopFlags</a></code></li><li><code><a href="../../Prism/MagicComment.html">MagicComment</a></code></li><li><code><a href="../../Prism/MatchLastLineNode.html">MatchLastLineNode</a></code></li><li><code><a href="../../Prism/MatchPredicateNode.html">MatchPredicateNode</a></code></li><li><code><a href="../../Prism/MatchRequiredNode.html">MatchRequiredNode</a></code></li><li><code><a href="../../Prism/MatchWriteNode.html">MatchWriteNode</a></code></li><li><code><a href="../../Prism/MissingNode.html">MissingNode</a></code></li><li><code><a href="../../Prism/ModuleNode.html">ModuleNode</a></code></li><li><code><a href="../../Prism/MultiTargetNode.html">MultiTargetNode</a></code></li><li><code><a href="../../Prism/MultiWriteNode.html">MultiWriteNode</a></code></li><li><code><a href="../../Prism/MutationCompiler.html">MutationCompiler</a></code></li><li><code><a href="../../Prism/NextNode.html">NextNode</a></code></li><li><code><a href="../../Prism/NilNode.html">NilNode</a></code></li><li><code><a href="../../Prism/NoKeywordsParameterNode.html">NoKeywordsParameterNode</a></code></li><li><code><a href="../../Prism/Node.html">Node</a></code></li><li><code><a href="../../Prism/NodeFlags.html">NodeFlags</a></code></li><li><code><a href="../../Prism/NumberedParametersNode.html">NumberedParametersNode</a></code></li><li><code><a href="../../Prism/NumberedReferenceReadNode.html">NumberedReferenceReadNode</a></code></li><li><code><a href="../../Prism/OptionalKeywordParameterNode.html">OptionalKeywordParameterNode</a></code></li><li><code><a href="../../Prism/OptionalParameterNode.html">OptionalParameterNode</a></code></li><li><code><a href="../../Prism/OrNode.html">OrNode</a></code></li><li><details><summary><code><a href="../../Prism/Pack.html">Pack</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/Pack/Directive.html">Directive</a></code></li><li><code><a href="../../Prism/Pack/Format.html">Format</a></code></li></ul></details></li><li><code><a href="../../Prism/ParameterFlags.html">ParameterFlags</a></code></li><li><code><a href="../../Prism/ParametersNode.html">ParametersNode</a></code></li><li><code><a href="../../Prism/ParenthesesNode.html">ParenthesesNode</a></code></li><li><code><a href="../../Prism/ParenthesesNodeFlags.html">ParenthesesNodeFlags</a></code></li><li><code><a href="../../Prism/ParseError.html">ParseError</a></code></li><li><code><a href="../../Prism/ParseLexResult.html">ParseLexResult</a></code></li><li><details><summary><code><a href="../../Prism/ParseResult.html">ParseResult</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/ParseResult/Comments.html">Comments</a></code></li><li><code><a href="../../Prism/ParseResult/Errors.html">Errors</a></code></li><li><code><a href="../../Prism/ParseResult/Newlines.html">Newlines</a></code></li></ul></details></li><li><code><a href="../../Prism/ParseWarning.html">ParseWarning</a></code></li><li><details><summary><code><a href="../../Prism/Pattern.html">Pattern</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/Pattern/CompilationError.html">CompilationError</a></code></li></ul></details></li><li><code><a href="../../Prism/PinnedExpressionNode.html">PinnedExpressionNode</a></code></li><li><code><a href="../../Prism/PinnedVariableNode.html">PinnedVariableNode</a></code></li><li><code><a href="../../Prism/PostExecutionNode.html">PostExecutionNode</a></code></li><li><code><a href="../../Prism/PreExecutionNode.html">PreExecutionNode</a></code></li><li><code><a href="../../Prism/ProgramNode.html">ProgramNode</a></code></li><li><code><a href="../../Prism/RangeFlags.html">RangeFlags</a></code></li><li><code><a href="../../Prism/RangeNode.html">RangeNode</a></code></li><li><code><a href="../../Prism/RationalNode.html">RationalNode</a></code></li><li><code><a href="../../Prism/RedoNode.html">RedoNode</a></code></li><li><details><summary><code><a href="../../Prism/Reflection.html">Reflection</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/Reflection/ConstantField.html">ConstantField</a></code></li><li><code><a href="../../Prism/Reflection/ConstantListField.html">ConstantListField</a></code></li><li><code><a href="../../Prism/Reflection/Field.html">Field</a></code></li><li><code><a href="../../Prism/Reflection/FlagsField.html">FlagsField</a></code></li><li><code><a href="../../Prism/Reflection/FloatField.html">FloatField</a></code></li><li><code><a href="../../Prism/Reflection/IntegerField.html">IntegerField</a></code></li><li><code><a href="../../Prism/Reflection/LocationField.html">LocationField</a></code></li><li><code><a href="../../Prism/Reflection/NodeField.html">NodeField</a></code></li><li><code><a href="../../Prism/Reflection/NodeListField.html">NodeListField</a></code></li><li><code><a href="../../Prism/Reflection/OptionalConstantField.html">OptionalConstantField</a></code></li><li><code><a href="../../Prism/Reflection/OptionalLocationField.html">OptionalLocationField</a></code></li><li><code><a href="../../Prism/Reflection/OptionalNodeField.html">OptionalNodeField</a></code></li><li><code><a href="../../Prism/Reflection/StringField.html">StringField</a></code></li></ul></details></li><li><code><a href="../../Prism/RegularExpressionFlags.html">RegularExpressionFlags</a></code></li><li><code><a href="../../Prism/RegularExpressionNode.html">RegularExpressionNode</a></code></li><li><details><summary><code><a href="../../Prism/Relocation.html">Relocation</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/Relocation/CharacterColumnsField.html">CharacterColumnsField</a></code></li><li><code><a href="../../Prism/Relocation/CharacterOffsetsField.html">CharacterOffsetsField</a></code></li><li><code><a href="../../Prism/Relocation/CodeUnitColumnsField.html">CodeUnitColumnsField</a></code></li><li><code><a href="../../Prism/Relocation/CodeUnitOffsetsField.html">CodeUnitOffsetsField</a></code></li><li><code><a href="../../Prism/Relocation/ColumnsField.html">ColumnsField</a></code></li><li><details><summary><code><a href="../../Prism/Relocation/CommentsField.html">CommentsField</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/Relocation/CommentsField/Comment.html">Comment</a></code></li></ul></details></li><li><details><summary><code><a href="../../Prism/Relocation/Entry.html">Entry</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/Relocation/Entry/MissingValueError.html">MissingValueError</a></code></li></ul></details></li><li><code><a href="../../Prism/Relocation/FilepathField.html">FilepathField</a></code></li><li><code><a href="../../Prism/Relocation/LeadingCommentsField.html">LeadingCommentsField</a></code></li><li><code><a href="../../Prism/Relocation/LinesField.html">LinesField</a></code></li><li><code><a href="../../Prism/Relocation/OffsetsField.html">OffsetsField</a></code></li><li><details><summary><code><a href="../../Prism/Relocation/Repository.html">Repository</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/Relocation/Repository/ConfigurationError.html">ConfigurationError</a></code></li></ul></details></li><li><code><a href="../../Prism/Relocation/Source.html">Source</a></code></li><li><code><a href="../../Prism/Relocation/SourceFilepath.html">SourceFilepath</a></code></li><li><code><a href="../../Prism/Relocation/SourceString.html">SourceString</a></code></li><li><code><a href="../../Prism/Relocation/TrailingCommentsField.html">TrailingCommentsField</a></code></li></ul></details></li><li><code><a href="../../Prism/RequiredKeywordParameterNode.html">RequiredKeywordParameterNode</a></code></li><li><code><a href="../../Prism/RequiredParameterNode.html">RequiredParameterNode</a></code></li><li><code><a href="../../Prism/RescueModifierNode.html">RescueModifierNode</a></code></li><li><code><a href="../../Prism/RescueNode.html">RescueNode</a></code></li><li><code><a href="../../Prism/RestParameterNode.html">RestParameterNode</a></code></li><li><code><a href="../../Prism/Result.html">Result</a></code></li><li><code><a href="../../Prism/RetryNode.html">RetryNode</a></code></li><li><code><a href="../../Prism/ReturnNode.html">ReturnNode</a></code></li><li><code><a href="../../Prism/Scope.html">Scope</a></code></li><li><code><a href="../../Prism/SelfNode.html">SelfNode</a></code></li><li><code><a href="../../Prism/Serialize.html">Serialize</a></code></li><li><code><a href="../../Prism/ShareableConstantNode.html">ShareableConstantNode</a></code></li><li><code><a href="../../Prism/ShareableConstantNodeFlags.html">ShareableConstantNodeFlags</a></code></li><li><code><a href="../../Prism/SingletonClassNode.html">SingletonClassNode</a></code></li><li><code><a href="../../Prism/Source.html">Source</a></code></li><li><code><a href="../../Prism/SourceEncodingNode.html">SourceEncodingNode</a></code></li><li><code><a href="../../Prism/SourceFileNode.html">SourceFileNode</a></code></li><li><code><a href="../../Prism/SourceLineNode.html">SourceLineNode</a></code></li><li><code><a href="../../Prism/SplatNode.html">SplatNode</a></code></li><li><code><a href="../../Prism/StatementsNode.html">StatementsNode</a></code></li><li><code><a href="../../Prism/StringFlags.html">StringFlags</a></code></li><li><code><a href="../../Prism/StringNode.html">StringNode</a></code></li><li><code><a href="../../Prism/StringQuery.html">StringQuery</a></code></li><li><code><a href="../../Prism/SuperNode.html">SuperNode</a></code></li><li><code><a href="../../Prism/SymbolFlags.html">SymbolFlags</a></code></li><li><code><a href="../../Prism/SymbolNode.html">SymbolNode</a></code></li><li><code><a href="../../Prism/Token.html">Token</a></code></li><li><details><summary><code><a href="../../Prism/Translation.html">Translation</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../Prism/Translation/Parser.html">Parser</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/Translation/Parser/Builder.html">Builder</a></code></li><li><details><summary><code><a href="../../Prism/Translation/Parser/Compiler.html">Compiler</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/Translation/Parser/Compiler/CompilationError.html">CompilationError</a></code></li></ul></details></li><li><code><a href="../../Prism/Translation/Parser/Lexer.html">Lexer</a></code></li><li><code><a href="../../Prism/Translation/Parser/PrismDiagnostic.html">PrismDiagnostic</a></code></li></ul></details></li><li><code><a href="../../Prism/Translation/Parser33.html">Parser33</a></code></li><li><code><a href="../../Prism/Translation/Parser34.html">Parser34</a></code></li><li><code><a href="../../Prism/Translation/Parser40.html">Parser40</a></code></li><li><code><a href="../../Prism/Translation/Parser41.html">Parser41</a></code></li><li><code><a href="../../Prism/Translation/Parser33.html">ParserCurrent</a></code></li><li><details><summary><code><a href="../../Prism/Translation/Ripper.html">Ripper</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/Translation/Ripper/Lexer.html">Lexer</a></code></li><li><code><a href="../../Prism/Translation/Ripper/SexpBuilder.html">SexpBuilder</a></code></li><li><code><a href="../../Prism/Translation/Ripper/SexpBuilderPP.html">SexpBuilderPP</a></code></li></ul></details></li><li><details><summary><code><a href="../../Prism/Translation/RubyParser.html">RubyParser</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Prism/Translation/RubyParser/Compiler.html">Compiler</a></code></li></ul></details></li></ul></details></li><li><code><a href="../../Prism/TrueNode.html">TrueNode</a></code></li><li><code><a href="../../Prism/UndefNode.html">UndefNode</a></code></li><li><code><a href="../../Prism/UnlessNode.html">UnlessNode</a></code></li><li><code><a href="../../Prism/UntilNode.html">UntilNode</a></code></li><li><code><a href="../../Prism/Visitor.html">Visitor</a></code></li><li><code><a href="../../Prism/WhenNode.html">WhenNode</a></code></li><li><code><a href="../../Prism/WhileNode.html">WhileNode</a></code></li><li><code><a href="../../Prism/XStringNode.html">XStringNode</a></code></li><li><code><a href="../../Prism/YieldNode.html">YieldNode</a></code></li></ul></details></li><li><code><a href="../../Proc.html">Proc</a></code></li><li><details><summary><code><a href="../../Process.html">Process</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Process/GID.html">GID</a></code></li><li><code><a href="../../Process/Status.html">Status</a></code></li><li><code><a href="../../Process/Sys.html">Sys</a></code></li><li><code><a href="../../Process/Tms.html">Tms</a></code></li><li><code><a href="../../Process/UID.html">UID</a></code></li></ul></details></li><li><details><summary><code><a href="../../Psych.html">Psych</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Psych/AliasesNotEnabled.html">AliasesNotEnabled</a></code></li><li><code><a href="../../Psych/AnchorNotDefined.html">AnchorNotDefined</a></code></li><li><code><a href="../../Psych/BadAlias.html">BadAlias</a></code></li><li><details><summary><code><a href="../../Psych/ClassLoader.html">ClassLoader</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Psych/ClassLoader/Restricted.html">Restricted</a></code></li></ul></details></li><li><code><a href="../../Psych/Coder.html">Coder</a></code></li><li><code><a href="../../Psych/DisallowedClass.html">DisallowedClass</a></code></li><li><code><a href="../../Psych/Emitter.html">Emitter</a></code></li><li><code><a href="../../Psych/Exception.html">Exception</a></code></li><li><details><summary><code><a href="../../Psych/Handler.html">Handler</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Psych/Handler/DumperOptions.html">DumperOptions</a></code></li></ul></details></li><li><details><summary><code><a href="../../Psych/Handlers.html">Handlers</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Psych/Handlers/Recorder.html">Recorder</a></code></li></ul></details></li><li><details><summary><code><a href="../../Psych/JSON.html">JSON</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Psych/JSON/Stream.html">Stream</a></code></li><li><code><a href="../../Psych/JSON/TreeBuilder.html">TreeBuilder</a></code></li></ul></details></li><li><details><summary><code><a href="../../Psych/Nodes.html">Nodes</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Psych/Nodes/Alias.html">Alias</a></code></li><li><code><a href="../../Psych/Nodes/Document.html">Document</a></code></li><li><code><a href="../../Psych/Nodes/Mapping.html">Mapping</a></code></li><li><code><a href="../../Psych/Nodes/Node.html">Node</a></code></li><li><code><a href="../../Psych/Nodes/Scalar.html">Scalar</a></code></li><li><code><a href="../../Psych/Nodes/Sequence.html">Sequence</a></code></li><li><code><a href="../../Psych/Nodes/Stream.html">Stream</a></code></li></ul></details></li><li><code><a href="../../Psych/Omap.html">Omap</a></code></li><li><details><summary><code><a href="../../Psych/Parser.html">Parser</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Psych/Parser/Mark.html">Mark</a></code></li></ul></details></li><li><code><a href="../../Psych/ScalarScanner.html">ScalarScanner</a></code></li><li><code><a href="../../Psych/Set.html">Set</a></code></li><li><code><a href="../../Psych/Stream.html">Stream</a></code></li><li><details><summary><code><a href="../../Psych/Streaming.html">Streaming</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Psych/Streaming/ClassMethods.html">ClassMethods</a></code></li></ul></details></li><li><code><a href="../../Psych/SyntaxError.html">SyntaxError</a></code></li><li><code><a href="../../Psych/TreeBuilder.html">TreeBuilder</a></code></li><li><details><summary><code><a href="../../Psych/Visitors.html">Visitors</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Psych/Visitors/DepthFirst.html">DepthFirst</a></code></li><li><code><a href="../../Psych/Visitors/Emitter.html">Emitter</a></code></li><li><code><a href="../../Psych/Visitors/JSONTree.html">JSONTree</a></code></li><li><code><a href="../../Psych/Visitors/NoAliasRuby.html">NoAliasRuby</a></code></li><li><code><a href="../../Psych/Visitors/RestrictedYAMLTree.html">RestrictedYAMLTree</a></code></li><li><code><a href="../../Psych/Visitors/ToRuby.html">ToRuby</a></code></li><li><code><a href="../../Psych/Visitors/Visitor.html">Visitor</a></code></li><li><code><a href="../../Psych/Visitors/YAMLTree.html">YAMLTree</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="../../Ractor.html">Ractor</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Ractor/ClosedError.html">ClosedError</a></code></li><li><code><a href="../../Ractor/Error.html">Error</a></code></li><li><code><a href="../../Ractor/IsolationError.html">IsolationError</a></code></li><li><code><a href="../../Ractor/MovedError.html">MovedError</a></code></li><li><code><a href="../../Ractor/MovedObject.html">MovedObject</a></code></li><li><code><a href="../../Ractor/Port.html">Port</a></code></li><li><code><a href="../../Ractor/RemoteError.html">RemoteError</a></code></li><li><code><a href="../../Ractor/UnsafeError.html">UnsafeError</a></code></li></ul></details></li><li><details><summary><code><a href="../../Random.html">Random</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Random/Formatter.html">Formatter</a></code></li></ul></details></li><li><code><a href="../../Range.html">Range</a></code></li><li><code><a href="../../RangeError.html">RangeError</a></code></li><li><code><a href="../../Rational.html">Rational</a></code></li><li><code><a href="../../RbConfig.html">RbConfig</a></code></li><li><code><a href="../../Refinement.html">Refinement</a></code></li><li><details><summary><code><a href="../../Regexp.html">Regexp</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Regexp/TimeoutError.html">TimeoutError</a></code></li></ul></details></li><li><code><a href="../../RegexpError.html">RegexpError</a></code></li><li><details><summary><code><a href="../../Resolv.html">Resolv</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Resolv/DNS.html">DNS</a></code></li><li><code><a href="../../Resolv/Hosts.html">Hosts</a></code></li><li><code><a href="../../Resolv/IPv4.html">IPv4</a></code></li><li><code><a href="../../Resolv/IPv6.html">IPv6</a></code></li><li><details><summary><code><a href="../../Resolv/LOC.html">LOC</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Resolv/LOC/Alt.html">Alt</a></code></li><li><code><a href="../../Resolv/LOC/Coord.html">Coord</a></code></li><li><code><a href="../../Resolv/LOC/Size.html">Size</a></code></li></ul></details></li><li><code><a href="../../Resolv/MDNS.html">MDNS</a></code></li><li><code><a href="../../Resolv/ResolvError.html">ResolvError</a></code></li><li><code><a href="../../Resolv/ResolvTimeout.html">ResolvTimeout</a></code></li></ul></details></li><li><details><summary><code><a href="../../Ripper.html">Ripper</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Ripper/Filter.html">Filter</a></code></li><li><code><a href="../../Ripper/Lexer.html">Lexer</a></code></li></ul></details></li><li><details><summary><code><a href="../../Ruby.html">Ruby</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Ruby/Box.html">Box</a></code></li></ul></details></li><li><details><summary><code><a href="../../RubyVM.html">RubyVM</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../RubyVM/AbstractSyntaxTree.html">AbstractSyntaxTree</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../RubyVM/AbstractSyntaxTree/Location.html">Location</a></code></li><li><code><a href="../../RubyVM/AbstractSyntaxTree/Node.html">Node</a></code></li></ul></details></li><li><code><a href="../../RubyVM/InstructionSequence.html">InstructionSequence</a></code></li><li><code><a href="../../RubyVM/YJIT.html">YJIT</a></code></li></ul></details></li><li><code><a href="../../RuntimeError.html">RuntimeError</a></code></li><li><code><a href="../../SOCKSSocket.html">SOCKSSocket</a></code></li><li><code><a href="../../ScriptError.html">ScriptError</a></code></li><li><code><a href="../../SecureRandom.html">SecureRandom</a></code></li><li><code><a href="../../SecurityError.html">SecurityError</a></code></li><li><code><a href="../../Set.html">Set</a></code></li><li><code><a href="../../Shellwords.html">Shellwords</a></code></li><li><code><a href="../../Signal.html">Signal</a></code></li><li><code><a href="../../SignalException.html">SignalException</a></code></li><li><code><a href="../../SimpleDelegator.html">SimpleDelegator</a></code></li><li><code><a href="../../SingleForwardable.html">SingleForwardable</a></code></li><li><code><a href="../../Singleton.html">Singleton</a></code></li><li><details><summary><code><a href="../../Socket.html">Socket</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Socket/AncillaryData.html">AncillaryData</a></code></li><li><code><a href="../../Socket/Constants.html">Constants</a></code></li><li><code><a href="../../Socket/Ifaddr.html">Ifaddr</a></code></li><li><code><a href="../../Socket/Option.html">Option</a></code></li><li><code><a href="../../Socket/ResolutionError.html">ResolutionError</a></code></li><li><code><a href="../../Socket/UDPSource.html">UDPSource</a></code></li></ul></details></li><li><code><a href="../../SocketError.html">SocketError</a></code></li><li><code><a href="../../StandardError.html">StandardError</a></code></li><li><code><a href="../../StopIteration.html">StopIteration</a></code></li><li><code><a href="../../String.html">String</a></code></li><li><code><a href="../../StringIO.html">StringIO</a></code></li><li><details><summary><code><a href="../../StringScanner.html">StringScanner</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../StringScanner/Error.html">Error</a></code></li></ul></details></li><li><code><a href="../../Struct.html">Struct</a></code></li><li><code><a href="../../Symbol.html">Symbol</a></code></li><li><code><a href="../../SyntaxError.html">SyntaxError</a></code></li><li><details><summary><code><a href="../../SyntaxSuggest.html">SyntaxSuggest</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../SyntaxSuggest/AroundBlockScan.html">AroundBlockScan</a></code></li><li><code><a href="../../SyntaxSuggest/BlockExpand.html">BlockExpand</a></code></li><li><details><summary><code><a href="../../SyntaxSuggest/Capture.html">Capture</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../SyntaxSuggest/Capture/BeforeAfterKeywordEnds.html">BeforeAfterKeywordEnds</a></code></li><li><code><a href="../../SyntaxSuggest/Capture/FallingIndentLines.html">FallingIndentLines</a></code></li></ul></details></li><li><code><a href="../../SyntaxSuggest/CaptureCodeContext.html">CaptureCodeContext</a></code></li><li><code><a href="../../SyntaxSuggest/CleanDocument.html">CleanDocument</a></code></li><li><code><a href="../../SyntaxSuggest/Cli.html">Cli</a></code></li><li><code><a href="../../SyntaxSuggest/CodeBlock.html">CodeBlock</a></code></li><li><code><a href="../../SyntaxSuggest/CodeFrontier.html">CodeFrontier</a></code></li><li><code><a href="../../SyntaxSuggest/CodeLine.html">CodeLine</a></code></li><li><code><a href="../../SyntaxSuggest/CodeSearch.html">CodeSearch</a></code></li><li><code><a href="../../SyntaxSuggest/DisplayCodeWithLineNumbers.html">DisplayCodeWithLineNumbers</a></code></li><li><code><a href="../../SyntaxSuggest/DisplayInvalidBlocks.html">DisplayInvalidBlocks</a></code></li><li><code><a href="../../SyntaxSuggest/Error.html">Error</a></code></li><li><code><a href="../../SyntaxSuggest/ExplainSyntax.html">ExplainSyntax</a></code></li><li><code><a href="../../SyntaxSuggest/GetParseErrors.html">GetParseErrors</a></code></li><li><code><a href="../../SyntaxSuggest/LeftRightLexCount.html">LeftRightLexCount</a></code></li><li><code><a href="../../SyntaxSuggest/LexAll.html">LexAll</a></code></li><li><code><a href="../../SyntaxSuggest/LexValue.html">LexValue</a></code></li><li><code><a href="../../SyntaxSuggest/MiniStringIO.html">MiniStringIO</a></code></li><li><code><a href="../../SyntaxSuggest/ParseBlocksFromIndentLine.html">ParseBlocksFromIndentLine</a></code></li><li><code><a href="../../SyntaxSuggest/PathnameFromMessage.html">PathnameFromMessage</a></code></li><li><code><a href="../../SyntaxSuggest/PriorityEngulfQueue.html">PriorityEngulfQueue</a></code></li><li><code><a href="../../SyntaxSuggest/PriorityQueue.html">PriorityQueue</a></code></li><li><code><a href="../../SyntaxSuggest/RipperErrors.html">RipperErrors</a></code></li><li><code><a href="../../SyntaxSuggest/ScanHistory.html">ScanHistory</a></code></li><li><code><a href="../../SyntaxSuggest/UnvisitedLines.html">UnvisitedLines</a></code></li></ul></details></li><li><code><a href="../../SystemCallError.html">SystemCallError</a></code></li><li><code><a href="../../SystemExit.html">SystemExit</a></code></li><li><code><a href="../../SystemStackError.html">SystemStackError</a></code></li><li><code><a href="../../TCPServer.html">TCPServer</a></code></li><li><code><a href="../../TCPSocket.html">TCPSocket</a></code></li><li><details><summary><code><a href="../../TSort.html">TSort</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../TSort/Cyclic.html">Cyclic</a></code></li></ul></details></li><li><code><a href="../../Tempfile.html">Tempfile</a></code></li><li><details><summary><code><a href="../../Thread.html">Thread</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../Thread/Backtrace.html">Backtrace</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Thread/Backtrace/Location.html">Location</a></code></li></ul></details></li><li><code><a href="../../Thread/ConditionVariable.html">ConditionVariable</a></code></li><li><code><a href="../../Thread/Mutex.html">Mutex</a></code></li><li><code><a href="../../Thread/Queue.html">Queue</a></code></li><li><code><a href="../../Thread/SizedQueue.html">SizedQueue</a></code></li></ul></details></li><li><code><a href="../../ThreadError.html">ThreadError</a></code></li><li><code><a href="../../ThreadGroup.html">ThreadGroup</a></code></li><li><code><a href="../../Time.html">Time</a></code></li><li><details><summary><code><a href="../../Timeout.html">Timeout</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Timeout/Error.html">Error</a></code></li><li><code><a href="../../Timeout/ExitException.html">ExitException</a></code></li></ul></details></li><li><code><a href="../../TracePoint.html">TracePoint</a></code></li><li><code><a href="../../TrueClass.html">TrueClass</a></code></li><li><code><a href="../../TypeError.html">TypeError</a></code></li><li><code><a href="../../UDPSocket.html">UDPSocket</a></code></li><li><code><a href="../../UNIXServer.html">UNIXServer</a></code></li><li><code><a href="../../UNIXSocket.html">UNIXSocket</a></code></li><li><details><summary><code><a href="../../URI.html">URI</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../URI/BadURIError.html">BadURIError</a></code></li><li><code><a href="../../URI/Error.html">Error</a></code></li><li><code><a href="../../URI/FTP.html">FTP</a></code></li><li><code><a href="../../URI/File.html">File</a></code></li><li><code><a href="../../URI/Generic.html">Generic</a></code></li><li><code><a href="../../URI/HTTP.html">HTTP</a></code></li><li><code><a href="../../URI/HTTPS.html">HTTPS</a></code></li><li><code><a href="../../URI/InvalidComponentError.html">InvalidComponentError</a></code></li><li><code><a href="../../URI/InvalidURIError.html">InvalidURIError</a></code></li><li><code><a href="../../URI/LDAP.html">LDAP</a></code></li><li><code><a href="../../URI/LDAPS.html">LDAPS</a></code></li><li><code><a href="../../URI/MailTo.html">MailTo</a></code></li><li><code><a href="../../URI/RFC2396_Parser.html">RFC2396_Parser</a></code></li><li><details><summary><code><a href="../../URI/RFC2396_REGEXP.html">RFC2396_REGEXP</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../URI/RFC2396_REGEXP/PATTERN.html">PATTERN</a></code></li></ul></details></li><li><code><a href="../../URI/WS.html">WS</a></code></li><li><code><a href="../../URI/WSS.html">WSS</a></code></li></ul></details></li><li><code><a href="../../UnboundMethod.html">UnboundMethod</a></code></li><li><code><a href="../../UncaughtThrowError.html">UncaughtThrowError</a></code></li><li><code><a href="../../Warning.html">Warning</a></code></li><li><details><summary><code><a href="../../WeakRef.html">WeakRef</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../WeakRef/RefError.html">RefError</a></code></li></ul></details></li><li><details><summary><code><a href="../../Win32.html">Win32</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../../Win32/Registry.html">Registry</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Win32/Registry/API.html">API</a></code></li><li><code><a href="../../Win32/Registry/Error.html">Error</a></code></li><li><code><a href="../../Win32/Registry/PredefinedKey.html">PredefinedKey</a></code></li></ul></details></li><li><details><summary><code><a href="../../Win32/Resolv.html">Resolv</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Win32/Resolv/Error.html">Error</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="../../YAML.html">YAML</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../YAML/DBM.html">DBM</a></code></li><li><code><a href="../../YAML/Store.html">Store</a></code></li></ul></details></li><li><code><a href="../../ZJIT.html">ZJIT</a></code></li><li><code><a href="../../ZeroDivisionError.html">ZeroDivisionError</a></code></li><li><details><summary><code><a href="../../Zlib.html">Zlib</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Zlib/BufError.html">BufError</a></code></li><li><code><a href="../../Zlib/DataError.html">DataError</a></code></li><li><code><a href="../../Zlib/Deflate.html">Deflate</a></code></li><li><code><a href="../../Zlib/Error.html">Error</a></code></li><li><details><summary><code><a href="../../Zlib/GzipFile.html">GzipFile</a></code></summary><ul class="link-list nav-list"><li><code><a href="../../Zlib/GzipFile/CRCError.html">CRCError</a></code></li><li><code><a href="../../Zlib/GzipFile/Error.html">Error</a></code></li><li><code><a href="../../Zlib/GzipFile/LengthError.html">LengthError</a></code></li><li><code><a href="../../Zlib/GzipFile/NoFooter.html">NoFooter</a></code></li></ul></details></li><li><code><a href="../../Zlib/GzipReader.html">GzipReader</a></code></li><li><code><a href="../../Zlib/GzipWriter.html">GzipWriter</a></code></li><li><code><a href="../../Zlib/InProgressError.html">InProgressError</a></code></li><li><code><a href="../../Zlib/Inflate.html">Inflate</a></code></li><li><code><a href="../../Zlib/MemError.html">MemError</a></code></li><li><code><a href="../../Zlib/NeedDict.html">NeedDict</a></code></li><li><code><a href="../../Zlib/StreamEnd.html">StreamEnd</a></code></li><li><code><a href="../../Zlib/StreamError.html">StreamError</a></code></li><li><code><a href="../../Zlib/VersionError.html">VersionError</a></code></li><li><code><a href="../../Zlib/ZStream.html">ZStream</a></code></li></ul></details></li><li><code><a href="../../fatal.html">fatal</a></code></li></ul>
+  </details>
+</div>
+
+</nav>
+
+<main role="main" aria-label="Page language/regexp/unicode_properties.rdoc">
+
+<h2 id="label-Regexps+Based+on+Unicode+Properties"><a href="#label-Regexps+Based+on+Unicode+Properties">Regexps Based on Unicode Properties</a></h2>
+
+<p>The properties shown here are those currently supported in Ruby. Older versions may not support all of these.</p>
+
+<h3 id="label-POSIX+brackets"><a href="#label-POSIX+brackets">POSIX brackets</a></h3>
+<ul><li>
+<p><code>\p{ASCII}</code></p>
+</li><li>
+<p><code>\p{Alnum}</code></p>
+</li><li>
+<p><code>\p{Alphabetic}</code>, <code>\p{Alpha}</code></p>
+</li><li>
+<p><code>\p{Blank}</code></p>
+</li><li>
+<p><code>\p{Cntrl}</code></p>
+</li><li>
+<p><code>\p{Digit}</code></p>
+</li><li>
+<p><code>\p{Graph}</code></p>
+</li><li>
+<p><code>\p{Lowercase}</code>, <code>\p{Lower}</code></p>
+</li><li>
+<p><code>\p{Print}</code></p>
+</li><li>
+<p><code>\p{Punct}</code></p>
+</li><li>
+<p><code>\p{Space}</code></p>
+</li><li>
+<p><code>\p{Uppercase}</code>, <code>\p{Upper}</code></p>
+</li><li>
+<p><code>\p{Word}</code></p>
+</li><li>
+<p><code>\p{XDigit}</code></p>
+</li><li>
+<p><code>\p{XPosixPunct}</code></p>
+</li></ul>
+
+<h3 id="label-Special"><a href="#label-Special">Special</a></h3>
+<ul><li>
+<p><code>\p{Any}</code></p>
+</li><li>
+<p><code>\p{Assigned}</code></p>
+</li></ul>
+
+<h3 id="label-Major+and+General+Categories"><a href="#label-Major+and+General+Categories">Major and General Categories</a></h3>
+<ul><li>
+<p><code>\p{Cased_Letter}</code>, <code>\p{LC}</code></p>
+</li><li>
+<p><code>\p{Close_Punctuation}</code>, <code>\p{Pe}</code></p>
+</li><li>
+<p><code>\p{Connector_Punctuation}</code>, <code>\p{Pc}</code></p>
+</li><li>
+<p><code>\p{Control}</code>, <code>\p{Cc}</code></p>
+</li><li>
+<p><code>\p{Currency_Symbol}</code>, <code>\p{Sc}</code></p>
+</li><li>
+<p><code>\p{Dash_Punctuation}</code>, <code>\p{Pd}</code></p>
+</li><li>
+<p><code>\p{Decimal_Number}</code>, <code>\p{Nd}</code></p>
+</li><li>
+<p><code>\p{Enclosing_Mark}</code>, <code>\p{Me}</code></p>
+</li><li>
+<p><code>\p{Final_Punctuation}</code>, <code>\p{Pf}</code></p>
+</li><li>
+<p><code>\p{Format}</code>, <code>\p{Cf}</code></p>
+</li><li>
+<p><code>\p{Initial_Punctuation}</code>, <code>\p{Pi}</code></p>
+</li><li>
+<p><code>\p{Letter}</code>, <code>\p{L}</code></p>
+</li><li>
+<p><code>\p{Letter_Number}</code>, <code>\p{Nl}</code></p>
+</li><li>
+<p><code>\p{Line_Separator}</code>, <code>\p{Zl}</code></p>
+</li><li>
+<p><code>\p{Lowercase_Letter}</code>, <code>\p{Ll}</code></p>
+</li><li>
+<p><code>\p{Mark}</code>, <code>\p{M}</code></p>
+</li><li>
+<p><code>\p{Math_Symbol}</code>, <code>\p{Sm}</code></p>
+</li><li>
+<p><code>\p{Modifier_Letter}</code>, <code>\p{Lm}</code></p>
+</li><li>
+<p><code>\p{Modifier_Symbol}</code>, <code>\p{Sk}</code></p>
+</li><li>
+<p><code>\p{Nonspacing_Mark}</code>, <code>\p{Mn}</code></p>
+</li><li>
+<p><code>\p{Number}</code>, <code>\p{N}</code></p>
+</li><li>
+<p><code>\p{Open_Punctuation}</code>, <code>\p{Ps}</code></p>
+</li><li>
+<p><code>\p{Other}</code>, <code>\p{C}</code></p>
+</li><li>
+<p><code>\p{Other_Letter}</code>, <code>\p{Lo}</code></p>
+</li><li>
+<p><code>\p{Other_Number}</code>, <code>\p{No}</code></p>
+</li><li>
+<p><code>\p{Other_Punctuation}</code>, <code>\p{Po}</code></p>
+</li><li>
+<p><code>\p{Other_Symbol}</code>, <code>\p{So}</code></p>
+</li><li>
+<p><code>\p{Paragraph_Separator}</code>, <code>\p{Zp}</code></p>
+</li><li>
+<p><code>\p{Private_Use}</code>, <code>\p{Co}</code></p>
+</li><li>
+<p><code>\p{Punctuation}</code>, <code>\p{P}</code></p>
+</li><li>
+<p><code>\p{Separator}</code>, <code>\p{Z}</code></p>
+</li><li>
+<p><code>\p{Space_Separator}</code>, <code>\p{Zs}</code></p>
+</li><li>
+<p><code>\p{Spacing_Mark}</code>, <code>\p{Mc}</code></p>
+</li><li>
+<p><code>\p{Surrogate}</code>, <code>\p{Cs}</code></p>
+</li><li>
+<p><code>\p{Symbol}</code>, <code>\p{S}</code></p>
+</li><li>
+<p><code>\p{Titlecase_Letter}</code>, <code>\p{Lt}</code></p>
+</li><li>
+<p><code>\p{Unassigned}</code>, <code>\p{Cn}</code></p>
+</li><li>
+<p><code>\p{Uppercase_Letter}</code>, <code>\p{Lu}</code></p>
+</li></ul>
+
+<h3 id="label-Prop+List"><a href="#label-Prop+List">Prop List</a></h3>
+<ul><li>
+<p><code>\p{ASCII_Hex_Digit}</code>, <code>\p{AHex}</code></p>
+</li><li>
+<p><code>\p{Bidi_Control}</code>, <code>\p{Bidi_C}</code></p>
+</li><li>
+<p><code>\p{Dash}</code></p>
+</li><li>
+<p><code>\p{Deprecated}</code>, <code>\p{Dep}</code></p>
+</li><li>
+<p><code>\p{Diacritic}</code>, <code>\p{Dia}</code></p>
+</li><li>
+<p><code>\p{Extender}</code>, <code>\p{Ext}</code></p>
+</li><li>
+<p><code>\p{Hex_Digit}</code>, <code>\p{Hex}</code></p>
+</li><li>
+<p><code>\p{Hyphen}</code></p>
+</li><li>
+<p><code>\p{IDS_Binary_Operator}</code>, <code>\p{IDSB}</code></p>
+</li><li>
+<p><code>\p{IDS_Trinary_Operator}</code>, <code>\p{IDST}</code></p>
+</li><li>
+<p><code>\p{IDS_Unary_Operator}</code>, <code>\p{IDSU}</code></p>
+</li><li>
+<p><code>\p{ID_Compat_Math_Continue}</code></p>
+</li><li>
+<p><code>\p{ID_Compat_Math_Start}</code></p>
+</li><li>
+<p><code>\p{Ideographic}</code>, <code>\p{Ideo}</code></p>
+</li><li>
+<p><code>\p{Join_Control}</code>, <code>\p{Join_C}</code></p>
+</li><li>
+<p><code>\p{Logical_Order_Exception}</code>, <code>\p{LOE}</code></p>
+</li><li>
+<p><code>\p{Modifier_Combining_Mark}</code>, <code>\p{MCM}</code></p>
+</li><li>
+<p><code>\p{Noncharacter_Code_Point}</code>, <code>\p{NChar}</code></p>
+</li><li>
+<p><code>\p{Other_Alphabetic}</code>, <code>\p{OAlpha}</code></p>
+</li><li>
+<p><code>\p{Other_Default_Ignorable_Code_Point}</code>, <code>\p{ODI}</code></p>
+</li><li>
+<p><code>\p{Other_Grapheme_Extend}</code>, <code>\p{OGr_Ext}</code></p>
+</li><li>
+<p><code>\p{Other_ID_Continue}</code>, <code>\p{OIDC}</code></p>
+</li><li>
+<p><code>\p{Other_ID_Start}</code>, <code>\p{OIDS}</code></p>
+</li><li>
+<p><code>\p{Other_Lowercase}</code>, <code>\p{OLower}</code></p>
+</li><li>
+<p><code>\p{Other_Math}</code>, <code>\p{OMath}</code></p>
+</li><li>
+<p><code>\p{Other_Uppercase}</code>, <code>\p{OUpper}</code></p>
+</li><li>
+<p><code>\p{Pattern_Syntax}</code>, <code>\p{Pat_Syn}</code></p>
+</li><li>
+<p><code>\p{Pattern_White_Space}</code>, <code>\p{Pat_WS}</code></p>
+</li><li>
+<p><code>\p{Prepended_Concatenation_Mark}</code>, <code>\p{PCM}</code></p>
+</li><li>
+<p><code>\p{Quotation_Mark}</code>, <code>\p{QMark}</code></p>
+</li><li>
+<p><code>\p{Radical}</code></p>
+</li><li>
+<p><code>\p{Regional_Indicator}</code>, <code>\p{RI}</code></p>
+</li><li>
+<p><code>\p{Sentence_Terminal}</code>, <code>\p{STerm}</code></p>
+</li><li>
+<p><code>\p{Soft_Dotted}</code>, <code>\p{SD}</code></p>
+</li><li>
+<p><code>\p{Terminal_Punctuation}</code>, <code>\p{Term}</code></p>
+</li><li>
+<p><code>\p{Unified_Ideograph}</code>, <code>\p{UIdeo}</code></p>
+</li><li>
+<p><code>\p{Variation_Selector}</code>, <code>\p{VS}</code></p>
+</li><li>
+<p><code>\p{White_Space}</code>, <code>\p{WSpace}</code></p>
+</li></ul>
+
+<h3 id="label-Derived+Core+Properties"><a href="#label-Derived+Core+Properties">Derived Core Properties</a></h3>
+<ul><li>
+<p><code>\p{Alphabetic}</code>, <code>\p{Alpha}</code></p>
+</li><li>
+<p><code>\p{Case_Ignorable}</code>, <code>\p{CI}</code></p>
+</li><li>
+<p><code>\p{Cased}</code></p>
+</li><li>
+<p><code>\p{Changes_When_Casefolded}</code>, <code>\p{CWCF}</code></p>
+</li><li>
+<p><code>\p{Changes_When_Casemapped}</code>, <code>\p{CWCM}</code></p>
+</li><li>
+<p><code>\p{Changes_When_Lowercased}</code>, <code>\p{CWL}</code></p>
+</li><li>
+<p><code>\p{Changes_When_Titlecased}</code>, <code>\p{CWT}</code></p>
+</li><li>
+<p><code>\p{Changes_When_Uppercased}</code>, <code>\p{CWU}</code></p>
+</li><li>
+<p><code>\p{Default_Ignorable_Code_Point}</code>, <code>\p{DI}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Base}</code>, <code>\p{Gr_Base}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Extend}</code>, <code>\p{Gr_Ext}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Link}</code>, <code>\p{Gr_Link}</code></p>
+</li><li>
+<p><code>\p{ID_Continue}</code>, <code>\p{IDC}</code></p>
+</li><li>
+<p><code>\p{ID_Start}</code>, <code>\p{IDS}</code></p>
+</li><li>
+<p><code>\p{InCB_Consonant}</code></p>
+</li><li>
+<p><code>\p{InCB_Extend}</code></p>
+</li><li>
+<p><code>\p{InCB_Linker}</code></p>
+</li><li>
+<p><code>\p{Lowercase}</code>, <code>\p{Lower}</code></p>
+</li><li>
+<p><code>\p{Math}</code></p>
+</li><li>
+<p><code>\p{Uppercase}</code>, <code>\p{Upper}</code></p>
+</li><li>
+<p><code>\p{XID_Continue}</code>, <code>\p{XIDC}</code></p>
+</li><li>
+<p><code>\p{XID_Start}</code>, <code>\p{XIDS}</code></p>
+</li></ul>
+
+<h3 id="label-Scripts"><a href="#label-Scripts">Scripts</a></h3>
+<ul><li>
+<p><code>\p{Adlam}</code>, <code>\p{Adlm}</code></p>
+</li><li>
+<p><code>\p{Ahom}</code></p>
+</li><li>
+<p><code>\p{Anatolian_Hieroglyphs}</code>, <code>\p{Hluw}</code></p>
+</li><li>
+<p><code>\p{Arabic}</code>, <code>\p{Arab}</code></p>
+</li><li>
+<p><code>\p{Armenian}</code>, <code>\p{Armn}</code></p>
+</li><li>
+<p><code>\p{Avestan}</code>, <code>\p{Avst}</code></p>
+</li><li>
+<p><code>\p{Balinese}</code>, <code>\p{Bali}</code></p>
+</li><li>
+<p><code>\p{Bamum}</code>, <code>\p{Bamu}</code></p>
+</li><li>
+<p><code>\p{Bassa_Vah}</code>, <code>\p{Bass}</code></p>
+</li><li>
+<p><code>\p{Batak}</code>, <code>\p{Batk}</code></p>
+</li><li>
+<p><code>\p{Bengali}</code>, <code>\p{Beng}</code></p>
+</li><li>
+<p><code>\p{Beria_Erfe}</code>, <code>\p{Berf}</code></p>
+</li><li>
+<p><code>\p{Bhaiksuki}</code>, <code>\p{Bhks}</code></p>
+</li><li>
+<p><code>\p{Bopomofo}</code>, <code>\p{Bopo}</code></p>
+</li><li>
+<p><code>\p{Brahmi}</code>, <code>\p{Brah}</code></p>
+</li><li>
+<p><code>\p{Braille}</code>, <code>\p{Brai}</code></p>
+</li><li>
+<p><code>\p{Buginese}</code>, <code>\p{Bugi}</code></p>
+</li><li>
+<p><code>\p{Buhid}</code>, <code>\p{Buhd}</code></p>
+</li><li>
+<p><code>\p{Canadian_Aboriginal}</code>, <code>\p{Cans}</code></p>
+</li><li>
+<p><code>\p{Carian}</code>, <code>\p{Cari}</code></p>
+</li><li>
+<p><code>\p{Caucasian_Albanian}</code>, <code>\p{Aghb}</code></p>
+</li><li>
+<p><code>\p{Chakma}</code>, <code>\p{Cakm}</code></p>
+</li><li>
+<p><code>\p{Cham}</code></p>
+</li><li>
+<p><code>\p{Cherokee}</code>, <code>\p{Cher}</code></p>
+</li><li>
+<p><code>\p{Chorasmian}</code>, <code>\p{Chrs}</code></p>
+</li><li>
+<p><code>\p{Common}</code>, <code>\p{Zyyy}</code></p>
+</li><li>
+<p><code>\p{Coptic}</code>, <code>\p{Copt}</code></p>
+</li><li>
+<p><code>\p{Cuneiform}</code>, <code>\p{Xsux}</code></p>
+</li><li>
+<p><code>\p{Cypriot}</code>, <code>\p{Cprt}</code></p>
+</li><li>
+<p><code>\p{Cypro_Minoan}</code>, <code>\p{Cpmn}</code></p>
+</li><li>
+<p><code>\p{Cyrillic}</code>, <code>\p{Cyrl}</code></p>
+</li><li>
+<p><code>\p{Deseret}</code>, <code>\p{Dsrt}</code></p>
+</li><li>
+<p><code>\p{Devanagari}</code>, <code>\p{Deva}</code></p>
+</li><li>
+<p><code>\p{Dives_Akuru}</code>, <code>\p{Diak}</code></p>
+</li><li>
+<p><code>\p{Dogra}</code>, <code>\p{Dogr}</code></p>
+</li><li>
+<p><code>\p{Duployan}</code>, <code>\p{Dupl}</code></p>
+</li><li>
+<p><code>\p{Egyptian_Hieroglyphs}</code>, <code>\p{Egyp}</code></p>
+</li><li>
+<p><code>\p{Elbasan}</code>, <code>\p{Elba}</code></p>
+</li><li>
+<p><code>\p{Elymaic}</code>, <code>\p{Elym}</code></p>
+</li><li>
+<p><code>\p{Ethiopic}</code>, <code>\p{Ethi}</code></p>
+</li><li>
+<p><code>\p{Garay}</code>, <code>\p{Gara}</code></p>
+</li><li>
+<p><code>\p{Georgian}</code>, <code>\p{Geor}</code></p>
+</li><li>
+<p><code>\p{Glagolitic}</code>, <code>\p{Glag}</code></p>
+</li><li>
+<p><code>\p{Gothic}</code>, <code>\p{Goth}</code></p>
+</li><li>
+<p><code>\p{Grantha}</code>, <code>\p{Gran}</code></p>
+</li><li>
+<p><code>\p{Greek}</code>, <code>\p{Grek}</code></p>
+</li><li>
+<p><code>\p{Gujarati}</code>, <code>\p{Gujr}</code></p>
+</li><li>
+<p><code>\p{Gunjala_Gondi}</code>, <code>\p{Gong}</code></p>
+</li><li>
+<p><code>\p{Gurmukhi}</code>, <code>\p{Guru}</code></p>
+</li><li>
+<p><code>\p{Gurung_Khema}</code>, <code>\p{Gukh}</code></p>
+</li><li>
+<p><code>\p{Han}</code>, <code>\p{Hani}</code></p>
+</li><li>
+<p><code>\p{Hangul}</code>, <code>\p{Hang}</code></p>
+</li><li>
+<p><code>\p{Hanifi_Rohingya}</code>, <code>\p{Rohg}</code></p>
+</li><li>
+<p><code>\p{Hanunoo}</code>, <code>\p{Hano}</code></p>
+</li><li>
+<p><code>\p{Hatran}</code>, <code>\p{Hatr}</code></p>
+</li><li>
+<p><code>\p{Hebrew}</code>, <code>\p{Hebr}</code></p>
+</li><li>
+<p><code>\p{Hiragana}</code>, <code>\p{Hira}</code></p>
+</li><li>
+<p><code>\p{Imperial_Aramaic}</code>, <code>\p{Armi}</code></p>
+</li><li>
+<p><code>\p{Inherited}</code>, <code>\p{Zinh}</code></p>
+</li><li>
+<p><code>\p{Inscriptional_Pahlavi}</code>, <code>\p{Phli}</code></p>
+</li><li>
+<p><code>\p{Inscriptional_Parthian}</code>, <code>\p{Prti}</code></p>
+</li><li>
+<p><code>\p{Javanese}</code>, <code>\p{Java}</code></p>
+</li><li>
+<p><code>\p{Kaithi}</code>, <code>\p{Kthi}</code></p>
+</li><li>
+<p><code>\p{Kannada}</code>, <code>\p{Knda}</code></p>
+</li><li>
+<p><code>\p{Katakana}</code>, <code>\p{Kana}</code></p>
+</li><li>
+<p><code>\p{Kawi}</code></p>
+</li><li>
+<p><code>\p{Kayah_Li}</code>, <code>\p{Kali}</code></p>
+</li><li>
+<p><code>\p{Kharoshthi}</code>, <code>\p{Khar}</code></p>
+</li><li>
+<p><code>\p{Khitan_Small_Script}</code>, <code>\p{Kits}</code></p>
+</li><li>
+<p><code>\p{Khmer}</code>, <code>\p{Khmr}</code></p>
+</li><li>
+<p><code>\p{Khojki}</code>, <code>\p{Khoj}</code></p>
+</li><li>
+<p><code>\p{Khudawadi}</code>, <code>\p{Sind}</code></p>
+</li><li>
+<p><code>\p{Kirat_Rai}</code>, <code>\p{Krai}</code></p>
+</li><li>
+<p><code>\p{Lao}</code>, <code>\p{Laoo}</code></p>
+</li><li>
+<p><code>\p{Latin}</code>, <code>\p{Latn}</code></p>
+</li><li>
+<p><code>\p{Lepcha}</code>, <code>\p{Lepc}</code></p>
+</li><li>
+<p><code>\p{Limbu}</code>, <code>\p{Limb}</code></p>
+</li><li>
+<p><code>\p{Linear_A}</code>, <code>\p{Lina}</code></p>
+</li><li>
+<p><code>\p{Linear_B}</code>, <code>\p{Linb}</code></p>
+</li><li>
+<p><code>\p{Lisu}</code></p>
+</li><li>
+<p><code>\p{Lycian}</code>, <code>\p{Lyci}</code></p>
+</li><li>
+<p><code>\p{Lydian}</code>, <code>\p{Lydi}</code></p>
+</li><li>
+<p><code>\p{Mahajani}</code>, <code>\p{Mahj}</code></p>
+</li><li>
+<p><code>\p{Makasar}</code>, <code>\p{Maka}</code></p>
+</li><li>
+<p><code>\p{Malayalam}</code>, <code>\p{Mlym}</code></p>
+</li><li>
+<p><code>\p{Mandaic}</code>, <code>\p{Mand}</code></p>
+</li><li>
+<p><code>\p{Manichaean}</code>, <code>\p{Mani}</code></p>
+</li><li>
+<p><code>\p{Marchen}</code>, <code>\p{Marc}</code></p>
+</li><li>
+<p><code>\p{Masaram_Gondi}</code>, <code>\p{Gonm}</code></p>
+</li><li>
+<p><code>\p{Medefaidrin}</code>, <code>\p{Medf}</code></p>
+</li><li>
+<p><code>\p{Meetei_Mayek}</code>, <code>\p{Mtei}</code></p>
+</li><li>
+<p><code>\p{Mende_Kikakui}</code>, <code>\p{Mend}</code></p>
+</li><li>
+<p><code>\p{Meroitic_Cursive}</code>, <code>\p{Merc}</code></p>
+</li><li>
+<p><code>\p{Meroitic_Hieroglyphs}</code>, <code>\p{Mero}</code></p>
+</li><li>
+<p><code>\p{Miao}</code>, <code>\p{Plrd}</code></p>
+</li><li>
+<p><code>\p{Modi}</code></p>
+</li><li>
+<p><code>\p{Mongolian}</code>, <code>\p{Mong}</code></p>
+</li><li>
+<p><code>\p{Mro}</code>, <code>\p{Mroo}</code></p>
+</li><li>
+<p><code>\p{Multani}</code>, <code>\p{Mult}</code></p>
+</li><li>
+<p><code>\p{Myanmar}</code>, <code>\p{Mymr}</code></p>
+</li><li>
+<p><code>\p{Nabataean}</code>, <code>\p{Nbat}</code></p>
+</li><li>
+<p><code>\p{Nag_Mundari}</code>, <code>\p{Nagm}</code></p>
+</li><li>
+<p><code>\p{Nandinagari}</code>, <code>\p{Nand}</code></p>
+</li><li>
+<p><code>\p{New_Tai_Lue}</code>, <code>\p{Talu}</code></p>
+</li><li>
+<p><code>\p{Newa}</code></p>
+</li><li>
+<p><code>\p{Nko}</code>, <code>\p{Nkoo}</code></p>
+</li><li>
+<p><code>\p{Nushu}</code>, <code>\p{Nshu}</code></p>
+</li><li>
+<p><code>\p{Nyiakeng_Puachue_Hmong}</code>, <code>\p{Hmnp}</code></p>
+</li><li>
+<p><code>\p{Ogham}</code>, <code>\p{Ogam}</code></p>
+</li><li>
+<p><code>\p{Ol_Chiki}</code>, <code>\p{Olck}</code></p>
+</li><li>
+<p><code>\p{Ol_Onal}</code>, <code>\p{Onao}</code></p>
+</li><li>
+<p><code>\p{Old_Hungarian}</code>, <code>\p{Hung}</code></p>
+</li><li>
+<p><code>\p{Old_Italic}</code>, <code>\p{Ital}</code></p>
+</li><li>
+<p><code>\p{Old_North_Arabian}</code>, <code>\p{Narb}</code></p>
+</li><li>
+<p><code>\p{Old_Permic}</code>, <code>\p{Perm}</code></p>
+</li><li>
+<p><code>\p{Old_Persian}</code>, <code>\p{Xpeo}</code></p>
+</li><li>
+<p><code>\p{Old_Sogdian}</code>, <code>\p{Sogo}</code></p>
+</li><li>
+<p><code>\p{Old_South_Arabian}</code>, <code>\p{Sarb}</code></p>
+</li><li>
+<p><code>\p{Old_Turkic}</code>, <code>\p{Orkh}</code></p>
+</li><li>
+<p><code>\p{Old_Uyghur}</code>, <code>\p{Ougr}</code></p>
+</li><li>
+<p><code>\p{Oriya}</code>, <code>\p{Orya}</code></p>
+</li><li>
+<p><code>\p{Osage}</code>, <code>\p{Osge}</code></p>
+</li><li>
+<p><code>\p{Osmanya}</code>, <code>\p{Osma}</code></p>
+</li><li>
+<p><code>\p{Pahawh_Hmong}</code>, <code>\p{Hmng}</code></p>
+</li><li>
+<p><code>\p{Palmyrene}</code>, <code>\p{Palm}</code></p>
+</li><li>
+<p><code>\p{Pau_Cin_Hau}</code>, <code>\p{Pauc}</code></p>
+</li><li>
+<p><code>\p{Phags_Pa}</code>, <code>\p{Phag}</code></p>
+</li><li>
+<p><code>\p{Phoenician}</code>, <code>\p{Phnx}</code></p>
+</li><li>
+<p><code>\p{Psalter_Pahlavi}</code>, <code>\p{Phlp}</code></p>
+</li><li>
+<p><code>\p{Rejang}</code>, <code>\p{Rjng}</code></p>
+</li><li>
+<p><code>\p{Runic}</code>, <code>\p{Runr}</code></p>
+</li><li>
+<p><code>\p{Samaritan}</code>, <code>\p{Samr}</code></p>
+</li><li>
+<p><code>\p{Saurashtra}</code>, <code>\p{Saur}</code></p>
+</li><li>
+<p><code>\p{Sharada}</code>, <code>\p{Shrd}</code></p>
+</li><li>
+<p><code>\p{Shavian}</code>, <code>\p{Shaw}</code></p>
+</li><li>
+<p><code>\p{Siddham}</code>, <code>\p{Sidd}</code></p>
+</li><li>
+<p><code>\p{Sidetic}</code>, <code>\p{Sidt}</code></p>
+</li><li>
+<p><code>\p{SignWriting}</code>, <code>\p{Sgnw}</code></p>
+</li><li>
+<p><code>\p{Sinhala}</code>, <code>\p{Sinh}</code></p>
+</li><li>
+<p><code>\p{Sogdian}</code>, <code>\p{Sogd}</code></p>
+</li><li>
+<p><code>\p{Sora_Sompeng}</code>, <code>\p{Sora}</code></p>
+</li><li>
+<p><code>\p{Soyombo}</code>, <code>\p{Soyo}</code></p>
+</li><li>
+<p><code>\p{Sundanese}</code>, <code>\p{Sund}</code></p>
+</li><li>
+<p><code>\p{Sunuwar}</code>, <code>\p{Sunu}</code></p>
+</li><li>
+<p><code>\p{Syloti_Nagri}</code>, <code>\p{Sylo}</code></p>
+</li><li>
+<p><code>\p{Syriac}</code>, <code>\p{Syrc}</code></p>
+</li><li>
+<p><code>\p{Tagalog}</code>, <code>\p{Tglg}</code></p>
+</li><li>
+<p><code>\p{Tagbanwa}</code>, <code>\p{Tagb}</code></p>
+</li><li>
+<p><code>\p{Tai_Le}</code>, <code>\p{Tale}</code></p>
+</li><li>
+<p><code>\p{Tai_Tham}</code>, <code>\p{Lana}</code></p>
+</li><li>
+<p><code>\p{Tai_Viet}</code>, <code>\p{Tavt}</code></p>
+</li><li>
+<p><code>\p{Tai_Yo}</code>, <code>\p{Tayo}</code></p>
+</li><li>
+<p><code>\p{Takri}</code>, <code>\p{Takr}</code></p>
+</li><li>
+<p><code>\p{Tamil}</code>, <code>\p{Taml}</code></p>
+</li><li>
+<p><code>\p{Tangsa}</code>, <code>\p{Tnsa}</code></p>
+</li><li>
+<p><code>\p{Tangut}</code>, <code>\p{Tang}</code></p>
+</li><li>
+<p><code>\p{Telugu}</code>, <code>\p{Telu}</code></p>
+</li><li>
+<p><code>\p{Thaana}</code>, <code>\p{Thaa}</code></p>
+</li><li>
+<p><code>\p{Thai}</code></p>
+</li><li>
+<p><code>\p{Tibetan}</code>, <code>\p{Tibt}</code></p>
+</li><li>
+<p><code>\p{Tifinagh}</code>, <code>\p{Tfng}</code></p>
+</li><li>
+<p><code>\p{Tirhuta}</code>, <code>\p{Tirh}</code></p>
+</li><li>
+<p><code>\p{Todhri}</code>, <code>\p{Todr}</code></p>
+</li><li>
+<p><code>\p{Tolong_Siki}</code>, <code>\p{Tols}</code></p>
+</li><li>
+<p><code>\p{Toto}</code></p>
+</li><li>
+<p><code>\p{Tulu_Tigalari}</code>, <code>\p{Tutg}</code></p>
+</li><li>
+<p><code>\p{Ugaritic}</code>, <code>\p{Ugar}</code></p>
+</li><li>
+<p><code>\p{Unknown}</code>, <code>\p{Zzzz}</code></p>
+</li><li>
+<p><code>\p{Vai}</code>, <code>\p{Vaii}</code></p>
+</li><li>
+<p><code>\p{Vithkuqi}</code>, <code>\p{Vith}</code></p>
+</li><li>
+<p><code>\p{Wancho}</code>, <code>\p{Wcho}</code></p>
+</li><li>
+<p><code>\p{Warang_Citi}</code>, <code>\p{Wara}</code></p>
+</li><li>
+<p><code>\p{Yezidi}</code>, <code>\p{Yezi}</code></p>
+</li><li>
+<p><code>\p{Yi}</code>, <code>\p{Yiii}</code></p>
+</li><li>
+<p><code>\p{Zanabazar_Square}</code>, <code>\p{Zanb}</code></p>
+</li></ul>
+
+<h3 id="label-Blocks"><a href="#label-Blocks">Blocks</a></h3>
+<ul><li>
+<p><code>\p{In_Adlam}</code></p>
+</li><li>
+<p><code>\p{In_Aegean_Numbers}</code></p>
+</li><li>
+<p><code>\p{In_Ahom}</code></p>
+</li><li>
+<p><code>\p{In_Alchemical_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Alphabetic_Presentation_Forms}</code></p>
+</li><li>
+<p><code>\p{In_Anatolian_Hieroglyphs}</code></p>
+</li><li>
+<p><code>\p{In_Ancient_Greek_Musical_Notation}</code></p>
+</li><li>
+<p><code>\p{In_Ancient_Greek_Numbers}</code></p>
+</li><li>
+<p><code>\p{In_Ancient_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Arabic}</code></p>
+</li><li>
+<p><code>\p{In_Arabic_Extended_A}</code></p>
+</li><li>
+<p><code>\p{In_Arabic_Extended_B}</code></p>
+</li><li>
+<p><code>\p{In_Arabic_Extended_C}</code></p>
+</li><li>
+<p><code>\p{In_Arabic_Mathematical_Alphabetic_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Arabic_Presentation_Forms_A}</code></p>
+</li><li>
+<p><code>\p{In_Arabic_Presentation_Forms_B}</code></p>
+</li><li>
+<p><code>\p{In_Arabic_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Armenian}</code></p>
+</li><li>
+<p><code>\p{In_Arrows}</code></p>
+</li><li>
+<p><code>\p{In_Avestan}</code></p>
+</li><li>
+<p><code>\p{In_Balinese}</code></p>
+</li><li>
+<p><code>\p{In_Bamum}</code></p>
+</li><li>
+<p><code>\p{In_Bamum_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Basic_Latin}</code></p>
+</li><li>
+<p><code>\p{In_Bassa_Vah}</code></p>
+</li><li>
+<p><code>\p{In_Batak}</code></p>
+</li><li>
+<p><code>\p{In_Bengali}</code></p>
+</li><li>
+<p><code>\p{In_Beria_Erfe}</code></p>
+</li><li>
+<p><code>\p{In_Bhaiksuki}</code></p>
+</li><li>
+<p><code>\p{In_Block_Elements}</code></p>
+</li><li>
+<p><code>\p{In_Bopomofo}</code></p>
+</li><li>
+<p><code>\p{In_Bopomofo_Extended}</code></p>
+</li><li>
+<p><code>\p{In_Box_Drawing}</code></p>
+</li><li>
+<p><code>\p{In_Brahmi}</code></p>
+</li><li>
+<p><code>\p{In_Braille_Patterns}</code></p>
+</li><li>
+<p><code>\p{In_Buginese}</code></p>
+</li><li>
+<p><code>\p{In_Buhid}</code></p>
+</li><li>
+<p><code>\p{In_Byzantine_Musical_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Compatibility}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Compatibility_Forms}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Compatibility_Ideographs}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Compatibility_Ideographs_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Radicals_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Strokes}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Symbols_and_Punctuation}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Unified_Ideographs}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Unified_Ideographs_Extension_A}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Unified_Ideographs_Extension_B}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Unified_Ideographs_Extension_C}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Unified_Ideographs_Extension_D}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Unified_Ideographs_Extension_E}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Unified_Ideographs_Extension_F}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Unified_Ideographs_Extension_G}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Unified_Ideographs_Extension_H}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Unified_Ideographs_Extension_I}</code></p>
+</li><li>
+<p><code>\p{In_CJK_Unified_Ideographs_Extension_J}</code></p>
+</li><li>
+<p><code>\p{In_Carian}</code></p>
+</li><li>
+<p><code>\p{In_Caucasian_Albanian}</code></p>
+</li><li>
+<p><code>\p{In_Chakma}</code></p>
+</li><li>
+<p><code>\p{In_Cham}</code></p>
+</li><li>
+<p><code>\p{In_Cherokee}</code></p>
+</li><li>
+<p><code>\p{In_Cherokee_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Chess_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Chorasmian}</code></p>
+</li><li>
+<p><code>\p{In_Combining_Diacritical_Marks}</code></p>
+</li><li>
+<p><code>\p{In_Combining_Diacritical_Marks_Extended}</code></p>
+</li><li>
+<p><code>\p{In_Combining_Diacritical_Marks_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Combining_Diacritical_Marks_for_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Combining_Half_Marks}</code></p>
+</li><li>
+<p><code>\p{In_Common_Indic_Number_Forms}</code></p>
+</li><li>
+<p><code>\p{In_Control_Pictures}</code></p>
+</li><li>
+<p><code>\p{In_Coptic}</code></p>
+</li><li>
+<p><code>\p{In_Coptic_Epact_Numbers}</code></p>
+</li><li>
+<p><code>\p{In_Counting_Rod_Numerals}</code></p>
+</li><li>
+<p><code>\p{In_Cuneiform}</code></p>
+</li><li>
+<p><code>\p{In_Cuneiform_Numbers_and_Punctuation}</code></p>
+</li><li>
+<p><code>\p{In_Currency_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Cypriot_Syllabary}</code></p>
+</li><li>
+<p><code>\p{In_Cypro_Minoan}</code></p>
+</li><li>
+<p><code>\p{In_Cyrillic}</code></p>
+</li><li>
+<p><code>\p{In_Cyrillic_Extended_A}</code></p>
+</li><li>
+<p><code>\p{In_Cyrillic_Extended_B}</code></p>
+</li><li>
+<p><code>\p{In_Cyrillic_Extended_C}</code></p>
+</li><li>
+<p><code>\p{In_Cyrillic_Extended_D}</code></p>
+</li><li>
+<p><code>\p{In_Cyrillic_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Deseret}</code></p>
+</li><li>
+<p><code>\p{In_Devanagari}</code></p>
+</li><li>
+<p><code>\p{In_Devanagari_Extended}</code></p>
+</li><li>
+<p><code>\p{In_Devanagari_Extended_A}</code></p>
+</li><li>
+<p><code>\p{In_Dingbats}</code></p>
+</li><li>
+<p><code>\p{In_Dives_Akuru}</code></p>
+</li><li>
+<p><code>\p{In_Dogra}</code></p>
+</li><li>
+<p><code>\p{In_Domino_Tiles}</code></p>
+</li><li>
+<p><code>\p{In_Duployan}</code></p>
+</li><li>
+<p><code>\p{In_Early_Dynastic_Cuneiform}</code></p>
+</li><li>
+<p><code>\p{In_Egyptian_Hieroglyph_Format_Controls}</code></p>
+</li><li>
+<p><code>\p{In_Egyptian_Hieroglyphs}</code></p>
+</li><li>
+<p><code>\p{In_Egyptian_Hieroglyphs_Extended_A}</code></p>
+</li><li>
+<p><code>\p{In_Elbasan}</code></p>
+</li><li>
+<p><code>\p{In_Elymaic}</code></p>
+</li><li>
+<p><code>\p{In_Emoticons}</code></p>
+</li><li>
+<p><code>\p{In_Enclosed_Alphanumeric_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Enclosed_Alphanumerics}</code></p>
+</li><li>
+<p><code>\p{In_Enclosed_CJK_Letters_and_Months}</code></p>
+</li><li>
+<p><code>\p{In_Enclosed_Ideographic_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Ethiopic}</code></p>
+</li><li>
+<p><code>\p{In_Ethiopic_Extended}</code></p>
+</li><li>
+<p><code>\p{In_Ethiopic_Extended_A}</code></p>
+</li><li>
+<p><code>\p{In_Ethiopic_Extended_B}</code></p>
+</li><li>
+<p><code>\p{In_Ethiopic_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Garay}</code></p>
+</li><li>
+<p><code>\p{In_General_Punctuation}</code></p>
+</li><li>
+<p><code>\p{In_Geometric_Shapes}</code></p>
+</li><li>
+<p><code>\p{In_Geometric_Shapes_Extended}</code></p>
+</li><li>
+<p><code>\p{In_Georgian}</code></p>
+</li><li>
+<p><code>\p{In_Georgian_Extended}</code></p>
+</li><li>
+<p><code>\p{In_Georgian_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Glagolitic}</code></p>
+</li><li>
+<p><code>\p{In_Glagolitic_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Gothic}</code></p>
+</li><li>
+<p><code>\p{In_Grantha}</code></p>
+</li><li>
+<p><code>\p{In_Greek_Extended}</code></p>
+</li><li>
+<p><code>\p{In_Greek_and_Coptic}</code></p>
+</li><li>
+<p><code>\p{In_Gujarati}</code></p>
+</li><li>
+<p><code>\p{In_Gunjala_Gondi}</code></p>
+</li><li>
+<p><code>\p{In_Gurmukhi}</code></p>
+</li><li>
+<p><code>\p{In_Gurung_Khema}</code></p>
+</li><li>
+<p><code>\p{In_Halfwidth_and_Fullwidth_Forms}</code></p>
+</li><li>
+<p><code>\p{In_Hangul_Compatibility_Jamo}</code></p>
+</li><li>
+<p><code>\p{In_Hangul_Jamo}</code></p>
+</li><li>
+<p><code>\p{In_Hangul_Jamo_Extended_A}</code></p>
+</li><li>
+<p><code>\p{In_Hangul_Jamo_Extended_B}</code></p>
+</li><li>
+<p><code>\p{In_Hangul_Syllables}</code></p>
+</li><li>
+<p><code>\p{In_Hanifi_Rohingya}</code></p>
+</li><li>
+<p><code>\p{In_Hanunoo}</code></p>
+</li><li>
+<p><code>\p{In_Hatran}</code></p>
+</li><li>
+<p><code>\p{In_Hebrew}</code></p>
+</li><li>
+<p><code>\p{In_High_Private_Use_Surrogates}</code></p>
+</li><li>
+<p><code>\p{In_High_Surrogates}</code></p>
+</li><li>
+<p><code>\p{In_Hiragana}</code></p>
+</li><li>
+<p><code>\p{In_IPA_Extensions}</code></p>
+</li><li>
+<p><code>\p{In_Ideographic_Description_Characters}</code></p>
+</li><li>
+<p><code>\p{In_Ideographic_Symbols_and_Punctuation}</code></p>
+</li><li>
+<p><code>\p{In_Imperial_Aramaic}</code></p>
+</li><li>
+<p><code>\p{In_Indic_Siyaq_Numbers}</code></p>
+</li><li>
+<p><code>\p{In_Inscriptional_Pahlavi}</code></p>
+</li><li>
+<p><code>\p{In_Inscriptional_Parthian}</code></p>
+</li><li>
+<p><code>\p{In_Javanese}</code></p>
+</li><li>
+<p><code>\p{In_Kaithi}</code></p>
+</li><li>
+<p><code>\p{In_Kaktovik_Numerals}</code></p>
+</li><li>
+<p><code>\p{In_Kana_Extended_A}</code></p>
+</li><li>
+<p><code>\p{In_Kana_Extended_B}</code></p>
+</li><li>
+<p><code>\p{In_Kana_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Kanbun}</code></p>
+</li><li>
+<p><code>\p{In_Kangxi_Radicals}</code></p>
+</li><li>
+<p><code>\p{In_Kannada}</code></p>
+</li><li>
+<p><code>\p{In_Katakana}</code></p>
+</li><li>
+<p><code>\p{In_Katakana_Phonetic_Extensions}</code></p>
+</li><li>
+<p><code>\p{In_Kawi}</code></p>
+</li><li>
+<p><code>\p{In_Kayah_Li}</code></p>
+</li><li>
+<p><code>\p{In_Kharoshthi}</code></p>
+</li><li>
+<p><code>\p{In_Khitan_Small_Script}</code></p>
+</li><li>
+<p><code>\p{In_Khmer}</code></p>
+</li><li>
+<p><code>\p{In_Khmer_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Khojki}</code></p>
+</li><li>
+<p><code>\p{In_Khudawadi}</code></p>
+</li><li>
+<p><code>\p{In_Kirat_Rai}</code></p>
+</li><li>
+<p><code>\p{In_Lao}</code></p>
+</li><li>
+<p><code>\p{In_Latin_1_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Latin_Extended_A}</code></p>
+</li><li>
+<p><code>\p{In_Latin_Extended_Additional}</code></p>
+</li><li>
+<p><code>\p{In_Latin_Extended_B}</code></p>
+</li><li>
+<p><code>\p{In_Latin_Extended_C}</code></p>
+</li><li>
+<p><code>\p{In_Latin_Extended_D}</code></p>
+</li><li>
+<p><code>\p{In_Latin_Extended_E}</code></p>
+</li><li>
+<p><code>\p{In_Latin_Extended_F}</code></p>
+</li><li>
+<p><code>\p{In_Latin_Extended_G}</code></p>
+</li><li>
+<p><code>\p{In_Lepcha}</code></p>
+</li><li>
+<p><code>\p{In_Letterlike_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Limbu}</code></p>
+</li><li>
+<p><code>\p{In_Linear_A}</code></p>
+</li><li>
+<p><code>\p{In_Linear_B_Ideograms}</code></p>
+</li><li>
+<p><code>\p{In_Linear_B_Syllabary}</code></p>
+</li><li>
+<p><code>\p{In_Lisu}</code></p>
+</li><li>
+<p><code>\p{In_Lisu_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Low_Surrogates}</code></p>
+</li><li>
+<p><code>\p{In_Lycian}</code></p>
+</li><li>
+<p><code>\p{In_Lydian}</code></p>
+</li><li>
+<p><code>\p{In_Mahajani}</code></p>
+</li><li>
+<p><code>\p{In_Mahjong_Tiles}</code></p>
+</li><li>
+<p><code>\p{In_Makasar}</code></p>
+</li><li>
+<p><code>\p{In_Malayalam}</code></p>
+</li><li>
+<p><code>\p{In_Mandaic}</code></p>
+</li><li>
+<p><code>\p{In_Manichaean}</code></p>
+</li><li>
+<p><code>\p{In_Marchen}</code></p>
+</li><li>
+<p><code>\p{In_Masaram_Gondi}</code></p>
+</li><li>
+<p><code>\p{In_Mathematical_Alphanumeric_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Mathematical_Operators}</code></p>
+</li><li>
+<p><code>\p{In_Mayan_Numerals}</code></p>
+</li><li>
+<p><code>\p{In_Medefaidrin}</code></p>
+</li><li>
+<p><code>\p{In_Meetei_Mayek}</code></p>
+</li><li>
+<p><code>\p{In_Meetei_Mayek_Extensions}</code></p>
+</li><li>
+<p><code>\p{In_Mende_Kikakui}</code></p>
+</li><li>
+<p><code>\p{In_Meroitic_Cursive}</code></p>
+</li><li>
+<p><code>\p{In_Meroitic_Hieroglyphs}</code></p>
+</li><li>
+<p><code>\p{In_Miao}</code></p>
+</li><li>
+<p><code>\p{In_Miscellaneous_Mathematical_Symbols_A}</code></p>
+</li><li>
+<p><code>\p{In_Miscellaneous_Mathematical_Symbols_B}</code></p>
+</li><li>
+<p><code>\p{In_Miscellaneous_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Miscellaneous_Symbols_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Miscellaneous_Symbols_and_Arrows}</code></p>
+</li><li>
+<p><code>\p{In_Miscellaneous_Symbols_and_Pictographs}</code></p>
+</li><li>
+<p><code>\p{In_Miscellaneous_Technical}</code></p>
+</li><li>
+<p><code>\p{In_Modi}</code></p>
+</li><li>
+<p><code>\p{In_Modifier_Tone_Letters}</code></p>
+</li><li>
+<p><code>\p{In_Mongolian}</code></p>
+</li><li>
+<p><code>\p{In_Mongolian_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Mro}</code></p>
+</li><li>
+<p><code>\p{In_Multani}</code></p>
+</li><li>
+<p><code>\p{In_Musical_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Myanmar}</code></p>
+</li><li>
+<p><code>\p{In_Myanmar_Extended_A}</code></p>
+</li><li>
+<p><code>\p{In_Myanmar_Extended_B}</code></p>
+</li><li>
+<p><code>\p{In_Myanmar_Extended_C}</code></p>
+</li><li>
+<p><code>\p{In_NKo}</code></p>
+</li><li>
+<p><code>\p{In_Nabataean}</code></p>
+</li><li>
+<p><code>\p{In_Nag_Mundari}</code></p>
+</li><li>
+<p><code>\p{In_Nandinagari}</code></p>
+</li><li>
+<p><code>\p{In_New_Tai_Lue}</code></p>
+</li><li>
+<p><code>\p{In_Newa}</code></p>
+</li><li>
+<p><code>\p{In_No_Block}</code></p>
+</li><li>
+<p><code>\p{In_Number_Forms}</code></p>
+</li><li>
+<p><code>\p{In_Nushu}</code></p>
+</li><li>
+<p><code>\p{In_Nyiakeng_Puachue_Hmong}</code></p>
+</li><li>
+<p><code>\p{In_Ogham}</code></p>
+</li><li>
+<p><code>\p{In_Ol_Chiki}</code></p>
+</li><li>
+<p><code>\p{In_Ol_Onal}</code></p>
+</li><li>
+<p><code>\p{In_Old_Hungarian}</code></p>
+</li><li>
+<p><code>\p{In_Old_Italic}</code></p>
+</li><li>
+<p><code>\p{In_Old_North_Arabian}</code></p>
+</li><li>
+<p><code>\p{In_Old_Permic}</code></p>
+</li><li>
+<p><code>\p{In_Old_Persian}</code></p>
+</li><li>
+<p><code>\p{In_Old_Sogdian}</code></p>
+</li><li>
+<p><code>\p{In_Old_South_Arabian}</code></p>
+</li><li>
+<p><code>\p{In_Old_Turkic}</code></p>
+</li><li>
+<p><code>\p{In_Old_Uyghur}</code></p>
+</li><li>
+<p><code>\p{In_Optical_Character_Recognition}</code></p>
+</li><li>
+<p><code>\p{In_Oriya}</code></p>
+</li><li>
+<p><code>\p{In_Ornamental_Dingbats}</code></p>
+</li><li>
+<p><code>\p{In_Osage}</code></p>
+</li><li>
+<p><code>\p{In_Osmanya}</code></p>
+</li><li>
+<p><code>\p{In_Ottoman_Siyaq_Numbers}</code></p>
+</li><li>
+<p><code>\p{In_Pahawh_Hmong}</code></p>
+</li><li>
+<p><code>\p{In_Palmyrene}</code></p>
+</li><li>
+<p><code>\p{In_Pau_Cin_Hau}</code></p>
+</li><li>
+<p><code>\p{In_Phags_pa}</code></p>
+</li><li>
+<p><code>\p{In_Phaistos_Disc}</code></p>
+</li><li>
+<p><code>\p{In_Phoenician}</code></p>
+</li><li>
+<p><code>\p{In_Phonetic_Extensions}</code></p>
+</li><li>
+<p><code>\p{In_Phonetic_Extensions_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Playing_Cards}</code></p>
+</li><li>
+<p><code>\p{In_Private_Use_Area}</code></p>
+</li><li>
+<p><code>\p{In_Psalter_Pahlavi}</code></p>
+</li><li>
+<p><code>\p{In_Rejang}</code></p>
+</li><li>
+<p><code>\p{In_Rumi_Numeral_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Runic}</code></p>
+</li><li>
+<p><code>\p{In_Samaritan}</code></p>
+</li><li>
+<p><code>\p{In_Saurashtra}</code></p>
+</li><li>
+<p><code>\p{In_Sharada}</code></p>
+</li><li>
+<p><code>\p{In_Sharada_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Shavian}</code></p>
+</li><li>
+<p><code>\p{In_Shorthand_Format_Controls}</code></p>
+</li><li>
+<p><code>\p{In_Siddham}</code></p>
+</li><li>
+<p><code>\p{In_Sidetic}</code></p>
+</li><li>
+<p><code>\p{In_Sinhala}</code></p>
+</li><li>
+<p><code>\p{In_Sinhala_Archaic_Numbers}</code></p>
+</li><li>
+<p><code>\p{In_Small_Form_Variants}</code></p>
+</li><li>
+<p><code>\p{In_Small_Kana_Extension}</code></p>
+</li><li>
+<p><code>\p{In_Sogdian}</code></p>
+</li><li>
+<p><code>\p{In_Sora_Sompeng}</code></p>
+</li><li>
+<p><code>\p{In_Soyombo}</code></p>
+</li><li>
+<p><code>\p{In_Spacing_Modifier_Letters}</code></p>
+</li><li>
+<p><code>\p{In_Specials}</code></p>
+</li><li>
+<p><code>\p{In_Sundanese}</code></p>
+</li><li>
+<p><code>\p{In_Sundanese_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Sunuwar}</code></p>
+</li><li>
+<p><code>\p{In_Superscripts_and_Subscripts}</code></p>
+</li><li>
+<p><code>\p{In_Supplemental_Arrows_A}</code></p>
+</li><li>
+<p><code>\p{In_Supplemental_Arrows_B}</code></p>
+</li><li>
+<p><code>\p{In_Supplemental_Arrows_C}</code></p>
+</li><li>
+<p><code>\p{In_Supplemental_Mathematical_Operators}</code></p>
+</li><li>
+<p><code>\p{In_Supplemental_Punctuation}</code></p>
+</li><li>
+<p><code>\p{In_Supplemental_Symbols_and_Pictographs}</code></p>
+</li><li>
+<p><code>\p{In_Supplementary_Private_Use_Area_A}</code></p>
+</li><li>
+<p><code>\p{In_Supplementary_Private_Use_Area_B}</code></p>
+</li><li>
+<p><code>\p{In_Sutton_SignWriting}</code></p>
+</li><li>
+<p><code>\p{In_Syloti_Nagri}</code></p>
+</li><li>
+<p><code>\p{In_Symbols_and_Pictographs_Extended_A}</code></p>
+</li><li>
+<p><code>\p{In_Symbols_for_Legacy_Computing}</code></p>
+</li><li>
+<p><code>\p{In_Symbols_for_Legacy_Computing_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Syriac}</code></p>
+</li><li>
+<p><code>\p{In_Syriac_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Tagalog}</code></p>
+</li><li>
+<p><code>\p{In_Tagbanwa}</code></p>
+</li><li>
+<p><code>\p{In_Tags}</code></p>
+</li><li>
+<p><code>\p{In_Tai_Le}</code></p>
+</li><li>
+<p><code>\p{In_Tai_Tham}</code></p>
+</li><li>
+<p><code>\p{In_Tai_Viet}</code></p>
+</li><li>
+<p><code>\p{In_Tai_Xuan_Jing_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Tai_Yo}</code></p>
+</li><li>
+<p><code>\p{In_Takri}</code></p>
+</li><li>
+<p><code>\p{In_Tamil}</code></p>
+</li><li>
+<p><code>\p{In_Tamil_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Tangsa}</code></p>
+</li><li>
+<p><code>\p{In_Tangut}</code></p>
+</li><li>
+<p><code>\p{In_Tangut_Components}</code></p>
+</li><li>
+<p><code>\p{In_Tangut_Components_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Tangut_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Telugu}</code></p>
+</li><li>
+<p><code>\p{In_Thaana}</code></p>
+</li><li>
+<p><code>\p{In_Thai}</code></p>
+</li><li>
+<p><code>\p{In_Tibetan}</code></p>
+</li><li>
+<p><code>\p{In_Tifinagh}</code></p>
+</li><li>
+<p><code>\p{In_Tirhuta}</code></p>
+</li><li>
+<p><code>\p{In_Todhri}</code></p>
+</li><li>
+<p><code>\p{In_Tolong_Siki}</code></p>
+</li><li>
+<p><code>\p{In_Toto}</code></p>
+</li><li>
+<p><code>\p{In_Transport_and_Map_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Tulu_Tigalari}</code></p>
+</li><li>
+<p><code>\p{In_Ugaritic}</code></p>
+</li><li>
+<p><code>\p{In_Unified_Canadian_Aboriginal_Syllabics}</code></p>
+</li><li>
+<p><code>\p{In_Unified_Canadian_Aboriginal_Syllabics_Extended}</code></p>
+</li><li>
+<p><code>\p{In_Unified_Canadian_Aboriginal_Syllabics_Extended_A}</code></p>
+</li><li>
+<p><code>\p{In_Vai}</code></p>
+</li><li>
+<p><code>\p{In_Variation_Selectors}</code></p>
+</li><li>
+<p><code>\p{In_Variation_Selectors_Supplement}</code></p>
+</li><li>
+<p><code>\p{In_Vedic_Extensions}</code></p>
+</li><li>
+<p><code>\p{In_Vertical_Forms}</code></p>
+</li><li>
+<p><code>\p{In_Vithkuqi}</code></p>
+</li><li>
+<p><code>\p{In_Wancho}</code></p>
+</li><li>
+<p><code>\p{In_Warang_Citi}</code></p>
+</li><li>
+<p><code>\p{In_Yezidi}</code></p>
+</li><li>
+<p><code>\p{In_Yi_Radicals}</code></p>
+</li><li>
+<p><code>\p{In_Yi_Syllables}</code></p>
+</li><li>
+<p><code>\p{In_Yijing_Hexagram_Symbols}</code></p>
+</li><li>
+<p><code>\p{In_Zanabazar_Square}</code></p>
+</li><li>
+<p><code>\p{In_Znamenny_Musical_Notation}</code></p>
+</li></ul>
+
+<h3 id="label-Emoji"><a href="#label-Emoji">Emoji</a></h3>
+<ul><li>
+<p><code>\p{Emoji}</code></p>
+</li><li>
+<p><code>\p{Emoji_Component}</code>, <code>\p{EComp}</code></p>
+</li><li>
+<p><code>\p{Emoji_Modifier}</code>, <code>\p{EMod}</code></p>
+</li><li>
+<p><code>\p{Emoji_Modifier_Base}</code>, <code>\p{EBase}</code></p>
+</li><li>
+<p><code>\p{Emoji_Presentation}</code>, <code>\p{EPres}</code></p>
+</li><li>
+<p><code>\p{Extended_Pictographic}</code>, <code>\p{ExtPict}</code></p>
+</li></ul>
+
+<h3 id="label-Graphemes"><a href="#label-Graphemes">Graphemes</a></h3>
+<ul><li>
+<p><code>\p{Grapheme_Cluster_Break_CR}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_Control}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_Extend}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_L}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_LF}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_LV}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_LVT}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_Prepend}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_Regional_Indicator}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_SpacingMark}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_T}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_V}</code></p>
+</li><li>
+<p><code>\p{Grapheme_Cluster_Break_ZWJ}</code></p>
+</li></ul>
+
+<h3 id="label-Derived+Ages"><a href="#label-Derived+Ages">Derived Ages</a></h3>
+<ul><li>
+<p><code>\p{Age_10_0}</code></p>
+</li><li>
+<p><code>\p{Age_11_0}</code></p>
+</li><li>
+<p><code>\p{Age_12_0}</code></p>
+</li><li>
+<p><code>\p{Age_12_1}</code></p>
+</li><li>
+<p><code>\p{Age_13_0}</code></p>
+</li><li>
+<p><code>\p{Age_14_0}</code></p>
+</li><li>
+<p><code>\p{Age_15_0}</code></p>
+</li><li>
+<p><code>\p{Age_15_1}</code></p>
+</li><li>
+<p><code>\p{Age_16_0}</code></p>
+</li><li>
+<p><code>\p{Age_17_0}</code></p>
+</li><li>
+<p><code>\p{Age_1_1}</code></p>
+</li><li>
+<p><code>\p{Age_2_0}</code></p>
+</li><li>
+<p><code>\p{Age_2_1}</code></p>
+</li><li>
+<p><code>\p{Age_3_0}</code></p>
+</li><li>
+<p><code>\p{Age_3_1}</code></p>
+</li><li>
+<p><code>\p{Age_3_2}</code></p>
+</li><li>
+<p><code>\p{Age_4_0}</code></p>
+</li><li>
+<p><code>\p{Age_4_1}</code></p>
+</li><li>
+<p><code>\p{Age_5_0}</code></p>
+</li><li>
+<p><code>\p{Age_5_1}</code></p>
+</li><li>
+<p><code>\p{Age_5_2}</code></p>
+</li><li>
+<p><code>\p{Age_6_0}</code></p>
+</li><li>
+<p><code>\p{Age_6_1}</code></p>
+</li><li>
+<p><code>\p{Age_6_2}</code></p>
+</li><li>
+<p><code>\p{Age_6_3}</code></p>
+</li><li>
+<p><code>\p{Age_7_0}</code></p>
+</li><li>
+<p><code>\p{Age_8_0}</code></p>
+</li><li>
+<p><code>\p{Age_9_0}</code></p>
+</li></ul>
+
+</main>
+
+<aside class="table-of-contents" role="complementary" aria-label="Table of Contents">
+  <div class="toc-sticky">
+    <h3 class="toc-heading">On This Page</h3>
+    <nav class="toc-nav" id="toc-nav" aria-label="Page sections">
+      <!-- Generated by JavaScript based on page headings -->
+    </nav>
+  </div>
+</aside>
+
+
+<footer class="site-footer">
+  
+  <div class="footer-content">
+    
+    <div>
+      <h3>Ruby</h3>
+      <ul>
+        
+        <li><a href="../../index.html">Documentation</a></li>
+        
+        <li><a href="https://www.ruby-lang.org/">Official Website</a></li>
+        
+        <li><a href="https://ruby.github.io/play-ruby/">Playground</a></li>
+        
+      </ul>
+    </div>
+    
+    <div>
+      <h3>Resources</h3>
+      <ul>
+        
+        <li><a href="https://github.com/ruby/ruby">GitHub</a></li>
+        
+        <li><a href="https://bugs.ruby-lang.org/projects/ruby-master/issues">Issue Tracker</a></li>
+        
+        <li><a href="https://rubygems.org/">RubyGems</a></li>
+        
+      </ul>
+    </div>
+    
+    <div>
+      <h3>Community</h3>
+      <ul>
+        
+        <li><a href="https://x.com/rubylangorg">X</a></li>
+        
+      </ul>
+    </div>
+    
+  </div>
+  
+
+  <div class="footer-bottom">
+    <p>
+      Generated by <a href="https://ruby.github.io/rdoc/">RDoc 7.0.3</a>
+      using the Aliki theme by <a href="http://st0012.dev">Stan Lo</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+

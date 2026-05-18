@@ -1,0 +1,2650 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>extension.ja - Documentation for Ruby 4.0</title>
+
+
+  <meta name="keywords" content="ruby,documentation,extension.ja">
+  <meta
+    name="description"
+    content="extension.ja: extension. rdoc] = Rubyの拡張ライブラリの作り方 Rubyの拡張ライブラリの作り方を説明します． == 基礎知識 Cの変数には型があり，データには型がありません．ですから，た とえばポインタをintの変数に代入すると，その値は整数として取 り扱われます．逆にRubyの変"
+  >
+
+
+
+  
+  <link rel="canonical" href="https://docs.ruby-lang.org/en/master/extension_ja_rdoc.html">
+
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="extension.ja - Documentation for Ruby 4.0">
+
+
+
+    <meta property="og:description" content="extension. rdoc] = Rubyの拡張ライブラリの作り方 Rubyの拡張ライブラリの作り方を説明します． == 基礎知識 Cの変数には型があり，データには型がありません．ですから，た とえばポインタをintの変数に代入すると，その値は整数として取 り扱われます．逆にRubyの変">
+
+
+
+
+  
+  <meta property="og:url" content="https://docs.ruby-lang.org/en/master/extension_ja_rdoc.html">
+
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="extension.ja - Documentation for Ruby 4.0">
+
+
+
+    <meta name="twitter:description" content="extension. rdoc] = Rubyの拡張ライブラリの作り方 Rubyの拡張ライブラリの作り方を説明します． == 基礎知識 Cの変数には型があり，データには型がありません．ですから，た とえばポインタをintの変数に代入すると，その値は整数として取 り扱われます．逆にRubyの変">
+
+
+
+<script type="text/javascript">
+  var rdoc_rel_prefix = "./";
+  var index_rel_prefix = "./";
+</script>
+
+<script
+  src="./js/theme-toggle.js?v=7.0.3"
+></script>
+
+<script
+  src="./js/search_navigation.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="./js/search_data.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="./js/search_ranker.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="./js/search_controller.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="./js/c_highlighter.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="./js/aliki.js?v=7.0.3"
+  defer
+></script>
+
+<link
+  href="./css/rdoc.css?v=7.0.3"
+  rel="stylesheet"
+>
+
+
+
+
+<body role="document" class="file has-toc">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <!-- Chevron (right arrow) - used for expand/collapse -->
+  <symbol
+    id="icon-chevron"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <polyline points="9 18 15 12 9 6"></polyline>
+  </symbol>
+
+  <!-- File/Document - Pages section -->
+  <symbol
+    id="icon-file"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path
+      d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+    ></path>
+
+    <polyline points="14 2 14 8 20 8"></polyline>
+  </symbol>
+
+  <!-- Layers/Stack - Classes and Modules section -->
+  <symbol
+    id="icon-layers"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+    <polyline points="2 17 12 22 22 17"></polyline>
+    <polyline points="2 12 12 17 22 12"></polyline>
+  </symbol>
+
+  <!-- Curly braces with C - Class Methods section -->
+  <symbol
+    id="icon-class-methods"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M6 3C3.5 3 2 4.5 2 7v3c0 1.5-1 2-1 2s1 .5 1 2v5c0 2.5 1.5 4 4 4"></path>
+    <path d="M18 3c2.5 0 4 1.5 4 4v3c0 1.5 1 2 1 2s-1 .5-1 2v5c0 2.5-1.5 4-4 4"></path>
+
+    <text
+      x="12"
+      y="17"
+      text-anchor="middle"
+      font-size="13"
+      font-weight="bold"
+      fill="currentColor"
+      stroke="none"
+    >
+      C
+    </text>
+  </symbol>
+
+  <!-- Curly braces with I - Instance Methods section -->
+  <symbol
+    id="icon-instance-methods"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M6 3C3.5 3 2 4.5 2 7v3c0 1.5-1 2-1 2s1 .5 1 2v5c0 2.5 1.5 4 4 4"></path>
+    <path d="M18 3c2.5 0 4 1.5 4 4v3c0 1.5 1 2 1 2s-1 .5-1 2v5c0 2.5-1.5 4-4 4"></path>
+
+    <text
+      x="12"
+      y="17"
+      text-anchor="middle"
+      font-size="13"
+      font-weight="bold"
+      fill="currentColor"
+      stroke="none"
+    >
+      I
+    </text>
+  </symbol>
+
+  <!-- Double chevrons up - Ancestors section -->
+  <symbol
+    id="icon-ancestors"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <polyline points="17 11 12 6 7 11"></polyline>
+    <polyline points="17 18 12 13 7 18"></polyline>
+  </symbol>
+
+  <!-- User with plus - Included Modules section -->
+  <symbol
+    id="icon-includes"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="8.5" cy="7" r="4"></circle>
+
+    <line
+      x1="20"
+      y1="8"
+      x2="20"
+      y2="14"
+    ></line>
+
+    <line
+      x1="23"
+      y1="11"
+      x2="17"
+      y2="11"
+    ></line>
+  </symbol>
+
+  <!-- User with check - Extended Modules section -->
+  <symbol
+    id="icon-extends"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="8.5" cy="7" r="4"></circle>
+    <polyline points="17 11 19 13 23 9"></polyline>
+  </symbol>
+
+  <!-- List - Sections section -->
+  <symbol
+    id="icon-list"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <line
+      x1="8"
+      y1="6"
+      x2="21"
+      y2="6"
+    ></line>
+
+    <line
+      x1="8"
+      y1="12"
+      x2="21"
+      y2="12"
+    ></line>
+
+    <line
+      x1="8"
+      y1="18"
+      x2="21"
+      y2="18"
+    ></line>
+
+    <line
+      x1="3"
+      y1="6"
+      x2="3.01"
+      y2="6"
+    ></line>
+
+    <line
+      x1="3"
+      y1="12"
+      x2="3.01"
+      y2="12"
+    ></line>
+
+    <line
+      x1="3"
+      y1="18"
+      x2="3.01"
+      y2="18"
+    ></line>
+  </symbol>
+</svg>
+
+<header class="top-navbar">
+  <a href="./index.html" class="navbar-brand">
+    Documentation for Ruby 4.0
+  </a>
+
+  <!-- Desktop search bar -->
+  <div class="navbar-search navbar-search-desktop" role="search">
+    <form action="#" method="get" accept-charset="utf-8">
+      <input id="search-field" role="combobox" aria-label="Search"
+             aria-autocomplete="list" aria-controls="search-results-desktop"
+             type="text" name="search" placeholder="Search (/) for a class, method..."
+             spellcheck="false" autocomplete="off"
+             title="Type to search, Up and Down to navigate, Enter to load">
+      <ul id="search-results-desktop" aria-label="Search Results"
+          aria-busy="false" aria-expanded="false"
+          aria-atomic="false" class="initially-hidden search-results"></ul>
+    </form>
+  </div>
+
+  <!-- Mobile search icon button -->
+  <button id="search-toggle" class="navbar-search-mobile" aria-label="Open search" type="button">
+    <span aria-hidden="true">🔍</span>
+  </button>
+
+  <!-- Theme toggle button -->
+  <button id="theme-toggle" class="theme-toggle" aria-label="Switch to dark mode" type="button">
+    <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
+  </button>
+</header>
+
+<!-- Search Modal (Mobile) -->
+<div id="search-modal" class="search-modal" hidden aria-modal="true" role="dialog" aria-label="Search">
+  <div class="search-modal-backdrop"></div>
+  <div class="search-modal-content">
+    <div class="search-modal-header">
+      <form class="search-modal-form" action="#" method="get" accept-charset="utf-8">
+        <span class="search-modal-icon" aria-hidden="true">🔍</span>
+        <input id="search-field-mobile" role="combobox" aria-label="Search"
+               aria-autocomplete="list" aria-controls="search-results-mobile"
+               type="text" name="search" placeholder="Search documentation"
+               spellcheck="false" autocomplete="off">
+        <button type="button" class="search-modal-close" aria-label="Close search" id="search-modal-close">
+          <span aria-hidden="true">esc</span>
+        </button>
+      </form>
+    </div>
+    <div class="search-modal-body">
+      <ul id="search-results-mobile" aria-label="Search Results"
+          aria-busy="false" aria-expanded="false"
+          aria-atomic="false" class="search-results search-modal-results initially-hidden"></ul>
+      <div class="search-modal-empty">
+        <p>No recent searches</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="navigation-toggle" role="button" tabindex="0" aria-label="Toggle sidebar" aria-expanded="true" aria-controls="navigation">
+  <span aria-hidden="true">&#9776;</span>
+</div>
+
+
+<nav id="navigation" role="navigation" hidden>
+  
+
+
+
+
+
+
+  <div id="fileindex-section" class="nav-section">
+    <details class="nav-section-collapsible" open>
+      <summary class="nav-section-header">
+        <span class="nav-section-icon">
+          <svg>
+            <use href="#icon-file"></use>
+          </svg>
+        </span>
+
+        <span class="nav-section-title">Pages</span>
+
+        <span class="nav-section-chevron">
+          <svg>
+            <use href="#icon-chevron"></use>
+          </svg>
+        </span>
+      </summary>
+
+      <ul class="nav-list">
+
+
+
+
+
+
+            <li>
+              <a href="./COPYING.html">
+                COPYING
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="./COPYING_ja.html">
+                COPYING.ja
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="./LEGAL.html">
+                LEGAL
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  <a href="./NEWS_md.html">NEWS</a>
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="./NEWS/NEWS-1_8_7.html">
+                      NEWS-1.8.7
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-1_9_1.html">
+                      NEWS-1.9.1
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-1_9_2.html">
+                      NEWS-1.9.2
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-1_9_3.html">
+                      NEWS-1.9.3
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-2_0_0.html">
+                      NEWS-2.0.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-2_1_0.html">
+                      NEWS-2.1.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-2_2_0.html">
+                      NEWS-2.2.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-2_3_0.html">
+                      NEWS-2.3.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-2_4_0.html">
+                      NEWS-2.4.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-2_5_0.html">
+                      NEWS-2.5.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-2_6_0.html">
+                      NEWS-2.6.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-2_7_0.html">
+                      NEWS-2.7.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-3_0_0_md.html">
+                      NEWS-3.0.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-3_1_0_md.html">
+                      NEWS-3.1.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-3_2_0_md.html">
+                      NEWS-3.2.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-3_3_0_md.html">
+                      NEWS-3.3.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./NEWS/NEWS-3_4_0_md.html">
+                      NEWS-3.4.0
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="./README_ja_md.html">
+                README.ja
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="./README_md.html">
+                README
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  contributing
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="./contributing/bug_triaging_rdoc.html">
+                      bug_triaging
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/building_ruby_md.html">
+                      building_ruby
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/concurrency_guide_md.html">
+                      concurrency_guide
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/contributing_md.html">
+                      contributing
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/documentation_guide_md.html">
+                      documentation_guide
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/dtrace_probes_rdoc.html">
+                      dtrace_probes
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/glossary_md.html">
+                      glossary
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/making_changes_to_ruby_md.html">
+                      making_changes_to_ruby
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/making_changes_to_stdlibs_md.html">
+                      making_changes_to_stdlibs
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/memory_view_md.html">
+                      memory_view
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/reporting_issues_md.html">
+                      reporting_issues
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/testing_ruby_md.html">
+                      testing_ruby
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./contributing/vm_stack_and_frames_md.html">
+                      vm_stack_and_frames
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  <a href="./distribution/distribution_md.html">distribution</a>
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="./distribution/windows_md.html">
+                      windows
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="./extension_ja_rdoc.html">
+                extension.ja
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="./extension_rdoc.html">
+                extension
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="./index_md.html">
+                index
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  jit
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="./jit/yjit_md.html">
+                      yjit
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./jit/zjit_md.html">
+                      zjit
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  language
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="./language/box_md.html">
+                      box
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/bsearch_rdoc.html">
+                      bsearch
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/calendars_rdoc.html">
+                      calendars
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/case_mapping_rdoc.html">
+                      case_mapping
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/character_selectors_rdoc.html">
+                      character_selectors
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/dig_methods_rdoc.html">
+                      dig_methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/encodings_rdoc.html">
+                      encodings
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/exceptions_md.html">
+                      exceptions
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/fiber_md.html">
+                      fiber
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/format_specifications_rdoc.html">
+                      format_specifications
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/globals_md.html">
+                      globals
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/hash_inclusion_rdoc.html">
+                      hash_inclusion
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/implicit_conversion_rdoc.html">
+                      implicit_conversion
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/marshal_rdoc.html">
+                      marshal
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/option_dump_md.html">
+                      option_dump
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/options_md.html">
+                      options
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/packed_data_rdoc.html">
+                      packed_data
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/ractor_md.html">
+                      ractor
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/regexp/methods_rdoc.html">
+                      methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/regexp/unicode_properties_rdoc.html">
+                      unicode_properties
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/signals_rdoc.html">
+                      signals
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./language/strftime_formatting_rdoc.html">
+                      strftime_formatting
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="./maintainers_md.html">
+                maintainers
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  optparse
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="./optparse/argument_converters_rdoc.html">
+                      argument_converters
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./optparse/creates_option_rdoc.html">
+                      creates_option
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./optparse/option_params_rdoc.html">
+                      option_params
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./optparse/tutorial_rdoc.html">
+                      tutorial
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  security
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="./security/command_injection_rdoc.html">
+                      command_injection
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./security/security_rdoc.html">
+                      security
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="./standard_library_md.html">
+                standard_library
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  <a href="./syntax_rdoc.html">syntax</a>
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="./syntax/assignment_rdoc.html">
+                      assignment
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/calling_methods_rdoc.html">
+                      calling_methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/comments_rdoc.html">
+                      comments
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/control_expressions_rdoc.html">
+                      control_expressions
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/exceptions_rdoc.html">
+                      exceptions
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/keywords_rdoc.html">
+                      keywords
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/layout_rdoc.html">
+                      layout
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/literals_rdoc.html">
+                      literals
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/methods_rdoc.html">
+                      methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/miscellaneous_rdoc.html">
+                      miscellaneous
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/modules_and_classes_rdoc.html">
+                      modules_and_classes
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/operators_rdoc.html">
+                      operators
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/pattern_matching_rdoc.html">
+                      pattern_matching
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/precedence_rdoc.html">
+                      precedence
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="./syntax/refinements_rdoc.html">
+                      refinements
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+      </ul>
+    </details>
+  </div>
+
+
+  <div id="classindex-section" class="nav-section">
+  <details class="nav-section-collapsible" open>
+    <summary class="nav-section-header">
+      <span class="nav-section-icon">
+        <svg><use href="#icon-layers"></use></svg>
+      </span>
+      <span class="nav-section-title">Classes and Modules</span>
+      <span class="nav-section-chevron">
+        <svg><use href="#icon-chevron"></use></svg>
+      </span>
+    </summary>
+
+    <ul class="link-list nav-list"><li><code><a href="./ARGF.html">ARGF</a></code></li><li><code><a href="./Addrinfo.html">Addrinfo</a></code></li><li><code><a href="./ArgumentError.html">ArgumentError</a></code></li><li><code><a href="./Array.html">Array</a></code></li><li><code><a href="./BasicObject.html">BasicObject</a></code></li><li><code><a href="./BasicSocket.html">BasicSocket</a></code></li><li><code><a href="./BigDecimal.html">BigDecimal</a></code></li><li><code><a href="./Binding.html">Binding</a></code></li><li><code><a href="./Bundler.html">Bundler</a></code></li><li><details><summary><code><a href="./CGI.html">CGI</a></code></summary><ul class="link-list nav-list"><li><code><a href="./CGI/Escape.html">Escape</a></code></li><li><code><a href="./CGI/EscapeExt.html">EscapeExt</a></code></li></ul></details></li><li><code><a href="./Class.html">Class</a></code></li><li><code><a href="./ClosedQueueError.html">ClosedQueueError</a></code></li><li><code><a href="./Comparable.html">Comparable</a></code></li><li><code><a href="./Complex.html">Complex</a></code></li><li><code><a href="./Continuation.html">Continuation</a></code></li><li><details><summary><code><a href="./CoreExtensions.html">CoreExtensions</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./CoreExtensions/TCPSocketExt.html">TCPSocketExt</a></code></summary><ul class="link-list nav-list"><li><code><a href="./CoreExtensions/TCPSocketExt/Initializer.html">Initializer</a></code></li></ul></details></li></ul></details></li><li><code><a href="./Coverage.html">Coverage</a></code></li><li><code><a href="./Data.html">Data</a></code></li><li><details><summary><code><a href="./Date.html">Date</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Date/Error.html">Error</a></code></li></ul></details></li><li><code><a href="./DateTime.html">DateTime</a></code></li><li><code><a href="./Delegator.html">Delegator</a></code></li><li><details><summary><code><a href="./DidYouMean.html">DidYouMean</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./DidYouMean/ClassNameChecker.html">ClassNameChecker</a></code></summary><ul class="link-list nav-list"><li><code><a href="./DidYouMean/ClassNameChecker/ClassName.html">ClassName</a></code></li></ul></details></li><li><code><a href="./DidYouMean/Correctable.html">Correctable</a></code></li><li><code><a href="./DidYouMean/Formatter.html">Formatter</a></code></li><li><code><a href="./DidYouMean/Jaro.html">Jaro</a></code></li><li><code><a href="./DidYouMean/JaroWinkler.html">JaroWinkler</a></code></li><li><code><a href="./DidYouMean/KeyErrorChecker.html">KeyErrorChecker</a></code></li><li><code><a href="./DidYouMean/MethodNameChecker.html">MethodNameChecker</a></code></li><li><code><a href="./DidYouMean/NameErrorCheckers.html">NameErrorCheckers</a></code></li><li><code><a href="./DidYouMean/NullChecker.html">NullChecker</a></code></li><li><code><a href="./DidYouMean/PatternKeyNameChecker.html">PatternKeyNameChecker</a></code></li><li><code><a href="./DidYouMean/Formatter.html">PlainFormatter</a></code></li><li><code><a href="./DidYouMean/RequirePathChecker.html">RequirePathChecker</a></code></li><li><code><a href="./DidYouMean/SpellChecker.html">SpellChecker</a></code></li><li><code><a href="./DidYouMean/TreeSpellChecker.html">TreeSpellChecker</a></code></li><li><code><a href="./DidYouMean/VariableNameChecker.html">VariableNameChecker</a></code></li><li><code><a href="./DidYouMean/Formatter.html">VerboseFormatter</a></code></li></ul></details></li><li><details><summary><code><a href="./Digest.html">Digest</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Digest/Base.html">Base</a></code></li><li><code><a href="./Digest/Class.html">Class</a></code></li><li><code><a href="./Digest/Instance.html">Instance</a></code></li><li><code><a href="./Digest/MD5.html">MD5</a></code></li><li><code><a href="./Digest/RMD160.html">RMD160</a></code></li><li><code><a href="./Digest/SHA1.html">SHA1</a></code></li><li><code><a href="./Digest/SHA2.html">SHA2</a></code></li><li><code><a href="./Digest/SHA256.html">SHA256</a></code></li><li><code><a href="./Digest/SHA384.html">SHA384</a></code></li><li><code><a href="./Digest/SHA512.html">SHA512</a></code></li></ul></details></li><li><code><a href="./Dir.html">Dir</a></code></li><li><code><a href="./ENV.html">ENV</a></code></li><li><code><a href="./EOFError.html">EOFError</a></code></li><li><details><summary><code><a href="./ERB.html">ERB</a></code></summary><ul class="link-list nav-list"><li><code><a href="./ERB/DefMethod.html">DefMethod</a></code></li><li><code><a href="./ERB/Escape.html">Escape</a></code></li><li><code><a href="./ERB/Util.html">Util</a></code></li></ul></details></li><li><details><summary><code><a href="./Encoding.html">Encoding</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Encoding/CompatibilityError.html">CompatibilityError</a></code></li><li><code><a href="./Encoding/Converter.html">Converter</a></code></li><li><code><a href="./Encoding/ConverterNotFoundError.html">ConverterNotFoundError</a></code></li><li><code><a href="./Encoding/InvalidByteSequenceError.html">InvalidByteSequenceError</a></code></li><li><code><a href="./Encoding/UndefinedConversionError.html">UndefinedConversionError</a></code></li></ul></details></li><li><code><a href="./EncodingError.html">EncodingError</a></code></li><li><code><a href="./English.html">English</a></code></li><li><code><a href="./Enumerable.html">Enumerable</a></code></li><li><details><summary><code><a href="./Enumerator.html">Enumerator</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Enumerator/ArithmeticSequence.html">ArithmeticSequence</a></code></li><li><code><a href="./Enumerator/Chain.html">Chain</a></code></li><li><code><a href="./Enumerator/Generator.html">Generator</a></code></li><li><code><a href="./Enumerator/Lazy.html">Lazy</a></code></li><li><code><a href="./Enumerator/Producer.html">Producer</a></code></li><li><code><a href="./Enumerator/Product.html">Product</a></code></li><li><code><a href="./Enumerator/Yielder.html">Yielder</a></code></li></ul></details></li><li><code><a href="./Errno.html">Errno</a></code></li><li><details><summary><code><a href="./ErrorHighlight.html">ErrorHighlight</a></code></summary><ul class="link-list nav-list"><li><code><a href="./ErrorHighlight/CoreExt.html">CoreExt</a></code></li><li><code><a href="./ErrorHighlight/DefaultFormatter.html">DefaultFormatter</a></code></li><li><details><summary><code><a href="./ErrorHighlight/Spotter.html">Spotter</a></code></summary><ul class="link-list nav-list"><li><code><a href="./ErrorHighlight/Spotter/NonAscii.html">NonAscii</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="./Etc.html">Etc</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Etc/Group.html">Group</a></code></li><li><code><a href="./Etc/Passwd.html">Passwd</a></code></li></ul></details></li><li><code><a href="./Exception.html">Exception</a></code></li><li><code><a href="./FalseClass.html">FalseClass</a></code></li><li><code><a href="./Fcntl.html">Fcntl</a></code></li><li><details><summary><code><a href="./Fiber.html">Fiber</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Fiber/Scheduler.html">Scheduler</a></code></li></ul></details></li><li><code><a href="./FiberError.html">FiberError</a></code></li><li><details><summary><code><a href="./File.html">File</a></code></summary><ul class="link-list nav-list"><li><code><a href="./File/Constants.html">Constants</a></code></li><li><code><a href="./File/Stat.html">Stat</a></code></li></ul></details></li><li><code><a href="./FileTest.html">FileTest</a></code></li><li><details><summary><code><a href="./FileUtils.html">FileUtils</a></code></summary><ul class="link-list nav-list"><li><code><a href="./FileUtils/DryRun.html">DryRun</a></code></li><li><code><a href="./FileUtils/NoWrite.html">NoWrite</a></code></li><li><code><a href="./FileUtils/Verbose.html">Verbose</a></code></li></ul></details></li><li><code><a href="./Find.html">Find</a></code></li><li><code><a href="./Float.html">Float</a></code></li><li><code><a href="./FloatDomainError.html">FloatDomainError</a></code></li><li><code><a href="./Forwardable.html">Forwardable</a></code></li><li><code><a href="./FrozenError.html">FrozenError</a></code></li><li><code><a href="./GC.html">GC</a></code></li><li><details><summary><code>Gem</code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/AvailableSet.html">AvailableSet</a></code></li><li><code><a href="./Gem/BasicSpecification.html">BasicSpecification</a></code></li><li><code><a href="./Gem/BundlerVersionFinder.html">BundlerVersionFinder</a></code></li><li><code><a href="./Gem/CIDetector.html">CIDetector</a></code></li><li><code><a href="./Gem/Command.html">Command</a></code></li><li><code><a href="./Gem/CommandLineError.html">CommandLineError</a></code></li><li><code><a href="./Gem/CommandManager.html">CommandManager</a></code></li><li><details><summary><code><a href="./Gem/Commands.html">Commands</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Commands/BuildCommand.html">BuildCommand</a></code></li><li><code><a href="./Gem/Commands/CertCommand.html">CertCommand</a></code></li><li><code><a href="./Gem/Commands/CheckCommand.html">CheckCommand</a></code></li><li><code><a href="./Gem/Commands/CleanupCommand.html">CleanupCommand</a></code></li><li><code><a href="./Gem/Commands/ContentsCommand.html">ContentsCommand</a></code></li><li><code><a href="./Gem/Commands/DependencyCommand.html">DependencyCommand</a></code></li><li><code><a href="./Gem/Commands/EnvironmentCommand.html">EnvironmentCommand</a></code></li><li><code><a href="./Gem/Commands/ExecCommand.html">ExecCommand</a></code></li><li><code><a href="./Gem/Commands/FetchCommand.html">FetchCommand</a></code></li><li><details><summary><code><a href="./Gem/Commands/GenerateIndexCommand.html">GenerateIndexCommand</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Commands/GenerateIndexCommand/RubygemsTrampoline.html">RubygemsTrampoline</a></code></li></ul></details></li><li><code><a href="./Gem/Commands/HelpCommand.html">HelpCommand</a></code></li><li><code><a href="./Gem/Commands/InfoCommand.html">InfoCommand</a></code></li><li><code><a href="./Gem/Commands/InstallCommand.html">InstallCommand</a></code></li><li><code><a href="./Gem/Commands/ListCommand.html">ListCommand</a></code></li><li><code><a href="./Gem/Commands/LockCommand.html">LockCommand</a></code></li><li><code><a href="./Gem/Commands/MirrorCommand.html">MirrorCommand</a></code></li><li><code><a href="./Gem/Commands/OpenCommand.html">OpenCommand</a></code></li><li><code><a href="./Gem/Commands/OutdatedCommand.html">OutdatedCommand</a></code></li><li><code><a href="./Gem/Commands/OwnerCommand.html">OwnerCommand</a></code></li><li><code><a href="./Gem/Commands/PristineCommand.html">PristineCommand</a></code></li><li><code><a href="./Gem/Commands/PushCommand.html">PushCommand</a></code></li><li><code><a href="./Gem/Commands/RdocCommand.html">RdocCommand</a></code></li><li><code><a href="./Gem/Commands/RebuildCommand.html">RebuildCommand</a></code></li><li><code><a href="./Gem/Commands/SearchCommand.html">SearchCommand</a></code></li><li><code><a href="./Gem/Commands/ServerCommand.html">ServerCommand</a></code></li><li><details><summary><code><a href="./Gem/Commands/SetupCommand.html">SetupCommand</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Commands/SetupCommand/MakeDirs.html">MakeDirs</a></code></li></ul></details></li><li><code><a href="./Gem/Commands/SigninCommand.html">SigninCommand</a></code></li><li><code><a href="./Gem/Commands/SignoutCommand.html">SignoutCommand</a></code></li><li><code><a href="./Gem/Commands/SourcesCommand.html">SourcesCommand</a></code></li><li><code><a href="./Gem/Commands/SpecificationCommand.html">SpecificationCommand</a></code></li><li><code><a href="./Gem/Commands/StaleCommand.html">StaleCommand</a></code></li><li><code><a href="./Gem/Commands/UninstallCommand.html">UninstallCommand</a></code></li><li><code><a href="./Gem/Commands/UnpackCommand.html">UnpackCommand</a></code></li><li><code><a href="./Gem/Commands/UpdateCommand.html">UpdateCommand</a></code></li><li><code><a href="./Gem/Commands/WhichCommand.html">WhichCommand</a></code></li><li><code><a href="./Gem/Commands/YankCommand.html">YankCommand</a></code></li></ul></details></li><li><code><a href="./Gem/ConfigFile.html">ConfigFile</a></code></li><li><code><a href="./Gem/ConflictError.html">ConflictError</a></code></li><li><code><a href="./Gem/ConsoleUI.html">ConsoleUI</a></code></li><li><code><a href="./Gem/DefaultUserInteraction.html">DefaultUserInteraction</a></code></li><li><code><a href="./Gem/Dependency.html">Dependency</a></code></li><li><code><a href="./Gem/DependencyError.html">DependencyError</a></code></li><li><code><a href="./Gem/DependencyInstaller.html">DependencyInstaller</a></code></li><li><code><a href="./Gem/DependencyList.html">DependencyList</a></code></li><li><code><a href="./Gem/DependencyRemovalException.html">DependencyRemovalException</a></code></li><li><code><a href="./Gem/DependencyResolutionError.html">DependencyResolutionError</a></code></li><li><code><a href="./Gem/Deprecate.html">Deprecate</a></code></li><li><code><a href="./Gem/Doctor.html">Doctor</a></code></li><li><code><a href="./Gem/DocumentError.html">DocumentError</a></code></li><li><code><a href="./Gem/EndOfYAMLException.html">EndOfYAMLException</a></code></li><li><code><a href="./Gem/ErrorReason.html">ErrorReason</a></code></li><li><code><a href="./Gem/Exception.html">Exception</a></code></li><li><details><summary><code><a href="./Gem/Ext.html">Ext</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Ext/BuildError.html">BuildError</a></code></li><li><details><summary><code><a href="./Gem/Ext/Builder.html">Builder</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Ext/Builder/NoMakefileError.html">NoMakefileError</a></code></li></ul></details></li><li><details><summary><code><a href="./Gem/Ext/CargoBuilder.html">CargoBuilder</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Ext/CargoBuilder/DylibNotFoundError.html">DylibNotFoundError</a></code></li><li><code><a href="./Gem/Ext/CargoBuilder/LinkFlagConverter.html">LinkFlagConverter</a></code></li></ul></details></li><li><code><a href="./Gem/Ext/CmakeBuilder.html">CmakeBuilder</a></code></li><li><code><a href="./Gem/Ext/ConfigureBuilder.html">ConfigureBuilder</a></code></li><li><code><a href="./Gem/Ext/ExtConfBuilder.html">ExtConfBuilder</a></code></li><li><code><a href="./Gem/Ext/RakeBuilder.html">RakeBuilder</a></code></li></ul></details></li><li><code><a href="./Gem/FilePermissionError.html">FilePermissionError</a></code></li><li><code><a href="./Gem/FormatException.html">FormatException</a></code></li><li><code><a href="./Gem/GemNotFoundException.html">GemNotFoundException</a></code></li><li><code><a href="./Gem/GemNotInHomeException.html">GemNotInHomeException</a></code></li><li><code><a href="./Gem/GemRunner.html">GemRunner</a></code></li><li><details><summary><code><a href="./Gem/GemcutterUtilities.html">GemcutterUtilities</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./Gem/GemcutterUtilities/WebauthnListener.html">WebauthnListener</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/GemcutterUtilities/WebauthnListener/BadRequestResponse.html">BadRequestResponse</a></code></li><li><code><a href="./Gem/GemcutterUtilities/WebauthnListener/MethodNotAllowedResponse.html">MethodNotAllowedResponse</a></code></li><li><code><a href="./Gem/GemcutterUtilities/WebauthnListener/NoContentResponse.html">NoContentResponse</a></code></li><li><code><a href="./Gem/GemcutterUtilities/WebauthnListener/NotFoundResponse.html">NotFoundResponse</a></code></li><li><code><a href="./Gem/GemcutterUtilities/WebauthnListener/OkResponse.html">OkResponse</a></code></li><li><code><a href="./Gem/GemcutterUtilities/WebauthnListener/Response.html">Response</a></code></li><li><code><a href="./Gem/GemcutterUtilities/WebauthnListener/SocketResponder.html">SocketResponder</a></code></li></ul></details></li><li><code><a href="./Gem/GemcutterUtilities/WebauthnPoller.html">WebauthnPoller</a></code></li></ul></details></li><li><code><a href="./Gem/GemspecHelpers.html">GemspecHelpers</a></code></li><li><code><a href="./Gem/ImpossibleDependenciesError.html">ImpossibleDependenciesError</a></code></li><li><code><a href="./Gem/InstallError.html">InstallError</a></code></li><li><code><a href="./Gem/InstallUpdateOptions.html">InstallUpdateOptions</a></code></li><li><details><summary><code><a href="./Gem/Installer.html">Installer</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Installer/FakePackage.html">FakePackage</a></code></li></ul></details></li><li><code><a href="./Gem/InstallerUninstallerUtils.html">InstallerUninstallerUtils</a></code></li><li><code><a href="./Gem/InvalidSpecificationException.html">InvalidSpecificationException</a></code></li><li><code><a href="./Gem/Licenses.html">Licenses</a></code></li><li><code><a href="./Gem/LoadError.html">LoadError</a></code></li><li><code><a href="./Gem/LocalRemoteOptions.html">LocalRemoteOptions</a></code></li><li><code><a href="./Gem/MissingSpecError.html">MissingSpecError</a></code></li><li><code><a href="./Gem/MissingSpecVersionError.html">MissingSpecVersionError</a></code></li><li><code><a href="./Gem/NameTuple.html">NameTuple</a></code></li><li><code><a href="./Gem/NoAliasYAMLTree.html">NoAliasYAMLTree</a></code></li><li><code><a href="./Gem/OperationNotSupportedError.html">OperationNotSupportedError</a></code></li><li><details><summary><code><a href="./Gem/Package.html">Package</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Package/DigestIO.html">DigestIO</a></code></li><li><code><a href="./Gem/Package/Error.html">Error</a></code></li><li><code><a href="./Gem/Package/FormatError.html">FormatError</a></code></li><li><code><a href="./Gem/Package/NonSeekableIO.html">NonSeekableIO</a></code></li><li><code><a href="./Gem/Package/Old.html">Old</a></code></li><li><code><a href="./Gem/Package/PathError.html">PathError</a></code></li><li><code><a href="./Gem/Package/SymlinkError.html">SymlinkError</a></code></li><li><code><a href="./Gem/Package/TarHeader.html">TarHeader</a></code></li><li><code><a href="./Gem/Package/TarInvalidError.html">TarInvalidError</a></code></li><li><details><summary><code><a href="./Gem/Package/TarReader.html">TarReader</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Package/TarReader/Entry.html">Entry</a></code></li></ul></details></li><li><details><summary><code><a href="./Gem/Package/TarWriter.html">TarWriter</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Package/TarWriter/BoundedStream.html">BoundedStream</a></code></li><li><code><a href="./Gem/Package/TarWriter/FileOverflow.html">FileOverflow</a></code></li><li><code><a href="./Gem/Package/TarWriter/RestrictedStream.html">RestrictedStream</a></code></li></ul></details></li><li><code><a href="./Gem/Package/TooLongFileName.html">TooLongFileName</a></code></li></ul></details></li><li><code><a href="./Gem/PackageTask.html">PackageTask</a></code></li><li><code><a href="./Gem/PathSupport.html">PathSupport</a></code></li><li><code><a href="./Gem/Platform.html">Platform</a></code></li><li><code><a href="./Gem/PlatformMismatch.html">PlatformMismatch</a></code></li><li><code><a href="./Gem/QueryUtils.html">QueryUtils</a></code></li><li><code><a href="./Gem/RemoteError.html">RemoteError</a></code></li><li><details><summary><code><a href="./Gem/RemoteFetcher.html">RemoteFetcher</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/RemoteFetcher/FetchError.html">FetchError</a></code></li><li><code><a href="./Gem/RemoteFetcher/UnknownHostError.html">UnknownHostError</a></code></li></ul></details></li><li><code><a href="./Gem/RemoteInstallationCancelled.html">RemoteInstallationCancelled</a></code></li><li><code><a href="./Gem/RemoteInstallationSkipped.html">RemoteInstallationSkipped</a></code></li><li><code><a href="./Gem/RemoteSourceException.html">RemoteSourceException</a></code></li><li><details><summary><code><a href="./Gem/RequestSet.html">RequestSet</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/RequestSet/GemDependencyAPI.html">GemDependencyAPI</a></code></li><li><details><summary><code><a href="./Gem/RequestSet/Lockfile.html">Lockfile</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/RequestSet/Lockfile/ParseError.html">ParseError</a></code></li><li><code><a href="./Gem/RequestSet/Lockfile/Parser.html">Parser</a></code></li><li><code><a href="./Gem/RequestSet/Lockfile/Tokenizer.html">Tokenizer</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="./Gem/Requirement.html">Requirement</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Requirement/BadRequirementError.html">BadRequirementError</a></code></li></ul></details></li><li><details><summary><code><a href="./Gem/Resolver.html">Resolver</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./Gem/Resolver/APISet.html">APISet</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Resolver/APISet/GemParser.html">GemParser</a></code></li></ul></details></li><li><code><a href="./Gem/Resolver/APISpecification.html">APISpecification</a></code></li><li><code><a href="./Gem/Resolver/ActivationRequest.html">ActivationRequest</a></code></li><li><code><a href="./Gem/Resolver/BestSet.html">BestSet</a></code></li><li><code><a href="./Gem/Resolver/ComposedSet.html">ComposedSet</a></code></li><li><code><a href="./Gem/Resolver/Conflict.html">Conflict</a></code></li><li><code><a href="./Gem/Resolver/CurrentSet.html">CurrentSet</a></code></li><li><code><a href="./Gem/Resolver/DependencyRequest.html">DependencyRequest</a></code></li><li><code><a href="./Gem/Resolver/GitSet.html">GitSet</a></code></li><li><code><a href="./Gem/Resolver/GitSpecification.html">GitSpecification</a></code></li><li><code><a href="./Gem/Resolver/IndexSet.html">IndexSet</a></code></li><li><code><a href="./Gem/Resolver/IndexSpecification.html">IndexSpecification</a></code></li><li><code><a href="./Gem/Resolver/InstalledSpecification.html">InstalledSpecification</a></code></li><li><code><a href="./Gem/Resolver/InstallerSet.html">InstallerSet</a></code></li><li><code><a href="./Gem/Resolver/LocalSpecification.html">LocalSpecification</a></code></li><li><code><a href="./Gem/Resolver/LockSet.html">LockSet</a></code></li><li><code><a href="./Gem/Resolver/LockSpecification.html">LockSpecification</a></code></li><li><code><a href="./Gem/Resolver/RequirementList.html">RequirementList</a></code></li><li><code><a href="./Gem/Resolver/Set.html">Set</a></code></li><li><code><a href="./Gem/Resolver/SourceSet.html">SourceSet</a></code></li><li><code><a href="./Gem/Resolver/SpecSpecification.html">SpecSpecification</a></code></li><li><code><a href="./Gem/Resolver/Specification.html">Specification</a></code></li><li><code><a href="./Gem/Resolver/Stats.html">Stats</a></code></li><li><code><a href="./Gem/Resolver/VendorSet.html">VendorSet</a></code></li><li><code><a href="./Gem/Resolver/VendorSpecification.html">VendorSpecification</a></code></li></ul></details></li><li><code><a href="./Gem/RubyVersionMismatch.html">RubyVersionMismatch</a></code></li><li><code><a href="./Gem/RuntimeRequirementNotMetError.html">RuntimeRequirementNotMetError</a></code></li><li><details><summary><code><a href="./Gem/S3URISigner.html">S3URISigner</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/S3URISigner/ConfigurationError.html">ConfigurationError</a></code></li><li><code><a href="./Gem/S3URISigner/InstanceProfileError.html">InstanceProfileError</a></code></li></ul></details></li><li><details><summary><code><a href="./Gem/SafeMarshal.html">SafeMarshal</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./Gem/SafeMarshal/Elements.html">Elements</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/SafeMarshal/Elements/Array.html">Array</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/Bignum.html">Bignum</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/Element.html">Element</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/False.html">False</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/Float.html">Float</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/Hash.html">Hash</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/HashWithDefaultValue.html">HashWithDefaultValue</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/Integer.html">Integer</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/Nil.html">Nil</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/Object.html">Object</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/ObjectLink.html">ObjectLink</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/String.html">String</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/Symbol.html">Symbol</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/SymbolLink.html">SymbolLink</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/True.html">True</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/UserClass.html">UserClass</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/UserDefined.html">UserDefined</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/UserMarshal.html">UserMarshal</a></code></li><li><code><a href="./Gem/SafeMarshal/Elements/WithIvars.html">WithIvars</a></code></li></ul></details></li><li><details><summary><code><a href="./Gem/SafeMarshal/Reader.html">Reader</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/SafeMarshal/Reader/DataTooShortError.html">DataTooShortError</a></code></li><li><code><a href="./Gem/SafeMarshal/Reader/EOFError.html">EOFError</a></code></li><li><code><a href="./Gem/SafeMarshal/Reader/Error.html">Error</a></code></li><li><code><a href="./Gem/SafeMarshal/Reader/NegativeLengthError.html">NegativeLengthError</a></code></li><li><code><a href="./Gem/SafeMarshal/Reader/NotImplementedError.html">NotImplementedError</a></code></li><li><code><a href="./Gem/SafeMarshal/Reader/UnconsumedBytesError.html">UnconsumedBytesError</a></code></li><li><code><a href="./Gem/SafeMarshal/Reader/UnsupportedVersionError.html">UnsupportedVersionError</a></code></li></ul></details></li><li><details><summary><code><a href="./Gem/SafeMarshal/Visitors.html">Visitors</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/SafeMarshal/Visitors/StreamPrinter.html">StreamPrinter</a></code></li><li><details><summary><code><a href="./Gem/SafeMarshal/Visitors/ToRuby.html">ToRuby</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/SafeMarshal/Visitors/ToRuby/Error.html">Error</a></code></li><li><code><a href="./Gem/SafeMarshal/Visitors/ToRuby/FormatError.html">FormatError</a></code></li><li><code><a href="./Gem/SafeMarshal/Visitors/ToRuby/MethodCallError.html">MethodCallError</a></code></li><li><code><a href="./Gem/SafeMarshal/Visitors/ToRuby/RationalCompat.html">RationalCompat</a></code></li><li><code><a href="./Gem/SafeMarshal/Visitors/ToRuby/TimeTooLargeError.html">TimeTooLargeError</a></code></li><li><code><a href="./Gem/SafeMarshal/Visitors/ToRuby/UnpermittedClassError.html">UnpermittedClassError</a></code></li><li><code><a href="./Gem/SafeMarshal/Visitors/ToRuby/UnpermittedIvarError.html">UnpermittedIvarError</a></code></li><li><code><a href="./Gem/SafeMarshal/Visitors/ToRuby/UnpermittedSymbolError.html">UnpermittedSymbolError</a></code></li><li><code><a href="./Gem/SafeMarshal/Visitors/ToRuby/UnsupportedError.html">UnsupportedError</a></code></li></ul></details></li><li><code><a href="./Gem/SafeMarshal/Visitors/Visitor.html">Visitor</a></code></li></ul></details></li></ul></details></li><li><code><a href="./Gem/SafeYAML.html">SafeYAML</a></code></li><li><details><summary><code><a href="./Gem/Security.html">Security</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Security/Exception.html">Exception</a></code></li><li><code><a href="./Gem/Security/Policy.html">Policy</a></code></li><li><code><a href="./Gem/Security/Signer.html">Signer</a></code></li><li><code><a href="./Gem/Security/TrustDir.html">TrustDir</a></code></li></ul></details></li><li><code><a href="./Gem/SecurityOption.html">SecurityOption</a></code></li><li><details><summary><code><a href="./Gem/SilentUI.html">SilentUI</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/SilentUI/NullIO.html">NullIO</a></code></li></ul></details></li><li><details><summary><code><a href="./Gem/Source.html">Source</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/Source/Git.html">Git</a></code></li><li><code><a href="./Gem/Source/Installed.html">Installed</a></code></li><li><code><a href="./Gem/Source/Local.html">Local</a></code></li><li><code><a href="./Gem/Source/Lock.html">Lock</a></code></li><li><code><a href="./Gem/Source/SpecificFile.html">SpecificFile</a></code></li><li><code><a href="./Gem/Source/Vendor.html">Vendor</a></code></li></ul></details></li><li><code><a href="./Gem/SourceFetchProblem.html">SourceFetchProblem</a></code></li><li><code><a href="./Gem/SourceList.html">SourceList</a></code></li><li><code><a href="./Gem/SpecFetcher.html">SpecFetcher</a></code></li><li><code><a href="./Gem/SpecificGemNotFoundException.html">SpecificGemNotFoundException</a></code></li><li><code><a href="./Gem/Specification.html">Specification</a></code></li><li><code><a href="./Gem/SpecificationPolicy.html">SpecificationPolicy</a></code></li><li><code><a href="./Gem/SpecificationRecord.html">SpecificationRecord</a></code></li><li><details><summary><code><a href="./Gem/StreamUI.html">StreamUI</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Gem/StreamUI/SilentDownloadReporter.html">SilentDownloadReporter</a></code></li><li><code><a href="./Gem/StreamUI/SilentProgressReporter.html">SilentProgressReporter</a></code></li><li><code><a href="./Gem/StreamUI/SimpleProgressReporter.html">SimpleProgressReporter</a></code></li><li><code><a href="./Gem/StreamUI/ThreadedDownloadReporter.html">ThreadedDownloadReporter</a></code></li><li><code><a href="./Gem/StreamUI/VerboseProgressReporter.html">VerboseProgressReporter</a></code></li></ul></details></li><li><code><a href="./Gem/StubSpecification.html">StubSpecification</a></code></li><li><code><a href="./Gem/SystemExitException.html">SystemExitException</a></code></li><li><code><a href="./Gem/TargetRbConfig.html">TargetRbConfig</a></code></li><li><code><a href="./Gem/Text.html">Text</a></code></li><li><code><a href="./Gem/UninstallError.html">UninstallError</a></code></li><li><code><a href="./Gem/Uninstaller.html">Uninstaller</a></code></li><li><code><a href="./Gem/UnknownCommandError.html">UnknownCommandError</a></code></li><li><code><a href="./Gem/UnknownCommandSpellChecker.html">UnknownCommandSpellChecker</a></code></li><li><code><a href="./Gem/UnsatisfiableDependencyError.html">UnsatisfiableDependencyError</a></code></li><li><code><a href="./Gem/UpdateSuggestion.html">UpdateSuggestion</a></code></li><li><code><a href="./Gem/Uri.html">Uri</a></code></li><li><code><a href="./Gem/UriFormatter.html">UriFormatter</a></code></li><li><code><a href="./Gem/UserInteraction.html">UserInteraction</a></code></li><li><code><a href="./Gem/Util.html">Util</a></code></li><li><code><a href="./Gem/Validator.html">Validator</a></code></li><li><code><a href="./Gem/VerificationError.html">VerificationError</a></code></li><li><code><a href="./Gem/Version.html">Version</a></code></li><li><code><a href="./Gem/VersionOption.html">VersionOption</a></code></li><li><code><a href="./Gem/WebauthnVerificationError.html">WebauthnVerificationError</a></code></li><li><code><a href="./Gem/YAMLSerializer.html">YAMLSerializer</a></code></li></ul></details></li><li><code><a href="./Hash.html">Hash</a></code></li><li><details><summary><code><a href="./IO.html">IO</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./IO/Buffer.html">Buffer</a></code></summary><ul class="link-list nav-list"><li><code><a href="./IO/Buffer/AccessError.html">AccessError</a></code></li><li><code><a href="./IO/Buffer/AllocationError.html">AllocationError</a></code></li><li><code><a href="./IO/Buffer/InvalidatedError.html">InvalidatedError</a></code></li><li><code><a href="./IO/Buffer/LockedError.html">LockedError</a></code></li><li><code><a href="./IO/Buffer/MaskError.html">MaskError</a></code></li></ul></details></li><li><code><a href="./IO/EAGAINWaitReadable.html">EAGAINWaitReadable</a></code></li><li><code><a href="./IO/EAGAINWaitWritable.html">EAGAINWaitWritable</a></code></li><li><code><a href="./IO/EINPROGRESSWaitReadable.html">EINPROGRESSWaitReadable</a></code></li><li><code><a href="./IO/EINPROGRESSWaitWritable.html">EINPROGRESSWaitWritable</a></code></li><li><code><a href="./IO/EWOULDBLOCKWaitReadable.html">EWOULDBLOCKWaitReadable</a></code></li><li><code><a href="./IO/EWOULDBLOCKWaitWritable.html">EWOULDBLOCKWaitWritable</a></code></li><li><code><a href="./IO/TimeoutError.html">TimeoutError</a></code></li><li><code><a href="./IO/WaitReadable.html">WaitReadable</a></code></li><li><code><a href="./IO/WaitWritable.html">WaitWritable</a></code></li></ul></details></li><li><code><a href="./IOError.html">IOError</a></code></li><li><details><summary><code><a href="./IPAddr.html">IPAddr</a></code></summary><ul class="link-list nav-list"><li><code><a href="./IPAddr/AddressFamilyError.html">AddressFamilyError</a></code></li><li><code><a href="./IPAddr/Error.html">Error</a></code></li><li><code><a href="./IPAddr/InvalidAddressError.html">InvalidAddressError</a></code></li><li><code><a href="./IPAddr/InvalidPrefixError.html">InvalidPrefixError</a></code></li></ul></details></li><li><code><a href="./IPSocket.html">IPSocket</a></code></li><li><code><a href="./IndexError.html">IndexError</a></code></li><li><code><a href="./Integer.html">Integer</a></code></li><li><code><a href="./Interrupt.html">Interrupt</a></code></li><li><details><summary><code><a href="./JSON.html">JSON</a></code></summary><ul class="link-list nav-list"><li><code><a href="./JSON/Coder.html">Coder</a></code></li><li><details><summary><code><a href="./JSON/Ext.html">Ext</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./JSON/Ext/Generator.html">Generator</a></code></summary><ul class="link-list nav-list"><li><code><a href="./JSON/Ext/Generator/State.html">State</a></code></li></ul></details></li><li><code><a href="./JSON/Ext/Parser.html">Parser</a></code></li><li><code><a href="./JSON/Ext/ParserConfig.html">ParserConfig</a></code></li></ul></details></li><li><code><a href="./JSON/GeneratorError.html">GeneratorError</a></code></li><li><code><a href="./JSON/GenericObject.html">GenericObject</a></code></li><li><code><a href="./JSON/JSONError.html">JSONError</a></code></li><li><code><a href="./JSON/NestingError.html">NestingError</a></code></li><li><code><a href="./JSON/ParserError.html">ParserError</a></code></li></ul></details></li><li><code><a href="./Kernel.html">Kernel</a></code></li><li><code><a href="./KeyError.html">KeyError</a></code></li><li><code><a href="./LoadError.html">LoadError</a></code></li><li><code><a href="./LocalJumpError.html">LocalJumpError</a></code></li><li><details><summary><code><a href="./MakeMakefile.html">MakeMakefile</a></code></summary><ul class="link-list nav-list"><li><code><a href="./RbConfig.html">RbConfig</a></code></li></ul></details></li><li><code><a href="./Marshal.html">Marshal</a></code></li><li><code><a href="./MatchData.html">MatchData</a></code></li><li><details><summary><code><a href="./Math.html">Math</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Math/DomainError.html">DomainError</a></code></li></ul></details></li><li><code><a href="./Method.html">Method</a></code></li><li><code><a href="./Module.html">Module</a></code></li><li><code><a href="./Monitor.html">Monitor</a></code></li><li><details><summary><code><a href="./MonitorMixin.html">MonitorMixin</a></code></summary><ul class="link-list nav-list"><li><code><a href="./MonitorMixin/ConditionVariable.html">ConditionVariable</a></code></li></ul></details></li><li><code><a href="./NameError.html">NameError</a></code></li><li><details><summary><code><a href="./Net.html">Net</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./Net/HTTP.html">HTTP</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Net/HTTP/Copy.html">Copy</a></code></li><li><code><a href="./Net/HTTP/Delete.html">Delete</a></code></li><li><code><a href="./Net/HTTP/Get.html">Get</a></code></li><li><code><a href="./Net/HTTP/Head.html">Head</a></code></li><li><code><a href="./Net/HTTP/Lock.html">Lock</a></code></li><li><code><a href="./Net/HTTP/Mkcol.html">Mkcol</a></code></li><li><code><a href="./Net/HTTP/Move.html">Move</a></code></li><li><code><a href="./Net/HTTP/Options.html">Options</a></code></li><li><code><a href="./Net/HTTP/Patch.html">Patch</a></code></li><li><code><a href="./Net/HTTP/Post.html">Post</a></code></li><li><code><a href="./Net/HTTP/Propfind.html">Propfind</a></code></li><li><code><a href="./Net/HTTP/Proppatch.html">Proppatch</a></code></li><li><code><a href="./Net/HTTP/Put.html">Put</a></code></li><li><code><a href="./Net/HTTP/Trace.html">Trace</a></code></li><li><code><a href="./Net/HTTP/Unlock.html">Unlock</a></code></li></ul></details></li><li><code><a href="./Net/HTTPAccepted.html">HTTPAccepted</a></code></li><li><code><a href="./Net/HTTPAlreadyReported.html">HTTPAlreadyReported</a></code></li><li><code><a href="./Net/HTTPBadGateway.html">HTTPBadGateway</a></code></li><li><code><a href="./Net/HTTPBadRequest.html">HTTPBadRequest</a></code></li><li><code><a href="./Net/HTTPClientError.html">HTTPClientError</a></code></li><li><code><a href="./Net/HTTPConflict.html">HTTPConflict</a></code></li><li><code><a href="./Net/HTTPContinue.html">HTTPContinue</a></code></li><li><code><a href="./Net/HTTPCreated.html">HTTPCreated</a></code></li><li><code><a href="./Net/HTTPEarlyHints.html">HTTPEarlyHints</a></code></li><li><code><a href="./Net/HTTPExpectationFailed.html">HTTPExpectationFailed</a></code></li><li><code><a href="./Net/HTTPFailedDependency.html">HTTPFailedDependency</a></code></li><li><code><a href="./Net/HTTPForbidden.html">HTTPForbidden</a></code></li><li><code><a href="./Net/HTTPFound.html">HTTPFound</a></code></li><li><code><a href="./Net/HTTPGatewayTimeout.html">HTTPGatewayTimeOut</a></code></li><li><code><a href="./Net/HTTPGatewayTimeout.html">HTTPGatewayTimeout</a></code></li><li><code><a href="./Net/HTTPGenericRequest.html">HTTPGenericRequest</a></code></li><li><code><a href="./Net/HTTPGone.html">HTTPGone</a></code></li><li><code><a href="./Net/HTTPHeader.html">HTTPHeader</a></code></li><li><code><a href="./Net/HTTPIMUsed.html">HTTPIMUsed</a></code></li><li><code><a href="./Net/HTTPInformation.html">HTTPInformation</a></code></li><li><code><a href="./Net/HTTPInsufficientStorage.html">HTTPInsufficientStorage</a></code></li><li><code><a href="./Net/HTTPInternalServerError.html">HTTPInternalServerError</a></code></li><li><code><a href="./Net/HTTPLengthRequired.html">HTTPLengthRequired</a></code></li><li><code><a href="./Net/HTTPLocked.html">HTTPLocked</a></code></li><li><code><a href="./Net/HTTPLoopDetected.html">HTTPLoopDetected</a></code></li><li><code><a href="./Net/HTTPMethodNotAllowed.html">HTTPMethodNotAllowed</a></code></li><li><code><a href="./Net/HTTPMisdirectedRequest.html">HTTPMisdirectedRequest</a></code></li><li><code><a href="./Net/HTTPMovedPermanently.html">HTTPMovedPermanently</a></code></li><li><code><a href="./Net/HTTPFound.html">HTTPMovedTemporarily</a></code></li><li><code><a href="./Net/HTTPMultiStatus.html">HTTPMultiStatus</a></code></li><li><code><a href="./Net/HTTPMultipleChoices.html">HTTPMultipleChoice</a></code></li><li><code><a href="./Net/HTTPMultipleChoices.html">HTTPMultipleChoices</a></code></li><li><code><a href="./Net/HTTPNetworkAuthenticationRequired.html">HTTPNetworkAuthenticationRequired</a></code></li><li><code><a href="./Net/HTTPNoContent.html">HTTPNoContent</a></code></li><li><code><a href="./Net/HTTPNonAuthoritativeInformation.html">HTTPNonAuthoritativeInformation</a></code></li><li><code><a href="./Net/HTTPNotAcceptable.html">HTTPNotAcceptable</a></code></li><li><code><a href="./Net/HTTPNotExtended.html">HTTPNotExtended</a></code></li><li><code><a href="./Net/HTTPNotFound.html">HTTPNotFound</a></code></li><li><code><a href="./Net/HTTPNotImplemented.html">HTTPNotImplemented</a></code></li><li><code><a href="./Net/HTTPNotModified.html">HTTPNotModified</a></code></li><li><code><a href="./Net/HTTPOK.html">HTTPOK</a></code></li><li><code><a href="./Net/HTTPPartialContent.html">HTTPPartialContent</a></code></li><li><code><a href="./Net/HTTPPayloadTooLarge.html">HTTPPayloadTooLarge</a></code></li><li><code><a href="./Net/HTTPPaymentRequired.html">HTTPPaymentRequired</a></code></li><li><code><a href="./Net/HTTPPermanentRedirect.html">HTTPPermanentRedirect</a></code></li><li><code><a href="./Net/HTTPPreconditionFailed.html">HTTPPreconditionFailed</a></code></li><li><code><a href="./Net/HTTPPreconditionRequired.html">HTTPPreconditionRequired</a></code></li><li><code><a href="./Net/HTTPProcessing.html">HTTPProcessing</a></code></li><li><code><a href="./Net/HTTPProxyAuthenticationRequired.html">HTTPProxyAuthenticationRequired</a></code></li><li><code><a href="./Net/HTTPRangeNotSatisfiable.html">HTTPRangeNotSatisfiable</a></code></li><li><code><a href="./Net/HTTPRedirection.html">HTTPRedirection</a></code></li><li><code><a href="./Net/HTTPRequest.html">HTTPRequest</a></code></li><li><code><a href="./Net/HTTPPayloadTooLarge.html">HTTPRequestEntityTooLarge</a></code></li><li><code><a href="./Net/HTTPRequestHeaderFieldsTooLarge.html">HTTPRequestHeaderFieldsTooLarge</a></code></li><li><code><a href="./Net/HTTPRequestTimeout.html">HTTPRequestTimeOut</a></code></li><li><code><a href="./Net/HTTPRequestTimeout.html">HTTPRequestTimeout</a></code></li><li><code><a href="./Net/HTTPURITooLong.html">HTTPRequestURITooLong</a></code></li><li><code><a href="./Net/HTTPRangeNotSatisfiable.html">HTTPRequestedRangeNotSatisfiable</a></code></li><li><code><a href="./Net/HTTPResetContent.html">HTTPResetContent</a></code></li><li><code><a href="./Net/HTTPResponse.html">HTTPResponse</a></code></li><li><code><a href="./Net/HTTPSeeOther.html">HTTPSeeOther</a></code></li><li><code><a href="./Net/HTTPServerError.html">HTTPServerError</a></code></li><li><code><a href="./Net/HTTPServiceUnavailable.html">HTTPServiceUnavailable</a></code></li><li><code><a href="./Net/HTTP.html">HTTPSession</a></code></li><li><code><a href="./Net/HTTPSuccess.html">HTTPSuccess</a></code></li><li><code><a href="./Net/HTTPSwitchProtocol.html">HTTPSwitchProtocol</a></code></li><li><code><a href="./Net/HTTPTemporaryRedirect.html">HTTPTemporaryRedirect</a></code></li><li><code><a href="./Net/HTTPTooManyRequests.html">HTTPTooManyRequests</a></code></li><li><code><a href="./Net/HTTPURITooLong.html">HTTPURITooLong</a></code></li><li><code><a href="./Net/HTTPUnauthorized.html">HTTPUnauthorized</a></code></li><li><code><a href="./Net/HTTPUnavailableForLegalReasons.html">HTTPUnavailableForLegalReasons</a></code></li><li><code><a href="./Net/HTTPUnknownResponse.html">HTTPUnknownResponse</a></code></li><li><code><a href="./Net/HTTPUnprocessableEntity.html">HTTPUnprocessableEntity</a></code></li><li><code><a href="./Net/HTTPUnsupportedMediaType.html">HTTPUnsupportedMediaType</a></code></li><li><code><a href="./Net/HTTPUpgradeRequired.html">HTTPUpgradeRequired</a></code></li><li><code><a href="./Net/HTTPUseProxy.html">HTTPUseProxy</a></code></li><li><code><a href="./Net/HTTPVariantAlsoNegotiates.html">HTTPVariantAlsoNegotiates</a></code></li><li><code><a href="./Net/HTTPVersionNotSupported.html">HTTPVersionNotSupported</a></code></li><li><code><a href="./Net/OpenTimeout.html">OpenTimeout</a></code></li><li><code><a href="./Net/ReadTimeout.html">ReadTimeout</a></code></li><li><code><a href="./Net/WriteAdapter.html">WriteAdapter</a></code></li><li><code><a href="./Net/WriteTimeout.html">WriteTimeout</a></code></li></ul></details></li><li><code><a href="./NilClass.html">NilClass</a></code></li><li><code><a href="./NoMatchingPatternError.html">NoMatchingPatternError</a></code></li><li><code><a href="./NoMatchingPatternKeyError.html">NoMatchingPatternKeyError</a></code></li><li><code><a href="./NoMemoryError.html">NoMemoryError</a></code></li><li><code><a href="./NoMethodError.html">NoMethodError</a></code></li><li><code><a href="./NotImplementedError.html">NotImplementedError</a></code></li><li><code><a href="./Numeric.html">Numeric</a></code></li><li><code><a href="./Object.html">Object</a></code></li><li><details><summary><code><a href="./ObjectSpace.html">ObjectSpace</a></code></summary><ul class="link-list nav-list"><li><code><a href="./ObjectSpace/InternalObjectWrapper.html">InternalObjectWrapper</a></code></li><li><code><a href="./ObjectSpace/WeakKeyMap.html">WeakKeyMap</a></code></li><li><code><a href="./ObjectSpace/WeakMap.html">WeakMap</a></code></li></ul></details></li><li><code><a href="./Open3.html">Open3</a></code></li><li><details><summary><code><a href="./OpenSSL.html">OpenSSL</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./OpenSSL/ASN1.html">ASN1</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/ASN1/ASN1Data.html">ASN1Data</a></code></li><li><code><a href="./OpenSSL/ASN1/ASN1Error.html">ASN1Error</a></code></li><li><code><a href="./OpenSSL/ASN1/Constructive.html">Constructive</a></code></li><li><code><a href="./OpenSSL/ASN1/ObjectId.html">ObjectId</a></code></li><li><code><a href="./OpenSSL/ASN1/Primitive.html">Primitive</a></code></li></ul></details></li><li><code><a href="./OpenSSL/BN.html">BN</a></code></li><li><code><a href="./OpenSSL/BNError.html">BNError</a></code></li><li><details><summary><code><a href="./OpenSSL/Buffering.html">Buffering</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/Buffering/Buffer.html">Buffer</a></code></li></ul></details></li><li><details><summary><code><a href="./OpenSSL/Cipher.html">Cipher</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/Cipher/AuthTagError.html">AuthTagError</a></code></li><li><code><a href="./OpenSSL/Cipher/Cipher.html">Cipher</a></code></li><li><code><a href="./OpenSSL/Cipher/CipherError.html">CipherError</a></code></li></ul></details></li><li><code><a href="./OpenSSL/Config.html">Config</a></code></li><li><code><a href="./OpenSSL/ConfigError.html">ConfigError</a></code></li><li><details><summary><code><a href="./OpenSSL/Digest.html">Digest</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/Digest/DigestError.html">DigestError</a></code></li></ul></details></li><li><details><summary><code><a href="./OpenSSL/Engine.html">Engine</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/Engine/EngineError.html">EngineError</a></code></li></ul></details></li><li><code><a href="./OpenSSL/HMAC.html">HMAC</a></code></li><li><code><a href="./OpenSSL/HMACError.html">HMACError</a></code></li><li><details><summary><code><a href="./OpenSSL/KDF.html">KDF</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/KDF/KDFError.html">KDFError</a></code></li></ul></details></li><li><details><summary><code><a href="./OpenSSL/Marshal.html">Marshal</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/Marshal/ClassMethods.html">ClassMethods</a></code></li></ul></details></li><li><details><summary><code><a href="./OpenSSL/Netscape.html">Netscape</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/Netscape/SPKI.html">SPKI</a></code></li><li><code><a href="./OpenSSL/Netscape/SPKIError.html">SPKIError</a></code></li></ul></details></li><li><details><summary><code><a href="./OpenSSL/OCSP.html">OCSP</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/OCSP/BasicResponse.html">BasicResponse</a></code></li><li><code><a href="./OpenSSL/OCSP/CertificateId.html">CertificateId</a></code></li><li><code><a href="./OpenSSL/OCSP/OCSPError.html">OCSPError</a></code></li><li><code><a href="./OpenSSL/OCSP/Request.html">Request</a></code></li><li><code><a href="./OpenSSL/OCSP/Response.html">Response</a></code></li><li><code><a href="./OpenSSL/OCSP/SingleResponse.html">SingleResponse</a></code></li></ul></details></li><li><code><a href="./OpenSSL/OpenSSLError.html">OpenSSLError</a></code></li><li><details><summary><code><a href="./OpenSSL/PKCS12.html">PKCS12</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/PKCS12/PKCS12Error.html">PKCS12Error</a></code></li></ul></details></li><li><code><a href="./OpenSSL/PKCS5.html">PKCS5</a></code></li><li><details><summary><code><a href="./OpenSSL/PKCS7.html">PKCS7</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/PKCS7/PKCS7Error.html">PKCS7Error</a></code></li><li><code><a href="./OpenSSL/PKCS7/RecipientInfo.html">RecipientInfo</a></code></li><li><code><a href="./OpenSSL/PKCS7/SignerInfo.html">SignerInfo</a></code></li></ul></details></li><li><details><summary><code><a href="./OpenSSL/PKey.html">PKey</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/PKey/DH.html">DH</a></code></li><li><code><a href="./OpenSSL/PKey/DSA.html">DSA</a></code></li><li><details><summary><code><a href="./OpenSSL/PKey/EC.html">EC</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./OpenSSL/PKey/EC/Group.html">Group</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/PKey/EC/Group/Error.html">Error</a></code></li></ul></details></li><li><details><summary><code><a href="./OpenSSL/PKey/EC/Point.html">Point</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/PKey/EC/Point/Error.html">Error</a></code></li></ul></details></li></ul></details></li><li><code><a href="./OpenSSL/PKey/PKey.html">PKey</a></code></li><li><code><a href="./OpenSSL/PKey/PKeyError.html">PKeyError</a></code></li><li><code><a href="./OpenSSL/PKey/RSA.html">RSA</a></code></li><li><code><a href="./OpenSSL/PKey/PKeyError.html">RSAError</a></code></li></ul></details></li><li><details><summary><code><a href="./OpenSSL/Random.html">Random</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/Random/RandomError.html">RandomError</a></code></li></ul></details></li><li><details><summary><code><a href="./OpenSSL/SSL.html">SSL</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/SSL/SSLContext.html">SSLContext</a></code></li><li><code><a href="./OpenSSL/SSL/SSLError.html">SSLError</a></code></li><li><code><a href="./OpenSSL/SSL/SSLErrorWaitReadable.html">SSLErrorWaitReadable</a></code></li><li><code><a href="./OpenSSL/SSL/SSLErrorWaitWritable.html">SSLErrorWaitWritable</a></code></li><li><code><a href="./OpenSSL/SSL/SSLServer.html">SSLServer</a></code></li><li><code><a href="./OpenSSL/SSL/SSLSocket.html">SSLSocket</a></code></li><li><details><summary><code><a href="./OpenSSL/SSL/Session.html">Session</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/SSL/Session/SessionError.html">SessionError</a></code></li></ul></details></li><li><code><a href="./OpenSSL/SSL/SocketForwarder.html">SocketForwarder</a></code></li></ul></details></li><li><details><summary><code><a href="./OpenSSL/Timestamp.html">Timestamp</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/Timestamp/Factory.html">Factory</a></code></li><li><code><a href="./OpenSSL/Timestamp/Request.html">Request</a></code></li><li><code><a href="./OpenSSL/Timestamp/Response.html">Response</a></code></li><li><code><a href="./OpenSSL/Timestamp/TimestampError.html">TimestampError</a></code></li><li><code><a href="./OpenSSL/Timestamp/TokenInfo.html">TokenInfo</a></code></li></ul></details></li><li><details><summary><code><a href="./OpenSSL/X509.html">X509</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/X509/Attribute.html">Attribute</a></code></li><li><code><a href="./OpenSSL/X509/AttributeError.html">AttributeError</a></code></li><li><code><a href="./OpenSSL/X509/CRL.html">CRL</a></code></li><li><code><a href="./OpenSSL/X509/CRLError.html">CRLError</a></code></li><li><code><a href="./OpenSSL/X509/Certificate.html">Certificate</a></code></li><li><code><a href="./OpenSSL/X509/CertificateError.html">CertificateError</a></code></li><li><details><summary><code><a href="./OpenSSL/X509/Extension.html">Extension</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/X509/Extension/AuthorityInfoAccess.html">AuthorityInfoAccess</a></code></li><li><code><a href="./OpenSSL/X509/Extension/AuthorityKeyIdentifier.html">AuthorityKeyIdentifier</a></code></li><li><code><a href="./OpenSSL/X509/Extension/CRLDistributionPoints.html">CRLDistributionPoints</a></code></li><li><code><a href="./OpenSSL/X509/Extension/Helpers.html">Helpers</a></code></li><li><code><a href="./OpenSSL/X509/Extension/SubjectKeyIdentifier.html">SubjectKeyIdentifier</a></code></li></ul></details></li><li><code><a href="./OpenSSL/X509/ExtensionError.html">ExtensionError</a></code></li><li><code><a href="./OpenSSL/X509/ExtensionFactory.html">ExtensionFactory</a></code></li><li><details><summary><code><a href="./OpenSSL/X509/Name.html">Name</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenSSL/X509/Name/RFC2253DN.html">RFC2253DN</a></code></li></ul></details></li><li><code><a href="./OpenSSL/X509/NameError.html">NameError</a></code></li><li><code><a href="./OpenSSL/X509/Request.html">Request</a></code></li><li><code><a href="./OpenSSL/X509/RequestError.html">RequestError</a></code></li><li><code><a href="./OpenSSL/X509/Revoked.html">Revoked</a></code></li><li><code><a href="./OpenSSL/X509/RevokedError.html">RevokedError</a></code></li><li><code><a href="./OpenSSL/X509/Store.html">Store</a></code></li><li><code><a href="./OpenSSL/X509/StoreContext.html">StoreContext</a></code></li><li><code><a href="./OpenSSL/X509/StoreError.html">StoreError</a></code></li></ul></details></li></ul></details></li><li><code><a href="./OpenStruct.html">OpenStruct</a></code></li><li><details><summary><code><a href="./OpenURI.html">OpenURI</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OpenURI/HTTPError.html">HTTPError</a></code></li><li><code><a href="./OpenURI/HTTPRedirect.html">HTTPRedirect</a></code></li><li><code><a href="./OpenURI/Meta.html">Meta</a></code></li><li><code><a href="./OpenURI/OpenRead.html">OpenRead</a></code></li><li><code><a href="./OpenURI/TooManyRedirects.html">TooManyRedirects</a></code></li></ul></details></li><li><details><summary><code><a href="./OptionParser.html">OptionParser</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OptionParser/AC.html">AC</a></code></li><li><code><a href="./OptionParser/Acceptables.html">Acceptables</a></code></li><li><code><a href="./OptionParser/AmbiguousArgument.html">AmbiguousArgument</a></code></li><li><code><a href="./OptionParser/AmbiguousOption.html">AmbiguousOption</a></code></li><li><code><a href="./OptionParser/Arguable.html">Arguable</a></code></li><li><code><a href="./OptionParser/CompletingHash.html">CompletingHash</a></code></li><li><code><a href="./OptionParser/Completion.html">Completion</a></code></li><li><code><a href="./OptionParser/InvalidArgument.html">InvalidArgument</a></code></li><li><code><a href="./OptionParser/InvalidOption.html">InvalidOption</a></code></li><li><code><a href="./OptionParser/List.html">List</a></code></li><li><code><a href="./OptionParser/MissingArgument.html">MissingArgument</a></code></li><li><code><a href="./OptionParser/NeedlessArgument.html">NeedlessArgument</a></code></li><li><code><a href="./OptionParser/OptionMap.html">OptionMap</a></code></li><li><code><a href="./OptionParser/ParseError.html">ParseError</a></code></li><li><details><summary><code><a href="./OptionParser/Switch.html">Switch</a></code></summary><ul class="link-list nav-list"><li><code><a href="./OptionParser/Switch/NoArgument.html">NoArgument</a></code></li><li><code><a href="./OptionParser/Switch/OptionalArgument.html">OptionalArgument</a></code></li><li><code><a href="./OptionParser/Switch/PlacedArgument.html">PlacedArgument</a></code></li><li><code><a href="./OptionParser/Switch/RequiredArgument.html">RequiredArgument</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="./PP.html">PP</a></code></summary><ul class="link-list nav-list"><li><code><a href="./PP/PPMethods.html">PPMethods</a></code></li></ul></details></li><li><details><summary><code><a href="./PTY.html">PTY</a></code></summary><ul class="link-list nav-list"><li><code><a href="./PTY/ChildExited.html">ChildExited</a></code></li></ul></details></li><li><code><a href="./Pathname.html">Pathname</a></code></li><li><details><summary><code><a href="./PrettyPrint.html">PrettyPrint</a></code></summary><ul class="link-list nav-list"><li><code><a href="./PrettyPrint/SingleLine.html">SingleLine</a></code></li></ul></details></li><li><details><summary><code><a href="./Prism.html">Prism</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/ASCIISource.html">ASCIISource</a></code></li><li><code><a href="./Prism/AliasGlobalVariableNode.html">AliasGlobalVariableNode</a></code></li><li><code><a href="./Prism/AliasMethodNode.html">AliasMethodNode</a></code></li><li><code><a href="./Prism/AlternationPatternNode.html">AlternationPatternNode</a></code></li><li><code><a href="./Prism/AndNode.html">AndNode</a></code></li><li><code><a href="./Prism/ArgumentsNode.html">ArgumentsNode</a></code></li><li><code><a href="./Prism/ArgumentsNodeFlags.html">ArgumentsNodeFlags</a></code></li><li><code><a href="./Prism/ArrayNode.html">ArrayNode</a></code></li><li><code><a href="./Prism/ArrayNodeFlags.html">ArrayNodeFlags</a></code></li><li><code><a href="./Prism/ArrayPatternNode.html">ArrayPatternNode</a></code></li><li><code><a href="./Prism/AssocNode.html">AssocNode</a></code></li><li><code><a href="./Prism/AssocSplatNode.html">AssocSplatNode</a></code></li><li><code><a href="./Prism/BackReferenceReadNode.html">BackReferenceReadNode</a></code></li><li><code><a href="./Prism/BasicVisitor.html">BasicVisitor</a></code></li><li><code><a href="./Prism/BeginNode.html">BeginNode</a></code></li><li><code><a href="./Prism/BlockArgumentNode.html">BlockArgumentNode</a></code></li><li><code><a href="./Prism/BlockLocalVariableNode.html">BlockLocalVariableNode</a></code></li><li><code><a href="./Prism/BlockNode.html">BlockNode</a></code></li><li><code><a href="./Prism/BlockParameterNode.html">BlockParameterNode</a></code></li><li><code><a href="./Prism/BlockParametersNode.html">BlockParametersNode</a></code></li><li><code><a href="./Prism/BreakNode.html">BreakNode</a></code></li><li><code><a href="./Prism/CallAndWriteNode.html">CallAndWriteNode</a></code></li><li><code><a href="./Prism/CallNode.html">CallNode</a></code></li><li><code><a href="./Prism/CallNodeFlags.html">CallNodeFlags</a></code></li><li><code><a href="./Prism/CallOperatorWriteNode.html">CallOperatorWriteNode</a></code></li><li><code><a href="./Prism/CallOrWriteNode.html">CallOrWriteNode</a></code></li><li><code><a href="./Prism/CallTargetNode.html">CallTargetNode</a></code></li><li><code><a href="./Prism/CapturePatternNode.html">CapturePatternNode</a></code></li><li><code><a href="./Prism/CaseMatchNode.html">CaseMatchNode</a></code></li><li><code><a href="./Prism/CaseNode.html">CaseNode</a></code></li><li><code><a href="./Prism/ClassNode.html">ClassNode</a></code></li><li><code><a href="./Prism/ClassVariableAndWriteNode.html">ClassVariableAndWriteNode</a></code></li><li><code><a href="./Prism/ClassVariableOperatorWriteNode.html">ClassVariableOperatorWriteNode</a></code></li><li><code><a href="./Prism/ClassVariableOrWriteNode.html">ClassVariableOrWriteNode</a></code></li><li><code><a href="./Prism/ClassVariableReadNode.html">ClassVariableReadNode</a></code></li><li><code><a href="./Prism/ClassVariableTargetNode.html">ClassVariableTargetNode</a></code></li><li><code><a href="./Prism/ClassVariableWriteNode.html">ClassVariableWriteNode</a></code></li><li><code><a href="./Prism/CodeUnitsCache.html">CodeUnitsCache</a></code></li><li><code><a href="./Prism/Comment.html">Comment</a></code></li><li><code><a href="./Prism/Compiler.html">Compiler</a></code></li><li><code><a href="./Prism/ConstantAndWriteNode.html">ConstantAndWriteNode</a></code></li><li><code><a href="./Prism/ConstantOperatorWriteNode.html">ConstantOperatorWriteNode</a></code></li><li><code><a href="./Prism/ConstantOrWriteNode.html">ConstantOrWriteNode</a></code></li><li><code><a href="./Prism/ConstantPathAndWriteNode.html">ConstantPathAndWriteNode</a></code></li><li><details><summary><code><a href="./Prism/ConstantPathNode.html">ConstantPathNode</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/ConstantPathNode/DynamicPartsInConstantPathError.html">DynamicPartsInConstantPathError</a></code></li><li><code><a href="./Prism/ConstantPathNode/MissingNodesInConstantPathError.html">MissingNodesInConstantPathError</a></code></li></ul></details></li><li><code><a href="./Prism/ConstantPathOperatorWriteNode.html">ConstantPathOperatorWriteNode</a></code></li><li><code><a href="./Prism/ConstantPathOrWriteNode.html">ConstantPathOrWriteNode</a></code></li><li><code><a href="./Prism/ConstantPathTargetNode.html">ConstantPathTargetNode</a></code></li><li><code><a href="./Prism/ConstantPathWriteNode.html">ConstantPathWriteNode</a></code></li><li><code><a href="./Prism/ConstantReadNode.html">ConstantReadNode</a></code></li><li><code><a href="./Prism/ConstantTargetNode.html">ConstantTargetNode</a></code></li><li><code><a href="./Prism/ConstantWriteNode.html">ConstantWriteNode</a></code></li><li><code><a href="./Prism/CurrentVersionError.html">CurrentVersionError</a></code></li><li><code><a href="./Prism/DSL.html">DSL</a></code></li><li><code><a href="./Prism/DefNode.html">DefNode</a></code></li><li><code><a href="./Prism/DefinedNode.html">DefinedNode</a></code></li><li><code><a href="./Prism/DesugarCompiler.html">DesugarCompiler</a></code></li><li><code><a href="./Prism/Dispatcher.html">Dispatcher</a></code></li><li><code><a href="./Prism/DotVisitor.html">DotVisitor</a></code></li><li><code><a href="./Prism/ElseNode.html">ElseNode</a></code></li><li><code><a href="./Prism/EmbDocComment.html">EmbDocComment</a></code></li><li><code><a href="./Prism/EmbeddedStatementsNode.html">EmbeddedStatementsNode</a></code></li><li><code><a href="./Prism/EmbeddedVariableNode.html">EmbeddedVariableNode</a></code></li><li><code><a href="./Prism/EncodingFlags.html">EncodingFlags</a></code></li><li><code><a href="./Prism/EnsureNode.html">EnsureNode</a></code></li><li><code><a href="./Prism/FalseNode.html">FalseNode</a></code></li><li><code><a href="./Prism/FindPatternNode.html">FindPatternNode</a></code></li><li><code><a href="./Prism/FlipFlopNode.html">FlipFlopNode</a></code></li><li><code><a href="./Prism/FloatNode.html">FloatNode</a></code></li><li><code><a href="./Prism/ForNode.html">ForNode</a></code></li><li><code><a href="./Prism/ForwardingArgumentsNode.html">ForwardingArgumentsNode</a></code></li><li><code><a href="./Prism/ForwardingParameterNode.html">ForwardingParameterNode</a></code></li><li><code><a href="./Prism/ForwardingSuperNode.html">ForwardingSuperNode</a></code></li><li><code><a href="./Prism/GlobalVariableAndWriteNode.html">GlobalVariableAndWriteNode</a></code></li><li><code><a href="./Prism/GlobalVariableOperatorWriteNode.html">GlobalVariableOperatorWriteNode</a></code></li><li><code><a href="./Prism/GlobalVariableOrWriteNode.html">GlobalVariableOrWriteNode</a></code></li><li><code><a href="./Prism/GlobalVariableReadNode.html">GlobalVariableReadNode</a></code></li><li><code><a href="./Prism/GlobalVariableTargetNode.html">GlobalVariableTargetNode</a></code></li><li><code><a href="./Prism/GlobalVariableWriteNode.html">GlobalVariableWriteNode</a></code></li><li><code><a href="./Prism/HashNode.html">HashNode</a></code></li><li><code><a href="./Prism/HashPatternNode.html">HashPatternNode</a></code></li><li><code><a href="./Prism/IfNode.html">IfNode</a></code></li><li><code><a href="./Prism/ImaginaryNode.html">ImaginaryNode</a></code></li><li><code><a href="./Prism/ImplicitNode.html">ImplicitNode</a></code></li><li><code><a href="./Prism/ImplicitRestNode.html">ImplicitRestNode</a></code></li><li><code><a href="./Prism/InNode.html">InNode</a></code></li><li><code><a href="./Prism/IndexAndWriteNode.html">IndexAndWriteNode</a></code></li><li><code><a href="./Prism/IndexOperatorWriteNode.html">IndexOperatorWriteNode</a></code></li><li><code><a href="./Prism/IndexOrWriteNode.html">IndexOrWriteNode</a></code></li><li><code><a href="./Prism/IndexTargetNode.html">IndexTargetNode</a></code></li><li><code><a href="./Prism/InlineComment.html">InlineComment</a></code></li><li><code><a href="./Prism/InspectVisitor.html">InspectVisitor</a></code></li><li><code><a href="./Prism/InstanceVariableAndWriteNode.html">InstanceVariableAndWriteNode</a></code></li><li><code><a href="./Prism/InstanceVariableOperatorWriteNode.html">InstanceVariableOperatorWriteNode</a></code></li><li><code><a href="./Prism/InstanceVariableOrWriteNode.html">InstanceVariableOrWriteNode</a></code></li><li><code><a href="./Prism/InstanceVariableReadNode.html">InstanceVariableReadNode</a></code></li><li><code><a href="./Prism/InstanceVariableTargetNode.html">InstanceVariableTargetNode</a></code></li><li><code><a href="./Prism/InstanceVariableWriteNode.html">InstanceVariableWriteNode</a></code></li><li><code><a href="./Prism/IntegerBaseFlags.html">IntegerBaseFlags</a></code></li><li><code><a href="./Prism/IntegerNode.html">IntegerNode</a></code></li><li><code><a href="./Prism/InterpolatedMatchLastLineNode.html">InterpolatedMatchLastLineNode</a></code></li><li><code><a href="./Prism/InterpolatedRegularExpressionNode.html">InterpolatedRegularExpressionNode</a></code></li><li><code><a href="./Prism/InterpolatedStringNode.html">InterpolatedStringNode</a></code></li><li><code><a href="./Prism/InterpolatedStringNodeFlags.html">InterpolatedStringNodeFlags</a></code></li><li><code><a href="./Prism/InterpolatedSymbolNode.html">InterpolatedSymbolNode</a></code></li><li><code><a href="./Prism/InterpolatedXStringNode.html">InterpolatedXStringNode</a></code></li><li><code><a href="./Prism/ItLocalVariableReadNode.html">ItLocalVariableReadNode</a></code></li><li><code><a href="./Prism/ItParametersNode.html">ItParametersNode</a></code></li><li><code><a href="./Prism/KeywordHashNode.html">KeywordHashNode</a></code></li><li><code><a href="./Prism/KeywordHashNodeFlags.html">KeywordHashNodeFlags</a></code></li><li><code><a href="./Prism/KeywordRestParameterNode.html">KeywordRestParameterNode</a></code></li><li><code><a href="./Prism/LambdaNode.html">LambdaNode</a></code></li><li><details><summary><code><a href="./Prism/LexCompat.html">LexCompat</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/LexCompat/EndContentToken.html">EndContentToken</a></code></li><li><code><a href="./Prism/LexCompat/IdentToken.html">IdentToken</a></code></li><li><code><a href="./Prism/LexCompat/IgnoreStateToken.html">IgnoreStateToken</a></code></li><li><code><a href="./Prism/LexCompat/IgnoredNewlineToken.html">IgnoredNewlineToken</a></code></li><li><code><a href="./Prism/LexCompat/ParamToken.html">ParamToken</a></code></li><li><code><a href="./Prism/LexCompat/Result.html">Result</a></code></li><li><code><a href="./Prism/LexCompat/Token.html">Token</a></code></li></ul></details></li><li><code><a href="./Prism/LexResult.html">LexResult</a></code></li><li><code><a href="./Prism/LocalVariableAndWriteNode.html">LocalVariableAndWriteNode</a></code></li><li><code><a href="./Prism/LocalVariableOperatorWriteNode.html">LocalVariableOperatorWriteNode</a></code></li><li><code><a href="./Prism/LocalVariableOrWriteNode.html">LocalVariableOrWriteNode</a></code></li><li><code><a href="./Prism/LocalVariableReadNode.html">LocalVariableReadNode</a></code></li><li><code><a href="./Prism/LocalVariableTargetNode.html">LocalVariableTargetNode</a></code></li><li><code><a href="./Prism/LocalVariableWriteNode.html">LocalVariableWriteNode</a></code></li><li><code><a href="./Prism/Location.html">Location</a></code></li><li><code><a href="./Prism/LoopFlags.html">LoopFlags</a></code></li><li><code><a href="./Prism/MagicComment.html">MagicComment</a></code></li><li><code><a href="./Prism/MatchLastLineNode.html">MatchLastLineNode</a></code></li><li><code><a href="./Prism/MatchPredicateNode.html">MatchPredicateNode</a></code></li><li><code><a href="./Prism/MatchRequiredNode.html">MatchRequiredNode</a></code></li><li><code><a href="./Prism/MatchWriteNode.html">MatchWriteNode</a></code></li><li><code><a href="./Prism/MissingNode.html">MissingNode</a></code></li><li><code><a href="./Prism/ModuleNode.html">ModuleNode</a></code></li><li><code><a href="./Prism/MultiTargetNode.html">MultiTargetNode</a></code></li><li><code><a href="./Prism/MultiWriteNode.html">MultiWriteNode</a></code></li><li><code><a href="./Prism/MutationCompiler.html">MutationCompiler</a></code></li><li><code><a href="./Prism/NextNode.html">NextNode</a></code></li><li><code><a href="./Prism/NilNode.html">NilNode</a></code></li><li><code><a href="./Prism/NoKeywordsParameterNode.html">NoKeywordsParameterNode</a></code></li><li><code><a href="./Prism/Node.html">Node</a></code></li><li><code><a href="./Prism/NodeFlags.html">NodeFlags</a></code></li><li><code><a href="./Prism/NumberedParametersNode.html">NumberedParametersNode</a></code></li><li><code><a href="./Prism/NumberedReferenceReadNode.html">NumberedReferenceReadNode</a></code></li><li><code><a href="./Prism/OptionalKeywordParameterNode.html">OptionalKeywordParameterNode</a></code></li><li><code><a href="./Prism/OptionalParameterNode.html">OptionalParameterNode</a></code></li><li><code><a href="./Prism/OrNode.html">OrNode</a></code></li><li><details><summary><code><a href="./Prism/Pack.html">Pack</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/Pack/Directive.html">Directive</a></code></li><li><code><a href="./Prism/Pack/Format.html">Format</a></code></li></ul></details></li><li><code><a href="./Prism/ParameterFlags.html">ParameterFlags</a></code></li><li><code><a href="./Prism/ParametersNode.html">ParametersNode</a></code></li><li><code><a href="./Prism/ParenthesesNode.html">ParenthesesNode</a></code></li><li><code><a href="./Prism/ParenthesesNodeFlags.html">ParenthesesNodeFlags</a></code></li><li><code><a href="./Prism/ParseError.html">ParseError</a></code></li><li><code><a href="./Prism/ParseLexResult.html">ParseLexResult</a></code></li><li><details><summary><code><a href="./Prism/ParseResult.html">ParseResult</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/ParseResult/Comments.html">Comments</a></code></li><li><code><a href="./Prism/ParseResult/Errors.html">Errors</a></code></li><li><code><a href="./Prism/ParseResult/Newlines.html">Newlines</a></code></li></ul></details></li><li><code><a href="./Prism/ParseWarning.html">ParseWarning</a></code></li><li><details><summary><code><a href="./Prism/Pattern.html">Pattern</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/Pattern/CompilationError.html">CompilationError</a></code></li></ul></details></li><li><code><a href="./Prism/PinnedExpressionNode.html">PinnedExpressionNode</a></code></li><li><code><a href="./Prism/PinnedVariableNode.html">PinnedVariableNode</a></code></li><li><code><a href="./Prism/PostExecutionNode.html">PostExecutionNode</a></code></li><li><code><a href="./Prism/PreExecutionNode.html">PreExecutionNode</a></code></li><li><code><a href="./Prism/ProgramNode.html">ProgramNode</a></code></li><li><code><a href="./Prism/RangeFlags.html">RangeFlags</a></code></li><li><code><a href="./Prism/RangeNode.html">RangeNode</a></code></li><li><code><a href="./Prism/RationalNode.html">RationalNode</a></code></li><li><code><a href="./Prism/RedoNode.html">RedoNode</a></code></li><li><details><summary><code><a href="./Prism/Reflection.html">Reflection</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/Reflection/ConstantField.html">ConstantField</a></code></li><li><code><a href="./Prism/Reflection/ConstantListField.html">ConstantListField</a></code></li><li><code><a href="./Prism/Reflection/Field.html">Field</a></code></li><li><code><a href="./Prism/Reflection/FlagsField.html">FlagsField</a></code></li><li><code><a href="./Prism/Reflection/FloatField.html">FloatField</a></code></li><li><code><a href="./Prism/Reflection/IntegerField.html">IntegerField</a></code></li><li><code><a href="./Prism/Reflection/LocationField.html">LocationField</a></code></li><li><code><a href="./Prism/Reflection/NodeField.html">NodeField</a></code></li><li><code><a href="./Prism/Reflection/NodeListField.html">NodeListField</a></code></li><li><code><a href="./Prism/Reflection/OptionalConstantField.html">OptionalConstantField</a></code></li><li><code><a href="./Prism/Reflection/OptionalLocationField.html">OptionalLocationField</a></code></li><li><code><a href="./Prism/Reflection/OptionalNodeField.html">OptionalNodeField</a></code></li><li><code><a href="./Prism/Reflection/StringField.html">StringField</a></code></li></ul></details></li><li><code><a href="./Prism/RegularExpressionFlags.html">RegularExpressionFlags</a></code></li><li><code><a href="./Prism/RegularExpressionNode.html">RegularExpressionNode</a></code></li><li><details><summary><code><a href="./Prism/Relocation.html">Relocation</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/Relocation/CharacterColumnsField.html">CharacterColumnsField</a></code></li><li><code><a href="./Prism/Relocation/CharacterOffsetsField.html">CharacterOffsetsField</a></code></li><li><code><a href="./Prism/Relocation/CodeUnitColumnsField.html">CodeUnitColumnsField</a></code></li><li><code><a href="./Prism/Relocation/CodeUnitOffsetsField.html">CodeUnitOffsetsField</a></code></li><li><code><a href="./Prism/Relocation/ColumnsField.html">ColumnsField</a></code></li><li><details><summary><code><a href="./Prism/Relocation/CommentsField.html">CommentsField</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/Relocation/CommentsField/Comment.html">Comment</a></code></li></ul></details></li><li><details><summary><code><a href="./Prism/Relocation/Entry.html">Entry</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/Relocation/Entry/MissingValueError.html">MissingValueError</a></code></li></ul></details></li><li><code><a href="./Prism/Relocation/FilepathField.html">FilepathField</a></code></li><li><code><a href="./Prism/Relocation/LeadingCommentsField.html">LeadingCommentsField</a></code></li><li><code><a href="./Prism/Relocation/LinesField.html">LinesField</a></code></li><li><code><a href="./Prism/Relocation/OffsetsField.html">OffsetsField</a></code></li><li><details><summary><code><a href="./Prism/Relocation/Repository.html">Repository</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/Relocation/Repository/ConfigurationError.html">ConfigurationError</a></code></li></ul></details></li><li><code><a href="./Prism/Relocation/Source.html">Source</a></code></li><li><code><a href="./Prism/Relocation/SourceFilepath.html">SourceFilepath</a></code></li><li><code><a href="./Prism/Relocation/SourceString.html">SourceString</a></code></li><li><code><a href="./Prism/Relocation/TrailingCommentsField.html">TrailingCommentsField</a></code></li></ul></details></li><li><code><a href="./Prism/RequiredKeywordParameterNode.html">RequiredKeywordParameterNode</a></code></li><li><code><a href="./Prism/RequiredParameterNode.html">RequiredParameterNode</a></code></li><li><code><a href="./Prism/RescueModifierNode.html">RescueModifierNode</a></code></li><li><code><a href="./Prism/RescueNode.html">RescueNode</a></code></li><li><code><a href="./Prism/RestParameterNode.html">RestParameterNode</a></code></li><li><code><a href="./Prism/Result.html">Result</a></code></li><li><code><a href="./Prism/RetryNode.html">RetryNode</a></code></li><li><code><a href="./Prism/ReturnNode.html">ReturnNode</a></code></li><li><code><a href="./Prism/Scope.html">Scope</a></code></li><li><code><a href="./Prism/SelfNode.html">SelfNode</a></code></li><li><code><a href="./Prism/Serialize.html">Serialize</a></code></li><li><code><a href="./Prism/ShareableConstantNode.html">ShareableConstantNode</a></code></li><li><code><a href="./Prism/ShareableConstantNodeFlags.html">ShareableConstantNodeFlags</a></code></li><li><code><a href="./Prism/SingletonClassNode.html">SingletonClassNode</a></code></li><li><code><a href="./Prism/Source.html">Source</a></code></li><li><code><a href="./Prism/SourceEncodingNode.html">SourceEncodingNode</a></code></li><li><code><a href="./Prism/SourceFileNode.html">SourceFileNode</a></code></li><li><code><a href="./Prism/SourceLineNode.html">SourceLineNode</a></code></li><li><code><a href="./Prism/SplatNode.html">SplatNode</a></code></li><li><code><a href="./Prism/StatementsNode.html">StatementsNode</a></code></li><li><code><a href="./Prism/StringFlags.html">StringFlags</a></code></li><li><code><a href="./Prism/StringNode.html">StringNode</a></code></li><li><code><a href="./Prism/StringQuery.html">StringQuery</a></code></li><li><code><a href="./Prism/SuperNode.html">SuperNode</a></code></li><li><code><a href="./Prism/SymbolFlags.html">SymbolFlags</a></code></li><li><code><a href="./Prism/SymbolNode.html">SymbolNode</a></code></li><li><code><a href="./Prism/Token.html">Token</a></code></li><li><details><summary><code><a href="./Prism/Translation.html">Translation</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./Prism/Translation/Parser.html">Parser</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/Translation/Parser/Builder.html">Builder</a></code></li><li><details><summary><code><a href="./Prism/Translation/Parser/Compiler.html">Compiler</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/Translation/Parser/Compiler/CompilationError.html">CompilationError</a></code></li></ul></details></li><li><code><a href="./Prism/Translation/Parser/Lexer.html">Lexer</a></code></li><li><code><a href="./Prism/Translation/Parser/PrismDiagnostic.html">PrismDiagnostic</a></code></li></ul></details></li><li><code><a href="./Prism/Translation/Parser33.html">Parser33</a></code></li><li><code><a href="./Prism/Translation/Parser34.html">Parser34</a></code></li><li><code><a href="./Prism/Translation/Parser40.html">Parser40</a></code></li><li><code><a href="./Prism/Translation/Parser41.html">Parser41</a></code></li><li><code><a href="./Prism/Translation/Parser33.html">ParserCurrent</a></code></li><li><details><summary><code><a href="./Prism/Translation/Ripper.html">Ripper</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/Translation/Ripper/Lexer.html">Lexer</a></code></li><li><code><a href="./Prism/Translation/Ripper/SexpBuilder.html">SexpBuilder</a></code></li><li><code><a href="./Prism/Translation/Ripper/SexpBuilderPP.html">SexpBuilderPP</a></code></li></ul></details></li><li><details><summary><code><a href="./Prism/Translation/RubyParser.html">RubyParser</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Prism/Translation/RubyParser/Compiler.html">Compiler</a></code></li></ul></details></li></ul></details></li><li><code><a href="./Prism/TrueNode.html">TrueNode</a></code></li><li><code><a href="./Prism/UndefNode.html">UndefNode</a></code></li><li><code><a href="./Prism/UnlessNode.html">UnlessNode</a></code></li><li><code><a href="./Prism/UntilNode.html">UntilNode</a></code></li><li><code><a href="./Prism/Visitor.html">Visitor</a></code></li><li><code><a href="./Prism/WhenNode.html">WhenNode</a></code></li><li><code><a href="./Prism/WhileNode.html">WhileNode</a></code></li><li><code><a href="./Prism/XStringNode.html">XStringNode</a></code></li><li><code><a href="./Prism/YieldNode.html">YieldNode</a></code></li></ul></details></li><li><code><a href="./Proc.html">Proc</a></code></li><li><details><summary><code><a href="./Process.html">Process</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Process/GID.html">GID</a></code></li><li><code><a href="./Process/Status.html">Status</a></code></li><li><code><a href="./Process/Sys.html">Sys</a></code></li><li><code><a href="./Process/Tms.html">Tms</a></code></li><li><code><a href="./Process/UID.html">UID</a></code></li></ul></details></li><li><details><summary><code><a href="./Psych.html">Psych</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Psych/AliasesNotEnabled.html">AliasesNotEnabled</a></code></li><li><code><a href="./Psych/AnchorNotDefined.html">AnchorNotDefined</a></code></li><li><code><a href="./Psych/BadAlias.html">BadAlias</a></code></li><li><details><summary><code><a href="./Psych/ClassLoader.html">ClassLoader</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Psych/ClassLoader/Restricted.html">Restricted</a></code></li></ul></details></li><li><code><a href="./Psych/Coder.html">Coder</a></code></li><li><code><a href="./Psych/DisallowedClass.html">DisallowedClass</a></code></li><li><code><a href="./Psych/Emitter.html">Emitter</a></code></li><li><code><a href="./Psych/Exception.html">Exception</a></code></li><li><details><summary><code><a href="./Psych/Handler.html">Handler</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Psych/Handler/DumperOptions.html">DumperOptions</a></code></li></ul></details></li><li><details><summary><code><a href="./Psych/Handlers.html">Handlers</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Psych/Handlers/Recorder.html">Recorder</a></code></li></ul></details></li><li><details><summary><code><a href="./Psych/JSON.html">JSON</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Psych/JSON/Stream.html">Stream</a></code></li><li><code><a href="./Psych/JSON/TreeBuilder.html">TreeBuilder</a></code></li></ul></details></li><li><details><summary><code><a href="./Psych/Nodes.html">Nodes</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Psych/Nodes/Alias.html">Alias</a></code></li><li><code><a href="./Psych/Nodes/Document.html">Document</a></code></li><li><code><a href="./Psych/Nodes/Mapping.html">Mapping</a></code></li><li><code><a href="./Psych/Nodes/Node.html">Node</a></code></li><li><code><a href="./Psych/Nodes/Scalar.html">Scalar</a></code></li><li><code><a href="./Psych/Nodes/Sequence.html">Sequence</a></code></li><li><code><a href="./Psych/Nodes/Stream.html">Stream</a></code></li></ul></details></li><li><code><a href="./Psych/Omap.html">Omap</a></code></li><li><details><summary><code><a href="./Psych/Parser.html">Parser</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Psych/Parser/Mark.html">Mark</a></code></li></ul></details></li><li><code><a href="./Psych/ScalarScanner.html">ScalarScanner</a></code></li><li><code><a href="./Psych/Set.html">Set</a></code></li><li><code><a href="./Psych/Stream.html">Stream</a></code></li><li><details><summary><code><a href="./Psych/Streaming.html">Streaming</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Psych/Streaming/ClassMethods.html">ClassMethods</a></code></li></ul></details></li><li><code><a href="./Psych/SyntaxError.html">SyntaxError</a></code></li><li><code><a href="./Psych/TreeBuilder.html">TreeBuilder</a></code></li><li><details><summary><code><a href="./Psych/Visitors.html">Visitors</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Psych/Visitors/DepthFirst.html">DepthFirst</a></code></li><li><code><a href="./Psych/Visitors/Emitter.html">Emitter</a></code></li><li><code><a href="./Psych/Visitors/JSONTree.html">JSONTree</a></code></li><li><code><a href="./Psych/Visitors/NoAliasRuby.html">NoAliasRuby</a></code></li><li><code><a href="./Psych/Visitors/RestrictedYAMLTree.html">RestrictedYAMLTree</a></code></li><li><code><a href="./Psych/Visitors/ToRuby.html">ToRuby</a></code></li><li><code><a href="./Psych/Visitors/Visitor.html">Visitor</a></code></li><li><code><a href="./Psych/Visitors/YAMLTree.html">YAMLTree</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="./Ractor.html">Ractor</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Ractor/ClosedError.html">ClosedError</a></code></li><li><code><a href="./Ractor/Error.html">Error</a></code></li><li><code><a href="./Ractor/IsolationError.html">IsolationError</a></code></li><li><code><a href="./Ractor/MovedError.html">MovedError</a></code></li><li><code><a href="./Ractor/MovedObject.html">MovedObject</a></code></li><li><code><a href="./Ractor/Port.html">Port</a></code></li><li><code><a href="./Ractor/RemoteError.html">RemoteError</a></code></li><li><code><a href="./Ractor/UnsafeError.html">UnsafeError</a></code></li></ul></details></li><li><details><summary><code><a href="./Random.html">Random</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Random/Formatter.html">Formatter</a></code></li></ul></details></li><li><code><a href="./Range.html">Range</a></code></li><li><code><a href="./RangeError.html">RangeError</a></code></li><li><code><a href="./Rational.html">Rational</a></code></li><li><code><a href="./RbConfig.html">RbConfig</a></code></li><li><code><a href="./Refinement.html">Refinement</a></code></li><li><details><summary><code><a href="./Regexp.html">Regexp</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Regexp/TimeoutError.html">TimeoutError</a></code></li></ul></details></li><li><code><a href="./RegexpError.html">RegexpError</a></code></li><li><details><summary><code><a href="./Resolv.html">Resolv</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Resolv/DNS.html">DNS</a></code></li><li><code><a href="./Resolv/Hosts.html">Hosts</a></code></li><li><code><a href="./Resolv/IPv4.html">IPv4</a></code></li><li><code><a href="./Resolv/IPv6.html">IPv6</a></code></li><li><details><summary><code><a href="./Resolv/LOC.html">LOC</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Resolv/LOC/Alt.html">Alt</a></code></li><li><code><a href="./Resolv/LOC/Coord.html">Coord</a></code></li><li><code><a href="./Resolv/LOC/Size.html">Size</a></code></li></ul></details></li><li><code><a href="./Resolv/MDNS.html">MDNS</a></code></li><li><code><a href="./Resolv/ResolvError.html">ResolvError</a></code></li><li><code><a href="./Resolv/ResolvTimeout.html">ResolvTimeout</a></code></li></ul></details></li><li><details><summary><code><a href="./Ripper.html">Ripper</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Ripper/Filter.html">Filter</a></code></li><li><code><a href="./Ripper/Lexer.html">Lexer</a></code></li></ul></details></li><li><details><summary><code><a href="./Ruby.html">Ruby</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Ruby/Box.html">Box</a></code></li></ul></details></li><li><details><summary><code><a href="./RubyVM.html">RubyVM</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./RubyVM/AbstractSyntaxTree.html">AbstractSyntaxTree</a></code></summary><ul class="link-list nav-list"><li><code><a href="./RubyVM/AbstractSyntaxTree/Location.html">Location</a></code></li><li><code><a href="./RubyVM/AbstractSyntaxTree/Node.html">Node</a></code></li></ul></details></li><li><code><a href="./RubyVM/InstructionSequence.html">InstructionSequence</a></code></li><li><code><a href="./RubyVM/YJIT.html">YJIT</a></code></li></ul></details></li><li><code><a href="./RuntimeError.html">RuntimeError</a></code></li><li><code><a href="./SOCKSSocket.html">SOCKSSocket</a></code></li><li><code><a href="./ScriptError.html">ScriptError</a></code></li><li><code><a href="./SecureRandom.html">SecureRandom</a></code></li><li><code><a href="./SecurityError.html">SecurityError</a></code></li><li><code><a href="./Set.html">Set</a></code></li><li><code><a href="./Shellwords.html">Shellwords</a></code></li><li><code><a href="./Signal.html">Signal</a></code></li><li><code><a href="./SignalException.html">SignalException</a></code></li><li><code><a href="./SimpleDelegator.html">SimpleDelegator</a></code></li><li><code><a href="./SingleForwardable.html">SingleForwardable</a></code></li><li><code><a href="./Singleton.html">Singleton</a></code></li><li><details><summary><code><a href="./Socket.html">Socket</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Socket/AncillaryData.html">AncillaryData</a></code></li><li><code><a href="./Socket/Constants.html">Constants</a></code></li><li><code><a href="./Socket/Ifaddr.html">Ifaddr</a></code></li><li><code><a href="./Socket/Option.html">Option</a></code></li><li><code><a href="./Socket/ResolutionError.html">ResolutionError</a></code></li><li><code><a href="./Socket/UDPSource.html">UDPSource</a></code></li></ul></details></li><li><code><a href="./SocketError.html">SocketError</a></code></li><li><code><a href="./StandardError.html">StandardError</a></code></li><li><code><a href="./StopIteration.html">StopIteration</a></code></li><li><code><a href="./String.html">String</a></code></li><li><code><a href="./StringIO.html">StringIO</a></code></li><li><details><summary><code><a href="./StringScanner.html">StringScanner</a></code></summary><ul class="link-list nav-list"><li><code><a href="./StringScanner/Error.html">Error</a></code></li></ul></details></li><li><code><a href="./Struct.html">Struct</a></code></li><li><code><a href="./Symbol.html">Symbol</a></code></li><li><code><a href="./SyntaxError.html">SyntaxError</a></code></li><li><details><summary><code><a href="./SyntaxSuggest.html">SyntaxSuggest</a></code></summary><ul class="link-list nav-list"><li><code><a href="./SyntaxSuggest/AroundBlockScan.html">AroundBlockScan</a></code></li><li><code><a href="./SyntaxSuggest/BlockExpand.html">BlockExpand</a></code></li><li><details><summary><code><a href="./SyntaxSuggest/Capture.html">Capture</a></code></summary><ul class="link-list nav-list"><li><code><a href="./SyntaxSuggest/Capture/BeforeAfterKeywordEnds.html">BeforeAfterKeywordEnds</a></code></li><li><code><a href="./SyntaxSuggest/Capture/FallingIndentLines.html">FallingIndentLines</a></code></li></ul></details></li><li><code><a href="./SyntaxSuggest/CaptureCodeContext.html">CaptureCodeContext</a></code></li><li><code><a href="./SyntaxSuggest/CleanDocument.html">CleanDocument</a></code></li><li><code><a href="./SyntaxSuggest/Cli.html">Cli</a></code></li><li><code><a href="./SyntaxSuggest/CodeBlock.html">CodeBlock</a></code></li><li><code><a href="./SyntaxSuggest/CodeFrontier.html">CodeFrontier</a></code></li><li><code><a href="./SyntaxSuggest/CodeLine.html">CodeLine</a></code></li><li><code><a href="./SyntaxSuggest/CodeSearch.html">CodeSearch</a></code></li><li><code><a href="./SyntaxSuggest/DisplayCodeWithLineNumbers.html">DisplayCodeWithLineNumbers</a></code></li><li><code><a href="./SyntaxSuggest/DisplayInvalidBlocks.html">DisplayInvalidBlocks</a></code></li><li><code><a href="./SyntaxSuggest/Error.html">Error</a></code></li><li><code><a href="./SyntaxSuggest/ExplainSyntax.html">ExplainSyntax</a></code></li><li><code><a href="./SyntaxSuggest/GetParseErrors.html">GetParseErrors</a></code></li><li><code><a href="./SyntaxSuggest/LeftRightLexCount.html">LeftRightLexCount</a></code></li><li><code><a href="./SyntaxSuggest/LexAll.html">LexAll</a></code></li><li><code><a href="./SyntaxSuggest/LexValue.html">LexValue</a></code></li><li><code><a href="./SyntaxSuggest/MiniStringIO.html">MiniStringIO</a></code></li><li><code><a href="./SyntaxSuggest/ParseBlocksFromIndentLine.html">ParseBlocksFromIndentLine</a></code></li><li><code><a href="./SyntaxSuggest/PathnameFromMessage.html">PathnameFromMessage</a></code></li><li><code><a href="./SyntaxSuggest/PriorityEngulfQueue.html">PriorityEngulfQueue</a></code></li><li><code><a href="./SyntaxSuggest/PriorityQueue.html">PriorityQueue</a></code></li><li><code><a href="./SyntaxSuggest/RipperErrors.html">RipperErrors</a></code></li><li><code><a href="./SyntaxSuggest/ScanHistory.html">ScanHistory</a></code></li><li><code><a href="./SyntaxSuggest/UnvisitedLines.html">UnvisitedLines</a></code></li></ul></details></li><li><code><a href="./SystemCallError.html">SystemCallError</a></code></li><li><code><a href="./SystemExit.html">SystemExit</a></code></li><li><code><a href="./SystemStackError.html">SystemStackError</a></code></li><li><code><a href="./TCPServer.html">TCPServer</a></code></li><li><code><a href="./TCPSocket.html">TCPSocket</a></code></li><li><details><summary><code><a href="./TSort.html">TSort</a></code></summary><ul class="link-list nav-list"><li><code><a href="./TSort/Cyclic.html">Cyclic</a></code></li></ul></details></li><li><code><a href="./Tempfile.html">Tempfile</a></code></li><li><details><summary><code><a href="./Thread.html">Thread</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./Thread/Backtrace.html">Backtrace</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Thread/Backtrace/Location.html">Location</a></code></li></ul></details></li><li><code><a href="./Thread/ConditionVariable.html">ConditionVariable</a></code></li><li><code><a href="./Thread/Mutex.html">Mutex</a></code></li><li><code><a href="./Thread/Queue.html">Queue</a></code></li><li><code><a href="./Thread/SizedQueue.html">SizedQueue</a></code></li></ul></details></li><li><code><a href="./ThreadError.html">ThreadError</a></code></li><li><code><a href="./ThreadGroup.html">ThreadGroup</a></code></li><li><code><a href="./Time.html">Time</a></code></li><li><details><summary><code><a href="./Timeout.html">Timeout</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Timeout/Error.html">Error</a></code></li><li><code><a href="./Timeout/ExitException.html">ExitException</a></code></li></ul></details></li><li><code><a href="./TracePoint.html">TracePoint</a></code></li><li><code><a href="./TrueClass.html">TrueClass</a></code></li><li><code><a href="./TypeError.html">TypeError</a></code></li><li><code><a href="./UDPSocket.html">UDPSocket</a></code></li><li><code><a href="./UNIXServer.html">UNIXServer</a></code></li><li><code><a href="./UNIXSocket.html">UNIXSocket</a></code></li><li><details><summary><code><a href="./URI.html">URI</a></code></summary><ul class="link-list nav-list"><li><code><a href="./URI/BadURIError.html">BadURIError</a></code></li><li><code><a href="./URI/Error.html">Error</a></code></li><li><code><a href="./URI/FTP.html">FTP</a></code></li><li><code><a href="./URI/File.html">File</a></code></li><li><code><a href="./URI/Generic.html">Generic</a></code></li><li><code><a href="./URI/HTTP.html">HTTP</a></code></li><li><code><a href="./URI/HTTPS.html">HTTPS</a></code></li><li><code><a href="./URI/InvalidComponentError.html">InvalidComponentError</a></code></li><li><code><a href="./URI/InvalidURIError.html">InvalidURIError</a></code></li><li><code><a href="./URI/LDAP.html">LDAP</a></code></li><li><code><a href="./URI/LDAPS.html">LDAPS</a></code></li><li><code><a href="./URI/MailTo.html">MailTo</a></code></li><li><code><a href="./URI/RFC2396_Parser.html">RFC2396_Parser</a></code></li><li><details><summary><code><a href="./URI/RFC2396_REGEXP.html">RFC2396_REGEXP</a></code></summary><ul class="link-list nav-list"><li><code><a href="./URI/RFC2396_REGEXP/PATTERN.html">PATTERN</a></code></li></ul></details></li><li><code><a href="./URI/WS.html">WS</a></code></li><li><code><a href="./URI/WSS.html">WSS</a></code></li></ul></details></li><li><code><a href="./UnboundMethod.html">UnboundMethod</a></code></li><li><code><a href="./UncaughtThrowError.html">UncaughtThrowError</a></code></li><li><code><a href="./Warning.html">Warning</a></code></li><li><details><summary><code><a href="./WeakRef.html">WeakRef</a></code></summary><ul class="link-list nav-list"><li><code><a href="./WeakRef/RefError.html">RefError</a></code></li></ul></details></li><li><details><summary><code><a href="./Win32.html">Win32</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="./Win32/Registry.html">Registry</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Win32/Registry/API.html">API</a></code></li><li><code><a href="./Win32/Registry/Error.html">Error</a></code></li><li><code><a href="./Win32/Registry/PredefinedKey.html">PredefinedKey</a></code></li></ul></details></li><li><details><summary><code><a href="./Win32/Resolv.html">Resolv</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Win32/Resolv/Error.html">Error</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="./YAML.html">YAML</a></code></summary><ul class="link-list nav-list"><li><code><a href="./YAML/DBM.html">DBM</a></code></li><li><code><a href="./YAML/Store.html">Store</a></code></li></ul></details></li><li><code><a href="./ZJIT.html">ZJIT</a></code></li><li><code><a href="./ZeroDivisionError.html">ZeroDivisionError</a></code></li><li><details><summary><code><a href="./Zlib.html">Zlib</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Zlib/BufError.html">BufError</a></code></li><li><code><a href="./Zlib/DataError.html">DataError</a></code></li><li><code><a href="./Zlib/Deflate.html">Deflate</a></code></li><li><code><a href="./Zlib/Error.html">Error</a></code></li><li><details><summary><code><a href="./Zlib/GzipFile.html">GzipFile</a></code></summary><ul class="link-list nav-list"><li><code><a href="./Zlib/GzipFile/CRCError.html">CRCError</a></code></li><li><code><a href="./Zlib/GzipFile/Error.html">Error</a></code></li><li><code><a href="./Zlib/GzipFile/LengthError.html">LengthError</a></code></li><li><code><a href="./Zlib/GzipFile/NoFooter.html">NoFooter</a></code></li></ul></details></li><li><code><a href="./Zlib/GzipReader.html">GzipReader</a></code></li><li><code><a href="./Zlib/GzipWriter.html">GzipWriter</a></code></li><li><code><a href="./Zlib/InProgressError.html">InProgressError</a></code></li><li><code><a href="./Zlib/Inflate.html">Inflate</a></code></li><li><code><a href="./Zlib/MemError.html">MemError</a></code></li><li><code><a href="./Zlib/NeedDict.html">NeedDict</a></code></li><li><code><a href="./Zlib/StreamEnd.html">StreamEnd</a></code></li><li><code><a href="./Zlib/StreamError.html">StreamError</a></code></li><li><code><a href="./Zlib/VersionError.html">VersionError</a></code></li><li><code><a href="./Zlib/ZStream.html">ZStream</a></code></li></ul></details></li><li><code><a href="./fatal.html">fatal</a></code></li></ul>
+  </details>
+</div>
+
+</nav>
+
+<main role="main" aria-label="Page extension.ja.rdoc">
+
+<p><a href="extension_rdoc.html">English</a></p>
+
+<h1 id="label-Ruby-E3-81-AE-E6-8B-A1-E5-BC-B5-E3-83-A9-E3-82-A4-E3-83-96-E3-83-A9-E3-83-AA-E3-81-AE-E4-BD-9C-E3-82-8A-E6-96-B9"><a href="#label-Ruby-E3-81-AE-E6-8B-A1-E5-BC-B5-E3-83-A9-E3-82-A4-E3-83-96-E3-83-A9-E3-83-AA-E3-81-AE-E4-BD-9C-E3-82-8A-E6-96-B9">Rubyの拡張ライブラリの作り方</a></h1>
+
+<p>Rubyの拡張ライブラリの作り方を説明します．</p>
+
+<h2 id="label-E5-9F-BA-E7-A4-8E-E7-9F-A5-E8-AD-98"><a href="#label-E5-9F-BA-E7-A4-8E-E7-9F-A5-E8-AD-98">基礎知識</a></h2>
+
+<p>Cの変数には型があり，データには型がありません．ですから，たとえばポインタをintの変数に代入すると，その値は整数として取り扱われます．逆にRubyの変数には型がなく，データに型があります．この違いのため，CとRubyは相互に変換しなければ，お互いのデータをアクセスできません．</p>
+
+<p>RubyのデータはVALUEというCの型で表現されます．VALUE型のデータはそのデータタイプを自分で知っています．このデータタイプというのはデータ(オブジェクト)の実際の構造を意味していて，Ruby のクラスとはまた違ったものです．</p>
+
+<p>VALUEからCにとって意味のあるデータを取り出すためには</p>
+<ol><li>
+<p>VALUEのデータタイプを知る</p>
+</li><li>
+<p>VALUEをCのデータに変換する</p>
+</li></ol>
+
+<p>の両方が必要です．(1)を忘れると間違ったデータの変換が行われて，最悪プログラムがcore dumpします．</p>
+
+<h3 id="label-E3-83-87-E3-83-BC-E3-82-BF-E3-82-BF-E3-82-A4-E3-83-97"><a href="#label-E3-83-87-E3-83-BC-E3-82-BF-E3-82-BF-E3-82-A4-E3-83-97">データタイプ</a></h3>
+
+<p>Rubyにはユーザが使う可能性のある以下のタイプがあります．</p>
+<dl class="rdoc-list note-list"><dt>T_NIL      </dt>
+<dd>
+<p>nil</p>
+</dd><dt>T_OBJECT   </dt>
+<dd>
+<p>通常のオブジェクト</p>
+</dd><dt>T_CLASS    </dt>
+<dd>
+<p>クラス</p>
+</dd><dt>T_MODULE   </dt>
+<dd>
+<p>モジュール</p>
+</dd><dt>T_FLOAT    </dt>
+<dd>
+<p>浮動小数点数</p>
+</dd><dt>T_STRING   </dt>
+<dd>
+<p>文字列</p>
+</dd><dt>T_REGEXP   </dt>
+<dd>
+<p>正規表現</p>
+</dd><dt>T_ARRAY    </dt>
+<dd>
+<p>配列</p>
+</dd><dt>T_HASH     </dt>
+<dd>
+<p>連想配列</p>
+</dd><dt>T_STRUCT   </dt>
+<dd>
+<p>(Rubyの)構造体</p>
+</dd><dt>T_BIGNUM   </dt>
+<dd>
+<p>多倍長整数</p>
+</dd><dt>T_FIXNUM   </dt>
+<dd>
+<p>Fixnum(31bitまたは63bit長整数)</p>
+</dd><dt>T_COMPLEX  </dt>
+<dd>
+<p>複素数</p>
+</dd><dt>T_RATIONAL </dt>
+<dd>
+<p>有理数</p>
+</dd><dt>T_FILE     </dt>
+<dd>
+<p>入出力</p>
+</dd><dt>T_TRUE     </dt>
+<dd>
+<p>真</p>
+</dd><dt>T_FALSE    </dt>
+<dd>
+<p>偽</p>
+</dd><dt>T_DATA     </dt>
+<dd>
+<p>データ</p>
+</dd><dt>T_SYMBOL   </dt>
+<dd>
+<p>シンボル</p>
+</dd></dl>
+
+<p>その他に内部で利用されている以下のタイプがあります．</p>
+
+<pre class="ruby"><span class="ruby-constant">T_ICLASS</span>
+<span class="ruby-constant">T_MATCH</span>
+<span class="ruby-constant">T_UNDEF</span>
+<span class="ruby-constant">T_NODE</span>
+<span class="ruby-constant">T_ZOMBIE</span>
+</pre>
+
+<p>ほとんどのタイプはCの構造体で実装されています．</p>
+
+<h3 id="label-VALUE-E3-81-AE-E3-83-87-E3-83-BC-E3-82-BF-E3-82-BF-E3-82-A4-E3-83-97-E3-82-92-E3-83-81-E3-82-A7-E3-83-83-E3-82-AF-E3-81-99-E3-82-8B"><a href="#label-VALUE-E3-81-AE-E3-83-87-E3-83-BC-E3-82-BF-E3-82-BF-E3-82-A4-E3-83-97-E3-82-92-E3-83-81-E3-82-A7-E3-83-83-E3-82-AF-E3-81-99-E3-82-8B">VALUEのデータタイプをチェックする</a></h3>
+
+<p>ruby.hではTYPE()というマクロが定義されていて，VALUEのデータタイプを知ることが出来ます．TYPE()マクロは上で紹介したT_XXXX の形式の定数を返します．VALUEのデータタイプに応じて処理する場合には，TYPE()の値で分岐することになります．</p>
+
+<pre>switch (TYPE(obj)) {
+  case T_FIXNUM:
+    /* FIXNUMの処理 */
+    break;
+  case T_STRING:
+    /* 文字列の処理 */
+    break;
+  case T_ARRAY:
+    /* 配列の処理 */
+    break;
+  default:
+    /* 例外を発生させる */
+    rb_raise(rb_eTypeError, &quot;not valid value&quot;);
+    break;
+}</pre>
+
+<p>それとデータタイプをチェックして，正しくなければ例外を発生する関数が用意されています．</p>
+
+<pre>void Check_Type(VALUE value, int type)</pre>
+
+<p>この関数はvalueがtypeで無ければ，例外を発生させます．引数として与えられたVALUEのデータタイプが正しいかどうかチェックするためには，この関数を使います．</p>
+
+<p>FIXNUMとNILに関してはより高速な判別マクロが用意されています．</p>
+
+<pre class="ruby"><span class="ruby-constant">FIXNUM_P</span>(<span class="ruby-identifier">obj</span>)
+<span class="ruby-constant">NIL_P</span>(<span class="ruby-identifier">obj</span>)
+</pre>
+
+<h3 id="label-VALUE-E3-82-92C-E3-81-AE-E3-83-87-E3-83-BC-E3-82-BF-E3-81-AB-E5-A4-89-E6-8F-9B-E3-81-99-E3-82-8B"><a href="#label-VALUE-E3-82-92C-E3-81-AE-E3-83-87-E3-83-BC-E3-82-BF-E3-81-AB-E5-A4-89-E6-8F-9B-E3-81-99-E3-82-8B">VALUEをCのデータに変換する</a></h3>
+
+<p>データタイプがT_NIL，T_FALSE，T_TRUEである時，データはそれぞれnil，false，trueです．このデータタイプのオブジェクトはひとつずつしか存在しません．</p>
+
+<p>データタイプがT_FIXNUMの時，これは31bitまたは63bitのサイズを持つ整数です．longのサイズが32bitのプラットフォームであれば31bitに，longのサイズが64bitのプラットフォームであれば63bit になります. FIXNUM を C の整数に変換するためにはマクロ「FIX2INT()」または「FIX2LONG()」を使います．これらのマクロを使用する際には事前にデータタイプがFIXNUMであることを確認する必要がありますが，比較的高速に変換を行うことができます．また，「FIX2LONG()」は例外を発生しませんが，「FIX2INT()」は変換結果がintのサイズに収まらない場合には例外を発生します．それから，FIXNUMに限らずRubyのデータを整数に変換する「NUM2INT()」および「NUM2LONG()」というマクロがあります．これらのマクロはデータタイプのチェック無しで使えます(整数に変換できない場合には例外が発生する)．同様にチェック無しで使える変換マクロはdoubleを取り出す「NUM2DBL()」があります．</p>
+
+<p>char* を取り出す場合， StringValue() と StringValuePtr() を使います．StringValue(var) は var が <a href="String.html"><code>String</code></a> であれば何もせず，そうでなければ var を var.to_str() の結果に置き換えるマクロ，StringValuePtr(var) は同様に var をString に置き換えてから var のバイト列表現に対する char* を返すマクロです．var の内容を直接置き換える処理が入るので，var は lvalue である必要があります．また，StringValuePtr() に類似した StringValueCStr() というマクロもあります．StringValueCStr(var) は var を <a href="String.html"><code>String</code></a> に置き換えてから var の文字列表現に対する char* を返します．返される文字列の末尾には NUL 文字が付加されます．なお，途中に NUL 文字が含まれる場合は <a href="ArgumentError.html"><code>ArgumentError</code></a> が発生します．一方，StringValuePtr() では，末尾に NUL 文字がある保証はなく，途中に NUL 文字が含まれている可能性もあります．</p>
+
+<p>それ以外のデータタイプは対応するCの構造体があります．対応する構造体のあるVALUEはそのままキャスト(型変換)すれば構造体のポインタに変換できます．</p>
+
+<p>構造体は「struct RXxxxx」という名前でruby.hで定義されています．例えば文字列は「struct RString」です．実際に使う可能性があるのは文字列と配列くらいだと思います．</p>
+
+<p>ruby.hでは構造体へキャストするマクロも「RXXXXX()」(全部大文字にしたもの)という名前で提供されています(例: RSTRING())．ただし、構造体への直接のアクセスはできるだけ避け，対応するrb_xxxx() といった関数を使うようにして下さい．例えば，配列の要素へアクセスする場合は，rb_ary_entry(ary, offset)，rb_ary_store(ary, offset, obj) を利用するようにして下さい．</p>
+
+<p>構造体からデータを取り出すマクロが提供されています．文字列strの長さを得るためには「RSTRING_LEN(str)」とし，文字列strをchar*として得るためには「RSTRING_PTR(str)」とします．</p>
+
+<p>Rubyの構造体を直接アクセスする時に気をつけなければならないことは，配列や文字列の構造体の中身は参照するだけで，直接変更しないことです．直接変更した場合，オブジェクトの内容の整合性がとれなくなって，思わぬバグの原因になります．</p>
+
+<h3 id="label-C-E3-81-AE-E3-83-87-E3-83-BC-E3-82-BF-E3-82-92VALUE-E3-81-AB-E5-A4-89-E6-8F-9B-E3-81-99-E3-82-8B"><a href="#label-C-E3-81-AE-E3-83-87-E3-83-BC-E3-82-BF-E3-82-92VALUE-E3-81-AB-E5-A4-89-E6-8F-9B-E3-81-99-E3-82-8B">CのデータをVALUEに変換する</a></h3>
+
+<p>VALUEの実際の構造は</p>
+<dl class="rdoc-list note-list"><dt>FIXNUMの場合 </dt>
+<dd>
+<p>1bit左シフトして，LSBを立てる．</p>
+</dd><dt>その他のポインタの場合 </dt>
+<dd>
+<p>そのままVALUEにキャストする．</p>
+</dd></dl>
+
+<p>となっています．よって，LSBをチェックすればVALUEがFIXNUMかどうかわかるわけです(ポインタのLSBが立っていないことを仮定している)．</p>
+
+<p>ですから，FIXNUM以外のRubyのオブジェクトの構造体は単にVALUE にキャストするだけでVALUEに変換出来ます．ただし，任意の構造体がVALUEにキャスト出来るわけではありません．キャストするのはRubyの知っている構造体(ruby.hで定義されているstruct RXxxx のもの)だけです．</p>
+
+<p>FIXNUMに関しては変換マクロを経由する必要があります．Cの整数からVALUEに変換するマクロは以下のものがあります．必要に応じて使い分けてください．</p>
+<dl class="rdoc-list note-list"><dt>INT2FIX() </dt>
+<dd>
+<p>もとの整数が31bitまたは63bit以内に収まる自信がある時</p>
+</dd><dt>INT2NUM() </dt>
+<dd>
+<p>任意の整数からVALUEへ</p>
+</dd></dl>
+
+<p>INT2NUM()は整数がFIXNUMの範囲に収まらない場合，Bignumに変換してくれます(が，少し遅い)．</p>
+
+<h3 id="label-Ruby-E3-81-AE-E3-83-87-E3-83-BC-E3-82-BF-E3-82-92-E6-93-8D-E4-BD-9C-E3-81-99-E3-82-8B"><a href="#label-Ruby-E3-81-AE-E3-83-87-E3-83-BC-E3-82-BF-E3-82-92-E6-93-8D-E4-BD-9C-E3-81-99-E3-82-8B">Rubyのデータを操作する</a></h3>
+
+<p>先程も述べた通り，Rubyの構造体をアクセスする時に内容の更新を行うことは勧められません．で，Rubyのデータを操作する時にはRubyが用意している関数を用いてください．</p>
+
+<p>ここではもっとも使われるであろう文字列と配列の生成/操作を行う関数をあげます(全部ではないです)．</p>
+
+<h4 id="label-E6-96-87-E5-AD-97-E5-88-97-E3-81-AB-E5-AF-BE-E3-81-99-E3-82-8B-E9-96-A2-E6-95-B0"><a href="#label-E6-96-87-E5-AD-97-E5-88-97-E3-81-AB-E5-AF-BE-E3-81-99-E3-82-8B-E9-96-A2-E6-95-B0">文字列に対する関数</a></h4>
+<dl class="rdoc-list note-list"><dt>rb_str_new(const char *ptr, long len) </dt>
+<dd>
+<p>新しいRubyの文字列を生成する．</p>
+</dd><dt>rb_str_new2(const char *ptr) </dt>
+<dt>rb_str_new_cstr(const char *ptr) </dt>
+<dd>
+<p>Cの文字列からRubyの文字列を生成する．この関数の機能はrb_str_new(ptr, strlen(ptr))と同等である．</p>
+</dd><dt>rb_str_new_literal(const char *ptr) </dt>
+<dd>
+<p>Cのリテラル文字列からRubyの文字列を生成する．</p>
+</dd><dt>rb_str_append(VALUE str1, VALUE str2) </dt>
+<dd>
+<p>Rubyの文字列str1にRubyの文字列str2を追加する．</p>
+</dd><dt>rb_sprintf(const char *format, …) </dt>
+<dt>rb_vsprintf(const char *format, va_list ap) </dt>
+<dd>
+<p>Cの文字列formatと続く引数をprintf(3)のフォーマットにしたがって整形し，Rubyの文字列を生成する．</p>
+
+<p>注意: “%”PRIsVALUEがObject#to_s(‘+’フラグが指定されているときはObject#inspect)を使ったVALUEの出力に利用できる．これは“%i”と衝突するため，整数には“%d”を使用すること．</p>
+</dd><dt>rb_str_cat(VALUE str, const char *ptr, long len) </dt>
+<dd>
+<p>Rubyの文字列strにlenバイトの文字列ptrを追加する．</p>
+</dd><dt>rb_str_cat2(VALUE str, const char* ptr) </dt>
+<dt>rb_str_cat_cstr(VALUE str, const char* ptr) </dt>
+<dd>
+<p>Rubyの文字列strにCの文字列ptrを追加する．この関数の機能はrb_str_cat(str, ptr, strlen(ptr))と同等である．</p>
+</dd><dt>rb_str_catf(VALUE str, const char* format, …) </dt>
+<dt>rb_str_vcatf(VALUE str, const char* format, va_list ap) </dt>
+<dd>
+<p>Cの文字列formatと続く引数をprintf(3)のフォーマットにしたがって整形し，Rubyの文字列strに追加する．この関数の機能は，それぞれrb_str_append(str, rb_sprintf(format, …)) やrb_str_append(str, rb_vsprintf(format, ap)) と同等である．</p>
+</dd><dt>rb_enc_str_new(const char *ptr, long len, rb_encoding *enc) </dt>
+<dt>rb_enc_str_new_cstr(const char *ptr, rb_encoding *enc) </dt>
+<dd>
+<p>指定されたエンコーディングでRubyの文字列を生成する.</p>
+</dd><dt>rb_enc_str_new_literal(const char *ptr, rb_encoding *enc) </dt>
+<dd>
+<p>Cのリテラル文字列から指定されたエンコーディングでRubyの文字列を生成する．</p>
+</dd><dt>rb_usascii_str_new(const char *ptr, long len) </dt>
+<dt>rb_usascii_str_new_cstr(const char *ptr) </dt>
+<dd>
+<p>エンコーディングがUS-ASCIIのRubyの文字列を生成する.</p>
+</dd><dt>rb_usascii_str_new_literal(const char *ptr) </dt>
+<dd>
+<p>Cのリテラル文字列からエンコーディングがUS-ASCIIのRubyの文字列を生成する．</p>
+</dd><dt>rb_utf8_str_new(const char *ptr, long len) </dt>
+<dt>rb_utf8_str_new_cstr(const char *ptr) </dt>
+<dd>
+<p>エンコーディングがUTF-8のRubyの文字列を生成する.</p>
+</dd><dt>rb_utf8_str_new_literal(const char *ptr) </dt>
+<dd>
+<p>Cのリテラル文字列からエンコーディングがUTF-8のRubyの文字列を生成する．</p>
+</dd><dt>rb_str_resize(VALUE str, long len) </dt>
+<dd>
+<p>Rubyの文字列のサイズをlenバイトに変更する．strの長さは前以てセットされていなければならない．lenが元の長さよりも短い時は，lenバイトを越えた部分の内容は捨てられる．lenが元の長さよりも長い時は，元の長さを越えた部分の内容は保存されないでゴミになるだろう．この関数の呼び出しによってRSTRING_PTR(str)が変更されるかもしれないことに注意．</p>
+</dd><dt>rb_str_set_len(VALUE str, long len) </dt>
+<dd>
+<p>Rubyの文字列のサイズをlenバイトにセットする．strが変更可能でなければ例外が発生する．RSTRING_LEN(str)とは無関係に，lenバイトまでの内容は保存される．lenはstrの容量を越えていてはならない．</p>
+</dd><dt>rb_str_modify(VALUE str) </dt>
+<dd>
+<p>Rubyの文字列の変更する準備をする．strが変更可能でなければ例外が発生する．strのバッファが共有されている場合は，新しいバッファを割り当てて共有されていない状態にする．RSTRING_PTRを使って中身を変更したり，rb_str_set_lenを呼んだりする前には，必ずこの関数を呼ばなけれならない．</p>
+</dd></dl>
+
+<h4 id="label-E9-85-8D-E5-88-97-E3-81-AB-E5-AF-BE-E3-81-99-E3-82-8B-E9-96-A2-E6-95-B0"><a href="#label-E9-85-8D-E5-88-97-E3-81-AB-E5-AF-BE-E3-81-99-E3-82-8B-E9-96-A2-E6-95-B0">配列に対する関数</a></h4>
+<dl class="rdoc-list note-list"><dt>rb_ary_new() </dt>
+<dd>
+<p>要素が0の配列を生成する．</p>
+</dd><dt>rb_ary_new2(long len) </dt>
+<dt>rb_ary_new_capa(long len) </dt>
+<dd>
+<p>要素が0の配列を生成する．len要素分の領域をあらかじめ割り当てておく．</p>
+</dd><dt>rb_ary_new3(long n, …) </dt>
+<dt>rb_ary_new_from_args(long n, …) </dt>
+<dd>
+<p>引数で指定したn要素を含む配列を生成する．</p>
+</dd><dt>rb_ary_new4(long n, VALUE *elts) </dt>
+<dt>rb_ary_new_from_values(long n, VALUE *elts) </dt>
+<dd>
+<p>配列で与えたn要素の配列を生成する．</p>
+</dd><dt>rb_ary_to_ary(VALUE obj) </dt>
+<dd>
+<p>オブジェクトを配列に変換する. Object#to_aryと同等である.</p>
+</dd></dl>
+
+<p>他にも配列を操作する関数が多数ある. これらは引数aryに配列を渡さなければならない. さもないとコアを吐く.</p>
+<dl class="rdoc-list note-list"><dt>rb_ary_aref(int argc, const VALUE *argv, VALUE ary) </dt>
+<dd>
+<p><a href="Array.html#method-i-5B-5D"><code>Array#[]</code></a>と同等.</p>
+</dd><dt>rb_ary_entry(VALUE ary, long offset) </dt>
+<dd>
+<p>ary[offset]</p>
+</dd><dt>rb_ary_store(VALUE ary, long offset, VALUE obj) </dt>
+<dd>
+<p>ary[offset] = obj</p>
+</dd><dt>rb_ary_subseq(VALUE ary, long beg, long len) </dt>
+<dd>
+<p>ary[beg, len]</p>
+</dd><dt>rb_ary_push(VALUE ary, VALUE val) </dt>
+<dt>rb_ary_pop(VALUE ary) </dt>
+<dt>rb_ary_shift(VALUE ary) </dt>
+<dt>rb_ary_unshift(VALUE ary, VALUE val) </dt>
+<dd>
+<p>ary.push, ary.pop, ary.shift, ary.unshift</p>
+</dd><dt>rb_ary_cat(VALUE ary, const VALUE *ptr, long len) </dt>
+<dd>
+<p>配列aryにptrからlen個のオブジェクトを追加する．</p>
+</dd></dl>
+
+<h2 id="label-Ruby-E3-81-AE-E6-A9-9F-E8-83-BD-E3-82-92-E4-BD-BF-E3-81-86"><a href="#label-Ruby-E3-81-AE-E6-A9-9F-E8-83-BD-E3-82-92-E4-BD-BF-E3-81-86">Rubyの機能を使う</a></h2>
+
+<p>原理的にRubyで書けることはCでも書けます．RubyそのものがCで記述されているんですから，当然といえば当然なんですけど．ここではRubyの拡張に使うことが多いだろうと予測される機能を中心に紹介します．</p>
+
+<h3 id="label-Ruby-E3-81-AB-E6-A9-9F-E8-83-BD-E3-82-92-E8-BF-BD-E5-8A-A0-E3-81-99-E3-82-8B"><a href="#label-Ruby-E3-81-AB-E6-A9-9F-E8-83-BD-E3-82-92-E8-BF-BD-E5-8A-A0-E3-81-99-E3-82-8B">Rubyに機能を追加する</a></h3>
+
+<p>Rubyで提供されている関数を使えばRubyインタプリタに新しい機能を追加することができます．Rubyでは以下の機能を追加する関数が提供されています．</p>
+<ul><li>
+<p>クラス，モジュール</p>
+</li><li>
+<p>メソッド，特異メソッドなど</p>
+</li><li>
+<p>定数</p>
+</li></ul>
+
+<p>では順に紹介します．</p>
+
+<h4 id="label-E3-82-AF-E3-83-A9-E3-82-B9-2F-E3-83-A2-E3-82-B8-E3-83-A5-E3-83-BC-E3-83-AB-E5-AE-9A-E7-BE-A9"><a href="#label-E3-82-AF-E3-83-A9-E3-82-B9-2F-E3-83-A2-E3-82-B8-E3-83-A5-E3-83-BC-E3-83-AB-E5-AE-9A-E7-BE-A9">クラス/モジュール定義</a></h4>
+
+<p>クラスやモジュールを定義するためには，以下の関数を使います．</p>
+
+<pre>VALUE rb_define_class(const char *name, VALUE super)
+VALUE rb_define_module(const char *name)</pre>
+
+<p>これらの関数は新しく定義されたクラスやモジュールを返します．メソッドや定数の定義にこれらの値が必要なので，ほとんどの場合は戻り値を変数に格納しておく必要があるでしょう．</p>
+
+<p>クラスやモジュールを他のクラスの内部にネストして定義する時には以下の関数を使います．</p>
+
+<pre>VALUE rb_define_class_under(VALUE outer, const char *name, VALUE super)
+VALUE rb_define_module_under(VALUE outer, const char *name)</pre>
+
+<h4 id="label-E3-83-A1-E3-82-BD-E3-83-83-E3-83-89-2F-E7-89-B9-E7-95-B0-E3-83-A1-E3-82-BD-E3-83-83-E3-83-89-E5-AE-9A-E7-BE-A9"><a href="#label-E3-83-A1-E3-82-BD-E3-83-83-E3-83-89-2F-E7-89-B9-E7-95-B0-E3-83-A1-E3-82-BD-E3-83-83-E3-83-89-E5-AE-9A-E7-BE-A9">メソッド/特異メソッド定義</a></h4>
+
+<p>メソッドや特異メソッドを定義するには以下の関数を使います．</p>
+
+<pre>void rb_define_method(VALUE klass, const char *name,
+                      VALUE (*func)(ANYARGS), int argc)
+
+void rb_define_singleton_method(VALUE object, const char *name,
+                                VALUE (*func)(ANYARGS), int argc)</pre>
+
+<p>念のため説明すると「特異メソッド」とは，その特定のオブジェクトに対してだけ有効なメソッドです．RubyではよくSmalltalkにおけるクラスメソッドとして，クラスに対する特異メソッドが使われます．</p>
+
+<p>これらの関数の argcという引数はCの関数へ渡される引数の数(と形式)を決めます．argcが0以上の時は関数に引き渡す引数の数を意味します．16個以上の引数は使えません(が，要りませんよね，そんなに)．実際の関数には先頭の引数としてselfが与えられますので，指定した数より1多い引数を持つことになります．</p>
+
+<p>argcが負の時は引数の数ではなく，形式を指定したことになります．argcが-1の時は引数を配列に入れて渡されます．argcが-2の時は引数はRubyの配列として渡されます．</p>
+
+<p>メソッドを定義する関数はまだいくつかあります. ひとつはメソッド名としてIDを取ります. IDについては2.2.2を参照.</p>
+
+<pre>void rb_define_method_id(VALUE klass, ID name,
+                         VALUE (*func)(ANYARGS), int argc)</pre>
+
+<p>private/protectedなメソッドを定義するふたつの関数があります.</p>
+
+<pre>void rb_define_private_method(VALUE klass, const char *name,
+                              VALUE (*func)(ANYARGS), int argc)
+void rb_define_protected_method(VALUE klass, const char *name,
+                                VALUE (*func)(ANYARGS), int argc)</pre>
+
+<p>privateメソッドとは関数形式でしか呼び出すことの出来ないメソッドです．</p>
+
+<p>最後に， rb_define_module関数はモジュール関数を定義します．モジュール関数とはモジュールの特異メソッドであり，同時にprivateメソッドでもあるものです．例をあげるとMathモジュールのsqrt()などがあげられます．このメソッドは</p>
+
+<pre class="ruby"><span class="ruby-constant">Math</span>.<span class="ruby-identifier">sqrt</span>(<span class="ruby-value">4</span>)
+</pre>
+
+<p>という形式でも</p>
+
+<pre class="ruby"><span class="ruby-identifier">include</span> <span class="ruby-constant">Math</span>
+<span class="ruby-identifier">sqrt</span>(<span class="ruby-value">4</span>)
+</pre>
+
+<p>という形式でも使えます．モジュール関数を定義する関数は以下の通りです．</p>
+
+<pre>void rb_define_module_function(VALUE module, const char *name,
+                               VALUE (*func)(ANYARGS), int argc)</pre>
+
+<p>関数的メソッド(Kernelモジュールのprivate method)を定義するための関数は以下の通りです．</p>
+
+<pre>void rb_define_global_function(const char *name, VALUE (*func)(ANYARGS), int argc)</pre>
+
+<p>メソッドの別名を定義するための関数は以下の通りです．</p>
+
+<pre>void rb_define_alias(VALUE module, const char* new, const char* old);</pre>
+
+<p>属性の取得・設定メソッドを定義するには</p>
+
+<pre>void rb_define_attr(VALUE klass, const char *name, int read, int write)</pre>
+
+<p>クラスメソッドallocateを定義したり削除したりするための関数は以下の通りです．</p>
+
+<pre>void rb_define_alloc_func(VALUE klass, VALUE (*func)(VALUE klass));
+void rb_undef_alloc_func(VALUE klass);</pre>
+
+<p>funcはクラスを引数として受け取って，新しく割り当てられたインスタンスを返さなくてはなりません．このインスタンスは，外部リソースなどを含まない，できるだけ「空」のままにしておいたほうがよいでしょう．</p>
+
+<p>継承したクラスにある既存のメソッドをオーバーライドしているなら，オーバーライドされたメソッドを呼び出すには以下の関数を使います．</p>
+
+<pre>VALUE rb_call_super(int argc, const VALUE *argv)</pre>
+
+<p>現在のスコープのレシーバは(他に方法がなければ)，以下の関数で得ることができます．</p>
+
+<pre class="ruby"><span class="ruby-constant">VALUE</span> <span class="ruby-identifier">rb_current_receiver</span>(<span class="ruby-identifier">void</span>)
+</pre>
+
+<h4 id="label-E5-AE-9A-E6-95-B0-E5-AE-9A-E7-BE-A9"><a href="#label-E5-AE-9A-E6-95-B0-E5-AE-9A-E7-BE-A9">定数定義</a></h4>
+
+<p>拡張ライブラリが必要な定数はあらかじめ定義しておいた方が良いでしょう．定数を定義する関数は二つあります．</p>
+
+<pre>void rb_define_const(VALUE klass, const char *name, VALUE val)
+void rb_define_global_const(const char *name, VALUE val)</pre>
+
+<p>前者は特定のクラス/モジュールに属する定数を定義するもの，後者はグローバルな定数を定義するものです．</p>
+
+<h3 id="label-Ruby-E3-81-AE-E6-A9-9F-E8-83-BD-E3-82-92C-E3-81-8B-E3-82-89-E5-91-BC-E3-81-B3-E5-87-BA-E3-81-99"><a href="#label-Ruby-E3-81-AE-E6-A9-9F-E8-83-BD-E3-82-92C-E3-81-8B-E3-82-89-E5-91-BC-E3-81-B3-E5-87-BA-E3-81-99">Rubyの機能をCから呼び出す</a></h3>
+
+<p>既に『1.5 Rubyのデータを操作する』で一部紹介したような関数を使えば，Rubyの機能を実現している関数を直接呼び出すことが出来ます．</p>
+
+<p># このような関数の一覧表はいまのところありません．ソースを見# るしかないですね．</p>
+
+<p>それ以外にもRubyの機能を呼び出す方法はいくつかあります．</p>
+
+<h4 id="label-Ruby-E3-81-AE-E3-83-97-E3-83-AD-E3-82-B0-E3-83-A9-E3-83-A0-E3-82-92eval-E3-81-99-E3-82-8B"><a href="#label-Ruby-E3-81-AE-E3-83-97-E3-83-AD-E3-82-B0-E3-83-A9-E3-83-A0-E3-82-92eval-E3-81-99-E3-82-8B">Rubyのプログラムをevalする</a></h4>
+
+<p>CからRubyの機能を呼び出すもっとも簡単な方法として，文字列で与えられたRubyのプログラムを評価する以下の関数があります．</p>
+
+<pre class="ruby"><span class="ruby-constant">VALUE</span> <span class="ruby-identifier">rb_eval_string</span>(<span class="ruby-identifier">const</span> <span class="ruby-identifier">char</span> <span class="ruby-operator">*</span><span class="ruby-identifier">str</span>)
+</pre>
+
+<p>この評価は現在の環境で行われます．つまり，現在のローカル変数などを受け継ぎます．</p>
+
+<p>評価は例外を発生するかもしれないことに注意しましょう. より安全な関数もあります.</p>
+
+<pre>VALUE rb_eval_string_protect(const char *str, int *state)</pre>
+
+<p>この関数はエラーが発生するとnilを返します．そして，成功時には*stateはゼロに，さもなくば非ゼロになります．</p>
+
+<h4 id="label-ID-E3-81-BE-E3-81-9F-E3-81-AF-E3-82-B7-E3-83-B3-E3-83-9C-E3-83-AB"><a href="#label-ID-E3-81-BE-E3-81-9F-E3-81-AF-E3-82-B7-E3-83-B3-E3-83-9C-E3-83-AB">IDまたはシンボル</a></h4>
+
+<p>Cから文字列を経由せずにRubyのメソッドを呼び出すこともできます．その前に，Rubyインタプリタ内でメソッドや変数名を指定する時に使われているIDについて説明しておきましょう．</p>
+
+<p>IDとは変数名，メソッド名を表す整数です．Rubyの中では</p>
+
+<pre class="ruby"><span class="ruby-value">:識別子</span>
+</pre>
+
+<p>または</p>
+
+<pre class="ruby"><span class="ruby-value">:&quot;任意の文字列&quot;</span>
+</pre>
+
+<p>でアクセスできます．Cからこの整数を得るためには関数</p>
+
+<pre class="ruby"><span class="ruby-identifier">rb_intern</span>(<span class="ruby-identifier">const</span> <span class="ruby-identifier">char</span> <span class="ruby-operator">*</span><span class="ruby-identifier">name</span>)
+<span class="ruby-identifier">rb_intern_str</span>(<span class="ruby-constant">VALUE</span> <span class="ruby-identifier">name</span>)
+</pre>
+
+<p>を使います．Rubyから引数として与えられたシンボル(または文字列)をIDに変換するには以下の関数を使います．</p>
+
+<pre>rb_to_id(VALUE symbol)
+rb_check_id(volatile VALUE *name)
+rb_check_id_cstr(const char *name, long len, rb_encoding *enc)</pre>
+
+<p>もし引数がシンボルでも文字列でもなければ，to_strメソッドで文字列に変換しようとします．第二の関数はその変換結果を*nameに保存し,その名前が既知のシンボルでない場合は0を返します．この関数が0以外を返した場合は*nameは常にシンボルか文字列であり，0を返した場合は常に文字列です．第三の関数はRubyの文字列ではなくNUL終端されたCの文字列を使います．</p>
+
+<p>Rubyから引数として与えられたシンボル(または文字列)をシンボルに変換するには以下の関数を使います．</p>
+
+<pre>rb_to_symbol(VALUE name)
+rb_check_symbol(volatile VALUE *namep)
+rb_check_symbol_cstr(const char *ptr, long len, rb_encoding *enc)</pre>
+
+<p>これらの関数は，IDの代わりにシンボルを返すことを除けば上記の関数と同じです．</p>
+
+<h4 id="label-C-E3-81-8B-E3-82-89Ruby-E3-81-AE-E3-83-A1-E3-82-BD-E3-83-83-E3-83-89-E3-82-92-E5-91-BC-E3-81-B3-E5-87-BA-E3-81-99"><a href="#label-C-E3-81-8B-E3-82-89Ruby-E3-81-AE-E3-83-A1-E3-82-BD-E3-83-83-E3-83-89-E3-82-92-E5-91-BC-E3-81-B3-E5-87-BA-E3-81-99">CからRubyのメソッドを呼び出す</a></h4>
+
+<p>Cから文字列を経由せずにRubyのメソッドを呼び出すためには以下の関数を使います．</p>
+
+<pre>VALUE rb_funcall(VALUE recv, ID mid, int argc, ...)</pre>
+
+<p>この関数はオブジェクトrecvのmidで指定されるメソッドを呼び出します．その他に引数の指定の仕方が違う以下の関数もあります．</p>
+
+<pre>VALUE rb_funcall2(VALUE recv, ID mid, int argc, VALUE *argv)
+VALUE rb_funcallv(VALUE recv, ID mid, int argc, VALUE *argv)
+VALUE rb_apply(VALUE recv, ID mid, VALUE args)</pre>
+
+<p>applyには引数としてRubyの配列を与えます．</p>
+
+<h4 id="label-E5-A4-89-E6-95-B0-2F-E5-AE-9A-E6-95-B0-E3-82-92-E5-8F-82-E7-85-A7-2F-E6-9B-B4-E6-96-B0-E3-81-99-E3-82-8B"><a href="#label-E5-A4-89-E6-95-B0-2F-E5-AE-9A-E6-95-B0-E3-82-92-E5-8F-82-E7-85-A7-2F-E6-9B-B4-E6-96-B0-E3-81-99-E3-82-8B">変数/定数を参照/更新する</a></h4>
+
+<p>Cから関数を使って参照・更新できるのは，定数，インスタンス変数です．大域変数は一部のものはCの大域変数としてアクセスできます．ローカル変数を参照する方法は公開していません．</p>
+
+<p>オブジェクトのインスタンス変数を参照・更新する関数は以下の通りです．</p>
+
+<pre>VALUE rb_ivar_get(VALUE obj, ID id)
+VALUE rb_ivar_set(VALUE obj, ID id, VALUE val)</pre>
+
+<p>idはrb_intern()で得られるものを使ってください．</p>
+
+<p>定数を参照するには以下の関数を使ってください．</p>
+
+<pre>VALUE rb_const_get(VALUE obj, ID id)</pre>
+
+<p>定数を新しく定義するためには『2.1.3 定数定義』で紹介されている関数を使ってください．</p>
+
+<h2 id="label-Ruby-E3-81-A8C-E3-81-A8-E3-81-AE-E6-83-85-E5-A0-B1-E5-85-B1-E6-9C-89"><a href="#label-Ruby-E3-81-A8C-E3-81-A8-E3-81-AE-E6-83-85-E5-A0-B1-E5-85-B1-E6-9C-89">RubyとCとの情報共有</a></h2>
+
+<p>C言語とRubyの間で情報を共有する方法について解説します．</p>
+
+<h3 id="label-C-E3-81-8B-E3-82-89-E5-8F-82-E7-85-A7-E3-81-A7-E3-81-8D-E3-82-8BRuby-E3-81-AE-E5-AE-9A-E6-95-B0"><a href="#label-C-E3-81-8B-E3-82-89-E5-8F-82-E7-85-A7-E3-81-A7-E3-81-8D-E3-82-8BRuby-E3-81-AE-E5-AE-9A-E6-95-B0">Cから参照できるRubyの定数</a></h3>
+
+<p>以下のRubyの定数はCのレベルから参照できます．</p>
+<dl class="rdoc-list note-list"><dt>Qtrue </dt>
+<dt>Qfalse </dt>
+<dd>
+<p>真偽値．C言語から見た「true」と「false」．</p>
+</dd><dt>Qnil </dt>
+<dd>
+<p>C言語から見た「nil」．</p>
+</dd></dl>
+
+<p>RTEST(obj)というマクロはobjがQfalseかQnilのとき0を返します．</p>
+
+<h3 id="label-C-E3-81-A8Ruby-E3-81-A7-E5-85-B1-E6-9C-89-E3-81-95-E3-82-8C-E3-82-8B-E5-A4-A7-E5-9F-9F-E5-A4-89-E6-95-B0"><a href="#label-C-E3-81-A8Ruby-E3-81-A7-E5-85-B1-E6-9C-89-E3-81-95-E3-82-8C-E3-82-8B-E5-A4-A7-E5-9F-9F-E5-A4-89-E6-95-B0">CとRubyで共有される大域変数</a></h3>
+
+<p>CとRubyで大域変数を使って情報を共有できます．共有できる大域変数にはいくつかの種類があります．そのなかでもっとも良く使われると思われるのはrb_define_variable()です．</p>
+
+<pre>void rb_define_variable(const char *name, VALUE *var)</pre>
+
+<p>この関数はRubyとCとで共有する大域変数を定義します．変数名が‘$’で始まらない時には自動的に追加されます．この変数の値を変更すると自動的にRubyの対応する変数の値も変わります．</p>
+
+<p>またRuby側からは更新できない変数もあります．このread onlyの変数は以下の関数で定義します．</p>
+
+<pre>void rb_define_readonly_variable(const char *name, VALUE *var)</pre>
+
+<p>これら変数の他にhookをつけた大域変数を定義できます．hook付きの大域変数は以下の関数を用いて定義します．hook付き大域変数の値の参照や設定はhookで行う必要があります．</p>
+
+<pre>void rb_define_hooked_variable(const char *name, VALUE *var,
+                               VALUE (*getter)(), void (*setter)())</pre>
+
+<p>この関数はCの関数によってhookのつけられた大域変数を定義します．変数が参照された時には関数getterが，変数に値がセットされた時には関数setterが呼ばれる．hookを指定しない場合はgetterやsetterに0を指定します．</p>
+
+<p>getterとsetterの仕様は次の通りです．</p>
+
+<pre>VALUE (*getter)(ID id, VALUE *var);
+void (*setter)(VALUE val, ID id, VALUE *var);</pre>
+
+<p>それから，対応するCの変数を持たないRubyの大域変数を定義することもできます. その変数の値はフック関数のみによって取得・設定されます.</p>
+
+<pre>void rb_define_virtual_variable(const char *name,
+                                VALUE (*getter)(), void (*setter)())</pre>
+
+<p>この関数によって定義されたRubyの大域変数が参照された時にはgetterが，変数に値がセットされた時にはsetterが呼ばれます．</p>
+
+<p>getterとsetterの仕様は以下の通りです．</p>
+
+<pre>(*getter)(ID id);
+(*setter)(VALUE val, ID id);</pre>
+
+<h3 id="label-C-E3-81-AE-E3-83-87-E3-83-BC-E3-82-BF-E3-82-92Ruby-E3-82-AA-E3-83-96-E3-82-B8-E3-82-A7-E3-82-AF-E3-83-88-E3-81-AB-E3-81-99-E3-82-8B"><a href="#label-C-E3-81-AE-E3-83-87-E3-83-BC-E3-82-BF-E3-82-92Ruby-E3-82-AA-E3-83-96-E3-82-B8-E3-82-A7-E3-82-AF-E3-83-88-E3-81-AB-E3-81-99-E3-82-8B">CのデータをRubyオブジェクトにする</a></h3>
+
+<p>Cの世界で定義されたデータ(構造体)をRubyのオブジェクトとして取り扱いたい場合がありえます．このような場合はTypedData_XXX マクロ群を用いて構造体へのポインタとRubyのオブジェクトとを互いに変換できます．</p>
+
+<h4 id="label-E6-A7-8B-E9-80-A0-E4-BD-93-E3-81-8B-E3-82-89-E3-82-AA-E3-83-96-E3-82-B8-E3-82-A7-E3-82-AF-E3-83-88-E3-81-B8"><a href="#label-E6-A7-8B-E9-80-A0-E4-BD-93-E3-81-8B-E3-82-89-E3-82-AA-E3-83-96-E3-82-B8-E3-82-A7-E3-82-AF-E3-83-88-E3-81-B8">構造体からオブジェクトへ</a></h4>
+
+<p>構造体へのポインタsvalをRubyオブジェクトに変換するには次のマクロを使います。</p>
+
+<pre class="ruby"><span class="ruby-constant">TypedData_Wrap_Struct</span>(<span class="ruby-identifier">klass</span>, <span class="ruby-identifier">data_type</span>, <span class="ruby-identifier">sval</span>)
+</pre>
+
+<p>このマクロの戻り値は生成されたオブジェクトを表すVALUE値です．</p>
+
+<p>klassはこのオブジェクトのクラスです．klassは, Objectクラスから派生し, 必ずrb_define_alloc_funcかrb_undef_alloc_funcを呼び出してallocatorを設定してください．</p>
+
+<p>data_typeはこの構造体をRubyが管理するための情報を記述したconst rb_data_type_t型へのポインタです．</p>
+
+<p>rb_data_type_tは次のように定義されています．</p>
+
+<pre>typedef struct rb_data_type_struct rb_data_type_t;
+
+struct rb_data_type_struct {
+    const char *wrap_struct_name;
+    struct {
+        void (*dmark)(void*);
+        void (*dfree)(void*);
+        size_t (*dsize)(const void *);
+        void *reserved[2];
+    } function;
+    const rb_data_type_t *parent;
+    void *data;
+    VALUE flags;
+};</pre>
+
+<p>wrap_struct_nameはこの構造体を識別する名前です．主に統計情報の収集と出力に用いられます．プロセス内で一意であれば特にCやRubyの識別子として有効である必要はありません．</p>
+
+<p>dmarkおよびdfree関数はGC実行中に呼び出されます. なお, GC実行中はRubyオブジェクトのアロケーションは禁止されます. よって, dmarkおよびdfree関数でRubyオブジェクトのアロケーションは行わないでください.</p>
+
+<p>dmarkはガーベージコレクタがオブジェクトへの参照をマークするときに用いる関数です．この構造体がRubyのオブジェクトへの参照を保持するときには, dmarkではrb_gc_markなどを用いて構造体内のすべての参照をマークしなければなりません．そのような参照を含まない時には0を指定します．</p>
+
+<p>dfreeはこの構造体がもう不要になった時に呼ばれる関数です．この関数がガーベージコレクタから呼ばれます．これがRUBY_DEFAULT_FREEの場合は，単純に構造体が解放されます．</p>
+
+<p>dsizeは構造体が消費しているメモリのバイト数を返す関数です．引数として構造体へのポインタが渡されます．実装困難であれば0 を渡しても差し支えありませんが, できるだけ指定するようにしてください．</p>
+
+<p>reservedとparentは0で埋めなければなりません．</p>
+
+<p>dataにはユーザー定義の任意の値を指定できます．Rubyはこの値には関知しないので，好きに使ってください．</p>
+
+<p>flagsには次のフラグのうち当てはまるもののビット和を指定します．いずれもRubyのガーベージコレクタについての深い理解を必要としますので，良くわからない場合には0を指定すると良いでしょう．</p>
+<dl class="rdoc-list note-list"><dt>RUBY_TYPED_FREE_IMMEDIATELY </dt>
+<dd>
+<p>このフラグを指定すると，ガーベージコレクタはこの構造体が不要になった場合にはGC中に直ちにdfreeを呼び出します．dfreeがRuby内部のロック(GVL)を解放する可能性がない場合はこのフラグを指定できます．</p>
+
+<p>指定しない場合はdfree呼び出しは遅延され, ファイナライザと同じタイミングで実行されます．</p>
+</dd><dt>RUBY_TYPED_WB_PROTECTED </dt>
+<dd>
+<p>オブジェクトの実装がライトバリアをサポートしていることを示します．このフラグを指定するとRubyはそのオブジェクトに対してGCをより効率的に実行できます．ただし，指定する場合はユーザーはそのオブジェクトのすべてのメソッドの実装に適切にライトバリアを挿入する責任があります．さもなくばRubyは実行時にクラッシュする可能性があります．</p>
+
+<p>ライトバリアについては<a href="#label-Appendix+D.+-E4-B8-96-E4-BB-A3-E5-88-A5GC">世代別GC</a> も参照してください．</p>
+</dd></dl>
+
+<p>このマクロは例外を発生させる可能性があることに注意してください． ラップされる sval が，解放する必要があるリソース (割り当てられたメモリ，外部ライブラリからのハンドルなど) を保持している場合は，rb_protect を使用する必要があります．</p>
+
+<p>Cの構造体の割当と対応するオブジェクトの生成を同時に行うマクロとして以下のものが提供されています．</p>
+
+<pre class="ruby"><span class="ruby-constant">TypedData_Make_Struct</span>(<span class="ruby-identifier">klass</span>, <span class="ruby-identifier">type</span>, <span class="ruby-identifier">data_type</span>, <span class="ruby-identifier">sval</span>)
+</pre>
+
+<p>このマクロの戻り値は生成されたオブジェクトのVALUE値です．このマクロは以下の式のように働きます:</p>
+
+<pre class="ruby">(<span class="ruby-identifier">sval</span> = <span class="ruby-constant">ZALLOC</span>(<span class="ruby-identifier">type</span>), <span class="ruby-constant">TypedData_Wrap_Struct</span>(<span class="ruby-identifier">klass</span>, <span class="ruby-identifier">data_type</span>, <span class="ruby-identifier">sval</span>))
+</pre>
+
+<p>klass, data_typeはData_Wrap_Structと同じ働きをします．type は割り当てるC構造体の型です．割り当てられた構造体は変数sval に代入されます．この変数の型は (type*) である必要があります．</p>
+
+<h4 id="label-E3-82-AA-E3-83-96-E3-82-B8-E3-82-A7-E3-82-AF-E3-83-88-E3-81-8B-E3-82-89-E6-A7-8B-E9-80-A0-E4-BD-93-E3-81-B8"><a href="#label-E3-82-AA-E3-83-96-E3-82-B8-E3-82-A7-E3-82-AF-E3-83-88-E3-81-8B-E3-82-89-E6-A7-8B-E9-80-A0-E4-BD-93-E3-81-B8">オブジェクトから構造体へ</a></h4>
+
+<p>TypedData_Wrap_StructやTypedData_Make_Structで生成したオブジェクトから構造体へのポインタを復元するには以下のマクロを用います．</p>
+
+<pre>TypedData_Get_Struct(obj, type, &amp;data_type, sval)</pre>
+
+<p>Cの構造体へのポインタは変数svalに代入されます．</p>
+
+<p>これらのマクロの使い方はちょっと分かりにくいので，後で説明する例題を参照してください．</p>
+
+<h2 id="label-E4-BE-8B-3A+dbm-E3-81-AE-E6-8B-A1-E5-BC-B5-E3-83-A9-E3-82-A4-E3-83-96-E3-83-A9-E3-83-AA-E3-81-AE-E4-BD-9C-E6-88-90"><a href="#label-E4-BE-8B-3A+dbm-E3-81-AE-E6-8B-A1-E5-BC-B5-E3-83-A9-E3-82-A4-E3-83-96-E3-83-A9-E3-83-AA-E3-81-AE-E4-BD-9C-E6-88-90">例: dbmの拡張ライブラリの作成</a></h2>
+
+<h3 id="label-E3-83-87-E3-82-A3-E3-83-AC-E3-82-AF-E3-83-88-E3-83-AA-E3-82-92-E4-BD-9C-E3-82-8B"><a href="#label-E3-83-87-E3-82-A3-E3-83-AC-E3-82-AF-E3-83-88-E3-83-AA-E3-82-92-E4-BD-9C-E3-82-8B">ディレクトリを作る</a></h3>
+
+<pre>% mkdir ext/dbm</pre>
+
+<p>Ruby 1.1からは任意のディレクトリでダイナミックライブラリを作ることができるようになりました．Rubyに静的にリンクする場合にはRubyを展開したディレクトリの下，extディレクトリの中に拡張ライブラリ用のディレクトリを作る必要があります．名前は適当に選んで構いません．</p>
+
+<h3 id="label-E8-A8-AD-E8-A8-88-E3-81-99-E3-82-8B"><a href="#label-E8-A8-AD-E8-A8-88-E3-81-99-E3-82-8B">設計する</a></h3>
+
+<p>まあ，当然なんですけど，どういう機能を実現するかどうかまず設計する必要があります．どんなクラスをつくるか，そのクラスにはどんなメソッドがあるか，クラスが提供する定数などについて設計します．</p>
+
+<h3 id="label-C-E3-82-B3-E3-83-BC-E3-83-89-E3-82-92-E6-9B-B8-E3-81-8F"><a href="#label-C-E3-82-B3-E3-83-BC-E3-83-89-E3-82-92-E6-9B-B8-E3-81-8F">Cコードを書く</a></h3>
+
+<p>拡張ライブラリ本体となるC言語のソースを書きます．C言語のソースがひとつの時には「ライブラリ名.c」を選ぶと良いでしょう．C 言語のソースが複数の場合には逆に「ライブラリ名.c」というファイル名は避ける必要があります．オブジェクトファイルとモジュール生成時に中間的に生成される「ライブラリ名.o」というファイルとが衝突するからです．また，後述する mkmf ライブラリのいくつかの関数がコンパイルを要するテストのために「conftest.c」というファイル名を使用することに注意してください．ソースファイル名として「conftest.c」を使用してはなりません．</p>
+
+<p>Rubyは拡張ライブラリをロードする時に「Init_ライブラリ名」という関数を自動的に実行します．dbmライブラリの場合「Init_dbm」です．この関数の中でクラス，モジュール，メソッド，定数などの定義を行います．dbm.cから一部引用します．</p>
+
+<pre>void
+Init_dbm(void)
+{
+    /* DBMクラスを定義する */
+    VALUE cDBM = rb_define_class(&quot;DBM&quot;, rb_cObject);
+    /* DBMはEnumerableモジュールをインクルードする */
+    rb_include_module(cDBM, rb_mEnumerable);
+
+    /* DBMクラスのクラスメソッドopen(): 引数はCの配列で受ける */
+    rb_define_singleton_method(cDBM, &quot;open&quot;, fdbm_s_open, -1);
+
+    /* DBMクラスのメソッドclose(): 引数はなし */
+    rb_define_method(cDBM, &quot;close&quot;, fdbm_close, 0);
+    /* DBMクラスのメソッド[]: 引数は1個 */
+    rb_define_method(cDBM, &quot;[]&quot;, fdbm_fetch, 1);
+
+    /* ... */
+
+    /* DBMデータを格納するインスタンス変数名のためのID */
+    id_dbm = rb_intern(&quot;dbm&quot;);
+}</pre>
+
+<p>DBMライブラリはdbmのデータと対応するオブジェクトになるはずですから，Cの世界のdbmをRubyの世界に取り込む必要があります．</p>
+
+<p>dbm.cではTypedData_Make_Structを以下のように使っています．</p>
+
+<pre>struct dbmdata {
+    int  di_size;
+    DBM *di_dbm;
+};
+
+static const rb_data_type_t dbm_type = {
+    &quot;dbm&quot;,
+    {0, free_dbm, memsize_dbm,},
+    0, 0,
+    RUBY_TYPED_FREE_IMMEDIATELY,
+};
+
+obj = TypedData_Make_Struct(klass, struct dbmdata, &amp;dbm_type, dbmp);</pre>
+
+<p>ここではdbmdata構造体へのポインタをRubyオブジェクトにカプセル化しています．DBM*を直接カプセル化しないのはclose()した時の処理を考えてのことです．</p>
+
+<p>Rubyオブジェクトからdbmdata構造体のポインタを取り出すために以下のマクロを使っています．</p>
+
+<pre>#define GetDBM(obj, dbmp) do {\
+    TypedData_Get_Struct((obj), struct dbmdata, &amp;dbm_type, (dbmp));\
+    if ((dbmp) == 0) closed_dbm();\
+    if ((dbmp)-&gt;di_dbm == 0) closed_dbm();\
+} while (0)</pre>
+
+<p>ちょっと複雑なマクロですが，要するにdbmdata構造体のポインタの取り出しと，closeされているかどうかのチェックをまとめているだけです．</p>
+
+<p>DBMクラスにはたくさんメソッドがありますが，分類すると3種類の引数の受け方があります．ひとつは引数の数が固定のもので，例としてはdeleteメソッドがあります．deleteメソッドを実装しているfdbm_delete()はこのようになっています．</p>
+
+<pre>static VALUE
+fdbm_delete(VALUE obj, VALUE keystr)
+{
+    /* ... */
+}</pre>
+
+<p>引数の数が固定のタイプは第1引数がself，第2引数以降がメソッドの引数となります．</p>
+
+<p>引数の数が不定のものはCの配列で受けるものとRubyの配列で受けるものとがあります．dbmライブラリの中で，Cの配列で受けるものはDBMのクラスメソッドであるopen()です．これを実装している関数fdbm_s_open()はこうなっています．</p>
+
+<pre>static VALUE
+fdbm_s_open(int argc, VALUE *argv, VALUE klass)
+{
+    /* ... */
+
+    if (rb_scan_args(argc, argv, &quot;11&quot;, &amp;file, &amp;vmode) == 1) {
+        mode = 0666;          /* default value */
+    }
+
+    /* ... */
+}</pre>
+
+<p>このタイプの関数は第1引数が与えられた引数の数，第2引数が与えられた引数の入っている配列になります．selfは第3引数として与えられます．</p>
+
+<p>この配列で与えられた引数を解析するための関数がopen()でも使われているrb_scan_args()です．第3引数に指定したフォーマットに従い，第4引数以降に指定したVALUEへの参照に値を代入してくれます．</p>
+
+<p>引数の数をチェックするだけならrb_check_arity()が使えます．これは引数をリストとして扱いたいときに便利です．</p>
+
+<p>引数をRubyの配列として受け取るメソッドの例にはThread#initializeがあります．実装はこうです．</p>
+
+<pre>static VALUE
+thread_initialize(VALUE thread, VALUE args)
+{
+    /* ... */
+}</pre>
+
+<p>第1引数はself，第2引数はRubyの配列です．</p>
+
+<p>*注意事項*</p>
+
+<p>Rubyと共有はしないがRubyのオブジェクトを格納する可能性のあるCの大域変数は以下の関数を使ってRubyインタプリタに変数の存在を教えてあげてください．でないとGCでトラブルを起こします．</p>
+
+<pre class="ruby"><span class="ruby-identifier">void</span> <span class="ruby-identifier">rb_global_variable</span>(<span class="ruby-constant">VALUE</span> <span class="ruby-operator">*</span><span class="ruby-identifier">var</span>)
+</pre>
+
+<h3 id="label-extconf.rb-E3-82-92-E7-94-A8-E6-84-8F-E3-81-99-E3-82-8B"><a href="#label-extconf.rb-E3-82-92-E7-94-A8-E6-84-8F-E3-81-99-E3-82-8B">extconf.rbを用意する</a></h3>
+
+<p>Makefileを作る場合の雛型になるextconf.rbというファイルを作ります．extconf.rbはライブラリのコンパイルに必要な条件のチェックなどを行うことが目的です．まず，</p>
+
+<pre class="ruby"><span class="ruby-identifier">require</span> <span class="ruby-string">&#39;mkmf&#39;</span>
+</pre>
+
+<p>をextconf.rbの先頭に置きます．extconf.rbの中では以下のRuby関数を使うことが出来ます．</p>
+
+<pre>have_library(lib, func): ライブラリの存在チェック
+have_func(func, header): 関数の存在チェック
+have_header(header): ヘッダファイルの存在チェック
+create_makefile(target[, target_prefix]): Makefileの生成</pre>
+
+<p>以下の変数を使うことができます．</p>
+
+<pre>$CFLAGS: コンパイル時に追加的に指定するフラグ(-Oなど)
+$CPPFLAGS: プリプロセッサに追加的に指定するフラグ(-Iや-Dなど)
+$LDFLAGS: リンク時に追加的に指定するフラグ(-Lなど)
+$objs: リンクされるオブジェクトファイル名のリスト</pre>
+
+<p>オブジェクトファイルのリストは，通常はソースファイルを検索して自動的に生成されますが，makeの途中でソースを生成するような場合は明示的に指定する必要があります．</p>
+
+<p>ライブラリをコンパイルする条件が揃わず，そのライブラリをコンパイルしない時にはcreate_makefileを呼ばなければMakefileは生成されず，コンパイルも行われません．</p>
+
+<h3 id="label-depend-E3-82-92-E7-94-A8-E6-84-8F-E3-81-99-E3-82-8B"><a href="#label-depend-E3-82-92-E7-94-A8-E6-84-8F-E3-81-99-E3-82-8B">dependを用意する</a></h3>
+
+<p>もし，ディレクトリにdependというファイルが存在すれば，Makefileが依存関係をチェックしてくれます．</p>
+
+<pre>% gcc -MM *.c &gt; depend</pre>
+
+<p>などで作ることが出来ます．あって損は無いでしょう．</p>
+
+<h3 id="label-Makefile-E3-82-92-E7-94-9F-E6-88-90-E3-81-99-E3-82-8B"><a href="#label-Makefile-E3-82-92-E7-94-9F-E6-88-90-E3-81-99-E3-82-8B">Makefileを生成する</a></h3>
+
+<p>Makefileを実際に生成するためには</p>
+
+<pre class="ruby"><span class="ruby-identifier">ruby</span> <span class="ruby-identifier">extconf</span>.<span class="ruby-identifier">rb</span>
+</pre>
+
+<p>とします．extconf.rbに require ‘mkmf’ の行がない場合にはエラーになりますので，引数を追加して</p>
+
+<pre>ruby -r mkmf extconf.rb</pre>
+
+<p>としてください．</p>
+
+<p>site_ruby ディレクトリでなく，vendor_ruby ディレクトリにインストールする場合には以下のように –vendor オプションを加えてください．</p>
+
+<pre class="ruby"><span class="ruby-identifier">ruby</span> <span class="ruby-identifier">extconf</span>.<span class="ruby-identifier">rb</span> <span class="ruby-operator">-</span><span class="ruby-operator">-</span><span class="ruby-identifier">vendor</span>
+</pre>
+
+<p>ディレクトリをext以下に用意した場合にはRuby全体のmakeの時に自動的にMakefileが生成されますので，このステップは不要です．</p>
+
+<h3 id="label-make-E3-81-99-E3-82-8B"><a href="#label-make-E3-81-99-E3-82-8B">makeする</a></h3>
+
+<p>動的リンクライブラリを生成する場合にはその場でmakeしてください．必要であれば make install でインストールされます．</p>
+
+<p>ext以下にディレクトリを用意した場合は，Rubyのディレクトリでmakeを実行するとMakefileを生成からmake，必要によってはそのモジュールのRubyへのリンクまで自動的に実行してくれます．extconf.rbを書き換えるなどしてMakefileの再生成が必要な時はまたRubyディレクトリでmakeしてください．</p>
+
+<p>拡張ライブラリはmake installでRubyライブラリのディレクトリの下にコピーされます．もし拡張ライブラリと協調して使うRubyで記述されたプログラムがあり，Rubyライブラリに置きたい場合には，拡張ライブラリ用のディレクトリの下に lib というディレクトリを作り，そこに 拡張子 .rb のファイルを置いておけば同時にインストールされます．</p>
+
+<h3 id="label-E3-83-87-E3-83-90-E3-83-83-E3-82-B0"><a href="#label-E3-83-87-E3-83-90-E3-83-83-E3-82-B0">デバッグ</a></h3>
+
+<p>まあ，デバッグしないと動かないでしょうね．ext/Setupにディレクトリ名を書くと静的にリンクするのでデバッガが使えるようになります．その分コンパイルが遅くなりますけど．</p>
+
+<h3 id="label-E3-81-A7-E3-81-8D-E3-81-82-E3-81-8C-E3-82-8A"><a href="#label-E3-81-A7-E3-81-8D-E3-81-82-E3-81-8C-E3-82-8A">できあがり</a></h3>
+
+<p>後はこっそり使うなり，広く公開するなり，売るなり，ご自由にお使いください．Rubyの作者は拡張ライブラリに関して一切の権利を主張しません．</p>
+
+<h2 id="label-Appendix+A.+Ruby-E3-81-AE-E3-82-BD-E3-83-BC-E3-82-B9-E3-82-B3-E3-83-BC-E3-83-89-E3-81-AE-E5-88-86-E9-A1-9E"><a href="#label-Appendix+A.+Ruby-E3-81-AE-E3-82-BD-E3-83-BC-E3-82-B9-E3-82-B3-E3-83-BC-E3-83-89-E3-81-AE-E5-88-86-E9-A1-9E">Appendix A. Rubyのソースコードの分類</a></h2>
+
+<p>Rubyのソースはいくつかに分類することが出来ます．このうちクラスライブラリの部分は基本的に拡張ライブラリと同じ作り方になっています．これらのソースは今までの説明でほとんど理解できると思います．</p>
+
+<h3 id="label-Ruby-E3-81-AE-E3-83-98-E3-83-83-E3-83-80-E3-83-95-E3-82-A1-E3-82-A4-E3-83-AB"><a href="#label-Ruby-E3-81-AE-E3-83-98-E3-83-83-E3-83-80-E3-83-95-E3-82-A1-E3-82-A4-E3-83-AB">Rubyのヘッダファイル</a></h3>
+
+<p><code>$repo_root/include/ruby</code>以下はすべて<code>make install</code>でインストールされます．拡張ライブラリからは，<code>#include &lt;ruby.h&gt;</code>でインクルードする必要があります．<code>rbimpl_</code>，<code>RBIMPL_</code>のプレフィックスが付いた実装の詳細のためのシンボルを除き，すべてのシンボルは公開APIです．</p>
+
+<p>拡張ライブラリで直接インクルードできるのは，<code>$repo_root/include/ruby/*.h</code>のうち，対応する<code>HAVE_RUBY_*_H</code>マクロが<code>$repo_root/include/ruby.h</code>ヘッダーで定義されているものです．</p>
+
+<h3 id="label-Ruby-E8-A8-80-E8-AA-9E-E3-81-AE-E3-82-B3-E3-82-A2"><a href="#label-Ruby-E8-A8-80-E8-AA-9E-E3-81-AE-E3-82-B3-E3-82-A2">Ruby言語のコア</a></h3>
+<dl class="rdoc-list note-list"><dt><a href="class_c.html">class.c</a>    </dt>
+<dd>
+<p>クラスとモジュール</p>
+</dd><dt><a href="error_c.html">error.c</a>    </dt>
+<dd>
+<p>例外クラスと例外機構</p>
+</dd><dt><a href="gc_c.html">gc.c</a>       </dt>
+<dd>
+<p>記憶領域管理</p>
+</dd><dt><a href="load_c.html">load.c</a>     </dt>
+<dd>
+<p>ライブラリのロード</p>
+</dd><dt><a href="object_c.html">object.c</a>   </dt>
+<dd>
+<p>オブジェクト</p>
+</dd><dt><a href="variable_c.html">variable.c</a> </dt>
+<dd>
+<p>変数と定数</p>
+</dd></dl>
+
+<h3 id="label-Ruby-E3-81-AE-E6-A7-8B-E6-96-87-E8-A7-A3-E6-9E-90-E5-99-A8"><a href="#label-Ruby-E3-81-AE-E6-A7-8B-E6-96-87-E8-A7-A3-E6-9E-90-E5-99-A8">Rubyの構文解析器</a></h3>
+<dl class="rdoc-list note-list"><dt><a href="parse_y.html">parse.y</a>       </dt>
+<dd>
+<p>字句解析器と構文定義</p>
+</dd><dt><a href="parse_c.html">parse.c</a>       </dt>
+<dd>
+<p>自動生成</p>
+</dd><dt>defs/keywords </dt>
+<dd>
+<p>予約語</p>
+</dd><dt><a href="lex_c.html">lex.c</a>         </dt>
+<dd>
+<p>自動生成</p>
+</dd></dl>
+
+<h3 id="label-Ruby-E3-81-AE-E8-A9-95-E4-BE-A1-E5-99-A8+-28-E9-80-9A-E7-A7-B0YARV-29"><a href="#label-Ruby-E3-81-AE-E8-A9-95-E4-BE-A1-E5-99-A8+-28-E9-80-9A-E7-A7-B0YARV-29">Rubyの評価器 (通称YARV)</a></h3>
+
+<pre>compile.c
+eval.c
+eval_error.c
+eval_jump.c
+eval_safe.c
+insns.def           : 仮想機械語の定義
+iseq.c              : VM::ISeqの実装
+thread.c            : スレッド管理とコンテキスト切り替え
+thread_win32.c      : スレッド実装
+thread_pthread.c    : 同上
+vm.c
+vm_dump.c
+vm_eval.c
+vm_exec.c
+vm_insnhelper.c
+vm_method.c
+
+defs/opt_insns_unif.def  : 命令融合
+defs/opt_operand.def     : 最適化のための定義
+
+  -&gt; insn*.inc           : 自動生成
+  -&gt; opt*.inc            : 自動生成
+  -&gt; vm.inc              : 自動生成</pre>
+
+<h3 id="label-E6-AD-A3-E8-A6-8F-E8-A1-A8-E7-8F-BE-E3-82-A8-E3-83-B3-E3-82-B8-E3-83-B3+-28-E9-AC-BC-E9-9B-B2-29"><a href="#label-E6-AD-A3-E8-A6-8F-E8-A1-A8-E7-8F-BE-E3-82-A8-E3-83-B3-E3-82-B8-E3-83-B3+-28-E9-AC-BC-E9-9B-B2-29">正規表現エンジン (鬼雲)</a></h3>
+
+<pre class="ruby"><span class="ruby-identifier">regcomp</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">regenc</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">regerror</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">regexec</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">regparse</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">regsyntax</span>.<span class="ruby-identifier">c</span>
+</pre>
+
+<h3 id="label-E3-83-A6-E3-83-BC-E3-83-86-E3-82-A3-E3-83-AA-E3-83-86-E3-82-A3-E9-96-A2-E6-95-B0"><a href="#label-E3-83-A6-E3-83-BC-E3-83-86-E3-82-A3-E3-83-AA-E3-83-86-E3-82-A3-E9-96-A2-E6-95-B0">ユーティリティ関数</a></h3>
+<dl class="rdoc-list note-list"><dt><a href="debug_c.html">debug.c</a>    </dt>
+<dd>
+<p>Cデバッガ用のデバッグシンボル</p>
+</dd><dt><a href="dln_c.html">dln.c</a>      </dt>
+<dd>
+<p>動的ローディング</p>
+</dd><dt><a href="st_c.html">st.c</a>       </dt>
+<dd>
+<p>汎用ハッシュ表</p>
+</dd><dt><a href="strftime_c.html">strftime.c</a> </dt>
+<dd>
+<p>時刻整形</p>
+</dd><dt><a href="util_c.html">util.c</a>     </dt>
+<dd>
+<p>その他のユーティリティ</p>
+</dd></dl>
+
+<h3 id="label-Ruby-E3-82-B3-E3-83-9E-E3-83-B3-E3-83-89-E3-81-AE-E5-AE-9F-E8-A3-85"><a href="#label-Ruby-E3-82-B3-E3-83-9E-E3-83-B3-E3-83-89-E3-81-AE-E5-AE-9F-E8-A3-85">Rubyコマンドの実装</a></h3>
+
+<pre class="ruby"><span class="ruby-identifier">dmyext</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">dmydln</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">dmyencoding</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">id</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">inits</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">main</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">ruby</span>.<span class="ruby-identifier">c</span>
+<span class="ruby-identifier">version</span>.<span class="ruby-identifier">c</span>
+
+<span class="ruby-identifier">gem_prelude</span>.<span class="ruby-identifier">rb</span>
+<span class="ruby-identifier">prelude</span>.<span class="ruby-identifier">rb</span>
+</pre>
+
+<h3 id="label-E3-82-AF-E3-83-A9-E3-82-B9-E3-83-A9-E3-82-A4-E3-83-96-E3-83-A9-E3-83-AA"><a href="#label-E3-82-AF-E3-83-A9-E3-82-B9-E3-83-A9-E3-82-A4-E3-83-96-E3-83-A9-E3-83-AA">クラスライブラリ</a></h3>
+<dl class="rdoc-list note-list"><dt><a href="array_c.html">array.c</a>      </dt>
+<dd>
+<p><a href="Array.html"><code>Array</code></a></p>
+</dd><dt><a href="bignum_c.html">bignum.c</a>     </dt>
+<dd>
+<p>Bignum</p>
+</dd><dt><a href="compar_c.html">compar.c</a>     </dt>
+<dd>
+<p><a href="Comparable.html"><code>Comparable</code></a></p>
+</dd><dt><a href="complex_c.html">complex.c</a>    </dt>
+<dd>
+<p><a href="Complex.html"><code>Complex</code></a></p>
+</dd><dt><a href="cont_c.html">cont.c</a>       </dt>
+<dd>
+<p><a href="Fiber.html"><code>Fiber</code></a>, <a href="Continuation.html"><code>Continuation</code></a></p>
+</dd><dt><a href="dir_c.html">dir.c</a>        </dt>
+<dd>
+<p><a href="Dir.html"><code>Dir</code></a></p>
+</dd><dt><a href="enum_c.html">enum.c</a>       </dt>
+<dd>
+<p><a href="Enumerable.html"><code>Enumerable</code></a></p>
+</dd><dt><a href="enumerator_c.html">enumerator.c</a> </dt>
+<dd>
+<p><a href="Enumerator.html"><code>Enumerator</code></a></p>
+</dd><dt><a href="file_c.html">file.c</a>       </dt>
+<dd>
+<p><a href="File.html"><code>File</code></a></p>
+</dd><dt><a href="hash_c.html">hash.c</a>       </dt>
+<dd>
+<p><a href="Hash.html"><code>Hash</code></a></p>
+</dd><dt><a href="io_c.html">io.c</a>         </dt>
+<dd>
+<p><a href="IO.html"><code>IO</code></a></p>
+</dd><dt><a href="marshal_c.html">marshal.c</a>    </dt>
+<dd>
+<p><a href="Marshal.html"><code>Marshal</code></a></p>
+</dd><dt><a href="math_c.html">math.c</a>       </dt>
+<dd>
+<p><a href="Math.html"><code>Math</code></a></p>
+</dd><dt><a href="numeric_c.html">numeric.c</a>    </dt>
+<dd>
+<p><a href="Numeric.html"><code>Numeric</code></a>, <a href="Integer.html"><code>Integer</code></a>, Fixnum, <a href="Float.html"><code>Float</code></a></p>
+</dd><dt><a href="pack_c.html">pack.c</a>       </dt>
+<dd>
+<p><a href="Array.html#method-i-pack"><code>Array#pack</code></a>, <a href="String.html#method-i-unpack"><code>String#unpack</code></a></p>
+</dd><dt><a href="proc_c.html">proc.c</a>       </dt>
+<dd>
+<p><a href="Binding.html"><code>Binding</code></a>, <a href="Proc.html"><code>Proc</code></a></p>
+</dd><dt><a href="process_c.html">process.c</a>    </dt>
+<dd>
+<p>Process</p>
+</dd><dt><a href="random_c.html">random.c</a>     </dt>
+<dd>
+<p>乱数</p>
+</dd><dt><a href="range_c.html">range.c</a>      </dt>
+<dd>
+<p><a href="Range.html"><code>Range</code></a></p>
+</dd><dt><a href="rational_c.html">rational.c</a>   </dt>
+<dd>
+<p><a href="Rational.html"><code>Rational</code></a></p>
+</dd><dt><a href="re_c.html">re.c</a>         </dt>
+<dd>
+<p><a href="Regexp.html"><code>Regexp</code></a>, <a href="MatchData.html"><code>MatchData</code></a></p>
+</dd><dt><a href="signal_c.html">signal.c</a>     </dt>
+<dd>
+<p><a href="Signal.html"><code>Signal</code></a></p>
+</dd><dt><a href="sprintf_c.html">sprintf.c</a>    </dt>
+<dd>
+<p><a href="Kernel.html#method-i-sprintf"><code>String#sprintf</code></a></p>
+</dd><dt><a href="string_c.html">string.c</a>     </dt>
+<dd>
+<p><a href="String.html"><code>String</code></a></p>
+</dd><dt><a href="struct_c.html">struct.c</a>     </dt>
+<dd>
+<p><a href="Struct.html"><code>Struct</code></a></p>
+</dd><dt><a href="time_c.html">time.c</a>       </dt>
+<dd>
+<p><a href="Time.html"><code>Time</code></a></p>
+</dd><dt>defs/known_errors.def </dt>
+<dd>
+<p>例外クラス Errno::*</p>
+</dd><dt>-&gt; <a href="known_errors_inc.html">known_errors.inc</a>   </dt>
+<dd>
+<p>自動生成</p>
+</dd></dl>
+
+<h3 id="label-E5-A4-9A-E8-A8-80-E8-AA-9E-E5-8C-96"><a href="#label-E5-A4-9A-E8-A8-80-E8-AA-9E-E5-8C-96">多言語化</a></h3>
+<dl class="rdoc-list note-list"><dt><a href="encoding_c.html">encoding.c</a>  </dt>
+<dd>
+<p><a href="Encoding.html"><code>Encoding</code></a></p>
+</dd><dt><a href="transcode_c.html">transcode.c</a> </dt>
+<dd>
+<p><a href="Encoding/Converter.html"><code>Encoding::Converter</code></a></p>
+</dd><dt>enc/*.c     </dt>
+<dd>
+<p>エンコーディングクラス群</p>
+</dd><dt>enc/trans/* </dt>
+<dd>
+<p>コードポイント対応表</p>
+</dd></dl>
+
+<h3 id="label-goruby-E3-82-B3-E3-83-9E-E3-83-B3-E3-83-89-E3-81-AE-E5-AE-9F-E8-A3-85"><a href="#label-goruby-E3-82-B3-E3-83-9E-E3-83-B3-E3-83-89-E3-81-AE-E5-AE-9F-E8-A3-85">gorubyコマンドの実装</a></h3>
+
+<pre>goruby.c
+golf_prelude.rb      : goruby固有のライブラリ
+  -&gt; golf_prelude.c  : 自動生成</pre>
+
+<h2 id="label-Appendix+B.+-E6-8B-A1-E5-BC-B5-E7-94-A8-E9-96-A2-E6-95-B0-E3-83-AA-E3-83-95-E3-82-A1-E3-83-AC-E3-83-B3-E3-82-B9"><a href="#label-Appendix+B.+-E6-8B-A1-E5-BC-B5-E7-94-A8-E9-96-A2-E6-95-B0-E3-83-AA-E3-83-95-E3-82-A1-E3-83-AC-E3-83-B3-E3-82-B9">Appendix B. 拡張用関数リファレンス</a></h2>
+
+<p>C言語からRubyの機能を利用するAPIは以下の通りである．</p>
+
+<h3 id="label-E5-9E-8B"><a href="#label-E5-9E-8B">型</a></h3>
+<dl class="rdoc-list note-list"><dt>VALUE </dt>
+<dd>
+<p>Rubyオブジェクトを表現する型．必要に応じてキャストして用いる．組み込み型を表現するCの型はruby.hに記述してあるRで始まる構造体である．VALUE型をこれらにキャストするためにRで始まる構造体名を全て大文字にした名前のマクロが用意されている．</p>
+</dd></dl>
+
+<h3 id="label-E5-A4-89-E6-95-B0-E3-83-BB-E5-AE-9A-E6-95-B0"><a href="#label-E5-A4-89-E6-95-B0-E3-83-BB-E5-AE-9A-E6-95-B0">変数・定数</a></h3>
+<dl class="rdoc-list note-list"><dt>Qnil </dt>
+<dd>
+<p>定数: nilオブジェクト</p>
+</dd><dt>Qtrue </dt>
+<dd>
+<p>定数: trueオブジェクト(真のデフォルト値)</p>
+</dd><dt>Qfalse </dt>
+<dd>
+<p>定数: falseオブジェクト</p>
+</dd></dl>
+
+<h3 id="label-C-E3-83-87-E3-83-BC-E3-82-BF-E3-81-AE-E3-82-AB-E3-83-97-E3-82-BB-E3-83-AB-E5-8C-96"><a href="#label-C-E3-83-87-E3-83-BC-E3-82-BF-E3-81-AE-E3-82-AB-E3-83-97-E3-82-BB-E3-83-AB-E5-8C-96">Cデータのカプセル化</a></h3>
+<dl class="rdoc-list note-list"><dt>Data_Wrap_Struct(VALUE klass, void (*mark)(), void (*free)(), void *sval) </dt>
+<dd>
+<p>Cの任意のポインタをカプセル化したRubyオブジェクトを返す．このポインタがRubyからアクセスされなくなった時，freeで指定した関数が呼ばれる．また，このポインタの指すデータが他のRubyオブジェクトを指している場合，markに指定する関数でマークする必要がある．</p>
+</dd><dt>Data_Make_Struct(klass, type, mark, free, sval) </dt>
+<dd>
+<p>type型のメモリをmallocし，変数svalに代入した後，それをカプセル化したデータを返すマクロ．</p>
+</dd><dt>Data_Get_Struct(data, type, sval) </dt>
+<dd>
+<p>dataからtype型のポインタを取り出し変数svalに代入するマクロ．</p>
+</dd></dl>
+
+<h3 id="label-E5-9E-8B-E3-83-81-E3-82-A7-E3-83-83-E3-82-AF"><a href="#label-E5-9E-8B-E3-83-81-E3-82-A7-E3-83-83-E3-82-AF">型チェック</a></h3>
+
+<pre>RB_TYPE_P(value, type)
+TYPE(value)
+FIXNUM_P(value)
+NIL_P(value)
+RB_INTEGER_TYPE_P(value)
+RB_FLOAT_TYPE_P(value)
+void Check_Type(VALUE value, int type)</pre>
+
+<h3 id="label-E5-9E-8B-E5-A4-89-E6-8F-9B"><a href="#label-E5-9E-8B-E5-A4-89-E6-8F-9B">型変換</a></h3>
+
+<pre>FIX2INT(value), INT2FIX(i)
+FIX2LONG(value), LONG2FIX(l)
+NUM2INT(value), INT2NUM(i)
+NUM2UINT(value), UINT2NUM(ui)
+NUM2LONG(value), LONG2NUM(l)
+NUM2ULONG(value), ULONG2NUM(ul)
+NUM2LL(value), LL2NUM(ll)
+NUM2ULL(value), ULL2NUM(ull)
+NUM2OFFT(value), OFFT2NUM(off)
+NUM2SIZET(value), SIZET2NUM(size)
+NUM2SSIZET(value), SSIZET2NUM(ssize)
+rb_integer_pack(value, words, numwords, wordsize, nails, flags), rb_integer_unpack(words, numwords, wordsize, nails, flags)
+NUM2DBL(value)
+rb_float_new(f)
+RSTRING_LEN(str)
+RSTRING_PTR(str)
+StringValue(value)
+StringValuePtr(value)
+StringValueCStr(value)
+rb_str_new2(s)</pre>
+
+<h3 id="label-E3-82-AF-E3-83-A9-E3-82-B9-2F-E3-83-A2-E3-82-B8-E3-83-A5-E3-83-BC-E3-83-AB-E5-AE-9A-E7-BE-A9"><a href="#label-E3-82-AF-E3-83-A9-E3-82-B9-2F-E3-83-A2-E3-82-B8-E3-83-A5-E3-83-BC-E3-83-AB-E5-AE-9A-E7-BE-A9">クラス/モジュール定義</a></h3>
+<dl class="rdoc-list note-list"><dt>VALUE rb_define_class(const char *name, VALUE super) </dt>
+<dd>
+<p>superのサブクラスとして新しいRubyクラスを定義する．</p>
+</dd><dt>VALUE rb_define_class_under(VALUE module, const char *name, VALUE super) </dt>
+<dd>
+<p>superのサブクラスとして新しいRubyクラスを定義し，moduleの定数として定義する．</p>
+</dd><dt>VALUE rb_define_module(const char *name) </dt>
+<dd>
+<p>新しいRubyモジュールを定義する．</p>
+</dd><dt>VALUE rb_define_module_under(VALUE module, const char *name) </dt>
+<dd>
+<p>新しいRubyモジュールを定義し，moduleの定数として定義する．</p>
+</dd><dt>void rb_include_module(VALUE klass, VALUE module) </dt>
+<dd>
+<p>モジュールをインクルードする．classがすでにmoduleをインクルードしている時には何もしない(多重インクルードの禁止)．</p>
+</dd><dt>void rb_extend_object(VALUE object, VALUE module) </dt>
+<dd>
+<p>オブジェクトをモジュール(で定義されているメソッド)で拡張する．</p>
+</dd></dl>
+
+<h3 id="label-E5-A4-A7-E5-9F-9F-E5-A4-89-E6-95-B0-E5-AE-9A-E7-BE-A9"><a href="#label-E5-A4-A7-E5-9F-9F-E5-A4-89-E6-95-B0-E5-AE-9A-E7-BE-A9">大域変数定義</a></h3>
+<dl class="rdoc-list note-list"><dt>void rb_define_variable(const char *name, VALUE *var) </dt>
+<dd>
+<p>RubyとCとで共有するグローバル変数を定義する．変数名が‘$’で始まらない時には自動的に追加される．nameとしてRubyの識別子として許されない文字(例えば‘ ’)を含む場合にはRubyプログラムからは見えなくなる．</p>
+</dd><dt>void rb_define_readonly_variable(const char *name, VALUE *var) </dt>
+<dd>
+<p>RubyとCとで共有するread onlyのグローバル変数を定義する．read onlyであること以外はrb_define_variable()と同じ．</p>
+</dd><dt>void rb_define_virtual_variable(const char *name, VALUE (*getter)(), void (*setter)()) </dt>
+<dd>
+<p>関数によって実現されるRuby変数を定義する．変数が参照された時にはgetterが，変数に値がセットされた時にはsetterが呼ばれる．</p>
+</dd><dt>void rb_define_hooked_variable(const char *name, VALUE *var, VALUE (*getter)(), void (*setter)()) </dt>
+<dd>
+<p>関数によってhookのつけられたグローバル変数を定義する．変数が参照された時にはgetterが，関数に値がセットされた時にはsetterが呼ばれる．getterやsetterに0を指定した時にはhookを指定しないのと同じ事になる．</p>
+</dd><dt>void rb_global_variable(VALUE *var) </dt>
+<dd>
+<p>マークする必要のあるRubyオブジェクトを含む大域変数を，GC によって解放されないように保護する．</p>
+</dd><dt>void rb_gc_register_mark_object(VALUE object) </dt>
+<dd>
+<p>マークする必要のあるRubyオブジェクトを，GCによって解放されないように登録する．</p>
+</dd></dl>
+
+<h3 id="label-E5-AE-9A-E6-95-B0"><a href="#label-E5-AE-9A-E6-95-B0">定数</a></h3>
+<dl class="rdoc-list note-list"><dt>void rb_define_const(VALUE klass, const char *name, VALUE val) </dt>
+<dd>
+<p>定数を定義する．</p>
+</dd><dt>void rb_define_global_const(const char *name, VALUE val) </dt>
+<dd>
+<p>大域定数を定義する．</p>
+
+<pre class="ruby"><span class="ruby-identifier">rb_define_const</span>(<span class="ruby-identifier">rb_cObject</span>, <span class="ruby-identifier">name</span>, <span class="ruby-identifier">val</span>)
+</pre>
+
+<p>と同じ意味．</p>
+</dd></dl>
+
+<h3 id="label-E3-83-A1-E3-82-BD-E3-83-83-E3-83-89-E5-AE-9A-E7-BE-A9"><a href="#label-E3-83-A1-E3-82-BD-E3-83-83-E3-83-89-E5-AE-9A-E7-BE-A9">メソッド定義</a></h3>
+<dl class="rdoc-list note-list"><dt>rb_define_method(VALUE klass, const char *name, VALUE (*func)(ANYARGS), int argc) </dt>
+<dd>
+<p>メソッドを定義する．argcはselfを除く引数の数．argcが-1の時, 関数には引数の数(selfを含まない)を第1引数, 引数の配列を第2 引数とする形式で与えられる(第3引数はself)．argcが-2の時, 第1引数がself, 第2引数がargs(argsは引数を含むRubyの配列)という形式で与えられる．</p>
+</dd><dt>rb_define_private_method(VALUE klass, const char *name, VALUE (*func)(ANYARGS), int argc) </dt>
+<dd>
+<p>privateメソッドを定義する．引数はrb_define_method()と同じ．</p>
+</dd><dt>rb_define_singleton_method(VALUE klass, const char *name, VALUE (*func)(ANYARGS), int argc) </dt>
+<dd>
+<p>特異メソッドを定義する．引数はrb_define_method()と同じ．</p>
+</dd><dt>rb_check_arity(int argc, int min, int max) </dt>
+<dd>
+<p>引数の数であるargcがmin..maxの範囲に入っているかをチェックします．もしmaxがUNLIMITED_ARGUMENTSなら，上限はチェックしません．もしargcが範囲外ならArgumentErrorが発生します．</p>
+</dd><dt>rb_scan_args(int argc, VALUE *argv, const char *fmt, …) </dt>
+<dd>
+<p>argc, argv形式で与えられた指定されたフォーマットに従って引数を分解し，続くVALUEへの参照にセットします．このフォーマットは，ABNFで記述すると以下の通りです．</p>
+
+<pre>scan-arg-spec  := param-arg-spec [option-hash-arg-spec] [block-arg-spec]
+
+param-arg-spec := pre-arg-spec [post-arg-spec] / post-arg-spec /
+                  pre-opt-post-arg-spec
+pre-arg-spec   := num-of-leading-mandatory-args [num-of-optional-args]
+post-arg-spec  := sym-for-variable-length-args
+                  [num-of-trailing-mandatory-args]
+pre-opt-post-arg-spec := num-of-leading-mandatory-args num-of-optional-args
+                         num-of-trailing-mandatory-args
+option-hash-arg-spec := sym-for-option-hash-arg
+block-arg-spec := sym-for-block-arg
+
+num-of-leading-mandatory-args  := DIGIT ; 先頭に置かれる省略不能な引数の数
+num-of-optional-args           := DIGIT ; 続いて置かれる省略可能な引数の数
+sym-for-variable-length-args   := &quot;*&quot;   ; 続いて置かれる可変長引数を
+                                        ; Rubyの配列で取得するための指定
+num-of-trailing-mandatory-args := DIGIT ; 終端に置かれる省略不能な引数の数
+sym-for-option-hash-arg        := &quot;:&quot;   ; オプションハッシュを取得する
+                                        ; ための指定; 省略不能な引数の
+                                        ; 数よりも多くの引数が指定され，
+                                        ; 最後の引数がハッシュ（または
+                                        ; #to_hashで変換可能）の場合に
+                                        ; 取得される．最後の引数がnilの
+                                        ; 場合，可変長引数指定がなく，
+                                        ; 省略不能引数の数よりも多くの
+                                        ; 引数が指定された場合に取得される
+sym-for-block-arg              := &quot;&amp;&quot;   ; イテレータブロックを取得するための
+                                        ; 指定</pre>
+
+<p>フォーマットが“12”の場合，引数は最低1つで，3つ(1+2)まで許されるという意味になります．従って，フォーマット文字列に続いて3つのVALUEへの参照を置く必要があります．それらには取得した変数がセットされます．変数への参照の代わりにNULLを指定することもでき，その場合は取得した引数の値は捨てられます．なお，省略可能引数が省略された時の変数の値はnil(C言語のレベルではQnil)になります．</p>
+
+<p>返り値は与えられた引数の数です．オプションハッシュおよびイテレータブロックは数えません．</p>
+</dd><dt>int rb_get_kwargs(VALUE keyword_hash, const ID *table, int required, int optional, VALUE *values) </dt>
+<dd>
+<p>キーワードで指定された値をtableにしたがって取り出します．tableの最初のrequired個のIDは必須キーワードを表し，続くoptional (optionalが負の場合は-optional-1) 個のIDは省略可能キーワードです．必須キーワードがkeyword_hash中にない場合，“missing keyword”ArgumentErrorが発生します．省略可能キーワードがない場合は，values中の対応する要素にはQundefがセットされます．keyword_hashに使用されない要素がある場合は，optionalが負なら無視されますが，そうでなければ“unknown keyword” ArgumentErrorが発生します．</p>
+</dd><dt>VALUE rb_extract_keywords(VALUE *original_hash) </dt>
+<dd>
+<p>original_hashで参照されるHashオブジェクトから，Symbolであるキーとその値を新しいHashに取り出します．original_hashの指す先には，元のHashがSymbol以外のキーを含んでいた場合はそれらがコピーされた別の新しいHash，そうでなければ0が保存されます．</p>
+</dd></dl>
+
+<h3 id="label-Ruby-E3-83-A1-E3-82-BD-E3-83-83-E3-83-89-E5-91-BC-E3-81-B3-E5-87-BA-E3-81-97"><a href="#label-Ruby-E3-83-A1-E3-82-BD-E3-83-83-E3-83-89-E5-91-BC-E3-81-B3-E5-87-BA-E3-81-97">Rubyメソッド呼び出し</a></h3>
+<dl class="rdoc-list note-list"><dt>VALUE rb_funcall(VALUE recv, ID mid, int narg, …) </dt>
+<dd>
+<p>メソッド呼び出し．文字列からmidを得るためにはrb_intern()を使う．private/protectedなメソッドでも呼び出せる．</p>
+</dd><dt>VALUE rb_funcall2(VALUE recv, ID mid, int argc, VALUE *argv) </dt>
+<dt>VALUE rb_funcallv(VALUE recv, ID mid, int argc, VALUE *argv) </dt>
+<dd>
+<p>メソッド呼び出し．引数をargc, argv形式で渡す．private/protectedなメソッドでも呼び出せる．</p>
+</dd><dt>VALUE rb_funcallv_public(VALUE recv, ID mid, int argc, VALUE *argv) </dt>
+<dd>
+<p>メソッド呼び出し．publicなメソッドしか呼べない．</p>
+</dd><dt>VALUE rb_eval_string(const char *str) </dt>
+<dd>
+<p>文字列をRubyスクリプトとしてコンパイル・実行する．</p>
+</dd><dt>ID rb_intern(const char *name) </dt>
+<dd>
+<p>文字列に対応するIDを返す．</p>
+</dd><dt>char *rb_id2name(ID id) </dt>
+<dd>
+<p>IDに対応する文字列を返す(デバッグ用)．</p>
+</dd><dt>char *rb_class2name(VALUE klass) </dt>
+<dd>
+<p>クラスの名前を返す(デバッグ用)．クラスが名前を持たない時には, 祖先を遡って名前を持つクラスの名前を返す．</p>
+</dd><dt>int rb_respond_to(VALUE obj, ID id) </dt>
+<dd>
+<p>objがidで示されるメソッドを持つかどうかを返す．</p>
+</dd></dl>
+
+<h3 id="label-E3-82-A4-E3-83-B3-E3-82-B9-E3-82-BF-E3-83-B3-E3-82-B9-E5-A4-89-E6-95-B0"><a href="#label-E3-82-A4-E3-83-B3-E3-82-B9-E3-82-BF-E3-83-B3-E3-82-B9-E5-A4-89-E6-95-B0">インスタンス変数</a></h3>
+<dl class="rdoc-list note-list"><dt>VALUE rb_iv_get(VALUE obj, const char *name) </dt>
+<dd>
+<p>objのインスタンス変数の値を得る．‘@’で始まらないインスタンス変数は Rubyプログラムからアクセスできない「隠れた」インスタンス変数になる．定数は大文字の名前を持つクラス(またはモジュール)のインスタンス変数として実装されている．</p>
+</dd><dt>VALUE rb_iv_set(VALUE obj, const char *name, VALUE val) </dt>
+<dd>
+<p>objのインスタンス変数をvalにセットする．</p>
+</dd></dl>
+
+<h3 id="label-E5-88-B6-E5-BE-A1-E6-A7-8B-E9-80-A0"><a href="#label-E5-88-B6-E5-BE-A1-E6-A7-8B-E9-80-A0">制御構造</a></h3>
+<dl class="rdoc-list note-list"><dt>VALUE rb_block_call(VALUE obj, ID mid, int argc, VALUE * argv, VALUE (*func) (ANYARGS), VALUE data2) </dt>
+<dd>
+<p>funcをブロックとして設定し，objをレシーバ，argcとargvを引数としてmidメソッドを呼び出す．funcは第一引数にyieldされた値，第二引数にdata2を受け取る．複数の値がyieldされた場合(Cではrb_yield_values()とrb_yield_values2(), rb_yield_splat())，data2はArrayとしてパックされている．第三, 第四引数のargcとargvによってyieldされた値を取り出すことができる．</p>
+</dd><dt>[OBSOLETE] VALUE rb_iterate(VALUE (*func1)(), VALUE arg1, VALUE (*func2)(), VALUE arg2) </dt>
+<dd>
+<p>func2をブロックとして設定し, func1をイテレータとして呼ぶ．func1には arg1が引数として渡され, func2には第1引数にイテレータから与えられた値, 第2引数にarg2が渡される．</p>
+
+<p>1.9でrb_iterateを使う場合は, func1の中でRubyレベルのメソッドを呼び出さなければならない. 1.9でobsoleteとなった. 代わりにrb_block_callが用意された.</p>
+</dd><dt>VALUE rb_yield(VALUE val) </dt>
+<dd>
+<p>valを値としてイテレータブロックを呼び出す．</p>
+</dd><dt>VALUE rb_rescue(VALUE (*func1)(ANYARGS), VALUE arg1, VALUE (*func2)(ANYARGS), VALUE arg2) </dt>
+<dd>
+<p>関数func1をarg1を引数に呼び出す．func1の実行中に例外が発生した時には func2をarg2を第一引数, 発生した例外オブジェクトを第二引数として呼ぶ．戻り値は例外が発生しなかった時はfunc1 の戻り値, 例外が発生した時にはfunc2の戻り値である．</p>
+</dd><dt>VALUE rb_ensure(VALUE (*func1)(ANYARGS), VALUE arg1, VALUE (*func2)(ANYARGS), VALUE arg2) </dt>
+<dd>
+<p>関数func1をarg1を引数として実行し, 実行終了後(たとえ例外が発生しても) func2をarg2を引数として実行する．戻り値はfunc1 の戻り値である(例外が発生した時は戻らない)．</p>
+</dd><dt>VALUE rb_protect(VALUE (*func) (VALUE), VALUE arg, int *state) </dt>
+<dd>
+<p>関数funcをargを引数として実行し, 例外が発生しなければその戻り値を返す．例外が発生した場合は, *stateに非0をセットしてQnilを返す．rb_jump_tag()を呼ばずに捕捉した例外を無視する場合には，rb_set_errinfo(Qnil)でエラー情報をクリアしなければならない．</p>
+</dd><dt>void rb_jump_tag(int state) </dt>
+<dd>
+<p>rb_protect()やrb_eval_string_protect()で捕捉された例外を再送する．stateはそれらの関数から返された値でなければならない．この関数は直接の呼び出し元に戻らない．</p>
+</dd><dt>void rb_iter_break() </dt>
+<dd>
+<p>現在の最も内側のブロックを終了する．この関数は直接の呼び出し元に戻らない．</p>
+</dd><dt>void rb_iter_break_value(VALUE value) </dt>
+<dd>
+<p>現在の最も内側のブロックをvalueで終了する．ブロックは引数で与えられたvalueを返す．この関数は直接の呼び出し元に戻らない．</p>
+</dd></dl>
+
+<h3 id="label-E4-BE-8B-E5-A4-96-E3-83-BB-E3-82-A8-E3-83-A9-E3-83-BC"><a href="#label-E4-BE-8B-E5-A4-96-E3-83-BB-E3-82-A8-E3-83-A9-E3-83-BC">例外・エラー</a></h3>
+<dl class="rdoc-list note-list"><dt>void rb_warning(const char *fmt, …) </dt>
+<dd>
+<p>rb_verbose時に標準エラー出力に警告情報を表示する．引数はprintf()と同じ．</p>
+</dd><dt>void rb_raise(rb_eRuntimeError, const char *fmt, …) </dt>
+<dd>
+<p>RuntimeError例外を発生させる．引数はprintf()と同じ．</p>
+</dd><dt>void rb_raise(VALUE exception, const char *fmt, …) </dt>
+<dd>
+<p>exceptionで指定した例外を発生させる．fmt以下の引数はprintf()と同じ．</p>
+</dd><dt>void rb_fatal(const char *fmt, …) </dt>
+<dd>
+<p>致命的例外を発生させる．通常の例外処理は行なわれず, インタープリタが終了する(ただしensureで指定されたコードは終了前に実行される)．</p>
+</dd><dt>void rb_bug(const char *fmt, …) </dt>
+<dd>
+<p>インタープリタなどプログラムのバグでしか発生するはずのない状況の時呼ぶ．インタープリタはコアダンプし直ちに終了する．例外処理は一切行なわれない．</p>
+</dd></dl>
+
+<p>注意: “%”PRIsVALUEがObject#to_s(‘+’フラグが指定されているときはObject#inspect)を使ったVALUEの出力に利用できる．これは“%i”と衝突するため，整数には“%d”を使用すること．</p>
+
+<h3 id="label-Ruby-E3-81-AE-E5-88-9D-E6-9C-9F-E5-8C-96-E3-83-BB-E5-AE-9F-E8-A1-8C"><a href="#label-Ruby-E3-81-AE-E5-88-9D-E6-9C-9F-E5-8C-96-E3-83-BB-E5-AE-9F-E8-A1-8C">Rubyの初期化・実行</a></h3>
+
+<p>Rubyをアプリケーションに埋め込む場合には以下のインタフェースを使う．通常の拡張ライブラリには必要ない．</p>
+<dl class="rdoc-list note-list"><dt>void ruby_init() </dt>
+<dd>
+<p>Rubyインタプリタの初期化を行なう．</p>
+</dd><dt>void *ruby_options(int argc, char **argv) </dt>
+<dd>
+<p>Rubyインタプリタのコマンドライン引数の処理を行ない，Rubyのソースコードをコンパイルする．コンパイルされたソースへのポインタ，もしくは特殊値を返す.</p>
+</dd><dt>int ruby_run_node(void *n) </dt>
+<dd>
+<p>コンパイルされたコードを実行する．実行に成功した場合はEXIT_SUCCESSを，エラーが起こったときはそれ以外を返す．</p>
+</dd><dt>void ruby_script(char *name) </dt>
+<dd>
+<p>Rubyのスクリプト名($0)を設定する．</p>
+</dd></dl>
+
+<h3 id="label-E3-82-A4-E3-83-B3-E3-82-BF-E3-83-97-E3-83-AA-E3-82-BF-E3-81-AE-E3-82-A4-E3-83-99-E3-83-B3-E3-83-88-E3-81-AE-E3-83-95-E3-83-83-E3-82-AF"><a href="#label-E3-82-A4-E3-83-B3-E3-82-BF-E3-83-97-E3-83-AA-E3-82-BF-E3-81-AE-E3-82-A4-E3-83-99-E3-83-B3-E3-83-88-E3-81-AE-E3-83-95-E3-83-83-E3-82-AF">インタプリタのイベントのフック</a></h3>
+<dl class="rdoc-list note-list"><dt>void rb_add_event_hook(rb_event_hook_func_t func, rb_event_flag_t events, VALUE data) </dt>
+<dd>
+<p>指定されたインタプリタのイベントに対するフック関数を追加します．eventsは以下の値のorでなければなりません:</p>
+
+<pre class="ruby"><span class="ruby-constant">RUBY_EVENT_LINE</span>
+<span class="ruby-constant">RUBY_EVENT_CLASS</span>
+<span class="ruby-constant">RUBY_EVENT_END</span>
+<span class="ruby-constant">RUBY_EVENT_CALL</span>
+<span class="ruby-constant">RUBY_EVENT_RETURN</span>
+<span class="ruby-constant">RUBY_EVENT_C_CALL</span>
+<span class="ruby-constant">RUBY_EVENT_C_RETURN</span>
+<span class="ruby-constant">RUBY_EVENT_RAISE</span>
+<span class="ruby-constant">RUBY_EVENT_ALL</span>
+</pre>
+
+<p>rb_event_hook_func_tの定義は以下の通りです:</p>
+
+<pre>typedef void (*rb_event_hook_func_t)(rb_event_t event, VALUE data,
+                                     VALUE self, ID id, VALUE klass)</pre>
+
+<p>rb_add_event_hook() の第3引数 data は，フック関数の第2引数として渡されます．これは1.8では現在のNODEへのポインタでした．以下の RB_EVENT_HOOKS_HAVE_CALLBACK_DATA も参照してください．</p>
+</dd><dt>int rb_remove_event_hook(rb_event_hook_func_t func) </dt>
+<dd>
+<p>指定されたフック関数を削除します．</p>
+</dd></dl>
+
+<h3 id="label-E3-83-A1-E3-83-A2-E3-83-AA-E4-BD-BF-E7-94-A8-E9-87-8F"><a href="#label-E3-83-A1-E3-83-A2-E3-83-AA-E4-BD-BF-E7-94-A8-E9-87-8F">メモリ使用量</a></h3>
+<dl class="rdoc-list note-list"><dt>void rb_gc_adjust_memory_usage(ssize_t diff) </dt>
+<dd>
+<p>登録された外部のメモリ使用量を調整します．この関数で外部のライブラリがどのくらいメモリを使っているのかをGCに伝えることができます．正のdiffでこの関数を呼び出すとメモリ使用量の増加を意味します．新しいメモリブロックが確保されたり，ブロックがより大きなサイズで再割り当てされたりした場合などです．負のdiffでこの関数を呼び出すとメモリ使用量の減少を意味します．メモリブロックが解放されたり，メモリブロックがより小さいサイズで再確保されたりした場合などです．この関数はGCを引き起こすかもしれません．</p>
+</dd></dl>
+
+<h3 id="label-E4-BA-92-E6-8F-9B-E6-80-A7-E3-81-AE-E3-81-9F-E3-82-81-E3-81-AE-E3-83-9E-E3-82-AF-E3-83-AD"><a href="#label-E4-BA-92-E6-8F-9B-E6-80-A7-E3-81-AE-E3-81-9F-E3-82-81-E3-81-AE-E3-83-9E-E3-82-AF-E3-83-AD">互換性のためのマクロ</a></h3>
+
+<p>APIの互換性をチェックするために以下のマクロがデフォルトで定義されています．</p>
+<dl class="rdoc-list note-list"><dt>NORETURN_STYLE_NEW </dt>
+<dd>
+<p>NORETURN マクロが関数型マクロとして定義されていることを意味する．</p>
+</dd><dt>HAVE_RB_DEFINE_ALLOC_FUNC </dt>
+<dd>
+<p>rb_define_alloc_func() 関数が提供されていること，つまりallocation framework が使われることを意味する．have_func(“rb_define_alloc_func”, “ruby.h”) の結果と同じ．</p>
+</dd><dt>HAVE_RB_REG_NEW_STR </dt>
+<dd>
+<p>StringオブジェクトからRegexpオブジェクトを作るrb_reg_new_str() 関数が提供されていることを意味する．have_func(“rb_reg_new_str”, “ruby.h”). の結果と同じ．</p>
+</dd><dt>HAVE_RB_IO_T </dt>
+<dd>
+<p>rb_io_t 型が提供されていることを意味する．</p>
+</dd><dt>USE_SYMBOL_AS_METHOD_NAME </dt>
+<dd>
+<p>メソッド名を返すメソッド，Module#methods, #singleton_methods などがSymbolを返すことを意味する．</p>
+</dd><dt>HAVE_RUBY_*_H </dt>
+<dd>
+<p>ruby.h で定義されている．対応するヘッダが提供されていることを意味する．たとえば，HAVE_RUBY_ST_H が定義されている場合は単なる st.h ではなく ruby/st.h を使用する．</p>
+
+<p>これらのマクロに対応するヘッダーファイルは，拡張ライブラリから直接インクルードしてもよい．</p>
+</dd><dt>RB_EVENT_HOOKS_HAVE_CALLBACK_DATA </dt>
+<dd>
+<p>rb_add_event_hook() がフック関数に渡す data を第3引数として受け取ることを意味する．</p>
+</dd></dl>
+
+<h2 id="label-Appendix+C.+extconf.rb-E3-81-A7-E4-BD-BF-E3-81-88-E3-82-8B-E9-96-A2-E6-95-B0-E3-81-9F-E3-81-A1"><a href="#label-Appendix+C.+extconf.rb-E3-81-A7-E4-BD-BF-E3-81-88-E3-82-8B-E9-96-A2-E6-95-B0-E3-81-9F-E3-81-A1">Appendix C. extconf.rbで使える関数たち</a></h2>
+
+<p>extconf.rbの中では利用可能なコンパイル条件チェックの関数は以下の通りである．</p>
+<dl class="rdoc-list note-list"><dt>have_macro(macro, headers) </dt>
+<dd>
+<p>ヘッダファイルheaderをインクルードしてマクロmacroが定義されているかどうかチェックする．マクロが定義されている時true を返す．</p>
+</dd><dt>have_library(lib, func) </dt>
+<dd>
+<p>関数funcを定義しているライブラリlibの存在をチェックする．チェックに成功すると，-llibを$libsに追加し，trueを返す．</p>
+</dd><dt>find_library(lib, func, path…) </dt>
+<dd>
+<p>関数funcを定義しているライブラリlibの存在を -Lpath を追加しながらチェックする．チェックに成功すると，-llibを$libsに追加し，trueを返す．</p>
+</dd><dt>have_func(func, header) </dt>
+<dd>
+<p>ヘッダファイルheaderをインクルードして関数funcの存在をチェックする．funcが標準ではリンクされないライブラリ内のものである時には先にhave_libraryでそのライブラリをチェックしておく事．チェックに成功すると，プリプロセッサマクロ<code>HAVE_{FUNC}</code> を定義し，trueを返す．</p>
+</dd><dt>have_var(var, header) </dt>
+<dd>
+<p>ヘッダファイルheaderをインクルードして変数varの存在をチェックする．varが標準ではリンクされないライブラリ内のものである時には先にhave_libraryでそのライブラリをチェックしておく事．チェックに成功すると，プリプロセッサマクロ<code>HAVE_{VAR}</code> を定義し，trueを返す．</p>
+</dd><dt>have_header(header) </dt>
+<dd>
+<p>ヘッダファイルの存在をチェックする．チェックに成功すると，プリプロセッサマクロ <code>HAVE_{HEADER_H}</code> を定義し，trueを返す．(スラッシュやドットはアンダースコアに置換される)</p>
+</dd><dt>find_header(header, path…) </dt>
+<dd>
+<p>ヘッダファイルheaderの存在を -Ipath を追加しながらチェックする．チェックに成功すると，プリプロセッサマクロ<code>HAVE_{HEADER_H}</code> を定義し，trueを返す．(スラッシュやドットはアンダースコアに置換される)</p>
+</dd><dt>have_struct_member(type, member[, header[, opt]]) </dt>
+<dd>
+<p>ヘッダファイルheaderをインクルードして型typeが定義され，なおかつメンバmemberが存在するかをチェックする．チェックに成功すると，プリプロセッサマクロ <code>HAVE_{TYPE}_{MEMBER}</code> を定義し，trueを返す．</p>
+</dd><dt>have_type(type, header, opt) </dt>
+<dd>
+<p>ヘッダファイルheaderをインクルードして型typeが存在するかをチェックする．チェックに成功すると，プリプロセッサマクロ<code>HAVE_TYPE_{TYPE}</code> を定義し，trueを返す．</p>
+</dd><dt>check_sizeof(type, header) </dt>
+<dd>
+<p>ヘッダファイルheaderをインクルードして型typeのchar単位サイズを調べる．チェックに成功すると，プリプロセッサマクロ<code>SIZEOF_{TYPE}</code> を定義し，そのサイズを返す．定義されていないときはnilを返す．</p>
+</dd><dt>append_cppflags(array-of-flags[, opt]) </dt>
+<dt>append_cflags(array-of-flags[, opt]) </dt>
+<dt>append_ldflags(array-of-flags[, opt]) </dt>
+<dd>
+<p>各flagが使用可能であれば，それぞれ$CPPFLAGS, $CFLAGS, $LDFLAGSに追加する．コンパイラのフラグには移植性がないので，変数に直接追加せずこれらを使うことが望ましい．</p>
+</dd><dt>create_makefile(target[, target_prefix]) </dt>
+<dd>
+<p>拡張ライブラリ用のMakefileを生成する．この関数を呼ばなければそのライブラリはコンパイルされない．targetはモジュール名を表す．</p>
+</dd><dt>find_executable(command, path) </dt>
+<dd>
+<p>コマンドcommandをFile::PATH_SEPARATORで区切られたパス名のリストpathから探す．pathがnilまたは省略された場合は，環境変数PATHの値を使用する．実行可能なコマンドが見つかった場合はパスを含むファイル名，見つからなかった場合はnilを返す．</p>
+</dd><dt>with_config(withval[, default=nil]) </dt>
+<dd>
+<p>コマンドライン上の–with-&lt;withval&gt;で指定されたオプション値を得る．</p>
+</dd><dt>enable_config(config, *defaults) </dt>
+<dt>disable_config(config, *defaults) </dt>
+<dd>
+<p>コマンドライン上の–enable-&lt;config&gt;または–disable-&lt;config&gt;で指定された真偽値を得る．–enable-&lt;config&gt;が指定されていた場合はtrue，–disable-&lt;config&gt;が指定されていた場合はfalseを返す．どちらも指定されていない場合は，ブロックつきで呼び出されている場合は*defaultsをyieldした結果，ブロックなしなら*defaultsを返す．</p>
+</dd><dt>dir_config(target[, default_dir]) </dt>
+<dt>dir_config(target[, default_include, default_lib]) </dt>
+<dd>
+<p>コマンドライン上の–with-&lt;target&gt;-dir, –with-&lt;target&gt;-include, –with-&lt;target&gt;-libのいずれかで指定されるディレクトリを$CFLAGS や $LDFLAGS に追加する．–with-&lt;target&gt;-dir=/pathは–with-&lt;target&gt;-include=/path/include –with-&lt;target&gt;-lib=/path/lib と等価である．追加された include ディレクトリと lib ディレクトリの配列を返す． ([include_dir, lib_dir])</p>
+</dd><dt>pkg_config(pkg, option=nil) </dt>
+<dd>
+<p>pkg-configコマンドからパッケージpkgの情報を [cflags, ldflags, libs] の配列として得る．$CFLAGS, $LDFLAGS, $libs にはそれぞれの値が追加される．</p>
+
+<p>pkg-configの実際のコマンドは，以下の順で試される．</p>
+<ol><li>
+<p>コマンドラインで–with-{pkg}-config={command}オプションが指定された場合: {command} {option}</p>
+</li><li>
+<p>{pkg}-config {option}</p>
+</li><li>
+<p>pkg-config {option} {pkg}</p>
+</li></ol>
+
+<p>optionが指定された場合は，上記の配列の代わりにそのオプションを指定して得られた出力をstripしたものを返す．</p>
+</dd></dl>
+
+<h2 id="label-Appendix+D.+-E4-B8-96-E4-BB-A3-E5-88-A5GC"><a href="#label-Appendix+D.+-E4-B8-96-E4-BB-A3-E5-88-A5GC">Appendix D. 世代別GC</a></h2>
+
+<p>Ruby 2.1から世代別GCに対応しました．我々はこれをRGenGCと呼んでいます．RGenGCは，過去の拡張ライブラリに（ほぼ）互換性を保つように開発されているため，拡張ライブラリ側の対応はほぼ不要です．</p>
+
+<p>ただし，対応をすることで性能を向上することができる可能性があります．もし拡張ライブラリに高い性能が必要である場合は対応を検討して下さい．</p>
+
+<p>とくにRARRAY_PTR()/RHASH_TBL()のようなマクロを用いてポインタに直接アクセスするようなコードは書かないようにして下さい．代わりに，rb_ary_aref(), rb_ary_store() などの，適切な API 関数を利用するようにして下さい．</p>
+
+<p>そのほか，対応についての詳細は <a href="extension_rdoc.html#label-Appendix+D.+Generational+GC">Appendix D. Generational GC</a>を参照して下さい．</p>
+
+<h2 id="label-Appendix+E.+Ractor+-E3-82-B5-E3-83-9D-E3-83-BC-E3-83-88"><a href="#label-Appendix+E.+Ractor+-E3-82-B5-E3-83-9D-E3-83-BC-E3-83-88">Appendix E. <a href="Ractor.html"><code>Ractor</code></a> サポート</a></h2>
+
+<p>Ruby 3.0 から、Ruby プログラムを並列に実行するための仕組みである <a href="Ractor.html"><code>Ractor</code></a> が導入されました。適切に並列に実行するためには、Ractor サポートが必要になります。サポートしていないライブラリは、メイン <a href="Ractor.html"><code>Ractor</code></a> 以外で実行するとエラーになります（Ractor::UnsafeError）。</p>
+
+<p><a href="Ractor.html"><code>Ractor</code></a> をサポートするための詳細は、<a href="extension_rdoc.html#label-Appendix+F.+Ractor+support">Appendix F. Ractor support</a> を参照してください。</p>
+
+</main>
+
+<aside class="table-of-contents" role="complementary" aria-label="Table of Contents">
+  <div class="toc-sticky">
+    <h3 class="toc-heading">On This Page</h3>
+    <nav class="toc-nav" id="toc-nav" aria-label="Page sections">
+      <!-- Generated by JavaScript based on page headings -->
+    </nav>
+  </div>
+</aside>
+
+
+<footer class="site-footer">
+  
+  <div class="footer-content">
+    
+    <div>
+      <h3>Ruby</h3>
+      <ul>
+        
+        <li><a href="./index.html">Documentation</a></li>
+        
+        <li><a href="https://www.ruby-lang.org/">Official Website</a></li>
+        
+        <li><a href="https://ruby.github.io/play-ruby/">Playground</a></li>
+        
+      </ul>
+    </div>
+    
+    <div>
+      <h3>Resources</h3>
+      <ul>
+        
+        <li><a href="https://github.com/ruby/ruby">GitHub</a></li>
+        
+        <li><a href="https://bugs.ruby-lang.org/projects/ruby-master/issues">Issue Tracker</a></li>
+        
+        <li><a href="https://rubygems.org/">RubyGems</a></li>
+        
+      </ul>
+    </div>
+    
+    <div>
+      <h3>Community</h3>
+      <ul>
+        
+        <li><a href="https://x.com/rubylangorg">X</a></li>
+        
+      </ul>
+    </div>
+    
+  </div>
+  
+
+  <div class="footer-bottom">
+    <p>
+      Generated by <a href="https://ruby.github.io/rdoc/">RDoc 7.0.3</a>
+      using the Aliki theme by <a href="http://st0012.dev">Stan Lo</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+

@@ -1,0 +1,4 @@
+U:RDoc::AnyMethod[iI"	kill:ETI"Thread#kill;TF:privateo:RDoc::Markup::Document:@parts[o:RDoc::Markup::Paragraph;	[I"HTerminates +thr+ and schedules another thread to be run, returning ;TI"Ethe terminated Thread.  If this is the main thread, or the last ;TI"Gthread, exits the process. Note that the caller does not wait for ;TI"Mthe thread to terminate if the receiver is different from the currently ;TI"Orunning thread. The termination is asynchronous, and the thread can still ;TI"4run a small amount of ruby code before exiting.;T:
+@fileI"thread.c;T:0@omit_headings_from_table_of_contents_below0I"Ithr.exit        -> thr
+thr.kill        -> thr
+thr.terminate   -> thr;T0[[I"terminate;T@	[I"	exit;T@	I"();T@FI"Thread;TcRDoc::NormalClass00

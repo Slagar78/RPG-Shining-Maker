@@ -1,0 +1,5043 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>module Socket::Constants - Documentation for Ruby 4.0</title>
+
+
+  <meta
+    name="keywords"
+    content="ruby,module,Socket::Constants"
+  >
+
+    <meta
+      name="description"
+      content="module Socket::Constants: Constants provides socket-related constants. All possible socket constants are listed in the documentation but they may not all be present on your pla"
+    >
+
+
+
+
+  
+  <link rel="canonical" href="https://docs.ruby-lang.org/en/master/Socket/Constants.html">
+
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="module Socket::Constants - Documentation for Ruby 4.0">
+
+
+
+    <meta property="og:description" content="Constants provides socket-related constants. All possible socket constants are listed in the documentation but they may not all be present on your pla">
+
+
+
+
+  
+  <meta property="og:url" content="https://docs.ruby-lang.org/en/master/Socket/Constants.html">
+
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="module Socket::Constants - Documentation for Ruby 4.0">
+
+
+
+    <meta name="twitter:description" content="Constants provides socket-related constants. All possible socket constants are listed in the documentation but they may not all be present on your pla">
+
+
+
+<script type="text/javascript">
+  var rdoc_rel_prefix = "../";
+  var index_rel_prefix = "../";
+</script>
+
+<script
+  src="../js/theme-toggle.js?v=7.0.3"
+></script>
+
+<script
+  src="../js/search_navigation.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="../js/search_data.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="../js/search_ranker.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="../js/search_controller.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="../js/c_highlighter.js?v=7.0.3"
+  defer
+></script>
+
+<script
+  src="../js/aliki.js?v=7.0.3"
+  defer
+></script>
+
+<link
+  href="../css/rdoc.css?v=7.0.3"
+  rel="stylesheet"
+>
+
+
+
+
+<body role="document" class="module has-toc">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <!-- Chevron (right arrow) - used for expand/collapse -->
+  <symbol
+    id="icon-chevron"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <polyline points="9 18 15 12 9 6"></polyline>
+  </symbol>
+
+  <!-- File/Document - Pages section -->
+  <symbol
+    id="icon-file"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path
+      d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+    ></path>
+
+    <polyline points="14 2 14 8 20 8"></polyline>
+  </symbol>
+
+  <!-- Layers/Stack - Classes and Modules section -->
+  <symbol
+    id="icon-layers"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+    <polyline points="2 17 12 22 22 17"></polyline>
+    <polyline points="2 12 12 17 22 12"></polyline>
+  </symbol>
+
+  <!-- Curly braces with C - Class Methods section -->
+  <symbol
+    id="icon-class-methods"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M6 3C3.5 3 2 4.5 2 7v3c0 1.5-1 2-1 2s1 .5 1 2v5c0 2.5 1.5 4 4 4"></path>
+    <path d="M18 3c2.5 0 4 1.5 4 4v3c0 1.5 1 2 1 2s-1 .5-1 2v5c0 2.5-1.5 4-4 4"></path>
+
+    <text
+      x="12"
+      y="17"
+      text-anchor="middle"
+      font-size="13"
+      font-weight="bold"
+      fill="currentColor"
+      stroke="none"
+    >
+      C
+    </text>
+  </symbol>
+
+  <!-- Curly braces with I - Instance Methods section -->
+  <symbol
+    id="icon-instance-methods"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M6 3C3.5 3 2 4.5 2 7v3c0 1.5-1 2-1 2s1 .5 1 2v5c0 2.5 1.5 4 4 4"></path>
+    <path d="M18 3c2.5 0 4 1.5 4 4v3c0 1.5 1 2 1 2s-1 .5-1 2v5c0 2.5-1.5 4-4 4"></path>
+
+    <text
+      x="12"
+      y="17"
+      text-anchor="middle"
+      font-size="13"
+      font-weight="bold"
+      fill="currentColor"
+      stroke="none"
+    >
+      I
+    </text>
+  </symbol>
+
+  <!-- Double chevrons up - Ancestors section -->
+  <symbol
+    id="icon-ancestors"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <polyline points="17 11 12 6 7 11"></polyline>
+    <polyline points="17 18 12 13 7 18"></polyline>
+  </symbol>
+
+  <!-- User with plus - Included Modules section -->
+  <symbol
+    id="icon-includes"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="8.5" cy="7" r="4"></circle>
+
+    <line
+      x1="20"
+      y1="8"
+      x2="20"
+      y2="14"
+    ></line>
+
+    <line
+      x1="23"
+      y1="11"
+      x2="17"
+      y2="11"
+    ></line>
+  </symbol>
+
+  <!-- User with check - Extended Modules section -->
+  <symbol
+    id="icon-extends"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="8.5" cy="7" r="4"></circle>
+    <polyline points="17 11 19 13 23 9"></polyline>
+  </symbol>
+
+  <!-- List - Sections section -->
+  <symbol
+    id="icon-list"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <line
+      x1="8"
+      y1="6"
+      x2="21"
+      y2="6"
+    ></line>
+
+    <line
+      x1="8"
+      y1="12"
+      x2="21"
+      y2="12"
+    ></line>
+
+    <line
+      x1="8"
+      y1="18"
+      x2="21"
+      y2="18"
+    ></line>
+
+    <line
+      x1="3"
+      y1="6"
+      x2="3.01"
+      y2="6"
+    ></line>
+
+    <line
+      x1="3"
+      y1="12"
+      x2="3.01"
+      y2="12"
+    ></line>
+
+    <line
+      x1="3"
+      y1="18"
+      x2="3.01"
+      y2="18"
+    ></line>
+  </symbol>
+</svg>
+
+<header class="top-navbar">
+  <a href="../index.html" class="navbar-brand">
+    Documentation for Ruby 4.0
+  </a>
+
+  <!-- Desktop search bar -->
+  <div class="navbar-search navbar-search-desktop" role="search">
+    <form action="#" method="get" accept-charset="utf-8">
+      <input id="search-field" role="combobox" aria-label="Search"
+             aria-autocomplete="list" aria-controls="search-results-desktop"
+             type="text" name="search" placeholder="Search (/) for a class, method..."
+             spellcheck="false" autocomplete="off"
+             title="Type to search, Up and Down to navigate, Enter to load">
+      <ul id="search-results-desktop" aria-label="Search Results"
+          aria-busy="false" aria-expanded="false"
+          aria-atomic="false" class="initially-hidden search-results"></ul>
+    </form>
+  </div>
+
+  <!-- Mobile search icon button -->
+  <button id="search-toggle" class="navbar-search-mobile" aria-label="Open search" type="button">
+    <span aria-hidden="true">🔍</span>
+  </button>
+
+  <!-- Theme toggle button -->
+  <button id="theme-toggle" class="theme-toggle" aria-label="Switch to dark mode" type="button">
+    <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
+  </button>
+</header>
+
+<!-- Search Modal (Mobile) -->
+<div id="search-modal" class="search-modal" hidden aria-modal="true" role="dialog" aria-label="Search">
+  <div class="search-modal-backdrop"></div>
+  <div class="search-modal-content">
+    <div class="search-modal-header">
+      <form class="search-modal-form" action="#" method="get" accept-charset="utf-8">
+        <span class="search-modal-icon" aria-hidden="true">🔍</span>
+        <input id="search-field-mobile" role="combobox" aria-label="Search"
+               aria-autocomplete="list" aria-controls="search-results-mobile"
+               type="text" name="search" placeholder="Search documentation"
+               spellcheck="false" autocomplete="off">
+        <button type="button" class="search-modal-close" aria-label="Close search" id="search-modal-close">
+          <span aria-hidden="true">esc</span>
+        </button>
+      </form>
+    </div>
+    <div class="search-modal-body">
+      <ul id="search-results-mobile" aria-label="Search Results"
+          aria-busy="false" aria-expanded="false"
+          aria-atomic="false" class="search-results search-modal-results initially-hidden"></ul>
+      <div class="search-modal-empty">
+        <p>No recent searches</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="navigation-toggle" role="button" tabindex="0" aria-label="Toggle sidebar" aria-expanded="true" aria-controls="navigation">
+  <span aria-hidden="true">&#9776;</span>
+</div>
+
+
+<nav id="navigation" role="navigation" hidden>
+  
+
+
+
+
+  <div id="fileindex-section" class="nav-section">
+    <details class="nav-section-collapsible" >
+      <summary class="nav-section-header">
+        <span class="nav-section-icon">
+          <svg>
+            <use href="#icon-file"></use>
+          </svg>
+        </span>
+
+        <span class="nav-section-title">Pages</span>
+
+        <span class="nav-section-chevron">
+          <svg>
+            <use href="#icon-chevron"></use>
+          </svg>
+        </span>
+      </summary>
+
+      <ul class="nav-list">
+
+
+
+
+
+
+            <li>
+              <a href="../COPYING.html">
+                COPYING
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="../COPYING_ja.html">
+                COPYING.ja
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="../LEGAL.html">
+                LEGAL
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  <a href="../NEWS_md.html">NEWS</a>
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../NEWS/NEWS-1_8_7.html">
+                      NEWS-1.8.7
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-1_9_1.html">
+                      NEWS-1.9.1
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-1_9_2.html">
+                      NEWS-1.9.2
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-1_9_3.html">
+                      NEWS-1.9.3
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-2_0_0.html">
+                      NEWS-2.0.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-2_1_0.html">
+                      NEWS-2.1.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-2_2_0.html">
+                      NEWS-2.2.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-2_3_0.html">
+                      NEWS-2.3.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-2_4_0.html">
+                      NEWS-2.4.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-2_5_0.html">
+                      NEWS-2.5.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-2_6_0.html">
+                      NEWS-2.6.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-2_7_0.html">
+                      NEWS-2.7.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-3_0_0_md.html">
+                      NEWS-3.0.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-3_1_0_md.html">
+                      NEWS-3.1.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-3_2_0_md.html">
+                      NEWS-3.2.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-3_3_0_md.html">
+                      NEWS-3.3.0
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../NEWS/NEWS-3_4_0_md.html">
+                      NEWS-3.4.0
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="../README_ja_md.html">
+                README.ja
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="../README_md.html">
+                README
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  contributing
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../contributing/bug_triaging_rdoc.html">
+                      bug_triaging
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/building_ruby_md.html">
+                      building_ruby
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/concurrency_guide_md.html">
+                      concurrency_guide
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/contributing_md.html">
+                      contributing
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/documentation_guide_md.html">
+                      documentation_guide
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/dtrace_probes_rdoc.html">
+                      dtrace_probes
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/glossary_md.html">
+                      glossary
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/making_changes_to_ruby_md.html">
+                      making_changes_to_ruby
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/making_changes_to_stdlibs_md.html">
+                      making_changes_to_stdlibs
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/memory_view_md.html">
+                      memory_view
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/reporting_issues_md.html">
+                      reporting_issues
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/testing_ruby_md.html">
+                      testing_ruby
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../contributing/vm_stack_and_frames_md.html">
+                      vm_stack_and_frames
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  <a href="../distribution/distribution_md.html">distribution</a>
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../distribution/windows_md.html">
+                      windows
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="../extension_ja_rdoc.html">
+                extension.ja
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="../extension_rdoc.html">
+                extension
+              </a>
+            </li>
+
+
+
+
+            <li>
+              <a href="../index_md.html">
+                index
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  jit
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../jit/yjit_md.html">
+                      yjit
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../jit/zjit_md.html">
+                      zjit
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  language
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../language/box_md.html">
+                      box
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/bsearch_rdoc.html">
+                      bsearch
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/calendars_rdoc.html">
+                      calendars
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/case_mapping_rdoc.html">
+                      case_mapping
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/character_selectors_rdoc.html">
+                      character_selectors
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/dig_methods_rdoc.html">
+                      dig_methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/encodings_rdoc.html">
+                      encodings
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/exceptions_md.html">
+                      exceptions
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/fiber_md.html">
+                      fiber
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/format_specifications_rdoc.html">
+                      format_specifications
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/globals_md.html">
+                      globals
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/hash_inclusion_rdoc.html">
+                      hash_inclusion
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/implicit_conversion_rdoc.html">
+                      implicit_conversion
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/marshal_rdoc.html">
+                      marshal
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/option_dump_md.html">
+                      option_dump
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/options_md.html">
+                      options
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/packed_data_rdoc.html">
+                      packed_data
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/ractor_md.html">
+                      ractor
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/regexp/methods_rdoc.html">
+                      methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/regexp/unicode_properties_rdoc.html">
+                      unicode_properties
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/signals_rdoc.html">
+                      signals
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../language/strftime_formatting_rdoc.html">
+                      strftime_formatting
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="../maintainers_md.html">
+                maintainers
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  optparse
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../optparse/argument_converters_rdoc.html">
+                      argument_converters
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../optparse/creates_option_rdoc.html">
+                      creates_option
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../optparse/option_params_rdoc.html">
+                      option_params
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../optparse/tutorial_rdoc.html">
+                      tutorial
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  security
+                  
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../security/command_injection_rdoc.html">
+                      command_injection
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../security/security_rdoc.html">
+                      security
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+
+
+
+            <li>
+              <a href="../standard_library_md.html">
+                standard_library
+              </a>
+            </li>
+
+
+
+
+
+          <li>
+            <details >
+              <summary>
+                
+                  <a href="../syntax_rdoc.html">syntax</a>
+                
+              </summary>
+
+              <ul class="link-list">
+
+                  <li>
+                    <a href="../syntax/assignment_rdoc.html">
+                      assignment
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/calling_methods_rdoc.html">
+                      calling_methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/comments_rdoc.html">
+                      comments
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/control_expressions_rdoc.html">
+                      control_expressions
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/exceptions_rdoc.html">
+                      exceptions
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/keywords_rdoc.html">
+                      keywords
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/layout_rdoc.html">
+                      layout
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/literals_rdoc.html">
+                      literals
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/methods_rdoc.html">
+                      methods
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/miscellaneous_rdoc.html">
+                      miscellaneous
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/modules_and_classes_rdoc.html">
+                      modules_and_classes
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/operators_rdoc.html">
+                      operators
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/pattern_matching_rdoc.html">
+                      pattern_matching
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/precedence_rdoc.html">
+                      precedence
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="../syntax/refinements_rdoc.html">
+                      refinements
+                    </a>
+                  </li>
+
+              </ul>
+            </details>
+          </li>
+
+      </ul>
+    </details>
+  </div>
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  <div id="classindex-section" class="nav-section">
+  <details class="nav-section-collapsible" open>
+    <summary class="nav-section-header">
+      <span class="nav-section-icon">
+        <svg><use href="#icon-layers"></use></svg>
+      </span>
+      <span class="nav-section-title">Classes and Modules</span>
+      <span class="nav-section-chevron">
+        <svg><use href="#icon-chevron"></use></svg>
+      </span>
+    </summary>
+
+    <ul class="link-list nav-list"><li><code><a href="../ARGF.html">ARGF</a></code></li><li><code><a href="../Addrinfo.html">Addrinfo</a></code></li><li><code><a href="../ArgumentError.html">ArgumentError</a></code></li><li><code><a href="../Array.html">Array</a></code></li><li><code><a href="../BasicObject.html">BasicObject</a></code></li><li><code><a href="../BasicSocket.html">BasicSocket</a></code></li><li><code><a href="../BigDecimal.html">BigDecimal</a></code></li><li><code><a href="../Binding.html">Binding</a></code></li><li><code><a href="../Bundler.html">Bundler</a></code></li><li><details><summary><code><a href="../CGI.html">CGI</a></code></summary><ul class="link-list nav-list"><li><code><a href="../CGI/Escape.html">Escape</a></code></li><li><code><a href="../CGI/EscapeExt.html">EscapeExt</a></code></li></ul></details></li><li><code><a href="../Class.html">Class</a></code></li><li><code><a href="../ClosedQueueError.html">ClosedQueueError</a></code></li><li><code><a href="../Comparable.html">Comparable</a></code></li><li><code><a href="../Complex.html">Complex</a></code></li><li><code><a href="../Continuation.html">Continuation</a></code></li><li><details><summary><code><a href="../CoreExtensions.html">CoreExtensions</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../CoreExtensions/TCPSocketExt.html">TCPSocketExt</a></code></summary><ul class="link-list nav-list"><li><code><a href="../CoreExtensions/TCPSocketExt/Initializer.html">Initializer</a></code></li></ul></details></li></ul></details></li><li><code><a href="../Coverage.html">Coverage</a></code></li><li><code><a href="../Data.html">Data</a></code></li><li><details><summary><code><a href="../Date.html">Date</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Date/Error.html">Error</a></code></li></ul></details></li><li><code><a href="../DateTime.html">DateTime</a></code></li><li><code><a href="../Delegator.html">Delegator</a></code></li><li><details><summary><code><a href="../DidYouMean.html">DidYouMean</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../DidYouMean/ClassNameChecker.html">ClassNameChecker</a></code></summary><ul class="link-list nav-list"><li><code><a href="../DidYouMean/ClassNameChecker/ClassName.html">ClassName</a></code></li></ul></details></li><li><code><a href="../DidYouMean/Correctable.html">Correctable</a></code></li><li><code><a href="../DidYouMean/Formatter.html">Formatter</a></code></li><li><code><a href="../DidYouMean/Jaro.html">Jaro</a></code></li><li><code><a href="../DidYouMean/JaroWinkler.html">JaroWinkler</a></code></li><li><code><a href="../DidYouMean/KeyErrorChecker.html">KeyErrorChecker</a></code></li><li><code><a href="../DidYouMean/MethodNameChecker.html">MethodNameChecker</a></code></li><li><code><a href="../DidYouMean/NameErrorCheckers.html">NameErrorCheckers</a></code></li><li><code><a href="../DidYouMean/NullChecker.html">NullChecker</a></code></li><li><code><a href="../DidYouMean/PatternKeyNameChecker.html">PatternKeyNameChecker</a></code></li><li><code><a href="../DidYouMean/Formatter.html">PlainFormatter</a></code></li><li><code><a href="../DidYouMean/RequirePathChecker.html">RequirePathChecker</a></code></li><li><code><a href="../DidYouMean/SpellChecker.html">SpellChecker</a></code></li><li><code><a href="../DidYouMean/TreeSpellChecker.html">TreeSpellChecker</a></code></li><li><code><a href="../DidYouMean/VariableNameChecker.html">VariableNameChecker</a></code></li><li><code><a href="../DidYouMean/Formatter.html">VerboseFormatter</a></code></li></ul></details></li><li><details><summary><code><a href="../Digest.html">Digest</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Digest/Base.html">Base</a></code></li><li><code><a href="../Digest/Class.html">Class</a></code></li><li><code><a href="../Digest/Instance.html">Instance</a></code></li><li><code><a href="../Digest/MD5.html">MD5</a></code></li><li><code><a href="../Digest/RMD160.html">RMD160</a></code></li><li><code><a href="../Digest/SHA1.html">SHA1</a></code></li><li><code><a href="../Digest/SHA2.html">SHA2</a></code></li><li><code><a href="../Digest/SHA256.html">SHA256</a></code></li><li><code><a href="../Digest/SHA384.html">SHA384</a></code></li><li><code><a href="../Digest/SHA512.html">SHA512</a></code></li></ul></details></li><li><code><a href="../Dir.html">Dir</a></code></li><li><code><a href="../ENV.html">ENV</a></code></li><li><code><a href="../EOFError.html">EOFError</a></code></li><li><details><summary><code><a href="../ERB.html">ERB</a></code></summary><ul class="link-list nav-list"><li><code><a href="../ERB/DefMethod.html">DefMethod</a></code></li><li><code><a href="../ERB/Escape.html">Escape</a></code></li><li><code><a href="../ERB/Util.html">Util</a></code></li></ul></details></li><li><details><summary><code><a href="../Encoding.html">Encoding</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Encoding/CompatibilityError.html">CompatibilityError</a></code></li><li><code><a href="../Encoding/Converter.html">Converter</a></code></li><li><code><a href="../Encoding/ConverterNotFoundError.html">ConverterNotFoundError</a></code></li><li><code><a href="../Encoding/InvalidByteSequenceError.html">InvalidByteSequenceError</a></code></li><li><code><a href="../Encoding/UndefinedConversionError.html">UndefinedConversionError</a></code></li></ul></details></li><li><code><a href="../EncodingError.html">EncodingError</a></code></li><li><code><a href="../English.html">English</a></code></li><li><code><a href="../Enumerable.html">Enumerable</a></code></li><li><details><summary><code><a href="../Enumerator.html">Enumerator</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Enumerator/ArithmeticSequence.html">ArithmeticSequence</a></code></li><li><code><a href="../Enumerator/Chain.html">Chain</a></code></li><li><code><a href="../Enumerator/Generator.html">Generator</a></code></li><li><code><a href="../Enumerator/Lazy.html">Lazy</a></code></li><li><code><a href="../Enumerator/Producer.html">Producer</a></code></li><li><code><a href="../Enumerator/Product.html">Product</a></code></li><li><code><a href="../Enumerator/Yielder.html">Yielder</a></code></li></ul></details></li><li><code><a href="../Errno.html">Errno</a></code></li><li><details><summary><code><a href="../ErrorHighlight.html">ErrorHighlight</a></code></summary><ul class="link-list nav-list"><li><code><a href="../ErrorHighlight/CoreExt.html">CoreExt</a></code></li><li><code><a href="../ErrorHighlight/DefaultFormatter.html">DefaultFormatter</a></code></li><li><details><summary><code><a href="../ErrorHighlight/Spotter.html">Spotter</a></code></summary><ul class="link-list nav-list"><li><code><a href="../ErrorHighlight/Spotter/NonAscii.html">NonAscii</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="../Etc.html">Etc</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Etc/Group.html">Group</a></code></li><li><code><a href="../Etc/Passwd.html">Passwd</a></code></li></ul></details></li><li><code><a href="../Exception.html">Exception</a></code></li><li><code><a href="../FalseClass.html">FalseClass</a></code></li><li><code><a href="../Fcntl.html">Fcntl</a></code></li><li><details><summary><code><a href="../Fiber.html">Fiber</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Fiber/Scheduler.html">Scheduler</a></code></li></ul></details></li><li><code><a href="../FiberError.html">FiberError</a></code></li><li><details><summary><code><a href="../File.html">File</a></code></summary><ul class="link-list nav-list"><li><code><a href="../File/Constants.html">Constants</a></code></li><li><code><a href="../File/Stat.html">Stat</a></code></li></ul></details></li><li><code><a href="../FileTest.html">FileTest</a></code></li><li><details><summary><code><a href="../FileUtils.html">FileUtils</a></code></summary><ul class="link-list nav-list"><li><code><a href="../FileUtils/DryRun.html">DryRun</a></code></li><li><code><a href="../FileUtils/NoWrite.html">NoWrite</a></code></li><li><code><a href="../FileUtils/Verbose.html">Verbose</a></code></li></ul></details></li><li><code><a href="../Find.html">Find</a></code></li><li><code><a href="../Float.html">Float</a></code></li><li><code><a href="../FloatDomainError.html">FloatDomainError</a></code></li><li><code><a href="../Forwardable.html">Forwardable</a></code></li><li><code><a href="../FrozenError.html">FrozenError</a></code></li><li><code><a href="../GC.html">GC</a></code></li><li><details><summary><code>Gem</code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/AvailableSet.html">AvailableSet</a></code></li><li><code><a href="../Gem/BasicSpecification.html">BasicSpecification</a></code></li><li><code><a href="../Gem/BundlerVersionFinder.html">BundlerVersionFinder</a></code></li><li><code><a href="../Gem/CIDetector.html">CIDetector</a></code></li><li><code><a href="../Gem/Command.html">Command</a></code></li><li><code><a href="../Gem/CommandLineError.html">CommandLineError</a></code></li><li><code><a href="../Gem/CommandManager.html">CommandManager</a></code></li><li><details><summary><code><a href="../Gem/Commands.html">Commands</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Commands/BuildCommand.html">BuildCommand</a></code></li><li><code><a href="../Gem/Commands/CertCommand.html">CertCommand</a></code></li><li><code><a href="../Gem/Commands/CheckCommand.html">CheckCommand</a></code></li><li><code><a href="../Gem/Commands/CleanupCommand.html">CleanupCommand</a></code></li><li><code><a href="../Gem/Commands/ContentsCommand.html">ContentsCommand</a></code></li><li><code><a href="../Gem/Commands/DependencyCommand.html">DependencyCommand</a></code></li><li><code><a href="../Gem/Commands/EnvironmentCommand.html">EnvironmentCommand</a></code></li><li><code><a href="../Gem/Commands/ExecCommand.html">ExecCommand</a></code></li><li><code><a href="../Gem/Commands/FetchCommand.html">FetchCommand</a></code></li><li><details><summary><code><a href="../Gem/Commands/GenerateIndexCommand.html">GenerateIndexCommand</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Commands/GenerateIndexCommand/RubygemsTrampoline.html">RubygemsTrampoline</a></code></li></ul></details></li><li><code><a href="../Gem/Commands/HelpCommand.html">HelpCommand</a></code></li><li><code><a href="../Gem/Commands/InfoCommand.html">InfoCommand</a></code></li><li><code><a href="../Gem/Commands/InstallCommand.html">InstallCommand</a></code></li><li><code><a href="../Gem/Commands/ListCommand.html">ListCommand</a></code></li><li><code><a href="../Gem/Commands/LockCommand.html">LockCommand</a></code></li><li><code><a href="../Gem/Commands/MirrorCommand.html">MirrorCommand</a></code></li><li><code><a href="../Gem/Commands/OpenCommand.html">OpenCommand</a></code></li><li><code><a href="../Gem/Commands/OutdatedCommand.html">OutdatedCommand</a></code></li><li><code><a href="../Gem/Commands/OwnerCommand.html">OwnerCommand</a></code></li><li><code><a href="../Gem/Commands/PristineCommand.html">PristineCommand</a></code></li><li><code><a href="../Gem/Commands/PushCommand.html">PushCommand</a></code></li><li><code><a href="../Gem/Commands/RdocCommand.html">RdocCommand</a></code></li><li><code><a href="../Gem/Commands/RebuildCommand.html">RebuildCommand</a></code></li><li><code><a href="../Gem/Commands/SearchCommand.html">SearchCommand</a></code></li><li><code><a href="../Gem/Commands/ServerCommand.html">ServerCommand</a></code></li><li><details><summary><code><a href="../Gem/Commands/SetupCommand.html">SetupCommand</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Commands/SetupCommand/MakeDirs.html">MakeDirs</a></code></li></ul></details></li><li><code><a href="../Gem/Commands/SigninCommand.html">SigninCommand</a></code></li><li><code><a href="../Gem/Commands/SignoutCommand.html">SignoutCommand</a></code></li><li><code><a href="../Gem/Commands/SourcesCommand.html">SourcesCommand</a></code></li><li><code><a href="../Gem/Commands/SpecificationCommand.html">SpecificationCommand</a></code></li><li><code><a href="../Gem/Commands/StaleCommand.html">StaleCommand</a></code></li><li><code><a href="../Gem/Commands/UninstallCommand.html">UninstallCommand</a></code></li><li><code><a href="../Gem/Commands/UnpackCommand.html">UnpackCommand</a></code></li><li><code><a href="../Gem/Commands/UpdateCommand.html">UpdateCommand</a></code></li><li><code><a href="../Gem/Commands/WhichCommand.html">WhichCommand</a></code></li><li><code><a href="../Gem/Commands/YankCommand.html">YankCommand</a></code></li></ul></details></li><li><code><a href="../Gem/ConfigFile.html">ConfigFile</a></code></li><li><code><a href="../Gem/ConflictError.html">ConflictError</a></code></li><li><code><a href="../Gem/ConsoleUI.html">ConsoleUI</a></code></li><li><code><a href="../Gem/DefaultUserInteraction.html">DefaultUserInteraction</a></code></li><li><code><a href="../Gem/Dependency.html">Dependency</a></code></li><li><code><a href="../Gem/DependencyError.html">DependencyError</a></code></li><li><code><a href="../Gem/DependencyInstaller.html">DependencyInstaller</a></code></li><li><code><a href="../Gem/DependencyList.html">DependencyList</a></code></li><li><code><a href="../Gem/DependencyRemovalException.html">DependencyRemovalException</a></code></li><li><code><a href="../Gem/DependencyResolutionError.html">DependencyResolutionError</a></code></li><li><code><a href="../Gem/Deprecate.html">Deprecate</a></code></li><li><code><a href="../Gem/Doctor.html">Doctor</a></code></li><li><code><a href="../Gem/DocumentError.html">DocumentError</a></code></li><li><code><a href="../Gem/EndOfYAMLException.html">EndOfYAMLException</a></code></li><li><code><a href="../Gem/ErrorReason.html">ErrorReason</a></code></li><li><code><a href="../Gem/Exception.html">Exception</a></code></li><li><details><summary><code><a href="../Gem/Ext.html">Ext</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Ext/BuildError.html">BuildError</a></code></li><li><details><summary><code><a href="../Gem/Ext/Builder.html">Builder</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Ext/Builder/NoMakefileError.html">NoMakefileError</a></code></li></ul></details></li><li><details><summary><code><a href="../Gem/Ext/CargoBuilder.html">CargoBuilder</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Ext/CargoBuilder/DylibNotFoundError.html">DylibNotFoundError</a></code></li><li><code><a href="../Gem/Ext/CargoBuilder/LinkFlagConverter.html">LinkFlagConverter</a></code></li></ul></details></li><li><code><a href="../Gem/Ext/CmakeBuilder.html">CmakeBuilder</a></code></li><li><code><a href="../Gem/Ext/ConfigureBuilder.html">ConfigureBuilder</a></code></li><li><code><a href="../Gem/Ext/ExtConfBuilder.html">ExtConfBuilder</a></code></li><li><code><a href="../Gem/Ext/RakeBuilder.html">RakeBuilder</a></code></li></ul></details></li><li><code><a href="../Gem/FilePermissionError.html">FilePermissionError</a></code></li><li><code><a href="../Gem/FormatException.html">FormatException</a></code></li><li><code><a href="../Gem/GemNotFoundException.html">GemNotFoundException</a></code></li><li><code><a href="../Gem/GemNotInHomeException.html">GemNotInHomeException</a></code></li><li><code><a href="../Gem/GemRunner.html">GemRunner</a></code></li><li><details><summary><code><a href="../Gem/GemcutterUtilities.html">GemcutterUtilities</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../Gem/GemcutterUtilities/WebauthnListener.html">WebauthnListener</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/GemcutterUtilities/WebauthnListener/BadRequestResponse.html">BadRequestResponse</a></code></li><li><code><a href="../Gem/GemcutterUtilities/WebauthnListener/MethodNotAllowedResponse.html">MethodNotAllowedResponse</a></code></li><li><code><a href="../Gem/GemcutterUtilities/WebauthnListener/NoContentResponse.html">NoContentResponse</a></code></li><li><code><a href="../Gem/GemcutterUtilities/WebauthnListener/NotFoundResponse.html">NotFoundResponse</a></code></li><li><code><a href="../Gem/GemcutterUtilities/WebauthnListener/OkResponse.html">OkResponse</a></code></li><li><code><a href="../Gem/GemcutterUtilities/WebauthnListener/Response.html">Response</a></code></li><li><code><a href="../Gem/GemcutterUtilities/WebauthnListener/SocketResponder.html">SocketResponder</a></code></li></ul></details></li><li><code><a href="../Gem/GemcutterUtilities/WebauthnPoller.html">WebauthnPoller</a></code></li></ul></details></li><li><code><a href="../Gem/GemspecHelpers.html">GemspecHelpers</a></code></li><li><code><a href="../Gem/ImpossibleDependenciesError.html">ImpossibleDependenciesError</a></code></li><li><code><a href="../Gem/InstallError.html">InstallError</a></code></li><li><code><a href="../Gem/InstallUpdateOptions.html">InstallUpdateOptions</a></code></li><li><details><summary><code><a href="../Gem/Installer.html">Installer</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Installer/FakePackage.html">FakePackage</a></code></li></ul></details></li><li><code><a href="../Gem/InstallerUninstallerUtils.html">InstallerUninstallerUtils</a></code></li><li><code><a href="../Gem/InvalidSpecificationException.html">InvalidSpecificationException</a></code></li><li><code><a href="../Gem/Licenses.html">Licenses</a></code></li><li><code><a href="../Gem/LoadError.html">LoadError</a></code></li><li><code><a href="../Gem/LocalRemoteOptions.html">LocalRemoteOptions</a></code></li><li><code><a href="../Gem/MissingSpecError.html">MissingSpecError</a></code></li><li><code><a href="../Gem/MissingSpecVersionError.html">MissingSpecVersionError</a></code></li><li><code><a href="../Gem/NameTuple.html">NameTuple</a></code></li><li><code><a href="../Gem/NoAliasYAMLTree.html">NoAliasYAMLTree</a></code></li><li><code><a href="../Gem/OperationNotSupportedError.html">OperationNotSupportedError</a></code></li><li><details><summary><code><a href="../Gem/Package.html">Package</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Package/DigestIO.html">DigestIO</a></code></li><li><code><a href="../Gem/Package/Error.html">Error</a></code></li><li><code><a href="../Gem/Package/FormatError.html">FormatError</a></code></li><li><code><a href="../Gem/Package/NonSeekableIO.html">NonSeekableIO</a></code></li><li><code><a href="../Gem/Package/Old.html">Old</a></code></li><li><code><a href="../Gem/Package/PathError.html">PathError</a></code></li><li><code><a href="../Gem/Package/SymlinkError.html">SymlinkError</a></code></li><li><code><a href="../Gem/Package/TarHeader.html">TarHeader</a></code></li><li><code><a href="../Gem/Package/TarInvalidError.html">TarInvalidError</a></code></li><li><details><summary><code><a href="../Gem/Package/TarReader.html">TarReader</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Package/TarReader/Entry.html">Entry</a></code></li></ul></details></li><li><details><summary><code><a href="../Gem/Package/TarWriter.html">TarWriter</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Package/TarWriter/BoundedStream.html">BoundedStream</a></code></li><li><code><a href="../Gem/Package/TarWriter/FileOverflow.html">FileOverflow</a></code></li><li><code><a href="../Gem/Package/TarWriter/RestrictedStream.html">RestrictedStream</a></code></li></ul></details></li><li><code><a href="../Gem/Package/TooLongFileName.html">TooLongFileName</a></code></li></ul></details></li><li><code><a href="../Gem/PackageTask.html">PackageTask</a></code></li><li><code><a href="../Gem/PathSupport.html">PathSupport</a></code></li><li><code><a href="../Gem/Platform.html">Platform</a></code></li><li><code><a href="../Gem/PlatformMismatch.html">PlatformMismatch</a></code></li><li><code><a href="../Gem/QueryUtils.html">QueryUtils</a></code></li><li><code><a href="../Gem/RemoteError.html">RemoteError</a></code></li><li><details><summary><code><a href="../Gem/RemoteFetcher.html">RemoteFetcher</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/RemoteFetcher/FetchError.html">FetchError</a></code></li><li><code><a href="../Gem/RemoteFetcher/UnknownHostError.html">UnknownHostError</a></code></li></ul></details></li><li><code><a href="../Gem/RemoteInstallationCancelled.html">RemoteInstallationCancelled</a></code></li><li><code><a href="../Gem/RemoteInstallationSkipped.html">RemoteInstallationSkipped</a></code></li><li><code><a href="../Gem/RemoteSourceException.html">RemoteSourceException</a></code></li><li><details><summary><code><a href="../Gem/RequestSet.html">RequestSet</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/RequestSet/GemDependencyAPI.html">GemDependencyAPI</a></code></li><li><details><summary><code><a href="../Gem/RequestSet/Lockfile.html">Lockfile</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/RequestSet/Lockfile/ParseError.html">ParseError</a></code></li><li><code><a href="../Gem/RequestSet/Lockfile/Parser.html">Parser</a></code></li><li><code><a href="../Gem/RequestSet/Lockfile/Tokenizer.html">Tokenizer</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="../Gem/Requirement.html">Requirement</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Requirement/BadRequirementError.html">BadRequirementError</a></code></li></ul></details></li><li><details><summary><code><a href="../Gem/Resolver.html">Resolver</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../Gem/Resolver/APISet.html">APISet</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Resolver/APISet/GemParser.html">GemParser</a></code></li></ul></details></li><li><code><a href="../Gem/Resolver/APISpecification.html">APISpecification</a></code></li><li><code><a href="../Gem/Resolver/ActivationRequest.html">ActivationRequest</a></code></li><li><code><a href="../Gem/Resolver/BestSet.html">BestSet</a></code></li><li><code><a href="../Gem/Resolver/ComposedSet.html">ComposedSet</a></code></li><li><code><a href="../Gem/Resolver/Conflict.html">Conflict</a></code></li><li><code><a href="../Gem/Resolver/CurrentSet.html">CurrentSet</a></code></li><li><code><a href="../Gem/Resolver/DependencyRequest.html">DependencyRequest</a></code></li><li><code><a href="../Gem/Resolver/GitSet.html">GitSet</a></code></li><li><code><a href="../Gem/Resolver/GitSpecification.html">GitSpecification</a></code></li><li><code><a href="../Gem/Resolver/IndexSet.html">IndexSet</a></code></li><li><code><a href="../Gem/Resolver/IndexSpecification.html">IndexSpecification</a></code></li><li><code><a href="../Gem/Resolver/InstalledSpecification.html">InstalledSpecification</a></code></li><li><code><a href="../Gem/Resolver/InstallerSet.html">InstallerSet</a></code></li><li><code><a href="../Gem/Resolver/LocalSpecification.html">LocalSpecification</a></code></li><li><code><a href="../Gem/Resolver/LockSet.html">LockSet</a></code></li><li><code><a href="../Gem/Resolver/LockSpecification.html">LockSpecification</a></code></li><li><code><a href="../Gem/Resolver/RequirementList.html">RequirementList</a></code></li><li><code><a href="../Gem/Resolver/Set.html">Set</a></code></li><li><code><a href="../Gem/Resolver/SourceSet.html">SourceSet</a></code></li><li><code><a href="../Gem/Resolver/SpecSpecification.html">SpecSpecification</a></code></li><li><code><a href="../Gem/Resolver/Specification.html">Specification</a></code></li><li><code><a href="../Gem/Resolver/Stats.html">Stats</a></code></li><li><code><a href="../Gem/Resolver/VendorSet.html">VendorSet</a></code></li><li><code><a href="../Gem/Resolver/VendorSpecification.html">VendorSpecification</a></code></li></ul></details></li><li><code><a href="../Gem/RubyVersionMismatch.html">RubyVersionMismatch</a></code></li><li><code><a href="../Gem/RuntimeRequirementNotMetError.html">RuntimeRequirementNotMetError</a></code></li><li><details><summary><code><a href="../Gem/S3URISigner.html">S3URISigner</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/S3URISigner/ConfigurationError.html">ConfigurationError</a></code></li><li><code><a href="../Gem/S3URISigner/InstanceProfileError.html">InstanceProfileError</a></code></li></ul></details></li><li><details><summary><code><a href="../Gem/SafeMarshal.html">SafeMarshal</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../Gem/SafeMarshal/Elements.html">Elements</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/SafeMarshal/Elements/Array.html">Array</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/Bignum.html">Bignum</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/Element.html">Element</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/False.html">False</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/Float.html">Float</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/Hash.html">Hash</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/HashWithDefaultValue.html">HashWithDefaultValue</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/Integer.html">Integer</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/Nil.html">Nil</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/Object.html">Object</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/ObjectLink.html">ObjectLink</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/String.html">String</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/Symbol.html">Symbol</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/SymbolLink.html">SymbolLink</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/True.html">True</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/UserClass.html">UserClass</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/UserDefined.html">UserDefined</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/UserMarshal.html">UserMarshal</a></code></li><li><code><a href="../Gem/SafeMarshal/Elements/WithIvars.html">WithIvars</a></code></li></ul></details></li><li><details><summary><code><a href="../Gem/SafeMarshal/Reader.html">Reader</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/SafeMarshal/Reader/DataTooShortError.html">DataTooShortError</a></code></li><li><code><a href="../Gem/SafeMarshal/Reader/EOFError.html">EOFError</a></code></li><li><code><a href="../Gem/SafeMarshal/Reader/Error.html">Error</a></code></li><li><code><a href="../Gem/SafeMarshal/Reader/NegativeLengthError.html">NegativeLengthError</a></code></li><li><code><a href="../Gem/SafeMarshal/Reader/NotImplementedError.html">NotImplementedError</a></code></li><li><code><a href="../Gem/SafeMarshal/Reader/UnconsumedBytesError.html">UnconsumedBytesError</a></code></li><li><code><a href="../Gem/SafeMarshal/Reader/UnsupportedVersionError.html">UnsupportedVersionError</a></code></li></ul></details></li><li><details><summary><code><a href="../Gem/SafeMarshal/Visitors.html">Visitors</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/SafeMarshal/Visitors/StreamPrinter.html">StreamPrinter</a></code></li><li><details><summary><code><a href="../Gem/SafeMarshal/Visitors/ToRuby.html">ToRuby</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/SafeMarshal/Visitors/ToRuby/Error.html">Error</a></code></li><li><code><a href="../Gem/SafeMarshal/Visitors/ToRuby/FormatError.html">FormatError</a></code></li><li><code><a href="../Gem/SafeMarshal/Visitors/ToRuby/MethodCallError.html">MethodCallError</a></code></li><li><code><a href="../Gem/SafeMarshal/Visitors/ToRuby/RationalCompat.html">RationalCompat</a></code></li><li><code><a href="../Gem/SafeMarshal/Visitors/ToRuby/TimeTooLargeError.html">TimeTooLargeError</a></code></li><li><code><a href="../Gem/SafeMarshal/Visitors/ToRuby/UnpermittedClassError.html">UnpermittedClassError</a></code></li><li><code><a href="../Gem/SafeMarshal/Visitors/ToRuby/UnpermittedIvarError.html">UnpermittedIvarError</a></code></li><li><code><a href="../Gem/SafeMarshal/Visitors/ToRuby/UnpermittedSymbolError.html">UnpermittedSymbolError</a></code></li><li><code><a href="../Gem/SafeMarshal/Visitors/ToRuby/UnsupportedError.html">UnsupportedError</a></code></li></ul></details></li><li><code><a href="../Gem/SafeMarshal/Visitors/Visitor.html">Visitor</a></code></li></ul></details></li></ul></details></li><li><code><a href="../Gem/SafeYAML.html">SafeYAML</a></code></li><li><details><summary><code><a href="../Gem/Security.html">Security</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Security/Exception.html">Exception</a></code></li><li><code><a href="../Gem/Security/Policy.html">Policy</a></code></li><li><code><a href="../Gem/Security/Signer.html">Signer</a></code></li><li><code><a href="../Gem/Security/TrustDir.html">TrustDir</a></code></li></ul></details></li><li><code><a href="../Gem/SecurityOption.html">SecurityOption</a></code></li><li><details><summary><code><a href="../Gem/SilentUI.html">SilentUI</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/SilentUI/NullIO.html">NullIO</a></code></li></ul></details></li><li><details><summary><code><a href="../Gem/Source.html">Source</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/Source/Git.html">Git</a></code></li><li><code><a href="../Gem/Source/Installed.html">Installed</a></code></li><li><code><a href="../Gem/Source/Local.html">Local</a></code></li><li><code><a href="../Gem/Source/Lock.html">Lock</a></code></li><li><code><a href="../Gem/Source/SpecificFile.html">SpecificFile</a></code></li><li><code><a href="../Gem/Source/Vendor.html">Vendor</a></code></li></ul></details></li><li><code><a href="../Gem/SourceFetchProblem.html">SourceFetchProblem</a></code></li><li><code><a href="../Gem/SourceList.html">SourceList</a></code></li><li><code><a href="../Gem/SpecFetcher.html">SpecFetcher</a></code></li><li><code><a href="../Gem/SpecificGemNotFoundException.html">SpecificGemNotFoundException</a></code></li><li><code><a href="../Gem/Specification.html">Specification</a></code></li><li><code><a href="../Gem/SpecificationPolicy.html">SpecificationPolicy</a></code></li><li><code><a href="../Gem/SpecificationRecord.html">SpecificationRecord</a></code></li><li><details><summary><code><a href="../Gem/StreamUI.html">StreamUI</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Gem/StreamUI/SilentDownloadReporter.html">SilentDownloadReporter</a></code></li><li><code><a href="../Gem/StreamUI/SilentProgressReporter.html">SilentProgressReporter</a></code></li><li><code><a href="../Gem/StreamUI/SimpleProgressReporter.html">SimpleProgressReporter</a></code></li><li><code><a href="../Gem/StreamUI/ThreadedDownloadReporter.html">ThreadedDownloadReporter</a></code></li><li><code><a href="../Gem/StreamUI/VerboseProgressReporter.html">VerboseProgressReporter</a></code></li></ul></details></li><li><code><a href="../Gem/StubSpecification.html">StubSpecification</a></code></li><li><code><a href="../Gem/SystemExitException.html">SystemExitException</a></code></li><li><code><a href="../Gem/TargetRbConfig.html">TargetRbConfig</a></code></li><li><code><a href="../Gem/Text.html">Text</a></code></li><li><code><a href="../Gem/UninstallError.html">UninstallError</a></code></li><li><code><a href="../Gem/Uninstaller.html">Uninstaller</a></code></li><li><code><a href="../Gem/UnknownCommandError.html">UnknownCommandError</a></code></li><li><code><a href="../Gem/UnknownCommandSpellChecker.html">UnknownCommandSpellChecker</a></code></li><li><code><a href="../Gem/UnsatisfiableDependencyError.html">UnsatisfiableDependencyError</a></code></li><li><code><a href="../Gem/UpdateSuggestion.html">UpdateSuggestion</a></code></li><li><code><a href="../Gem/Uri.html">Uri</a></code></li><li><code><a href="../Gem/UriFormatter.html">UriFormatter</a></code></li><li><code><a href="../Gem/UserInteraction.html">UserInteraction</a></code></li><li><code><a href="../Gem/Util.html">Util</a></code></li><li><code><a href="../Gem/Validator.html">Validator</a></code></li><li><code><a href="../Gem/VerificationError.html">VerificationError</a></code></li><li><code><a href="../Gem/Version.html">Version</a></code></li><li><code><a href="../Gem/VersionOption.html">VersionOption</a></code></li><li><code><a href="../Gem/WebauthnVerificationError.html">WebauthnVerificationError</a></code></li><li><code><a href="../Gem/YAMLSerializer.html">YAMLSerializer</a></code></li></ul></details></li><li><code><a href="../Hash.html">Hash</a></code></li><li><details><summary><code><a href="../IO.html">IO</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../IO/Buffer.html">Buffer</a></code></summary><ul class="link-list nav-list"><li><code><a href="../IO/Buffer/AccessError.html">AccessError</a></code></li><li><code><a href="../IO/Buffer/AllocationError.html">AllocationError</a></code></li><li><code><a href="../IO/Buffer/InvalidatedError.html">InvalidatedError</a></code></li><li><code><a href="../IO/Buffer/LockedError.html">LockedError</a></code></li><li><code><a href="../IO/Buffer/MaskError.html">MaskError</a></code></li></ul></details></li><li><code><a href="../IO/EAGAINWaitReadable.html">EAGAINWaitReadable</a></code></li><li><code><a href="../IO/EAGAINWaitWritable.html">EAGAINWaitWritable</a></code></li><li><code><a href="../IO/EINPROGRESSWaitReadable.html">EINPROGRESSWaitReadable</a></code></li><li><code><a href="../IO/EINPROGRESSWaitWritable.html">EINPROGRESSWaitWritable</a></code></li><li><code><a href="../IO/EWOULDBLOCKWaitReadable.html">EWOULDBLOCKWaitReadable</a></code></li><li><code><a href="../IO/EWOULDBLOCKWaitWritable.html">EWOULDBLOCKWaitWritable</a></code></li><li><code><a href="../IO/TimeoutError.html">TimeoutError</a></code></li><li><code><a href="../IO/WaitReadable.html">WaitReadable</a></code></li><li><code><a href="../IO/WaitWritable.html">WaitWritable</a></code></li></ul></details></li><li><code><a href="../IOError.html">IOError</a></code></li><li><details><summary><code><a href="../IPAddr.html">IPAddr</a></code></summary><ul class="link-list nav-list"><li><code><a href="../IPAddr/AddressFamilyError.html">AddressFamilyError</a></code></li><li><code><a href="../IPAddr/Error.html">Error</a></code></li><li><code><a href="../IPAddr/InvalidAddressError.html">InvalidAddressError</a></code></li><li><code><a href="../IPAddr/InvalidPrefixError.html">InvalidPrefixError</a></code></li></ul></details></li><li><code><a href="../IPSocket.html">IPSocket</a></code></li><li><code><a href="../IndexError.html">IndexError</a></code></li><li><code><a href="../Integer.html">Integer</a></code></li><li><code><a href="../Interrupt.html">Interrupt</a></code></li><li><details><summary><code><a href="../JSON.html">JSON</a></code></summary><ul class="link-list nav-list"><li><code><a href="../JSON/Coder.html">Coder</a></code></li><li><details><summary><code><a href="../JSON/Ext.html">Ext</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../JSON/Ext/Generator.html">Generator</a></code></summary><ul class="link-list nav-list"><li><code><a href="../JSON/Ext/Generator/State.html">State</a></code></li></ul></details></li><li><code><a href="../JSON/Ext/Parser.html">Parser</a></code></li><li><code><a href="../JSON/Ext/ParserConfig.html">ParserConfig</a></code></li></ul></details></li><li><code><a href="../JSON/GeneratorError.html">GeneratorError</a></code></li><li><code><a href="../JSON/GenericObject.html">GenericObject</a></code></li><li><code><a href="../JSON/JSONError.html">JSONError</a></code></li><li><code><a href="../JSON/NestingError.html">NestingError</a></code></li><li><code><a href="../JSON/ParserError.html">ParserError</a></code></li></ul></details></li><li><code><a href="../Kernel.html">Kernel</a></code></li><li><code><a href="../KeyError.html">KeyError</a></code></li><li><code><a href="../LoadError.html">LoadError</a></code></li><li><code><a href="../LocalJumpError.html">LocalJumpError</a></code></li><li><details><summary><code><a href="../MakeMakefile.html">MakeMakefile</a></code></summary><ul class="link-list nav-list"><li><code><a href="../RbConfig.html">RbConfig</a></code></li></ul></details></li><li><code><a href="../Marshal.html">Marshal</a></code></li><li><code><a href="../MatchData.html">MatchData</a></code></li><li><details><summary><code><a href="../Math.html">Math</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Math/DomainError.html">DomainError</a></code></li></ul></details></li><li><code><a href="../Method.html">Method</a></code></li><li><code><a href="../Module.html">Module</a></code></li><li><code><a href="../Monitor.html">Monitor</a></code></li><li><details><summary><code><a href="../MonitorMixin.html">MonitorMixin</a></code></summary><ul class="link-list nav-list"><li><code><a href="../MonitorMixin/ConditionVariable.html">ConditionVariable</a></code></li></ul></details></li><li><code><a href="../NameError.html">NameError</a></code></li><li><details><summary><code><a href="../Net.html">Net</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../Net/HTTP.html">HTTP</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Net/HTTP/Copy.html">Copy</a></code></li><li><code><a href="../Net/HTTP/Delete.html">Delete</a></code></li><li><code><a href="../Net/HTTP/Get.html">Get</a></code></li><li><code><a href="../Net/HTTP/Head.html">Head</a></code></li><li><code><a href="../Net/HTTP/Lock.html">Lock</a></code></li><li><code><a href="../Net/HTTP/Mkcol.html">Mkcol</a></code></li><li><code><a href="../Net/HTTP/Move.html">Move</a></code></li><li><code><a href="../Net/HTTP/Options.html">Options</a></code></li><li><code><a href="../Net/HTTP/Patch.html">Patch</a></code></li><li><code><a href="../Net/HTTP/Post.html">Post</a></code></li><li><code><a href="../Net/HTTP/Propfind.html">Propfind</a></code></li><li><code><a href="../Net/HTTP/Proppatch.html">Proppatch</a></code></li><li><code><a href="../Net/HTTP/Put.html">Put</a></code></li><li><code><a href="../Net/HTTP/Trace.html">Trace</a></code></li><li><code><a href="../Net/HTTP/Unlock.html">Unlock</a></code></li></ul></details></li><li><code><a href="../Net/HTTPAccepted.html">HTTPAccepted</a></code></li><li><code><a href="../Net/HTTPAlreadyReported.html">HTTPAlreadyReported</a></code></li><li><code><a href="../Net/HTTPBadGateway.html">HTTPBadGateway</a></code></li><li><code><a href="../Net/HTTPBadRequest.html">HTTPBadRequest</a></code></li><li><code><a href="../Net/HTTPClientError.html">HTTPClientError</a></code></li><li><code><a href="../Net/HTTPConflict.html">HTTPConflict</a></code></li><li><code><a href="../Net/HTTPContinue.html">HTTPContinue</a></code></li><li><code><a href="../Net/HTTPCreated.html">HTTPCreated</a></code></li><li><code><a href="../Net/HTTPEarlyHints.html">HTTPEarlyHints</a></code></li><li><code><a href="../Net/HTTPExpectationFailed.html">HTTPExpectationFailed</a></code></li><li><code><a href="../Net/HTTPFailedDependency.html">HTTPFailedDependency</a></code></li><li><code><a href="../Net/HTTPForbidden.html">HTTPForbidden</a></code></li><li><code><a href="../Net/HTTPFound.html">HTTPFound</a></code></li><li><code><a href="../Net/HTTPGatewayTimeout.html">HTTPGatewayTimeOut</a></code></li><li><code><a href="../Net/HTTPGatewayTimeout.html">HTTPGatewayTimeout</a></code></li><li><code><a href="../Net/HTTPGenericRequest.html">HTTPGenericRequest</a></code></li><li><code><a href="../Net/HTTPGone.html">HTTPGone</a></code></li><li><code><a href="../Net/HTTPHeader.html">HTTPHeader</a></code></li><li><code><a href="../Net/HTTPIMUsed.html">HTTPIMUsed</a></code></li><li><code><a href="../Net/HTTPInformation.html">HTTPInformation</a></code></li><li><code><a href="../Net/HTTPInsufficientStorage.html">HTTPInsufficientStorage</a></code></li><li><code><a href="../Net/HTTPInternalServerError.html">HTTPInternalServerError</a></code></li><li><code><a href="../Net/HTTPLengthRequired.html">HTTPLengthRequired</a></code></li><li><code><a href="../Net/HTTPLocked.html">HTTPLocked</a></code></li><li><code><a href="../Net/HTTPLoopDetected.html">HTTPLoopDetected</a></code></li><li><code><a href="../Net/HTTPMethodNotAllowed.html">HTTPMethodNotAllowed</a></code></li><li><code><a href="../Net/HTTPMisdirectedRequest.html">HTTPMisdirectedRequest</a></code></li><li><code><a href="../Net/HTTPMovedPermanently.html">HTTPMovedPermanently</a></code></li><li><code><a href="../Net/HTTPFound.html">HTTPMovedTemporarily</a></code></li><li><code><a href="../Net/HTTPMultiStatus.html">HTTPMultiStatus</a></code></li><li><code><a href="../Net/HTTPMultipleChoices.html">HTTPMultipleChoice</a></code></li><li><code><a href="../Net/HTTPMultipleChoices.html">HTTPMultipleChoices</a></code></li><li><code><a href="../Net/HTTPNetworkAuthenticationRequired.html">HTTPNetworkAuthenticationRequired</a></code></li><li><code><a href="../Net/HTTPNoContent.html">HTTPNoContent</a></code></li><li><code><a href="../Net/HTTPNonAuthoritativeInformation.html">HTTPNonAuthoritativeInformation</a></code></li><li><code><a href="../Net/HTTPNotAcceptable.html">HTTPNotAcceptable</a></code></li><li><code><a href="../Net/HTTPNotExtended.html">HTTPNotExtended</a></code></li><li><code><a href="../Net/HTTPNotFound.html">HTTPNotFound</a></code></li><li><code><a href="../Net/HTTPNotImplemented.html">HTTPNotImplemented</a></code></li><li><code><a href="../Net/HTTPNotModified.html">HTTPNotModified</a></code></li><li><code><a href="../Net/HTTPOK.html">HTTPOK</a></code></li><li><code><a href="../Net/HTTPPartialContent.html">HTTPPartialContent</a></code></li><li><code><a href="../Net/HTTPPayloadTooLarge.html">HTTPPayloadTooLarge</a></code></li><li><code><a href="../Net/HTTPPaymentRequired.html">HTTPPaymentRequired</a></code></li><li><code><a href="../Net/HTTPPermanentRedirect.html">HTTPPermanentRedirect</a></code></li><li><code><a href="../Net/HTTPPreconditionFailed.html">HTTPPreconditionFailed</a></code></li><li><code><a href="../Net/HTTPPreconditionRequired.html">HTTPPreconditionRequired</a></code></li><li><code><a href="../Net/HTTPProcessing.html">HTTPProcessing</a></code></li><li><code><a href="../Net/HTTPProxyAuthenticationRequired.html">HTTPProxyAuthenticationRequired</a></code></li><li><code><a href="../Net/HTTPRangeNotSatisfiable.html">HTTPRangeNotSatisfiable</a></code></li><li><code><a href="../Net/HTTPRedirection.html">HTTPRedirection</a></code></li><li><code><a href="../Net/HTTPRequest.html">HTTPRequest</a></code></li><li><code><a href="../Net/HTTPPayloadTooLarge.html">HTTPRequestEntityTooLarge</a></code></li><li><code><a href="../Net/HTTPRequestHeaderFieldsTooLarge.html">HTTPRequestHeaderFieldsTooLarge</a></code></li><li><code><a href="../Net/HTTPRequestTimeout.html">HTTPRequestTimeOut</a></code></li><li><code><a href="../Net/HTTPRequestTimeout.html">HTTPRequestTimeout</a></code></li><li><code><a href="../Net/HTTPURITooLong.html">HTTPRequestURITooLong</a></code></li><li><code><a href="../Net/HTTPRangeNotSatisfiable.html">HTTPRequestedRangeNotSatisfiable</a></code></li><li><code><a href="../Net/HTTPResetContent.html">HTTPResetContent</a></code></li><li><code><a href="../Net/HTTPResponse.html">HTTPResponse</a></code></li><li><code><a href="../Net/HTTPSeeOther.html">HTTPSeeOther</a></code></li><li><code><a href="../Net/HTTPServerError.html">HTTPServerError</a></code></li><li><code><a href="../Net/HTTPServiceUnavailable.html">HTTPServiceUnavailable</a></code></li><li><code><a href="../Net/HTTP.html">HTTPSession</a></code></li><li><code><a href="../Net/HTTPSuccess.html">HTTPSuccess</a></code></li><li><code><a href="../Net/HTTPSwitchProtocol.html">HTTPSwitchProtocol</a></code></li><li><code><a href="../Net/HTTPTemporaryRedirect.html">HTTPTemporaryRedirect</a></code></li><li><code><a href="../Net/HTTPTooManyRequests.html">HTTPTooManyRequests</a></code></li><li><code><a href="../Net/HTTPURITooLong.html">HTTPURITooLong</a></code></li><li><code><a href="../Net/HTTPUnauthorized.html">HTTPUnauthorized</a></code></li><li><code><a href="../Net/HTTPUnavailableForLegalReasons.html">HTTPUnavailableForLegalReasons</a></code></li><li><code><a href="../Net/HTTPUnknownResponse.html">HTTPUnknownResponse</a></code></li><li><code><a href="../Net/HTTPUnprocessableEntity.html">HTTPUnprocessableEntity</a></code></li><li><code><a href="../Net/HTTPUnsupportedMediaType.html">HTTPUnsupportedMediaType</a></code></li><li><code><a href="../Net/HTTPUpgradeRequired.html">HTTPUpgradeRequired</a></code></li><li><code><a href="../Net/HTTPUseProxy.html">HTTPUseProxy</a></code></li><li><code><a href="../Net/HTTPVariantAlsoNegotiates.html">HTTPVariantAlsoNegotiates</a></code></li><li><code><a href="../Net/HTTPVersionNotSupported.html">HTTPVersionNotSupported</a></code></li><li><code><a href="../Net/OpenTimeout.html">OpenTimeout</a></code></li><li><code><a href="../Net/ReadTimeout.html">ReadTimeout</a></code></li><li><code><a href="../Net/WriteAdapter.html">WriteAdapter</a></code></li><li><code><a href="../Net/WriteTimeout.html">WriteTimeout</a></code></li></ul></details></li><li><code><a href="../NilClass.html">NilClass</a></code></li><li><code><a href="../NoMatchingPatternError.html">NoMatchingPatternError</a></code></li><li><code><a href="../NoMatchingPatternKeyError.html">NoMatchingPatternKeyError</a></code></li><li><code><a href="../NoMemoryError.html">NoMemoryError</a></code></li><li><code><a href="../NoMethodError.html">NoMethodError</a></code></li><li><code><a href="../NotImplementedError.html">NotImplementedError</a></code></li><li><code><a href="../Numeric.html">Numeric</a></code></li><li><code><a href="../Object.html">Object</a></code></li><li><details><summary><code><a href="../ObjectSpace.html">ObjectSpace</a></code></summary><ul class="link-list nav-list"><li><code><a href="../ObjectSpace/InternalObjectWrapper.html">InternalObjectWrapper</a></code></li><li><code><a href="../ObjectSpace/WeakKeyMap.html">WeakKeyMap</a></code></li><li><code><a href="../ObjectSpace/WeakMap.html">WeakMap</a></code></li></ul></details></li><li><code><a href="../Open3.html">Open3</a></code></li><li><details><summary><code><a href="../OpenSSL.html">OpenSSL</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../OpenSSL/ASN1.html">ASN1</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/ASN1/ASN1Data.html">ASN1Data</a></code></li><li><code><a href="../OpenSSL/ASN1/ASN1Error.html">ASN1Error</a></code></li><li><code><a href="../OpenSSL/ASN1/Constructive.html">Constructive</a></code></li><li><code><a href="../OpenSSL/ASN1/ObjectId.html">ObjectId</a></code></li><li><code><a href="../OpenSSL/ASN1/Primitive.html">Primitive</a></code></li></ul></details></li><li><code><a href="../OpenSSL/BN.html">BN</a></code></li><li><code><a href="../OpenSSL/BNError.html">BNError</a></code></li><li><details><summary><code><a href="../OpenSSL/Buffering.html">Buffering</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/Buffering/Buffer.html">Buffer</a></code></li></ul></details></li><li><details><summary><code><a href="../OpenSSL/Cipher.html">Cipher</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/Cipher/AuthTagError.html">AuthTagError</a></code></li><li><code><a href="../OpenSSL/Cipher/Cipher.html">Cipher</a></code></li><li><code><a href="../OpenSSL/Cipher/CipherError.html">CipherError</a></code></li></ul></details></li><li><code><a href="../OpenSSL/Config.html">Config</a></code></li><li><code><a href="../OpenSSL/ConfigError.html">ConfigError</a></code></li><li><details><summary><code><a href="../OpenSSL/Digest.html">Digest</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/Digest/DigestError.html">DigestError</a></code></li></ul></details></li><li><details><summary><code><a href="../OpenSSL/Engine.html">Engine</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/Engine/EngineError.html">EngineError</a></code></li></ul></details></li><li><code><a href="../OpenSSL/HMAC.html">HMAC</a></code></li><li><code><a href="../OpenSSL/HMACError.html">HMACError</a></code></li><li><details><summary><code><a href="../OpenSSL/KDF.html">KDF</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/KDF/KDFError.html">KDFError</a></code></li></ul></details></li><li><details><summary><code><a href="../OpenSSL/Marshal.html">Marshal</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/Marshal/ClassMethods.html">ClassMethods</a></code></li></ul></details></li><li><details><summary><code><a href="../OpenSSL/Netscape.html">Netscape</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/Netscape/SPKI.html">SPKI</a></code></li><li><code><a href="../OpenSSL/Netscape/SPKIError.html">SPKIError</a></code></li></ul></details></li><li><details><summary><code><a href="../OpenSSL/OCSP.html">OCSP</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/OCSP/BasicResponse.html">BasicResponse</a></code></li><li><code><a href="../OpenSSL/OCSP/CertificateId.html">CertificateId</a></code></li><li><code><a href="../OpenSSL/OCSP/OCSPError.html">OCSPError</a></code></li><li><code><a href="../OpenSSL/OCSP/Request.html">Request</a></code></li><li><code><a href="../OpenSSL/OCSP/Response.html">Response</a></code></li><li><code><a href="../OpenSSL/OCSP/SingleResponse.html">SingleResponse</a></code></li></ul></details></li><li><code><a href="../OpenSSL/OpenSSLError.html">OpenSSLError</a></code></li><li><details><summary><code><a href="../OpenSSL/PKCS12.html">PKCS12</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/PKCS12/PKCS12Error.html">PKCS12Error</a></code></li></ul></details></li><li><code><a href="../OpenSSL/PKCS5.html">PKCS5</a></code></li><li><details><summary><code><a href="../OpenSSL/PKCS7.html">PKCS7</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/PKCS7/PKCS7Error.html">PKCS7Error</a></code></li><li><code><a href="../OpenSSL/PKCS7/RecipientInfo.html">RecipientInfo</a></code></li><li><code><a href="../OpenSSL/PKCS7/SignerInfo.html">SignerInfo</a></code></li></ul></details></li><li><details><summary><code><a href="../OpenSSL/PKey.html">PKey</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/PKey/DH.html">DH</a></code></li><li><code><a href="../OpenSSL/PKey/DSA.html">DSA</a></code></li><li><details><summary><code><a href="../OpenSSL/PKey/EC.html">EC</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../OpenSSL/PKey/EC/Group.html">Group</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/PKey/EC/Group/Error.html">Error</a></code></li></ul></details></li><li><details><summary><code><a href="../OpenSSL/PKey/EC/Point.html">Point</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/PKey/EC/Point/Error.html">Error</a></code></li></ul></details></li></ul></details></li><li><code><a href="../OpenSSL/PKey/PKey.html">PKey</a></code></li><li><code><a href="../OpenSSL/PKey/PKeyError.html">PKeyError</a></code></li><li><code><a href="../OpenSSL/PKey/RSA.html">RSA</a></code></li><li><code><a href="../OpenSSL/PKey/PKeyError.html">RSAError</a></code></li></ul></details></li><li><details><summary><code><a href="../OpenSSL/Random.html">Random</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/Random/RandomError.html">RandomError</a></code></li></ul></details></li><li><details><summary><code><a href="../OpenSSL/SSL.html">SSL</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/SSL/SSLContext.html">SSLContext</a></code></li><li><code><a href="../OpenSSL/SSL/SSLError.html">SSLError</a></code></li><li><code><a href="../OpenSSL/SSL/SSLErrorWaitReadable.html">SSLErrorWaitReadable</a></code></li><li><code><a href="../OpenSSL/SSL/SSLErrorWaitWritable.html">SSLErrorWaitWritable</a></code></li><li><code><a href="../OpenSSL/SSL/SSLServer.html">SSLServer</a></code></li><li><code><a href="../OpenSSL/SSL/SSLSocket.html">SSLSocket</a></code></li><li><details><summary><code><a href="../OpenSSL/SSL/Session.html">Session</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/SSL/Session/SessionError.html">SessionError</a></code></li></ul></details></li><li><code><a href="../OpenSSL/SSL/SocketForwarder.html">SocketForwarder</a></code></li></ul></details></li><li><details><summary><code><a href="../OpenSSL/Timestamp.html">Timestamp</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/Timestamp/Factory.html">Factory</a></code></li><li><code><a href="../OpenSSL/Timestamp/Request.html">Request</a></code></li><li><code><a href="../OpenSSL/Timestamp/Response.html">Response</a></code></li><li><code><a href="../OpenSSL/Timestamp/TimestampError.html">TimestampError</a></code></li><li><code><a href="../OpenSSL/Timestamp/TokenInfo.html">TokenInfo</a></code></li></ul></details></li><li><details><summary><code><a href="../OpenSSL/X509.html">X509</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/X509/Attribute.html">Attribute</a></code></li><li><code><a href="../OpenSSL/X509/AttributeError.html">AttributeError</a></code></li><li><code><a href="../OpenSSL/X509/CRL.html">CRL</a></code></li><li><code><a href="../OpenSSL/X509/CRLError.html">CRLError</a></code></li><li><code><a href="../OpenSSL/X509/Certificate.html">Certificate</a></code></li><li><code><a href="../OpenSSL/X509/CertificateError.html">CertificateError</a></code></li><li><details><summary><code><a href="../OpenSSL/X509/Extension.html">Extension</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/X509/Extension/AuthorityInfoAccess.html">AuthorityInfoAccess</a></code></li><li><code><a href="../OpenSSL/X509/Extension/AuthorityKeyIdentifier.html">AuthorityKeyIdentifier</a></code></li><li><code><a href="../OpenSSL/X509/Extension/CRLDistributionPoints.html">CRLDistributionPoints</a></code></li><li><code><a href="../OpenSSL/X509/Extension/Helpers.html">Helpers</a></code></li><li><code><a href="../OpenSSL/X509/Extension/SubjectKeyIdentifier.html">SubjectKeyIdentifier</a></code></li></ul></details></li><li><code><a href="../OpenSSL/X509/ExtensionError.html">ExtensionError</a></code></li><li><code><a href="../OpenSSL/X509/ExtensionFactory.html">ExtensionFactory</a></code></li><li><details><summary><code><a href="../OpenSSL/X509/Name.html">Name</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenSSL/X509/Name/RFC2253DN.html">RFC2253DN</a></code></li></ul></details></li><li><code><a href="../OpenSSL/X509/NameError.html">NameError</a></code></li><li><code><a href="../OpenSSL/X509/Request.html">Request</a></code></li><li><code><a href="../OpenSSL/X509/RequestError.html">RequestError</a></code></li><li><code><a href="../OpenSSL/X509/Revoked.html">Revoked</a></code></li><li><code><a href="../OpenSSL/X509/RevokedError.html">RevokedError</a></code></li><li><code><a href="../OpenSSL/X509/Store.html">Store</a></code></li><li><code><a href="../OpenSSL/X509/StoreContext.html">StoreContext</a></code></li><li><code><a href="../OpenSSL/X509/StoreError.html">StoreError</a></code></li></ul></details></li></ul></details></li><li><code><a href="../OpenStruct.html">OpenStruct</a></code></li><li><details><summary><code><a href="../OpenURI.html">OpenURI</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OpenURI/HTTPError.html">HTTPError</a></code></li><li><code><a href="../OpenURI/HTTPRedirect.html">HTTPRedirect</a></code></li><li><code><a href="../OpenURI/Meta.html">Meta</a></code></li><li><code><a href="../OpenURI/OpenRead.html">OpenRead</a></code></li><li><code><a href="../OpenURI/TooManyRedirects.html">TooManyRedirects</a></code></li></ul></details></li><li><details><summary><code><a href="../OptionParser.html">OptionParser</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OptionParser/AC.html">AC</a></code></li><li><code><a href="../OptionParser/Acceptables.html">Acceptables</a></code></li><li><code><a href="../OptionParser/AmbiguousArgument.html">AmbiguousArgument</a></code></li><li><code><a href="../OptionParser/AmbiguousOption.html">AmbiguousOption</a></code></li><li><code><a href="../OptionParser/Arguable.html">Arguable</a></code></li><li><code><a href="../OptionParser/CompletingHash.html">CompletingHash</a></code></li><li><code><a href="../OptionParser/Completion.html">Completion</a></code></li><li><code><a href="../OptionParser/InvalidArgument.html">InvalidArgument</a></code></li><li><code><a href="../OptionParser/InvalidOption.html">InvalidOption</a></code></li><li><code><a href="../OptionParser/List.html">List</a></code></li><li><code><a href="../OptionParser/MissingArgument.html">MissingArgument</a></code></li><li><code><a href="../OptionParser/NeedlessArgument.html">NeedlessArgument</a></code></li><li><code><a href="../OptionParser/OptionMap.html">OptionMap</a></code></li><li><code><a href="../OptionParser/ParseError.html">ParseError</a></code></li><li><details><summary><code><a href="../OptionParser/Switch.html">Switch</a></code></summary><ul class="link-list nav-list"><li><code><a href="../OptionParser/Switch/NoArgument.html">NoArgument</a></code></li><li><code><a href="../OptionParser/Switch/OptionalArgument.html">OptionalArgument</a></code></li><li><code><a href="../OptionParser/Switch/PlacedArgument.html">PlacedArgument</a></code></li><li><code><a href="../OptionParser/Switch/RequiredArgument.html">RequiredArgument</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="../PP.html">PP</a></code></summary><ul class="link-list nav-list"><li><code><a href="../PP/PPMethods.html">PPMethods</a></code></li></ul></details></li><li><details><summary><code><a href="../PTY.html">PTY</a></code></summary><ul class="link-list nav-list"><li><code><a href="../PTY/ChildExited.html">ChildExited</a></code></li></ul></details></li><li><code><a href="../Pathname.html">Pathname</a></code></li><li><details><summary><code><a href="../PrettyPrint.html">PrettyPrint</a></code></summary><ul class="link-list nav-list"><li><code><a href="../PrettyPrint/SingleLine.html">SingleLine</a></code></li></ul></details></li><li><details><summary><code><a href="../Prism.html">Prism</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/ASCIISource.html">ASCIISource</a></code></li><li><code><a href="../Prism/AliasGlobalVariableNode.html">AliasGlobalVariableNode</a></code></li><li><code><a href="../Prism/AliasMethodNode.html">AliasMethodNode</a></code></li><li><code><a href="../Prism/AlternationPatternNode.html">AlternationPatternNode</a></code></li><li><code><a href="../Prism/AndNode.html">AndNode</a></code></li><li><code><a href="../Prism/ArgumentsNode.html">ArgumentsNode</a></code></li><li><code><a href="../Prism/ArgumentsNodeFlags.html">ArgumentsNodeFlags</a></code></li><li><code><a href="../Prism/ArrayNode.html">ArrayNode</a></code></li><li><code><a href="../Prism/ArrayNodeFlags.html">ArrayNodeFlags</a></code></li><li><code><a href="../Prism/ArrayPatternNode.html">ArrayPatternNode</a></code></li><li><code><a href="../Prism/AssocNode.html">AssocNode</a></code></li><li><code><a href="../Prism/AssocSplatNode.html">AssocSplatNode</a></code></li><li><code><a href="../Prism/BackReferenceReadNode.html">BackReferenceReadNode</a></code></li><li><code><a href="../Prism/BasicVisitor.html">BasicVisitor</a></code></li><li><code><a href="../Prism/BeginNode.html">BeginNode</a></code></li><li><code><a href="../Prism/BlockArgumentNode.html">BlockArgumentNode</a></code></li><li><code><a href="../Prism/BlockLocalVariableNode.html">BlockLocalVariableNode</a></code></li><li><code><a href="../Prism/BlockNode.html">BlockNode</a></code></li><li><code><a href="../Prism/BlockParameterNode.html">BlockParameterNode</a></code></li><li><code><a href="../Prism/BlockParametersNode.html">BlockParametersNode</a></code></li><li><code><a href="../Prism/BreakNode.html">BreakNode</a></code></li><li><code><a href="../Prism/CallAndWriteNode.html">CallAndWriteNode</a></code></li><li><code><a href="../Prism/CallNode.html">CallNode</a></code></li><li><code><a href="../Prism/CallNodeFlags.html">CallNodeFlags</a></code></li><li><code><a href="../Prism/CallOperatorWriteNode.html">CallOperatorWriteNode</a></code></li><li><code><a href="../Prism/CallOrWriteNode.html">CallOrWriteNode</a></code></li><li><code><a href="../Prism/CallTargetNode.html">CallTargetNode</a></code></li><li><code><a href="../Prism/CapturePatternNode.html">CapturePatternNode</a></code></li><li><code><a href="../Prism/CaseMatchNode.html">CaseMatchNode</a></code></li><li><code><a href="../Prism/CaseNode.html">CaseNode</a></code></li><li><code><a href="../Prism/ClassNode.html">ClassNode</a></code></li><li><code><a href="../Prism/ClassVariableAndWriteNode.html">ClassVariableAndWriteNode</a></code></li><li><code><a href="../Prism/ClassVariableOperatorWriteNode.html">ClassVariableOperatorWriteNode</a></code></li><li><code><a href="../Prism/ClassVariableOrWriteNode.html">ClassVariableOrWriteNode</a></code></li><li><code><a href="../Prism/ClassVariableReadNode.html">ClassVariableReadNode</a></code></li><li><code><a href="../Prism/ClassVariableTargetNode.html">ClassVariableTargetNode</a></code></li><li><code><a href="../Prism/ClassVariableWriteNode.html">ClassVariableWriteNode</a></code></li><li><code><a href="../Prism/CodeUnitsCache.html">CodeUnitsCache</a></code></li><li><code><a href="../Prism/Comment.html">Comment</a></code></li><li><code><a href="../Prism/Compiler.html">Compiler</a></code></li><li><code><a href="../Prism/ConstantAndWriteNode.html">ConstantAndWriteNode</a></code></li><li><code><a href="../Prism/ConstantOperatorWriteNode.html">ConstantOperatorWriteNode</a></code></li><li><code><a href="../Prism/ConstantOrWriteNode.html">ConstantOrWriteNode</a></code></li><li><code><a href="../Prism/ConstantPathAndWriteNode.html">ConstantPathAndWriteNode</a></code></li><li><details><summary><code><a href="../Prism/ConstantPathNode.html">ConstantPathNode</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/ConstantPathNode/DynamicPartsInConstantPathError.html">DynamicPartsInConstantPathError</a></code></li><li><code><a href="../Prism/ConstantPathNode/MissingNodesInConstantPathError.html">MissingNodesInConstantPathError</a></code></li></ul></details></li><li><code><a href="../Prism/ConstantPathOperatorWriteNode.html">ConstantPathOperatorWriteNode</a></code></li><li><code><a href="../Prism/ConstantPathOrWriteNode.html">ConstantPathOrWriteNode</a></code></li><li><code><a href="../Prism/ConstantPathTargetNode.html">ConstantPathTargetNode</a></code></li><li><code><a href="../Prism/ConstantPathWriteNode.html">ConstantPathWriteNode</a></code></li><li><code><a href="../Prism/ConstantReadNode.html">ConstantReadNode</a></code></li><li><code><a href="../Prism/ConstantTargetNode.html">ConstantTargetNode</a></code></li><li><code><a href="../Prism/ConstantWriteNode.html">ConstantWriteNode</a></code></li><li><code><a href="../Prism/CurrentVersionError.html">CurrentVersionError</a></code></li><li><code><a href="../Prism/DSL.html">DSL</a></code></li><li><code><a href="../Prism/DefNode.html">DefNode</a></code></li><li><code><a href="../Prism/DefinedNode.html">DefinedNode</a></code></li><li><code><a href="../Prism/DesugarCompiler.html">DesugarCompiler</a></code></li><li><code><a href="../Prism/Dispatcher.html">Dispatcher</a></code></li><li><code><a href="../Prism/DotVisitor.html">DotVisitor</a></code></li><li><code><a href="../Prism/ElseNode.html">ElseNode</a></code></li><li><code><a href="../Prism/EmbDocComment.html">EmbDocComment</a></code></li><li><code><a href="../Prism/EmbeddedStatementsNode.html">EmbeddedStatementsNode</a></code></li><li><code><a href="../Prism/EmbeddedVariableNode.html">EmbeddedVariableNode</a></code></li><li><code><a href="../Prism/EncodingFlags.html">EncodingFlags</a></code></li><li><code><a href="../Prism/EnsureNode.html">EnsureNode</a></code></li><li><code><a href="../Prism/FalseNode.html">FalseNode</a></code></li><li><code><a href="../Prism/FindPatternNode.html">FindPatternNode</a></code></li><li><code><a href="../Prism/FlipFlopNode.html">FlipFlopNode</a></code></li><li><code><a href="../Prism/FloatNode.html">FloatNode</a></code></li><li><code><a href="../Prism/ForNode.html">ForNode</a></code></li><li><code><a href="../Prism/ForwardingArgumentsNode.html">ForwardingArgumentsNode</a></code></li><li><code><a href="../Prism/ForwardingParameterNode.html">ForwardingParameterNode</a></code></li><li><code><a href="../Prism/ForwardingSuperNode.html">ForwardingSuperNode</a></code></li><li><code><a href="../Prism/GlobalVariableAndWriteNode.html">GlobalVariableAndWriteNode</a></code></li><li><code><a href="../Prism/GlobalVariableOperatorWriteNode.html">GlobalVariableOperatorWriteNode</a></code></li><li><code><a href="../Prism/GlobalVariableOrWriteNode.html">GlobalVariableOrWriteNode</a></code></li><li><code><a href="../Prism/GlobalVariableReadNode.html">GlobalVariableReadNode</a></code></li><li><code><a href="../Prism/GlobalVariableTargetNode.html">GlobalVariableTargetNode</a></code></li><li><code><a href="../Prism/GlobalVariableWriteNode.html">GlobalVariableWriteNode</a></code></li><li><code><a href="../Prism/HashNode.html">HashNode</a></code></li><li><code><a href="../Prism/HashPatternNode.html">HashPatternNode</a></code></li><li><code><a href="../Prism/IfNode.html">IfNode</a></code></li><li><code><a href="../Prism/ImaginaryNode.html">ImaginaryNode</a></code></li><li><code><a href="../Prism/ImplicitNode.html">ImplicitNode</a></code></li><li><code><a href="../Prism/ImplicitRestNode.html">ImplicitRestNode</a></code></li><li><code><a href="../Prism/InNode.html">InNode</a></code></li><li><code><a href="../Prism/IndexAndWriteNode.html">IndexAndWriteNode</a></code></li><li><code><a href="../Prism/IndexOperatorWriteNode.html">IndexOperatorWriteNode</a></code></li><li><code><a href="../Prism/IndexOrWriteNode.html">IndexOrWriteNode</a></code></li><li><code><a href="../Prism/IndexTargetNode.html">IndexTargetNode</a></code></li><li><code><a href="../Prism/InlineComment.html">InlineComment</a></code></li><li><code><a href="../Prism/InspectVisitor.html">InspectVisitor</a></code></li><li><code><a href="../Prism/InstanceVariableAndWriteNode.html">InstanceVariableAndWriteNode</a></code></li><li><code><a href="../Prism/InstanceVariableOperatorWriteNode.html">InstanceVariableOperatorWriteNode</a></code></li><li><code><a href="../Prism/InstanceVariableOrWriteNode.html">InstanceVariableOrWriteNode</a></code></li><li><code><a href="../Prism/InstanceVariableReadNode.html">InstanceVariableReadNode</a></code></li><li><code><a href="../Prism/InstanceVariableTargetNode.html">InstanceVariableTargetNode</a></code></li><li><code><a href="../Prism/InstanceVariableWriteNode.html">InstanceVariableWriteNode</a></code></li><li><code><a href="../Prism/IntegerBaseFlags.html">IntegerBaseFlags</a></code></li><li><code><a href="../Prism/IntegerNode.html">IntegerNode</a></code></li><li><code><a href="../Prism/InterpolatedMatchLastLineNode.html">InterpolatedMatchLastLineNode</a></code></li><li><code><a href="../Prism/InterpolatedRegularExpressionNode.html">InterpolatedRegularExpressionNode</a></code></li><li><code><a href="../Prism/InterpolatedStringNode.html">InterpolatedStringNode</a></code></li><li><code><a href="../Prism/InterpolatedStringNodeFlags.html">InterpolatedStringNodeFlags</a></code></li><li><code><a href="../Prism/InterpolatedSymbolNode.html">InterpolatedSymbolNode</a></code></li><li><code><a href="../Prism/InterpolatedXStringNode.html">InterpolatedXStringNode</a></code></li><li><code><a href="../Prism/ItLocalVariableReadNode.html">ItLocalVariableReadNode</a></code></li><li><code><a href="../Prism/ItParametersNode.html">ItParametersNode</a></code></li><li><code><a href="../Prism/KeywordHashNode.html">KeywordHashNode</a></code></li><li><code><a href="../Prism/KeywordHashNodeFlags.html">KeywordHashNodeFlags</a></code></li><li><code><a href="../Prism/KeywordRestParameterNode.html">KeywordRestParameterNode</a></code></li><li><code><a href="../Prism/LambdaNode.html">LambdaNode</a></code></li><li><details><summary><code><a href="../Prism/LexCompat.html">LexCompat</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/LexCompat/EndContentToken.html">EndContentToken</a></code></li><li><code><a href="../Prism/LexCompat/IdentToken.html">IdentToken</a></code></li><li><code><a href="../Prism/LexCompat/IgnoreStateToken.html">IgnoreStateToken</a></code></li><li><code><a href="../Prism/LexCompat/IgnoredNewlineToken.html">IgnoredNewlineToken</a></code></li><li><code><a href="../Prism/LexCompat/ParamToken.html">ParamToken</a></code></li><li><code><a href="../Prism/LexCompat/Result.html">Result</a></code></li><li><code><a href="../Prism/LexCompat/Token.html">Token</a></code></li></ul></details></li><li><code><a href="../Prism/LexResult.html">LexResult</a></code></li><li><code><a href="../Prism/LocalVariableAndWriteNode.html">LocalVariableAndWriteNode</a></code></li><li><code><a href="../Prism/LocalVariableOperatorWriteNode.html">LocalVariableOperatorWriteNode</a></code></li><li><code><a href="../Prism/LocalVariableOrWriteNode.html">LocalVariableOrWriteNode</a></code></li><li><code><a href="../Prism/LocalVariableReadNode.html">LocalVariableReadNode</a></code></li><li><code><a href="../Prism/LocalVariableTargetNode.html">LocalVariableTargetNode</a></code></li><li><code><a href="../Prism/LocalVariableWriteNode.html">LocalVariableWriteNode</a></code></li><li><code><a href="../Prism/Location.html">Location</a></code></li><li><code><a href="../Prism/LoopFlags.html">LoopFlags</a></code></li><li><code><a href="../Prism/MagicComment.html">MagicComment</a></code></li><li><code><a href="../Prism/MatchLastLineNode.html">MatchLastLineNode</a></code></li><li><code><a href="../Prism/MatchPredicateNode.html">MatchPredicateNode</a></code></li><li><code><a href="../Prism/MatchRequiredNode.html">MatchRequiredNode</a></code></li><li><code><a href="../Prism/MatchWriteNode.html">MatchWriteNode</a></code></li><li><code><a href="../Prism/MissingNode.html">MissingNode</a></code></li><li><code><a href="../Prism/ModuleNode.html">ModuleNode</a></code></li><li><code><a href="../Prism/MultiTargetNode.html">MultiTargetNode</a></code></li><li><code><a href="../Prism/MultiWriteNode.html">MultiWriteNode</a></code></li><li><code><a href="../Prism/MutationCompiler.html">MutationCompiler</a></code></li><li><code><a href="../Prism/NextNode.html">NextNode</a></code></li><li><code><a href="../Prism/NilNode.html">NilNode</a></code></li><li><code><a href="../Prism/NoKeywordsParameterNode.html">NoKeywordsParameterNode</a></code></li><li><code><a href="../Prism/Node.html">Node</a></code></li><li><code><a href="../Prism/NodeFlags.html">NodeFlags</a></code></li><li><code><a href="../Prism/NumberedParametersNode.html">NumberedParametersNode</a></code></li><li><code><a href="../Prism/NumberedReferenceReadNode.html">NumberedReferenceReadNode</a></code></li><li><code><a href="../Prism/OptionalKeywordParameterNode.html">OptionalKeywordParameterNode</a></code></li><li><code><a href="../Prism/OptionalParameterNode.html">OptionalParameterNode</a></code></li><li><code><a href="../Prism/OrNode.html">OrNode</a></code></li><li><details><summary><code><a href="../Prism/Pack.html">Pack</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/Pack/Directive.html">Directive</a></code></li><li><code><a href="../Prism/Pack/Format.html">Format</a></code></li></ul></details></li><li><code><a href="../Prism/ParameterFlags.html">ParameterFlags</a></code></li><li><code><a href="../Prism/ParametersNode.html">ParametersNode</a></code></li><li><code><a href="../Prism/ParenthesesNode.html">ParenthesesNode</a></code></li><li><code><a href="../Prism/ParenthesesNodeFlags.html">ParenthesesNodeFlags</a></code></li><li><code><a href="../Prism/ParseError.html">ParseError</a></code></li><li><code><a href="../Prism/ParseLexResult.html">ParseLexResult</a></code></li><li><details><summary><code><a href="../Prism/ParseResult.html">ParseResult</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/ParseResult/Comments.html">Comments</a></code></li><li><code><a href="../Prism/ParseResult/Errors.html">Errors</a></code></li><li><code><a href="../Prism/ParseResult/Newlines.html">Newlines</a></code></li></ul></details></li><li><code><a href="../Prism/ParseWarning.html">ParseWarning</a></code></li><li><details><summary><code><a href="../Prism/Pattern.html">Pattern</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/Pattern/CompilationError.html">CompilationError</a></code></li></ul></details></li><li><code><a href="../Prism/PinnedExpressionNode.html">PinnedExpressionNode</a></code></li><li><code><a href="../Prism/PinnedVariableNode.html">PinnedVariableNode</a></code></li><li><code><a href="../Prism/PostExecutionNode.html">PostExecutionNode</a></code></li><li><code><a href="../Prism/PreExecutionNode.html">PreExecutionNode</a></code></li><li><code><a href="../Prism/ProgramNode.html">ProgramNode</a></code></li><li><code><a href="../Prism/RangeFlags.html">RangeFlags</a></code></li><li><code><a href="../Prism/RangeNode.html">RangeNode</a></code></li><li><code><a href="../Prism/RationalNode.html">RationalNode</a></code></li><li><code><a href="../Prism/RedoNode.html">RedoNode</a></code></li><li><details><summary><code><a href="../Prism/Reflection.html">Reflection</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/Reflection/ConstantField.html">ConstantField</a></code></li><li><code><a href="../Prism/Reflection/ConstantListField.html">ConstantListField</a></code></li><li><code><a href="../Prism/Reflection/Field.html">Field</a></code></li><li><code><a href="../Prism/Reflection/FlagsField.html">FlagsField</a></code></li><li><code><a href="../Prism/Reflection/FloatField.html">FloatField</a></code></li><li><code><a href="../Prism/Reflection/IntegerField.html">IntegerField</a></code></li><li><code><a href="../Prism/Reflection/LocationField.html">LocationField</a></code></li><li><code><a href="../Prism/Reflection/NodeField.html">NodeField</a></code></li><li><code><a href="../Prism/Reflection/NodeListField.html">NodeListField</a></code></li><li><code><a href="../Prism/Reflection/OptionalConstantField.html">OptionalConstantField</a></code></li><li><code><a href="../Prism/Reflection/OptionalLocationField.html">OptionalLocationField</a></code></li><li><code><a href="../Prism/Reflection/OptionalNodeField.html">OptionalNodeField</a></code></li><li><code><a href="../Prism/Reflection/StringField.html">StringField</a></code></li></ul></details></li><li><code><a href="../Prism/RegularExpressionFlags.html">RegularExpressionFlags</a></code></li><li><code><a href="../Prism/RegularExpressionNode.html">RegularExpressionNode</a></code></li><li><details><summary><code><a href="../Prism/Relocation.html">Relocation</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/Relocation/CharacterColumnsField.html">CharacterColumnsField</a></code></li><li><code><a href="../Prism/Relocation/CharacterOffsetsField.html">CharacterOffsetsField</a></code></li><li><code><a href="../Prism/Relocation/CodeUnitColumnsField.html">CodeUnitColumnsField</a></code></li><li><code><a href="../Prism/Relocation/CodeUnitOffsetsField.html">CodeUnitOffsetsField</a></code></li><li><code><a href="../Prism/Relocation/ColumnsField.html">ColumnsField</a></code></li><li><details><summary><code><a href="../Prism/Relocation/CommentsField.html">CommentsField</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/Relocation/CommentsField/Comment.html">Comment</a></code></li></ul></details></li><li><details><summary><code><a href="../Prism/Relocation/Entry.html">Entry</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/Relocation/Entry/MissingValueError.html">MissingValueError</a></code></li></ul></details></li><li><code><a href="../Prism/Relocation/FilepathField.html">FilepathField</a></code></li><li><code><a href="../Prism/Relocation/LeadingCommentsField.html">LeadingCommentsField</a></code></li><li><code><a href="../Prism/Relocation/LinesField.html">LinesField</a></code></li><li><code><a href="../Prism/Relocation/OffsetsField.html">OffsetsField</a></code></li><li><details><summary><code><a href="../Prism/Relocation/Repository.html">Repository</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/Relocation/Repository/ConfigurationError.html">ConfigurationError</a></code></li></ul></details></li><li><code><a href="../Prism/Relocation/Source.html">Source</a></code></li><li><code><a href="../Prism/Relocation/SourceFilepath.html">SourceFilepath</a></code></li><li><code><a href="../Prism/Relocation/SourceString.html">SourceString</a></code></li><li><code><a href="../Prism/Relocation/TrailingCommentsField.html">TrailingCommentsField</a></code></li></ul></details></li><li><code><a href="../Prism/RequiredKeywordParameterNode.html">RequiredKeywordParameterNode</a></code></li><li><code><a href="../Prism/RequiredParameterNode.html">RequiredParameterNode</a></code></li><li><code><a href="../Prism/RescueModifierNode.html">RescueModifierNode</a></code></li><li><code><a href="../Prism/RescueNode.html">RescueNode</a></code></li><li><code><a href="../Prism/RestParameterNode.html">RestParameterNode</a></code></li><li><code><a href="../Prism/Result.html">Result</a></code></li><li><code><a href="../Prism/RetryNode.html">RetryNode</a></code></li><li><code><a href="../Prism/ReturnNode.html">ReturnNode</a></code></li><li><code><a href="../Prism/Scope.html">Scope</a></code></li><li><code><a href="../Prism/SelfNode.html">SelfNode</a></code></li><li><code><a href="../Prism/Serialize.html">Serialize</a></code></li><li><code><a href="../Prism/ShareableConstantNode.html">ShareableConstantNode</a></code></li><li><code><a href="../Prism/ShareableConstantNodeFlags.html">ShareableConstantNodeFlags</a></code></li><li><code><a href="../Prism/SingletonClassNode.html">SingletonClassNode</a></code></li><li><code><a href="../Prism/Source.html">Source</a></code></li><li><code><a href="../Prism/SourceEncodingNode.html">SourceEncodingNode</a></code></li><li><code><a href="../Prism/SourceFileNode.html">SourceFileNode</a></code></li><li><code><a href="../Prism/SourceLineNode.html">SourceLineNode</a></code></li><li><code><a href="../Prism/SplatNode.html">SplatNode</a></code></li><li><code><a href="../Prism/StatementsNode.html">StatementsNode</a></code></li><li><code><a href="../Prism/StringFlags.html">StringFlags</a></code></li><li><code><a href="../Prism/StringNode.html">StringNode</a></code></li><li><code><a href="../Prism/StringQuery.html">StringQuery</a></code></li><li><code><a href="../Prism/SuperNode.html">SuperNode</a></code></li><li><code><a href="../Prism/SymbolFlags.html">SymbolFlags</a></code></li><li><code><a href="../Prism/SymbolNode.html">SymbolNode</a></code></li><li><code><a href="../Prism/Token.html">Token</a></code></li><li><details><summary><code><a href="../Prism/Translation.html">Translation</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../Prism/Translation/Parser.html">Parser</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/Translation/Parser/Builder.html">Builder</a></code></li><li><details><summary><code><a href="../Prism/Translation/Parser/Compiler.html">Compiler</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/Translation/Parser/Compiler/CompilationError.html">CompilationError</a></code></li></ul></details></li><li><code><a href="../Prism/Translation/Parser/Lexer.html">Lexer</a></code></li><li><code><a href="../Prism/Translation/Parser/PrismDiagnostic.html">PrismDiagnostic</a></code></li></ul></details></li><li><code><a href="../Prism/Translation/Parser33.html">Parser33</a></code></li><li><code><a href="../Prism/Translation/Parser34.html">Parser34</a></code></li><li><code><a href="../Prism/Translation/Parser40.html">Parser40</a></code></li><li><code><a href="../Prism/Translation/Parser41.html">Parser41</a></code></li><li><code><a href="../Prism/Translation/Parser33.html">ParserCurrent</a></code></li><li><details><summary><code><a href="../Prism/Translation/Ripper.html">Ripper</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/Translation/Ripper/Lexer.html">Lexer</a></code></li><li><code><a href="../Prism/Translation/Ripper/SexpBuilder.html">SexpBuilder</a></code></li><li><code><a href="../Prism/Translation/Ripper/SexpBuilderPP.html">SexpBuilderPP</a></code></li></ul></details></li><li><details><summary><code><a href="../Prism/Translation/RubyParser.html">RubyParser</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Prism/Translation/RubyParser/Compiler.html">Compiler</a></code></li></ul></details></li></ul></details></li><li><code><a href="../Prism/TrueNode.html">TrueNode</a></code></li><li><code><a href="../Prism/UndefNode.html">UndefNode</a></code></li><li><code><a href="../Prism/UnlessNode.html">UnlessNode</a></code></li><li><code><a href="../Prism/UntilNode.html">UntilNode</a></code></li><li><code><a href="../Prism/Visitor.html">Visitor</a></code></li><li><code><a href="../Prism/WhenNode.html">WhenNode</a></code></li><li><code><a href="../Prism/WhileNode.html">WhileNode</a></code></li><li><code><a href="../Prism/XStringNode.html">XStringNode</a></code></li><li><code><a href="../Prism/YieldNode.html">YieldNode</a></code></li></ul></details></li><li><code><a href="../Proc.html">Proc</a></code></li><li><details><summary><code><a href="../Process.html">Process</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Process/GID.html">GID</a></code></li><li><code><a href="../Process/Status.html">Status</a></code></li><li><code><a href="../Process/Sys.html">Sys</a></code></li><li><code><a href="../Process/Tms.html">Tms</a></code></li><li><code><a href="../Process/UID.html">UID</a></code></li></ul></details></li><li><details><summary><code><a href="../Psych.html">Psych</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Psych/AliasesNotEnabled.html">AliasesNotEnabled</a></code></li><li><code><a href="../Psych/AnchorNotDefined.html">AnchorNotDefined</a></code></li><li><code><a href="../Psych/BadAlias.html">BadAlias</a></code></li><li><details><summary><code><a href="../Psych/ClassLoader.html">ClassLoader</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Psych/ClassLoader/Restricted.html">Restricted</a></code></li></ul></details></li><li><code><a href="../Psych/Coder.html">Coder</a></code></li><li><code><a href="../Psych/DisallowedClass.html">DisallowedClass</a></code></li><li><code><a href="../Psych/Emitter.html">Emitter</a></code></li><li><code><a href="../Psych/Exception.html">Exception</a></code></li><li><details><summary><code><a href="../Psych/Handler.html">Handler</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Psych/Handler/DumperOptions.html">DumperOptions</a></code></li></ul></details></li><li><details><summary><code><a href="../Psych/Handlers.html">Handlers</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Psych/Handlers/Recorder.html">Recorder</a></code></li></ul></details></li><li><details><summary><code><a href="../Psych/JSON.html">JSON</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Psych/JSON/Stream.html">Stream</a></code></li><li><code><a href="../Psych/JSON/TreeBuilder.html">TreeBuilder</a></code></li></ul></details></li><li><details><summary><code><a href="../Psych/Nodes.html">Nodes</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Psych/Nodes/Alias.html">Alias</a></code></li><li><code><a href="../Psych/Nodes/Document.html">Document</a></code></li><li><code><a href="../Psych/Nodes/Mapping.html">Mapping</a></code></li><li><code><a href="../Psych/Nodes/Node.html">Node</a></code></li><li><code><a href="../Psych/Nodes/Scalar.html">Scalar</a></code></li><li><code><a href="../Psych/Nodes/Sequence.html">Sequence</a></code></li><li><code><a href="../Psych/Nodes/Stream.html">Stream</a></code></li></ul></details></li><li><code><a href="../Psych/Omap.html">Omap</a></code></li><li><details><summary><code><a href="../Psych/Parser.html">Parser</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Psych/Parser/Mark.html">Mark</a></code></li></ul></details></li><li><code><a href="../Psych/ScalarScanner.html">ScalarScanner</a></code></li><li><code><a href="../Psych/Set.html">Set</a></code></li><li><code><a href="../Psych/Stream.html">Stream</a></code></li><li><details><summary><code><a href="../Psych/Streaming.html">Streaming</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Psych/Streaming/ClassMethods.html">ClassMethods</a></code></li></ul></details></li><li><code><a href="../Psych/SyntaxError.html">SyntaxError</a></code></li><li><code><a href="../Psych/TreeBuilder.html">TreeBuilder</a></code></li><li><details><summary><code><a href="../Psych/Visitors.html">Visitors</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Psych/Visitors/DepthFirst.html">DepthFirst</a></code></li><li><code><a href="../Psych/Visitors/Emitter.html">Emitter</a></code></li><li><code><a href="../Psych/Visitors/JSONTree.html">JSONTree</a></code></li><li><code><a href="../Psych/Visitors/NoAliasRuby.html">NoAliasRuby</a></code></li><li><code><a href="../Psych/Visitors/RestrictedYAMLTree.html">RestrictedYAMLTree</a></code></li><li><code><a href="../Psych/Visitors/ToRuby.html">ToRuby</a></code></li><li><code><a href="../Psych/Visitors/Visitor.html">Visitor</a></code></li><li><code><a href="../Psych/Visitors/YAMLTree.html">YAMLTree</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="../Ractor.html">Ractor</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Ractor/ClosedError.html">ClosedError</a></code></li><li><code><a href="../Ractor/Error.html">Error</a></code></li><li><code><a href="../Ractor/IsolationError.html">IsolationError</a></code></li><li><code><a href="../Ractor/MovedError.html">MovedError</a></code></li><li><code><a href="../Ractor/MovedObject.html">MovedObject</a></code></li><li><code><a href="../Ractor/Port.html">Port</a></code></li><li><code><a href="../Ractor/RemoteError.html">RemoteError</a></code></li><li><code><a href="../Ractor/UnsafeError.html">UnsafeError</a></code></li></ul></details></li><li><details><summary><code><a href="../Random.html">Random</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Random/Formatter.html">Formatter</a></code></li></ul></details></li><li><code><a href="../Range.html">Range</a></code></li><li><code><a href="../RangeError.html">RangeError</a></code></li><li><code><a href="../Rational.html">Rational</a></code></li><li><code><a href="../RbConfig.html">RbConfig</a></code></li><li><code><a href="../Refinement.html">Refinement</a></code></li><li><details><summary><code><a href="../Regexp.html">Regexp</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Regexp/TimeoutError.html">TimeoutError</a></code></li></ul></details></li><li><code><a href="../RegexpError.html">RegexpError</a></code></li><li><details><summary><code><a href="../Resolv.html">Resolv</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Resolv/DNS.html">DNS</a></code></li><li><code><a href="../Resolv/Hosts.html">Hosts</a></code></li><li><code><a href="../Resolv/IPv4.html">IPv4</a></code></li><li><code><a href="../Resolv/IPv6.html">IPv6</a></code></li><li><details><summary><code><a href="../Resolv/LOC.html">LOC</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Resolv/LOC/Alt.html">Alt</a></code></li><li><code><a href="../Resolv/LOC/Coord.html">Coord</a></code></li><li><code><a href="../Resolv/LOC/Size.html">Size</a></code></li></ul></details></li><li><code><a href="../Resolv/MDNS.html">MDNS</a></code></li><li><code><a href="../Resolv/ResolvError.html">ResolvError</a></code></li><li><code><a href="../Resolv/ResolvTimeout.html">ResolvTimeout</a></code></li></ul></details></li><li><details><summary><code><a href="../Ripper.html">Ripper</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Ripper/Filter.html">Filter</a></code></li><li><code><a href="../Ripper/Lexer.html">Lexer</a></code></li></ul></details></li><li><details><summary><code><a href="../Ruby.html">Ruby</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Ruby/Box.html">Box</a></code></li></ul></details></li><li><details><summary><code><a href="../RubyVM.html">RubyVM</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../RubyVM/AbstractSyntaxTree.html">AbstractSyntaxTree</a></code></summary><ul class="link-list nav-list"><li><code><a href="../RubyVM/AbstractSyntaxTree/Location.html">Location</a></code></li><li><code><a href="../RubyVM/AbstractSyntaxTree/Node.html">Node</a></code></li></ul></details></li><li><code><a href="../RubyVM/InstructionSequence.html">InstructionSequence</a></code></li><li><code><a href="../RubyVM/YJIT.html">YJIT</a></code></li></ul></details></li><li><code><a href="../RuntimeError.html">RuntimeError</a></code></li><li><code><a href="../SOCKSSocket.html">SOCKSSocket</a></code></li><li><code><a href="../ScriptError.html">ScriptError</a></code></li><li><code><a href="../SecureRandom.html">SecureRandom</a></code></li><li><code><a href="../SecurityError.html">SecurityError</a></code></li><li><code><a href="../Set.html">Set</a></code></li><li><code><a href="../Shellwords.html">Shellwords</a></code></li><li><code><a href="../Signal.html">Signal</a></code></li><li><code><a href="../SignalException.html">SignalException</a></code></li><li><code><a href="../SimpleDelegator.html">SimpleDelegator</a></code></li><li><code><a href="../SingleForwardable.html">SingleForwardable</a></code></li><li><code><a href="../Singleton.html">Singleton</a></code></li><li><details><summary><code><a href="../Socket.html">Socket</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Socket/AncillaryData.html">AncillaryData</a></code></li><li><code><a href="../Socket/Constants.html">Constants</a></code></li><li><code><a href="../Socket/Ifaddr.html">Ifaddr</a></code></li><li><code><a href="../Socket/Option.html">Option</a></code></li><li><code><a href="../Socket/ResolutionError.html">ResolutionError</a></code></li><li><code><a href="../Socket/UDPSource.html">UDPSource</a></code></li></ul></details></li><li><code><a href="../SocketError.html">SocketError</a></code></li><li><code><a href="../StandardError.html">StandardError</a></code></li><li><code><a href="../StopIteration.html">StopIteration</a></code></li><li><code><a href="../String.html">String</a></code></li><li><code><a href="../StringIO.html">StringIO</a></code></li><li><details><summary><code><a href="../StringScanner.html">StringScanner</a></code></summary><ul class="link-list nav-list"><li><code><a href="../StringScanner/Error.html">Error</a></code></li></ul></details></li><li><code><a href="../Struct.html">Struct</a></code></li><li><code><a href="../Symbol.html">Symbol</a></code></li><li><code><a href="../SyntaxError.html">SyntaxError</a></code></li><li><details><summary><code><a href="../SyntaxSuggest.html">SyntaxSuggest</a></code></summary><ul class="link-list nav-list"><li><code><a href="../SyntaxSuggest/AroundBlockScan.html">AroundBlockScan</a></code></li><li><code><a href="../SyntaxSuggest/BlockExpand.html">BlockExpand</a></code></li><li><details><summary><code><a href="../SyntaxSuggest/Capture.html">Capture</a></code></summary><ul class="link-list nav-list"><li><code><a href="../SyntaxSuggest/Capture/BeforeAfterKeywordEnds.html">BeforeAfterKeywordEnds</a></code></li><li><code><a href="../SyntaxSuggest/Capture/FallingIndentLines.html">FallingIndentLines</a></code></li></ul></details></li><li><code><a href="../SyntaxSuggest/CaptureCodeContext.html">CaptureCodeContext</a></code></li><li><code><a href="../SyntaxSuggest/CleanDocument.html">CleanDocument</a></code></li><li><code><a href="../SyntaxSuggest/Cli.html">Cli</a></code></li><li><code><a href="../SyntaxSuggest/CodeBlock.html">CodeBlock</a></code></li><li><code><a href="../SyntaxSuggest/CodeFrontier.html">CodeFrontier</a></code></li><li><code><a href="../SyntaxSuggest/CodeLine.html">CodeLine</a></code></li><li><code><a href="../SyntaxSuggest/CodeSearch.html">CodeSearch</a></code></li><li><code><a href="../SyntaxSuggest/DisplayCodeWithLineNumbers.html">DisplayCodeWithLineNumbers</a></code></li><li><code><a href="../SyntaxSuggest/DisplayInvalidBlocks.html">DisplayInvalidBlocks</a></code></li><li><code><a href="../SyntaxSuggest/Error.html">Error</a></code></li><li><code><a href="../SyntaxSuggest/ExplainSyntax.html">ExplainSyntax</a></code></li><li><code><a href="../SyntaxSuggest/GetParseErrors.html">GetParseErrors</a></code></li><li><code><a href="../SyntaxSuggest/LeftRightLexCount.html">LeftRightLexCount</a></code></li><li><code><a href="../SyntaxSuggest/LexAll.html">LexAll</a></code></li><li><code><a href="../SyntaxSuggest/LexValue.html">LexValue</a></code></li><li><code><a href="../SyntaxSuggest/MiniStringIO.html">MiniStringIO</a></code></li><li><code><a href="../SyntaxSuggest/ParseBlocksFromIndentLine.html">ParseBlocksFromIndentLine</a></code></li><li><code><a href="../SyntaxSuggest/PathnameFromMessage.html">PathnameFromMessage</a></code></li><li><code><a href="../SyntaxSuggest/PriorityEngulfQueue.html">PriorityEngulfQueue</a></code></li><li><code><a href="../SyntaxSuggest/PriorityQueue.html">PriorityQueue</a></code></li><li><code><a href="../SyntaxSuggest/RipperErrors.html">RipperErrors</a></code></li><li><code><a href="../SyntaxSuggest/ScanHistory.html">ScanHistory</a></code></li><li><code><a href="../SyntaxSuggest/UnvisitedLines.html">UnvisitedLines</a></code></li></ul></details></li><li><code><a href="../SystemCallError.html">SystemCallError</a></code></li><li><code><a href="../SystemExit.html">SystemExit</a></code></li><li><code><a href="../SystemStackError.html">SystemStackError</a></code></li><li><code><a href="../TCPServer.html">TCPServer</a></code></li><li><code><a href="../TCPSocket.html">TCPSocket</a></code></li><li><details><summary><code><a href="../TSort.html">TSort</a></code></summary><ul class="link-list nav-list"><li><code><a href="../TSort/Cyclic.html">Cyclic</a></code></li></ul></details></li><li><code><a href="../Tempfile.html">Tempfile</a></code></li><li><details><summary><code><a href="../Thread.html">Thread</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../Thread/Backtrace.html">Backtrace</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Thread/Backtrace/Location.html">Location</a></code></li></ul></details></li><li><code><a href="../Thread/ConditionVariable.html">ConditionVariable</a></code></li><li><code><a href="../Thread/Mutex.html">Mutex</a></code></li><li><code><a href="../Thread/Queue.html">Queue</a></code></li><li><code><a href="../Thread/SizedQueue.html">SizedQueue</a></code></li></ul></details></li><li><code><a href="../ThreadError.html">ThreadError</a></code></li><li><code><a href="../ThreadGroup.html">ThreadGroup</a></code></li><li><code><a href="../Time.html">Time</a></code></li><li><details><summary><code><a href="../Timeout.html">Timeout</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Timeout/Error.html">Error</a></code></li><li><code><a href="../Timeout/ExitException.html">ExitException</a></code></li></ul></details></li><li><code><a href="../TracePoint.html">TracePoint</a></code></li><li><code><a href="../TrueClass.html">TrueClass</a></code></li><li><code><a href="../TypeError.html">TypeError</a></code></li><li><code><a href="../UDPSocket.html">UDPSocket</a></code></li><li><code><a href="../UNIXServer.html">UNIXServer</a></code></li><li><code><a href="../UNIXSocket.html">UNIXSocket</a></code></li><li><details><summary><code><a href="../URI.html">URI</a></code></summary><ul class="link-list nav-list"><li><code><a href="../URI/BadURIError.html">BadURIError</a></code></li><li><code><a href="../URI/Error.html">Error</a></code></li><li><code><a href="../URI/FTP.html">FTP</a></code></li><li><code><a href="../URI/File.html">File</a></code></li><li><code><a href="../URI/Generic.html">Generic</a></code></li><li><code><a href="../URI/HTTP.html">HTTP</a></code></li><li><code><a href="../URI/HTTPS.html">HTTPS</a></code></li><li><code><a href="../URI/InvalidComponentError.html">InvalidComponentError</a></code></li><li><code><a href="../URI/InvalidURIError.html">InvalidURIError</a></code></li><li><code><a href="../URI/LDAP.html">LDAP</a></code></li><li><code><a href="../URI/LDAPS.html">LDAPS</a></code></li><li><code><a href="../URI/MailTo.html">MailTo</a></code></li><li><code><a href="../URI/RFC2396_Parser.html">RFC2396_Parser</a></code></li><li><details><summary><code><a href="../URI/RFC2396_REGEXP.html">RFC2396_REGEXP</a></code></summary><ul class="link-list nav-list"><li><code><a href="../URI/RFC2396_REGEXP/PATTERN.html">PATTERN</a></code></li></ul></details></li><li><code><a href="../URI/WS.html">WS</a></code></li><li><code><a href="../URI/WSS.html">WSS</a></code></li></ul></details></li><li><code><a href="../UnboundMethod.html">UnboundMethod</a></code></li><li><code><a href="../UncaughtThrowError.html">UncaughtThrowError</a></code></li><li><code><a href="../Warning.html">Warning</a></code></li><li><details><summary><code><a href="../WeakRef.html">WeakRef</a></code></summary><ul class="link-list nav-list"><li><code><a href="../WeakRef/RefError.html">RefError</a></code></li></ul></details></li><li><details><summary><code><a href="../Win32.html">Win32</a></code></summary><ul class="link-list nav-list"><li><details><summary><code><a href="../Win32/Registry.html">Registry</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Win32/Registry/API.html">API</a></code></li><li><code><a href="../Win32/Registry/Error.html">Error</a></code></li><li><code><a href="../Win32/Registry/PredefinedKey.html">PredefinedKey</a></code></li></ul></details></li><li><details><summary><code><a href="../Win32/Resolv.html">Resolv</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Win32/Resolv/Error.html">Error</a></code></li></ul></details></li></ul></details></li><li><details><summary><code><a href="../YAML.html">YAML</a></code></summary><ul class="link-list nav-list"><li><code><a href="../YAML/DBM.html">DBM</a></code></li><li><code><a href="../YAML/Store.html">Store</a></code></li></ul></details></li><li><code><a href="../ZJIT.html">ZJIT</a></code></li><li><code><a href="../ZeroDivisionError.html">ZeroDivisionError</a></code></li><li><details><summary><code><a href="../Zlib.html">Zlib</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Zlib/BufError.html">BufError</a></code></li><li><code><a href="../Zlib/DataError.html">DataError</a></code></li><li><code><a href="../Zlib/Deflate.html">Deflate</a></code></li><li><code><a href="../Zlib/Error.html">Error</a></code></li><li><details><summary><code><a href="../Zlib/GzipFile.html">GzipFile</a></code></summary><ul class="link-list nav-list"><li><code><a href="../Zlib/GzipFile/CRCError.html">CRCError</a></code></li><li><code><a href="../Zlib/GzipFile/Error.html">Error</a></code></li><li><code><a href="../Zlib/GzipFile/LengthError.html">LengthError</a></code></li><li><code><a href="../Zlib/GzipFile/NoFooter.html">NoFooter</a></code></li></ul></details></li><li><code><a href="../Zlib/GzipReader.html">GzipReader</a></code></li><li><code><a href="../Zlib/GzipWriter.html">GzipWriter</a></code></li><li><code><a href="../Zlib/InProgressError.html">InProgressError</a></code></li><li><code><a href="../Zlib/Inflate.html">Inflate</a></code></li><li><code><a href="../Zlib/MemError.html">MemError</a></code></li><li><code><a href="../Zlib/NeedDict.html">NeedDict</a></code></li><li><code><a href="../Zlib/StreamEnd.html">StreamEnd</a></code></li><li><code><a href="../Zlib/StreamError.html">StreamError</a></code></li><li><code><a href="../Zlib/VersionError.html">VersionError</a></code></li><li><code><a href="../Zlib/ZStream.html">ZStream</a></code></li></ul></details></li><li><code><a href="../fatal.html">fatal</a></code></li></ul>
+  </details>
+</div>
+
+</nav>
+
+<main role="main" aria-labelledby="module-Socket::Constants">
+  
+  
+    <ol role="navigation" aria-label="Breadcrumb navigation" class="breadcrumb">
+      
+      <li>
+        
+        <a href="../Socket.html">Socket</a><span>::</span>
+        
+      </li>
+      
+      <li>
+        
+        <span>Constants</span>
+        
+      </li>
+      
+    </ol>
+  
+
+  <h1 id="module-Socket::Constants" class="anchor-link module">
+    module Socket::Constants
+  </h1>
+
+  <section class="description">
+    
+<p><a href="Constants.html"><code>Socket::Constants</code></a> provides socket-related constants.  All possible socket constants are listed in the documentation but they may not all be present on your platform.</p>
+
+<p>If the underlying platform doesn’t define a constant the corresponding Ruby constant is not defined.</p>
+
+  </section>
+
+
+  <section id="5Buntitled-5D" class="documentation-section anchor-link">
+
+
+
+
+
+    <section class="constants-list">
+      <header>
+        <h3 id="constants"><a href="#constants">Constants</a></h3>
+      </header>
+      <dl>
+
+        <dt id="AF_ALG">AF_ALG</dt>
+
+        <dd>
+
+          <p>Interface to kernel crypto API</p>
+        </dd>
+
+
+        <dt id="AF_APPLETALK">AF_APPLETALK</dt>
+
+        <dd>
+
+          <p>AppleTalk protocol</p>
+        </dd>
+
+
+        <dt id="AF_ATM">AF_ATM</dt>
+
+        <dd>
+
+          <p>Asynchronous Transfer Mode</p>
+        </dd>
+
+
+        <dt id="AF_AX25">AF_AX25</dt>
+
+        <dd>
+
+          <p>AX.25 protocol</p>
+        </dd>
+
+
+        <dt id="AF_BLUETOOTH">AF_BLUETOOTH</dt>
+
+        <dd>
+
+          <p>Bluetooth low-level socket protocol</p>
+        </dd>
+
+
+        <dt id="AF_CAN">AF_CAN</dt>
+
+        <dd>
+
+          <p>Controller Area Network automotive bus protocol</p>
+        </dd>
+
+
+        <dt id="AF_CCITT">AF_CCITT</dt>
+
+        <dd>
+
+          <p>CCITT (now ITU-T) protocols</p>
+        </dd>
+
+
+        <dt id="AF_CHAOS">AF_CHAOS</dt>
+
+        <dd>
+
+          <p>MIT CHAOS protocols</p>
+        </dd>
+
+
+        <dt id="AF_CNT">AF_CNT</dt>
+
+        <dd>
+
+          <p>Computer Network Technology</p>
+        </dd>
+
+
+        <dt id="AF_COIP">AF_COIP</dt>
+
+        <dd>
+
+          <p>Connection-oriented IP</p>
+        </dd>
+
+
+        <dt id="AF_DATAKIT">AF_DATAKIT</dt>
+
+        <dd>
+
+          <p>Datakit protocol</p>
+        </dd>
+
+
+        <dt id="AF_DEC">AF_DEC</dt>
+
+        <dd>
+
+          <p>DECnet protocol</p>
+        </dd>
+
+
+        <dt id="AF_DECnet">AF_DECnet</dt>
+
+        <dd>
+
+          <p>DECnet protocol</p>
+        </dd>
+
+
+        <dt id="AF_DLI">AF_DLI</dt>
+
+        <dd>
+
+          <p>DEC Direct Data Link Interface protocol</p>
+        </dd>
+
+
+        <dt id="AF_E164">AF_E164</dt>
+
+        <dd>
+
+          <p>CCITT (ITU-T) E.164 recommendation</p>
+        </dd>
+
+
+        <dt id="AF_ECMA">AF_ECMA</dt>
+
+        <dd>
+
+          <p>European Computer Manufacturers protocols</p>
+        </dd>
+
+
+        <dt id="AF_HYLINK">AF_HYLINK</dt>
+
+        <dd>
+
+          <p>NSC Hyperchannel protocol</p>
+        </dd>
+
+
+        <dt id="AF_IB">AF_IB</dt>
+
+        <dd>
+
+          <p>InfiniBand native addressing</p>
+        </dd>
+
+
+        <dt id="AF_IMPLINK">AF_IMPLINK</dt>
+
+        <dd>
+
+          <p>ARPANET IMP protocol</p>
+        </dd>
+
+
+        <dt id="AF_INET">AF_INET</dt>
+
+        <dd>
+
+          <p>IPv4 protocol</p>
+        </dd>
+
+
+        <dt id="AF_INET6">AF_INET6</dt>
+
+        <dd>
+
+          <p>IPv6 protocol</p>
+        </dd>
+
+
+        <dt id="AF_IPX">AF_IPX</dt>
+
+        <dd>
+
+          <p>IPX protocol</p>
+        </dd>
+
+
+        <dt id="AF_ISDN">AF_ISDN</dt>
+
+        <dd>
+
+          <p>Integrated Services Digital Network</p>
+        </dd>
+
+
+        <dt id="AF_ISO">AF_ISO</dt>
+
+        <dd>
+
+          <p>ISO Open Systems Interconnection protocols</p>
+        </dd>
+
+
+        <dt id="AF_KCM">AF_KCM</dt>
+
+        <dd>
+
+          <p>KCM (kernel connection multiplexor) interface</p>
+        </dd>
+
+
+        <dt id="AF_KEY">AF_KEY</dt>
+
+        <dd>
+
+          <p>Key management protocol, originally developed for usage with IPsec</p>
+        </dd>
+
+
+        <dt id="AF_LAT">AF_LAT</dt>
+
+        <dd>
+
+          <p>Local Area Transport protocol</p>
+        </dd>
+
+
+        <dt id="AF_LINK">AF_LINK</dt>
+
+        <dd>
+
+          <p>Link layer interface</p>
+        </dd>
+
+
+        <dt id="AF_LLC">AF_LLC</dt>
+
+        <dd>
+
+          <p>Logical  link control (IEEE 802.2 LLC) protocol</p>
+        </dd>
+
+
+        <dt id="AF_LOCAL">AF_LOCAL</dt>
+
+        <dd>
+
+          <p>Host-internal protocols</p>
+        </dd>
+
+
+        <dt id="AF_MAX">AF_MAX</dt>
+
+        <dd>
+
+          <p>Maximum address family for this platform</p>
+        </dd>
+
+
+        <dt id="AF_MPLS">AF_MPLS</dt>
+
+        <dd>
+
+          <p>Multiprotocol Label Switching</p>
+        </dd>
+
+
+        <dt id="AF_NATM">AF_NATM</dt>
+
+        <dd>
+
+          <p>Native ATM access</p>
+        </dd>
+
+
+        <dt id="AF_NDRV">AF_NDRV</dt>
+
+        <dd>
+
+          <p>Network driver raw access</p>
+        </dd>
+
+
+        <dt id="AF_NETBIOS">AF_NETBIOS</dt>
+
+        <dd>
+
+          <p>NetBIOS</p>
+        </dd>
+
+
+        <dt id="AF_NETGRAPH">AF_NETGRAPH</dt>
+
+        <dd>
+
+          <p>Netgraph sockets</p>
+        </dd>
+
+
+        <dt id="AF_NETLINK">AF_NETLINK</dt>
+
+        <dd>
+
+          <p>Kernel user interface device</p>
+        </dd>
+
+
+        <dt id="AF_NS">AF_NS</dt>
+
+        <dd>
+
+          <p>XEROX NS protocols</p>
+        </dd>
+
+
+        <dt id="AF_OSI">AF_OSI</dt>
+
+        <dd>
+
+          <p>ISO Open Systems Interconnection protocols</p>
+        </dd>
+
+
+        <dt id="AF_PACKET">AF_PACKET</dt>
+
+        <dd>
+
+          <p>Direct link-layer access</p>
+        </dd>
+
+
+        <dt id="AF_PPP">AF_PPP</dt>
+
+        <dd>
+
+          <p>Point-to-Point Protocol</p>
+        </dd>
+
+
+        <dt id="AF_PPPOX">AF_PPPOX</dt>
+
+        <dd>
+
+          <p>Generic PPP transport layer, for setting up L2 tunnels (L2TP and PPPoE)</p>
+        </dd>
+
+
+        <dt id="AF_PUP">AF_PUP</dt>
+
+        <dd>
+
+          <p>PARC Universal Packet protocol</p>
+        </dd>
+
+
+        <dt id="AF_RDS">AF_RDS</dt>
+
+        <dd>
+
+          <p>Reliable Datagram Sockets (RDS) protocol</p>
+        </dd>
+
+
+        <dt id="AF_ROUTE">AF_ROUTE</dt>
+
+        <dd>
+
+          <p>Internal routing protocol</p>
+        </dd>
+
+
+        <dt id="AF_SIP">AF_SIP</dt>
+
+        <dd>
+
+          <p>Simple Internet Protocol</p>
+        </dd>
+
+
+        <dt id="AF_SNA">AF_SNA</dt>
+
+        <dd>
+
+          <p>IBM SNA protocol</p>
+        </dd>
+
+
+        <dt id="AF_SYSTEM">AF_SYSTEM</dt>
+
+        <dd>
+
+          <p>Kernel event messages</p>
+        </dd>
+
+
+        <dt id="AF_TIPC">AF_TIPC</dt>
+
+        <dd>
+
+          <p>TIPC, “cluster domain sockets” protocol</p>
+        </dd>
+
+
+        <dt id="AF_UNIX">AF_UNIX</dt>
+
+        <dd>
+
+          <p>UNIX sockets</p>
+        </dd>
+
+
+        <dt id="AF_UNSPEC">AF_UNSPEC</dt>
+
+        <dd>
+
+          <p>Unspecified protocol, any supported address family</p>
+        </dd>
+
+
+        <dt id="AF_VSOCK">AF_VSOCK</dt>
+
+        <dd>
+
+          <p>VSOCK (originally “VMWare VSockets”) protocol for hypervisor-guest communication</p>
+        </dd>
+
+
+        <dt id="AF_XDP">AF_XDP</dt>
+
+        <dd>
+
+          <p>XDP (express data path) interface</p>
+        </dd>
+
+
+        <dt id="AI_ADDRCONFIG">AI_ADDRCONFIG</dt>
+
+        <dd>
+
+          <p>Accept only if any address is assigned</p>
+        </dd>
+
+
+        <dt id="AI_ALL">AI_ALL</dt>
+
+        <dd>
+
+          <p>Allow all addresses</p>
+        </dd>
+
+
+        <dt id="AI_CANONNAME">AI_CANONNAME</dt>
+
+        <dd>
+
+          <p>Fill in the canonical name</p>
+        </dd>
+
+
+        <dt id="AI_DEFAULT">AI_DEFAULT</dt>
+
+        <dd>
+
+          <p>Default flags for getaddrinfo</p>
+        </dd>
+
+
+        <dt id="AI_MASK">AI_MASK</dt>
+
+        <dd>
+
+          <p>Valid flag mask for getaddrinfo (not for application use)</p>
+        </dd>
+
+
+        <dt id="AI_NUMERICHOST">AI_NUMERICHOST</dt>
+
+        <dd>
+
+          <p>Prevent host name resolution</p>
+        </dd>
+
+
+        <dt id="AI_NUMERICSERV">AI_NUMERICSERV</dt>
+
+        <dd>
+
+          <p>Prevent service name resolution</p>
+        </dd>
+
+
+        <dt id="AI_PASSIVE">AI_PASSIVE</dt>
+
+        <dd>
+
+          <p>Get address to use with bind()</p>
+        </dd>
+
+
+        <dt id="AI_V4MAPPED">AI_V4MAPPED</dt>
+
+        <dd>
+
+          <p>Accept IPv4-mapped IPv6 addresses</p>
+        </dd>
+
+
+        <dt id="AI_V4MAPPED_CFG">AI_V4MAPPED_CFG</dt>
+
+        <dd>
+
+          <p>Accept IPv4 mapped addresses if the kernel supports it</p>
+        </dd>
+
+
+        <dt id="EAI_ADDRFAMILY">EAI_ADDRFAMILY</dt>
+
+        <dd>
+
+          <p>Address family for hostname not supported</p>
+        </dd>
+
+
+        <dt id="EAI_AGAIN">EAI_AGAIN</dt>
+
+        <dd>
+
+          <p>Temporary failure in name resolution</p>
+        </dd>
+
+
+        <dt id="EAI_BADFLAGS">EAI_BADFLAGS</dt>
+
+        <dd>
+
+          <p>Invalid flags</p>
+        </dd>
+
+
+        <dt id="EAI_BADHINTS">EAI_BADHINTS</dt>
+
+        <dd>
+
+          <p>Invalid value for hints</p>
+        </dd>
+
+
+        <dt id="EAI_FAIL">EAI_FAIL</dt>
+
+        <dd>
+
+          <p>Non-recoverable failure in name resolution</p>
+        </dd>
+
+
+        <dt id="EAI_FAMILY">EAI_FAMILY</dt>
+
+        <dd>
+
+          <p>Address family not supported</p>
+        </dd>
+
+
+        <dt id="EAI_MAX">EAI_MAX</dt>
+
+        <dd>
+
+          <p>Maximum error code from getaddrinfo</p>
+        </dd>
+
+
+        <dt id="EAI_MEMORY">EAI_MEMORY</dt>
+
+        <dd>
+
+          <p>Memory allocation failure</p>
+        </dd>
+
+
+        <dt id="EAI_NODATA">EAI_NODATA</dt>
+
+        <dd>
+
+          <p>No address associated with hostname</p>
+        </dd>
+
+
+        <dt id="EAI_NONAME">EAI_NONAME</dt>
+
+        <dd>
+
+          <p>Hostname nor servname, or not known</p>
+        </dd>
+
+
+        <dt id="EAI_OVERFLOW">EAI_OVERFLOW</dt>
+
+        <dd>
+
+          <p>Argument buffer overflow</p>
+        </dd>
+
+
+        <dt id="EAI_PROTOCOL">EAI_PROTOCOL</dt>
+
+        <dd>
+
+          <p>Resolved protocol is unknown</p>
+        </dd>
+
+
+        <dt id="EAI_SERVICE">EAI_SERVICE</dt>
+
+        <dd>
+
+          <p>Servname not supported for socket type</p>
+        </dd>
+
+
+        <dt id="EAI_SOCKTYPE">EAI_SOCKTYPE</dt>
+
+        <dd>
+
+          <p>Socket type not supported</p>
+        </dd>
+
+
+        <dt id="EAI_SYSTEM">EAI_SYSTEM</dt>
+
+        <dd>
+
+          <p>System error returned in errno</p>
+        </dd>
+
+
+        <dt id="IFF_802_1Q_VLAN">IFF_802_1Q_VLAN</dt>
+
+        <dd>
+
+          <p>802.1Q VLAN device</p>
+        </dd>
+
+
+        <dt id="IFF_ALLMULTI">IFF_ALLMULTI</dt>
+
+        <dd>
+
+          <p>receive all multicast packets</p>
+        </dd>
+
+
+        <dt id="IFF_ALTPHYS">IFF_ALTPHYS</dt>
+
+        <dd>
+
+          <p>use alternate physical connection</p>
+        </dd>
+
+
+        <dt id="IFF_AUTOMEDIA">IFF_AUTOMEDIA</dt>
+
+        <dd>
+
+          <p>auto media select active</p>
+        </dd>
+
+
+        <dt id="IFF_BONDING">IFF_BONDING</dt>
+
+        <dd>
+
+          <p>bonding master or slave</p>
+        </dd>
+
+
+        <dt id="IFF_BRIDGE_PORT">IFF_BRIDGE_PORT</dt>
+
+        <dd>
+
+          <p>device used as bridge port</p>
+        </dd>
+
+
+        <dt id="IFF_BROADCAST">IFF_BROADCAST</dt>
+
+        <dd>
+
+          <p>broadcast address valid</p>
+        </dd>
+
+
+        <dt id="IFF_CANTCHANGE">IFF_CANTCHANGE</dt>
+
+        <dd>
+
+          <p>flags not changeable</p>
+        </dd>
+
+
+        <dt id="IFF_CANTCONFIG">IFF_CANTCONFIG</dt>
+
+        <dd>
+
+          <p>unconfigurable using ioctl(2)</p>
+        </dd>
+
+
+        <dt id="IFF_DEBUG">IFF_DEBUG</dt>
+
+        <dd>
+
+          <p>turn on debugging</p>
+        </dd>
+
+
+        <dt id="IFF_DISABLE_NETPOLL">IFF_DISABLE_NETPOLL</dt>
+
+        <dd>
+
+          <p>disable netpoll at run-time</p>
+        </dd>
+
+
+        <dt id="IFF_DONT_BRIDGE">IFF_DONT_BRIDGE</dt>
+
+        <dd>
+
+          <p>disallow bridging this ether dev</p>
+        </dd>
+
+
+        <dt id="IFF_DORMANT">IFF_DORMANT</dt>
+
+        <dd>
+
+          <p>driver signals dormant</p>
+        </dd>
+
+
+        <dt id="IFF_DRV_OACTIVE">IFF_DRV_OACTIVE</dt>
+
+        <dd>
+
+          <p>tx hardware queue is full</p>
+        </dd>
+
+
+        <dt id="IFF_DRV_RUNNING">IFF_DRV_RUNNING</dt>
+
+        <dd>
+
+          <p>resources allocated</p>
+        </dd>
+
+
+        <dt id="IFF_DYING">IFF_DYING</dt>
+
+        <dd>
+
+          <p>interface is winding down</p>
+        </dd>
+
+
+        <dt id="IFF_DYNAMIC">IFF_DYNAMIC</dt>
+
+        <dd>
+
+          <p>dialup device with changing addresses</p>
+        </dd>
+
+
+        <dt id="IFF_EBRIDGE">IFF_EBRIDGE</dt>
+
+        <dd>
+
+          <p>ethernet bridging device</p>
+        </dd>
+
+
+        <dt id="IFF_ECHO">IFF_ECHO</dt>
+
+        <dd>
+
+          <p>echo sent packets</p>
+        </dd>
+
+
+        <dt id="IFF_ISATAP">IFF_ISATAP</dt>
+
+        <dd>
+
+          <p>ISATAP interface (RFC4214)</p>
+        </dd>
+
+
+        <dt id="IFF_LINK0">IFF_LINK0</dt>
+
+        <dd>
+
+          <p>per link layer defined bit 0</p>
+        </dd>
+
+
+        <dt id="IFF_LINK1">IFF_LINK1</dt>
+
+        <dd>
+
+          <p>per link layer defined bit 1</p>
+        </dd>
+
+
+        <dt id="IFF_LINK2">IFF_LINK2</dt>
+
+        <dd>
+
+          <p>per link layer defined bit 2</p>
+        </dd>
+
+
+        <dt id="IFF_LIVE_ADDR_CHANGE">IFF_LIVE_ADDR_CHANGE</dt>
+
+        <dd>
+
+          <p>hardware address change when it’s running</p>
+        </dd>
+
+
+        <dt id="IFF_LOOPBACK">IFF_LOOPBACK</dt>
+
+        <dd>
+
+          <p>loopback net</p>
+        </dd>
+
+
+        <dt id="IFF_LOWER_UP">IFF_LOWER_UP</dt>
+
+        <dd>
+
+          <p>driver signals L1 up</p>
+        </dd>
+
+
+        <dt id="IFF_MACVLAN_PORT">IFF_MACVLAN_PORT</dt>
+
+        <dd>
+
+          <p>device used as macvlan port</p>
+        </dd>
+
+
+        <dt id="IFF_MASTER">IFF_MASTER</dt>
+
+        <dd>
+
+          <p>master of a load balancer</p>
+        </dd>
+
+
+        <dt id="IFF_MASTER_8023AD">IFF_MASTER_8023AD</dt>
+
+        <dd>
+
+          <p>bonding master, 802.3ad.</p>
+        </dd>
+
+
+        <dt id="IFF_MASTER_ALB">IFF_MASTER_ALB</dt>
+
+        <dd>
+
+          <p>bonding master, balance-alb.</p>
+        </dd>
+
+
+        <dt id="IFF_MASTER_ARPMON">IFF_MASTER_ARPMON</dt>
+
+        <dd>
+
+          <p>bonding master, ARP mon in use</p>
+        </dd>
+
+
+        <dt id="IFF_MONITOR">IFF_MONITOR</dt>
+
+        <dd>
+
+          <p>user-requested monitor mode</p>
+        </dd>
+
+
+        <dt id="IFF_MULTICAST">IFF_MULTICAST</dt>
+
+        <dd>
+
+          <p>supports multicast</p>
+        </dd>
+
+
+        <dt id="IFF_NOARP">IFF_NOARP</dt>
+
+        <dd>
+
+          <p>no address resolution protocol</p>
+        </dd>
+
+
+        <dt id="IFF_NOTRAILERS">IFF_NOTRAILERS</dt>
+
+        <dd>
+
+          <p>avoid use of trailers</p>
+        </dd>
+
+
+        <dt id="IFF_OACTIVE">IFF_OACTIVE</dt>
+
+        <dd>
+
+          <p>transmission in progress</p>
+        </dd>
+
+
+        <dt id="IFF_OVS_DATAPATH">IFF_OVS_DATAPATH</dt>
+
+        <dd>
+
+          <p>device used as Open vSwitch datapath port</p>
+        </dd>
+
+
+        <dt id="IFF_POINTOPOINT">IFF_POINTOPOINT</dt>
+
+        <dd>
+
+          <p>point-to-point link</p>
+        </dd>
+
+
+        <dt id="IFF_PORTSEL">IFF_PORTSEL</dt>
+
+        <dd>
+
+          <p>can set media type</p>
+        </dd>
+
+
+        <dt id="IFF_PPROMISC">IFF_PPROMISC</dt>
+
+        <dd>
+
+          <p>user-requested promisc mode</p>
+        </dd>
+
+
+        <dt id="IFF_PROMISC">IFF_PROMISC</dt>
+
+        <dd>
+
+          <p>receive all packets</p>
+        </dd>
+
+
+        <dt id="IFF_RENAMING">IFF_RENAMING</dt>
+
+        <dd>
+
+          <p>interface is being renamed</p>
+        </dd>
+
+
+        <dt id="IFF_ROUTE">IFF_ROUTE</dt>
+
+        <dd>
+
+          <p>routing entry installed</p>
+        </dd>
+
+
+        <dt id="IFF_RUNNING">IFF_RUNNING</dt>
+
+        <dd>
+
+          <p>resources allocated</p>
+        </dd>
+
+
+        <dt id="IFF_SIMPLEX">IFF_SIMPLEX</dt>
+
+        <dd>
+
+          <p>can’t hear own transmissions</p>
+        </dd>
+
+
+        <dt id="IFF_SLAVE">IFF_SLAVE</dt>
+
+        <dd>
+
+          <p>slave of a load balancer</p>
+        </dd>
+
+
+        <dt id="IFF_SLAVE_INACTIVE">IFF_SLAVE_INACTIVE</dt>
+
+        <dd>
+
+          <p>bonding slave not the curr. active</p>
+        </dd>
+
+
+        <dt id="IFF_SLAVE_NEEDARP">IFF_SLAVE_NEEDARP</dt>
+
+        <dd>
+
+          <p>need ARPs for validation</p>
+        </dd>
+
+
+        <dt id="IFF_SMART">IFF_SMART</dt>
+
+        <dd>
+
+          <p>interface manages own routes</p>
+        </dd>
+
+
+        <dt id="IFF_STATICARP">IFF_STATICARP</dt>
+
+        <dd>
+
+          <p>static ARP</p>
+        </dd>
+
+
+        <dt id="IFF_SUPP_NOFCS">IFF_SUPP_NOFCS</dt>
+
+        <dd>
+
+          <p>sending custom FCS</p>
+        </dd>
+
+
+        <dt id="IFF_TEAM_PORT">IFF_TEAM_PORT</dt>
+
+        <dd>
+
+          <p>used as team port</p>
+        </dd>
+
+
+        <dt id="IFF_TX_SKB_SHARING">IFF_TX_SKB_SHARING</dt>
+
+        <dd>
+
+          <p>sharing skbs on transmit</p>
+        </dd>
+
+
+        <dt id="IFF_UNICAST_FLT">IFF_UNICAST_FLT</dt>
+
+        <dd>
+
+          <p>unicast filtering</p>
+        </dd>
+
+
+        <dt id="IFF_UP">IFF_UP</dt>
+
+        <dd>
+
+          <p>interface is up</p>
+        </dd>
+
+
+        <dt id="IFF_VOLATILE">IFF_VOLATILE</dt>
+
+        <dd>
+
+          <p>volatile flags</p>
+        </dd>
+
+
+        <dt id="IFF_WAN_HDLC">IFF_WAN_HDLC</dt>
+
+        <dd>
+
+          <p>WAN HDLC device</p>
+        </dd>
+
+
+        <dt id="IFF_XMIT_DST_RELEASE">IFF_XMIT_DST_RELEASE</dt>
+
+        <dd>
+
+          <p>dev_hard_start_xmit() is allowed to release skb-&gt;dst</p>
+        </dd>
+
+
+        <dt id="IFNAMSIZ">IFNAMSIZ</dt>
+
+        <dd>
+
+          <p>Maximum interface name size</p>
+        </dd>
+
+
+        <dt id="IF_NAMESIZE">IF_NAMESIZE</dt>
+
+        <dd>
+
+          <p>Maximum interface name size</p>
+        </dd>
+
+
+        <dt id="INADDR_ALLHOSTS_GROUP">INADDR_ALLHOSTS_GROUP</dt>
+
+        <dd>
+
+          <p>Multicast group for all systems on this subset</p>
+        </dd>
+
+
+        <dt id="INADDR_ANY">INADDR_ANY</dt>
+
+        <dd>
+
+          <p>A socket bound to <a href="Constants.html#INADDR_ANY"><code>INADDR_ANY</code></a> receives packets from all interfaces and sends from the default IP address</p>
+        </dd>
+
+
+        <dt id="INADDR_BROADCAST">INADDR_BROADCAST</dt>
+
+        <dd>
+
+          <p>The network broadcast address</p>
+        </dd>
+
+
+        <dt id="INADDR_LOOPBACK">INADDR_LOOPBACK</dt>
+
+        <dd>
+
+          <p>The loopback address</p>
+        </dd>
+
+
+        <dt id="INADDR_MAX_LOCAL_GROUP">INADDR_MAX_LOCAL_GROUP</dt>
+
+        <dd>
+
+          <p>The last local network multicast group</p>
+        </dd>
+
+
+        <dt id="INADDR_NONE">INADDR_NONE</dt>
+
+        <dd>
+
+          <p>A bitmask for matching no valid IP address</p>
+        </dd>
+
+
+        <dt id="INADDR_UNSPEC_GROUP">INADDR_UNSPEC_GROUP</dt>
+
+        <dd>
+
+          <p>The reserved multicast group</p>
+        </dd>
+
+
+        <dt id="INET6_ADDRSTRLEN">INET6_ADDRSTRLEN</dt>
+
+        <dd>
+
+          <p>Maximum length of an IPv6 address string</p>
+        </dd>
+
+
+        <dt id="INET_ADDRSTRLEN">INET_ADDRSTRLEN</dt>
+
+        <dd>
+
+          <p>Maximum length of an IPv4 address string</p>
+        </dd>
+
+
+        <dt id="IPPORT_RESERVED">IPPORT_RESERVED</dt>
+
+        <dd>
+
+          <p>Default minimum address for bind or connect</p>
+        </dd>
+
+
+        <dt id="IPPORT_USERRESERVED">IPPORT_USERRESERVED</dt>
+
+        <dd>
+
+          <p>Default maximum address for bind or connect</p>
+        </dd>
+
+
+        <dt id="IPPROTO_AH">IPPROTO_AH</dt>
+
+        <dd>
+
+          <p>IP6 auth header</p>
+        </dd>
+
+
+        <dt id="IPPROTO_BIP">IPPROTO_BIP</dt>
+
+        <dd>
+
+          <p><a href="Constants.html#IPPROTO_BIP"><code>IPPROTO_BIP</code></a></p>
+        </dd>
+
+
+        <dt id="IPPROTO_DSTOPTS">IPPROTO_DSTOPTS</dt>
+
+        <dd>
+
+          <p>IP6 destination option</p>
+        </dd>
+
+
+        <dt id="IPPROTO_EGP">IPPROTO_EGP</dt>
+
+        <dd>
+
+          <p>Exterior Gateway Protocol</p>
+        </dd>
+
+
+        <dt id="IPPROTO_EON">IPPROTO_EON</dt>
+
+        <dd>
+
+          <p>ISO cnlp</p>
+        </dd>
+
+
+        <dt id="IPPROTO_ESP">IPPROTO_ESP</dt>
+
+        <dd>
+
+          <p>IP6 Encapsulated Security Payload</p>
+        </dd>
+
+
+        <dt id="IPPROTO_FRAGMENT">IPPROTO_FRAGMENT</dt>
+
+        <dd>
+
+          <p>IP6 fragmentation header</p>
+        </dd>
+
+
+        <dt id="IPPROTO_GGP">IPPROTO_GGP</dt>
+
+        <dd>
+
+          <p>Gateway to Gateway Protocol</p>
+        </dd>
+
+
+        <dt id="IPPROTO_HELLO">IPPROTO_HELLO</dt>
+
+        <dd>
+
+          <p>“hello” routing protocol</p>
+        </dd>
+
+
+        <dt id="IPPROTO_HOPOPTS">IPPROTO_HOPOPTS</dt>
+
+        <dd>
+
+          <p>IP6 hop-by-hop options</p>
+        </dd>
+
+
+        <dt id="IPPROTO_ICMP">IPPROTO_ICMP</dt>
+
+        <dd>
+
+          <p>Control message protocol</p>
+        </dd>
+
+
+        <dt id="IPPROTO_ICMPV6">IPPROTO_ICMPV6</dt>
+
+        <dd>
+
+          <p>ICMP6</p>
+        </dd>
+
+
+        <dt id="IPPROTO_IDP">IPPROTO_IDP</dt>
+
+        <dd>
+
+          <p>XNS IDP</p>
+        </dd>
+
+
+        <dt id="IPPROTO_IGMP">IPPROTO_IGMP</dt>
+
+        <dd>
+
+          <p>Group Management Protocol</p>
+        </dd>
+
+
+        <dt id="IPPROTO_IP">IPPROTO_IP</dt>
+
+        <dd>
+
+          <p>Dummy protocol for IP</p>
+        </dd>
+
+
+        <dt id="IPPROTO_IPV6">IPPROTO_IPV6</dt>
+
+        <dd>
+
+          <p>IP6 header</p>
+        </dd>
+
+
+        <dt id="IPPROTO_MAX">IPPROTO_MAX</dt>
+
+        <dd>
+
+          <p>Maximum IPPROTO constant</p>
+        </dd>
+
+
+        <dt id="IPPROTO_ND">IPPROTO_ND</dt>
+
+        <dd>
+
+          <p>Sun net disk protocol</p>
+        </dd>
+
+
+        <dt id="IPPROTO_NONE">IPPROTO_NONE</dt>
+
+        <dd>
+
+          <p>IP6 no next header</p>
+        </dd>
+
+
+        <dt id="IPPROTO_PUP">IPPROTO_PUP</dt>
+
+        <dd>
+
+          <p>PARC Universal Packet protocol</p>
+        </dd>
+
+
+        <dt id="IPPROTO_RAW">IPPROTO_RAW</dt>
+
+        <dd>
+
+          <p>Raw IP packet</p>
+        </dd>
+
+
+        <dt id="IPPROTO_ROUTING">IPPROTO_ROUTING</dt>
+
+        <dd>
+
+          <p>IP6 routing header</p>
+        </dd>
+
+
+        <dt id="IPPROTO_TCP">IPPROTO_TCP</dt>
+
+        <dd>
+
+          <p>TCP</p>
+        </dd>
+
+
+        <dt id="IPPROTO_TP">IPPROTO_TP</dt>
+
+        <dd>
+
+          <p>ISO transport protocol class 4</p>
+        </dd>
+
+
+        <dt id="IPPROTO_UDP">IPPROTO_UDP</dt>
+
+        <dd>
+
+          <p>UDP</p>
+        </dd>
+
+
+        <dt id="IPPROTO_XTP">IPPROTO_XTP</dt>
+
+        <dd>
+
+          <p>Xpress Transport Protocol</p>
+        </dd>
+
+
+        <dt id="IPV6_CHECKSUM">IPV6_CHECKSUM</dt>
+
+        <dd>
+
+          <p>Checksum offset for raw sockets</p>
+        </dd>
+
+
+        <dt id="IPV6_DONTFRAG">IPV6_DONTFRAG</dt>
+
+        <dd>
+
+          <p>Don’t fragment packets</p>
+        </dd>
+
+
+        <dt id="IPV6_DSTOPTS">IPV6_DSTOPTS</dt>
+
+        <dd>
+
+          <p>Destination option</p>
+        </dd>
+
+
+        <dt id="IPV6_HOPLIMIT">IPV6_HOPLIMIT</dt>
+
+        <dd>
+
+          <p>Hop limit</p>
+        </dd>
+
+
+        <dt id="IPV6_HOPOPTS">IPV6_HOPOPTS</dt>
+
+        <dd>
+
+          <p>Hop-by-hop option</p>
+        </dd>
+
+
+        <dt id="IPV6_JOIN_GROUP">IPV6_JOIN_GROUP</dt>
+
+        <dd>
+
+          <p>Join a group membership</p>
+        </dd>
+
+
+        <dt id="IPV6_LEAVE_GROUP">IPV6_LEAVE_GROUP</dt>
+
+        <dd>
+
+          <p>Leave a group membership</p>
+        </dd>
+
+
+        <dt id="IPV6_MTU_DISCOVER">IPV6_MTU_DISCOVER</dt>
+
+        <dd>
+
+          <p>Path MTU discovery</p>
+        </dd>
+
+
+        <dt id="IPV6_MULTICAST_HOPS">IPV6_MULTICAST_HOPS</dt>
+
+        <dd>
+
+          <p>IP6 multicast hops</p>
+        </dd>
+
+
+        <dt id="IPV6_MULTICAST_IF">IPV6_MULTICAST_IF</dt>
+
+        <dd>
+
+          <p>IP6 multicast interface</p>
+        </dd>
+
+
+        <dt id="IPV6_MULTICAST_LOOP">IPV6_MULTICAST_LOOP</dt>
+
+        <dd>
+
+          <p>IP6 multicast loopback</p>
+        </dd>
+
+
+        <dt id="IPV6_NEXTHOP">IPV6_NEXTHOP</dt>
+
+        <dd>
+
+          <p>Next hop address</p>
+        </dd>
+
+
+        <dt id="IPV6_PATHMTU">IPV6_PATHMTU</dt>
+
+        <dd>
+
+          <p>Retrieve current path MTU</p>
+        </dd>
+
+
+        <dt id="IPV6_PKTINFO">IPV6_PKTINFO</dt>
+
+        <dd>
+
+          <p>Receive packet information with datagram</p>
+        </dd>
+
+
+        <dt id="IPV6_RECVDSTOPTS">IPV6_RECVDSTOPTS</dt>
+
+        <dd>
+
+          <p>Receive all IP6 options for response</p>
+        </dd>
+
+
+        <dt id="IPV6_RECVERR">IPV6_RECVERR</dt>
+
+        <dd>
+
+          <p>Enable extended reliable error message passing</p>
+        </dd>
+
+
+        <dt id="IPV6_RECVHOPLIMIT">IPV6_RECVHOPLIMIT</dt>
+
+        <dd>
+
+          <p>Receive hop limit with datagram</p>
+        </dd>
+
+
+        <dt id="IPV6_RECVHOPOPTS">IPV6_RECVHOPOPTS</dt>
+
+        <dd>
+
+          <p>Receive hop-by-hop options</p>
+        </dd>
+
+
+        <dt id="IPV6_RECVPATHMTU">IPV6_RECVPATHMTU</dt>
+
+        <dd>
+
+          <p>Receive current path MTU with datagram</p>
+        </dd>
+
+
+        <dt id="IPV6_RECVPKTINFO">IPV6_RECVPKTINFO</dt>
+
+        <dd>
+
+          <p>Receive destination IP address and incoming interface</p>
+        </dd>
+
+
+        <dt id="IPV6_RECVRTHDR">IPV6_RECVRTHDR</dt>
+
+        <dd>
+
+          <p>Receive routing header</p>
+        </dd>
+
+
+        <dt id="IPV6_RECVTCLASS">IPV6_RECVTCLASS</dt>
+
+        <dd>
+
+          <p>Receive traffic class</p>
+        </dd>
+
+
+        <dt id="IPV6_RTHDR">IPV6_RTHDR</dt>
+
+        <dd>
+
+          <p>Allows removal of sticky routing headers</p>
+        </dd>
+
+
+        <dt id="IPV6_RTHDRDSTOPTS">IPV6_RTHDRDSTOPTS</dt>
+
+        <dd>
+
+          <p>Allows removal of sticky destination options header</p>
+        </dd>
+
+
+        <dt id="IPV6_RTHDR_TYPE_0">IPV6_RTHDR_TYPE_0</dt>
+
+        <dd>
+
+          <p>Routing header type 0</p>
+        </dd>
+
+
+        <dt id="IPV6_TCLASS">IPV6_TCLASS</dt>
+
+        <dd>
+
+          <p>Specify the traffic class</p>
+        </dd>
+
+
+        <dt id="IPV6_UNICAST_HOPS">IPV6_UNICAST_HOPS</dt>
+
+        <dd>
+
+          <p>IP6 unicast hops</p>
+        </dd>
+
+
+        <dt id="IPV6_USE_MIN_MTU">IPV6_USE_MIN_MTU</dt>
+
+        <dd>
+
+          <p>Use the minimum MTU size</p>
+        </dd>
+
+
+        <dt id="IPV6_V6ONLY">IPV6_V6ONLY</dt>
+
+        <dd>
+
+          <p>Only bind IPv6 with a wildcard bind</p>
+        </dd>
+
+
+        <dt id="IPX_TYPE">IPX_TYPE</dt>
+
+        <dd>
+
+          <p><a href="Constants.html#IPX_TYPE"><code>IPX_TYPE</code></a></p>
+        </dd>
+
+
+        <dt id="IP_ADD_MEMBERSHIP">IP_ADD_MEMBERSHIP</dt>
+
+        <dd>
+
+          <p>Add a multicast group membership</p>
+        </dd>
+
+
+        <dt id="IP_ADD_SOURCE_MEMBERSHIP">IP_ADD_SOURCE_MEMBERSHIP</dt>
+
+        <dd>
+
+          <p>Add a multicast group membership</p>
+        </dd>
+
+
+        <dt id="IP_BLOCK_SOURCE">IP_BLOCK_SOURCE</dt>
+
+        <dd>
+
+          <p>Block IPv4 multicast packets with a give source address</p>
+        </dd>
+
+
+        <dt id="IP_DEFAULT_MULTICAST_LOOP">IP_DEFAULT_MULTICAST_LOOP</dt>
+
+        <dd>
+
+          <p>Default multicast loopback</p>
+        </dd>
+
+
+        <dt id="IP_DEFAULT_MULTICAST_TTL">IP_DEFAULT_MULTICAST_TTL</dt>
+
+        <dd>
+
+          <p>Default multicast TTL</p>
+        </dd>
+
+
+        <dt id="IP_DONTFRAG">IP_DONTFRAG</dt>
+
+        <dd>
+
+          <p>Don’t fragment packets</p>
+        </dd>
+
+
+        <dt id="IP_DROP_MEMBERSHIP">IP_DROP_MEMBERSHIP</dt>
+
+        <dd>
+
+          <p>Drop a multicast group membership</p>
+        </dd>
+
+
+        <dt id="IP_DROP_SOURCE_MEMBERSHIP">IP_DROP_SOURCE_MEMBERSHIP</dt>
+
+        <dd>
+
+          <p>Drop a multicast group membership</p>
+        </dd>
+
+
+        <dt id="IP_FREEBIND">IP_FREEBIND</dt>
+
+        <dd>
+
+          <p>Allow binding to nonexistent IP addresses</p>
+        </dd>
+
+
+        <dt id="IP_HDRINCL">IP_HDRINCL</dt>
+
+        <dd>
+
+          <p>Header is included with data</p>
+        </dd>
+
+
+        <dt id="IP_IPSEC_POLICY">IP_IPSEC_POLICY</dt>
+
+        <dd>
+
+          <p>IPsec security policy</p>
+        </dd>
+
+
+        <dt id="IP_MAX_MEMBERSHIPS">IP_MAX_MEMBERSHIPS</dt>
+
+        <dd>
+
+          <p>Maximum number multicast groups a socket can join</p>
+        </dd>
+
+
+        <dt id="IP_MINTTL">IP_MINTTL</dt>
+
+        <dd>
+
+          <p>Minimum TTL allowed for received packets</p>
+        </dd>
+
+
+        <dt id="IP_MSFILTER">IP_MSFILTER</dt>
+
+        <dd>
+
+          <p>Multicast source filtering</p>
+        </dd>
+
+
+        <dt id="IP_MTU">IP_MTU</dt>
+
+        <dd>
+
+          <p>The Maximum Transmission Unit of the socket</p>
+        </dd>
+
+
+        <dt id="IP_MTU_DISCOVER">IP_MTU_DISCOVER</dt>
+
+        <dd>
+
+          <p>Path MTU discovery</p>
+        </dd>
+
+
+        <dt id="IP_MULTICAST_IF">IP_MULTICAST_IF</dt>
+
+        <dd>
+
+          <p>IP multicast interface</p>
+        </dd>
+
+
+        <dt id="IP_MULTICAST_LOOP">IP_MULTICAST_LOOP</dt>
+
+        <dd>
+
+          <p>IP multicast loopback</p>
+        </dd>
+
+
+        <dt id="IP_MULTICAST_TTL">IP_MULTICAST_TTL</dt>
+
+        <dd>
+
+          <p>IP multicast TTL</p>
+        </dd>
+
+
+        <dt id="IP_ONESBCAST">IP_ONESBCAST</dt>
+
+        <dd>
+
+          <p>Force outgoing broadcast datagrams to have the undirected broadcast address</p>
+        </dd>
+
+
+        <dt id="IP_OPTIONS">IP_OPTIONS</dt>
+
+        <dd>
+
+          <p>IP options to be included in packets</p>
+        </dd>
+
+
+        <dt id="IP_PASSSEC">IP_PASSSEC</dt>
+
+        <dd>
+
+          <p>Retrieve security context with datagram</p>
+        </dd>
+
+
+        <dt id="IP_PKTINFO">IP_PKTINFO</dt>
+
+        <dd>
+
+          <p>Receive packet information with datagrams</p>
+        </dd>
+
+
+        <dt id="IP_PKTOPTIONS">IP_PKTOPTIONS</dt>
+
+        <dd>
+
+          <p>Receive packet options with datagrams</p>
+        </dd>
+
+
+        <dt id="IP_PMTUDISC_DO">IP_PMTUDISC_DO</dt>
+
+        <dd>
+
+          <p>Always send DF frames</p>
+        </dd>
+
+
+        <dt id="IP_PMTUDISC_DONT">IP_PMTUDISC_DONT</dt>
+
+        <dd>
+
+          <p>Never send DF frames</p>
+        </dd>
+
+
+        <dt id="IP_PMTUDISC_WANT">IP_PMTUDISC_WANT</dt>
+
+        <dd>
+
+          <p>Use per-route hints</p>
+        </dd>
+
+
+        <dt id="IP_PORTRANGE">IP_PORTRANGE</dt>
+
+        <dd>
+
+          <p>Set the port range for sockets with unspecified port numbers</p>
+        </dd>
+
+
+        <dt id="IP_RECVDSTADDR">IP_RECVDSTADDR</dt>
+
+        <dd>
+
+          <p>Receive IP destination address with datagram</p>
+        </dd>
+
+
+        <dt id="IP_RECVERR">IP_RECVERR</dt>
+
+        <dd>
+
+          <p>Enable extended reliable error message passing</p>
+        </dd>
+
+
+        <dt id="IP_RECVIF">IP_RECVIF</dt>
+
+        <dd>
+
+          <p>Receive interface information with datagrams</p>
+        </dd>
+
+
+        <dt id="IP_RECVOPTS">IP_RECVOPTS</dt>
+
+        <dd>
+
+          <p>Receive all IP options with datagram</p>
+        </dd>
+
+
+        <dt id="IP_RECVRETOPTS">IP_RECVRETOPTS</dt>
+
+        <dd>
+
+          <p>Receive all IP options for response</p>
+        </dd>
+
+
+        <dt id="IP_RECVSLLA">IP_RECVSLLA</dt>
+
+        <dd>
+
+          <p>Receive link-layer address with datagrams</p>
+        </dd>
+
+
+        <dt id="IP_RECVTOS">IP_RECVTOS</dt>
+
+        <dd>
+
+          <p>Receive TOS with incoming packets</p>
+        </dd>
+
+
+        <dt id="IP_RECVTTL">IP_RECVTTL</dt>
+
+        <dd>
+
+          <p>Receive IP TTL with datagrams</p>
+        </dd>
+
+
+        <dt id="IP_RETOPTS">IP_RETOPTS</dt>
+
+        <dd>
+
+          <p>IP options to be included in datagrams</p>
+        </dd>
+
+
+        <dt id="IP_ROUTER_ALERT">IP_ROUTER_ALERT</dt>
+
+        <dd>
+
+          <p>Notify transit routers to more closely examine the contents of an IP packet</p>
+        </dd>
+
+
+        <dt id="IP_SENDSRCADDR">IP_SENDSRCADDR</dt>
+
+        <dd>
+
+          <p>Source address for outgoing UDP datagrams</p>
+        </dd>
+
+
+        <dt id="IP_TOS">IP_TOS</dt>
+
+        <dd>
+
+          <p>IP type-of-service</p>
+        </dd>
+
+
+        <dt id="IP_TRANSPARENT">IP_TRANSPARENT</dt>
+
+        <dd>
+
+          <p>Transparent proxy</p>
+        </dd>
+
+
+        <dt id="IP_TTL">IP_TTL</dt>
+
+        <dd>
+
+          <p>IP time-to-live</p>
+        </dd>
+
+
+        <dt id="IP_UNBLOCK_SOURCE">IP_UNBLOCK_SOURCE</dt>
+
+        <dd>
+
+          <p>Unblock IPv4 multicast packets with a give source address</p>
+        </dd>
+
+
+        <dt id="IP_XFRM_POLICY">IP_XFRM_POLICY</dt>
+
+        <dd>
+
+          <p><a href="Constants.html#IP_XFRM_POLICY"><code>IP_XFRM_POLICY</code></a></p>
+        </dd>
+
+
+        <dt id="LOCAL_CONNWAIT">LOCAL_CONNWAIT</dt>
+
+        <dd>
+
+          <p>Connect blocks until accepted</p>
+        </dd>
+
+
+        <dt id="LOCAL_CREDS">LOCAL_CREDS</dt>
+
+        <dd>
+
+          <p>Pass credentials to receiver</p>
+        </dd>
+
+
+        <dt id="LOCAL_PEERCRED">LOCAL_PEERCRED</dt>
+
+        <dd>
+
+          <p>Retrieve peer credentials</p>
+        </dd>
+
+
+        <dt id="MCAST_BLOCK_SOURCE">MCAST_BLOCK_SOURCE</dt>
+
+        <dd>
+
+          <p>Block multicast packets from this source</p>
+        </dd>
+
+
+        <dt id="MCAST_EXCLUDE">MCAST_EXCLUDE</dt>
+
+        <dd>
+
+          <p>Exclusive multicast source filter</p>
+        </dd>
+
+
+        <dt id="MCAST_INCLUDE">MCAST_INCLUDE</dt>
+
+        <dd>
+
+          <p>Inclusive multicast source filter</p>
+        </dd>
+
+
+        <dt id="MCAST_JOIN_GROUP">MCAST_JOIN_GROUP</dt>
+
+        <dd>
+
+          <p>Join a multicast group</p>
+        </dd>
+
+
+        <dt id="MCAST_JOIN_SOURCE_GROUP">MCAST_JOIN_SOURCE_GROUP</dt>
+
+        <dd>
+
+          <p>Join a multicast source group</p>
+        </dd>
+
+
+        <dt id="MCAST_LEAVE_GROUP">MCAST_LEAVE_GROUP</dt>
+
+        <dd>
+
+          <p>Leave a multicast group</p>
+        </dd>
+
+
+        <dt id="MCAST_LEAVE_SOURCE_GROUP">MCAST_LEAVE_SOURCE_GROUP</dt>
+
+        <dd>
+
+          <p>Leave a multicast source group</p>
+        </dd>
+
+
+        <dt id="MCAST_MSFILTER">MCAST_MSFILTER</dt>
+
+        <dd>
+
+          <p>Multicast source filtering</p>
+        </dd>
+
+
+        <dt id="MCAST_UNBLOCK_SOURCE">MCAST_UNBLOCK_SOURCE</dt>
+
+        <dd>
+
+          <p>Unblock multicast packets from this source</p>
+        </dd>
+
+
+        <dt id="MSG_COMPAT">MSG_COMPAT</dt>
+
+        <dd>
+
+          <p>End of record</p>
+        </dd>
+
+
+        <dt id="MSG_CONFIRM">MSG_CONFIRM</dt>
+
+        <dd>
+
+          <p>Confirm path validity</p>
+        </dd>
+
+
+        <dt id="MSG_CTRUNC">MSG_CTRUNC</dt>
+
+        <dd>
+
+          <p>Control data lost before delivery</p>
+        </dd>
+
+
+        <dt id="MSG_DONTROUTE">MSG_DONTROUTE</dt>
+
+        <dd>
+
+          <p>Send without using the routing tables</p>
+        </dd>
+
+
+        <dt id="MSG_DONTWAIT">MSG_DONTWAIT</dt>
+
+        <dd>
+
+          <p>This message should be non-blocking</p>
+        </dd>
+
+
+        <dt id="MSG_EOF">MSG_EOF</dt>
+
+        <dd>
+
+          <p>Data completes connection</p>
+        </dd>
+
+
+        <dt id="MSG_EOR">MSG_EOR</dt>
+
+        <dd>
+
+          <p>Data completes record</p>
+        </dd>
+
+
+        <dt id="MSG_ERRQUEUE">MSG_ERRQUEUE</dt>
+
+        <dd>
+
+          <p>Fetch message from error queue</p>
+        </dd>
+
+
+        <dt id="MSG_FASTOPEN">MSG_FASTOPEN</dt>
+
+        <dd>
+
+          <p>Reduce step of the handshake process</p>
+        </dd>
+
+
+        <dt id="MSG_FIN">MSG_FIN</dt>
+
+        <dd>
+
+          <p><a href="Constants.html#MSG_FIN"><code>MSG_FIN</code></a></p>
+        </dd>
+
+
+        <dt id="MSG_FLUSH">MSG_FLUSH</dt>
+
+        <dd>
+
+          <p>Start of a hold sequence.  Dumps to so_temp</p>
+        </dd>
+
+
+        <dt id="MSG_HAVEMORE">MSG_HAVEMORE</dt>
+
+        <dd>
+
+          <p>Data ready to be read</p>
+        </dd>
+
+
+        <dt id="MSG_HOLD">MSG_HOLD</dt>
+
+        <dd>
+
+          <p>Hold fragment in so_temp</p>
+        </dd>
+
+
+        <dt id="MSG_MORE">MSG_MORE</dt>
+
+        <dd>
+
+          <p>Sender will send more</p>
+        </dd>
+
+
+        <dt id="MSG_NOSIGNAL">MSG_NOSIGNAL</dt>
+
+        <dd>
+
+          <p>Do not generate SIGPIPE</p>
+        </dd>
+
+
+        <dt id="MSG_OOB">MSG_OOB</dt>
+
+        <dd>
+
+          <p>Process out-of-band data</p>
+        </dd>
+
+
+        <dt id="MSG_PEEK">MSG_PEEK</dt>
+
+        <dd>
+
+          <p>Peek at incoming message</p>
+        </dd>
+
+
+        <dt id="MSG_PROXY">MSG_PROXY</dt>
+
+        <dd>
+
+          <p>Wait for full request</p>
+        </dd>
+
+
+        <dt id="MSG_RCVMORE">MSG_RCVMORE</dt>
+
+        <dd>
+
+          <p>Data remains in the current packet</p>
+        </dd>
+
+
+        <dt id="MSG_RST">MSG_RST</dt>
+
+        <dd>
+
+          <p><a href="Constants.html#MSG_RST"><code>MSG_RST</code></a></p>
+        </dd>
+
+
+        <dt id="MSG_SEND">MSG_SEND</dt>
+
+        <dd>
+
+          <p>Send the packet in so_temp</p>
+        </dd>
+
+
+        <dt id="MSG_SYN">MSG_SYN</dt>
+
+        <dd>
+
+          <p><a href="Constants.html#MSG_SYN"><code>MSG_SYN</code></a></p>
+        </dd>
+
+
+        <dt id="MSG_TRUNC">MSG_TRUNC</dt>
+
+        <dd>
+
+          <p>Data discarded before delivery</p>
+        </dd>
+
+
+        <dt id="MSG_WAITALL">MSG_WAITALL</dt>
+
+        <dd>
+
+          <p>Wait for full request or error</p>
+        </dd>
+
+
+        <dt id="NI_DGRAM">NI_DGRAM</dt>
+
+        <dd>
+
+          <p>The service specified is a datagram service (looks up UDP ports)</p>
+        </dd>
+
+
+        <dt id="NI_MAXHOST">NI_MAXHOST</dt>
+
+        <dd>
+
+          <p>Maximum length of a hostname</p>
+        </dd>
+
+
+        <dt id="NI_MAXSERV">NI_MAXSERV</dt>
+
+        <dd>
+
+          <p>Maximum length of a service name</p>
+        </dd>
+
+
+        <dt id="NI_NAMEREQD">NI_NAMEREQD</dt>
+
+        <dd>
+
+          <p>A name is required</p>
+        </dd>
+
+
+        <dt id="NI_NOFQDN">NI_NOFQDN</dt>
+
+        <dd>
+
+          <p>An FQDN is not required for local hosts, return only the local part</p>
+        </dd>
+
+
+        <dt id="NI_NUMERICHOST">NI_NUMERICHOST</dt>
+
+        <dd>
+
+          <p>Return a numeric address</p>
+        </dd>
+
+
+        <dt id="NI_NUMERICSERV">NI_NUMERICSERV</dt>
+
+        <dd>
+
+          <p>Return the service name as a digit string</p>
+        </dd>
+
+
+        <dt id="PF_ALG">PF_ALG</dt>
+
+        <dd>
+
+          <p>Interface to kernel crypto API</p>
+        </dd>
+
+
+        <dt id="PF_APPLETALK">PF_APPLETALK</dt>
+
+        <dd>
+
+          <p>AppleTalk protocol</p>
+        </dd>
+
+
+        <dt id="PF_ATM">PF_ATM</dt>
+
+        <dd>
+
+          <p>Asynchronous Transfer Mode</p>
+        </dd>
+
+
+        <dt id="PF_AX25">PF_AX25</dt>
+
+        <dd>
+
+          <p>AX.25 protocol</p>
+        </dd>
+
+
+        <dt id="PF_BLUETOOTH">PF_BLUETOOTH</dt>
+
+        <dd>
+
+          <p>Bluetooth low-level socket protocol</p>
+        </dd>
+
+
+        <dt id="PF_CAN">PF_CAN</dt>
+
+        <dd>
+
+          <p>Controller Area Network automotive bus protocol</p>
+        </dd>
+
+
+        <dt id="PF_CCITT">PF_CCITT</dt>
+
+        <dd>
+
+          <p>CCITT (now ITU-T) protocols</p>
+        </dd>
+
+
+        <dt id="PF_CHAOS">PF_CHAOS</dt>
+
+        <dd>
+
+          <p>MIT CHAOS protocols</p>
+        </dd>
+
+
+        <dt id="PF_CNT">PF_CNT</dt>
+
+        <dd>
+
+          <p>Computer Network Technology</p>
+        </dd>
+
+
+        <dt id="PF_COIP">PF_COIP</dt>
+
+        <dd>
+
+          <p>Connection-oriented IP</p>
+        </dd>
+
+
+        <dt id="PF_DATAKIT">PF_DATAKIT</dt>
+
+        <dd>
+
+          <p>Datakit protocol</p>
+        </dd>
+
+
+        <dt id="PF_DEC">PF_DEC</dt>
+
+        <dd>
+
+          <p>DECnet protocol</p>
+        </dd>
+
+
+        <dt id="PF_DECnet">PF_DECnet</dt>
+
+        <dd>
+
+          <p>DECnet protocol</p>
+        </dd>
+
+
+        <dt id="PF_DLI">PF_DLI</dt>
+
+        <dd>
+
+          <p>DEC Direct Data Link Interface protocol</p>
+        </dd>
+
+
+        <dt id="PF_ECMA">PF_ECMA</dt>
+
+        <dd>
+
+          <p>European Computer Manufacturers protocols</p>
+        </dd>
+
+
+        <dt id="PF_HYLINK">PF_HYLINK</dt>
+
+        <dd>
+
+          <p>NSC Hyperchannel protocol</p>
+        </dd>
+
+
+        <dt id="PF_IB">PF_IB</dt>
+
+        <dd>
+
+          <p>InfiniBand native addressing</p>
+        </dd>
+
+
+        <dt id="PF_IMPLINK">PF_IMPLINK</dt>
+
+        <dd>
+
+          <p>ARPANET IMP protocol</p>
+        </dd>
+
+
+        <dt id="PF_INET">PF_INET</dt>
+
+        <dd>
+
+          <p>IPv4 protocol</p>
+        </dd>
+
+
+        <dt id="PF_INET6">PF_INET6</dt>
+
+        <dd>
+
+          <p>IPv6 protocol</p>
+        </dd>
+
+
+        <dt id="PF_IPX">PF_IPX</dt>
+
+        <dd>
+
+          <p>IPX protocol</p>
+        </dd>
+
+
+        <dt id="PF_ISDN">PF_ISDN</dt>
+
+        <dd>
+
+          <p>Integrated Services Digital Network</p>
+        </dd>
+
+
+        <dt id="PF_ISO">PF_ISO</dt>
+
+        <dd>
+
+          <p>ISO Open Systems Interconnection protocols</p>
+        </dd>
+
+
+        <dt id="PF_KCM">PF_KCM</dt>
+
+        <dd>
+
+          <p>KCM (kernel connection multiplexor) interface</p>
+        </dd>
+
+
+        <dt id="PF_KEY">PF_KEY</dt>
+
+        <dd>
+
+          <p>Key management protocol, originally developed for usage with IPsec</p>
+        </dd>
+
+
+        <dt id="PF_LAT">PF_LAT</dt>
+
+        <dd>
+
+          <p>Local Area Transport protocol</p>
+        </dd>
+
+
+        <dt id="PF_LINK">PF_LINK</dt>
+
+        <dd>
+
+          <p>Link layer interface</p>
+        </dd>
+
+
+        <dt id="PF_LLC">PF_LLC</dt>
+
+        <dd>
+
+          <p>Logical  link control (IEEE 802.2 LLC) protocol</p>
+        </dd>
+
+
+        <dt id="PF_LOCAL">PF_LOCAL</dt>
+
+        <dd>
+
+          <p>Host-internal protocols</p>
+        </dd>
+
+
+        <dt id="PF_MAX">PF_MAX</dt>
+
+        <dd>
+
+          <p>Maximum address family for this platform</p>
+        </dd>
+
+
+        <dt id="PF_MPLS">PF_MPLS</dt>
+
+        <dd>
+
+          <p>Multiprotocol Label Switching</p>
+        </dd>
+
+
+        <dt id="PF_NATM">PF_NATM</dt>
+
+        <dd>
+
+          <p>Native ATM access</p>
+        </dd>
+
+
+        <dt id="PF_NDRV">PF_NDRV</dt>
+
+        <dd>
+
+          <p>Network driver raw access</p>
+        </dd>
+
+
+        <dt id="PF_NETBIOS">PF_NETBIOS</dt>
+
+        <dd>
+
+          <p>NetBIOS</p>
+        </dd>
+
+
+        <dt id="PF_NETGRAPH">PF_NETGRAPH</dt>
+
+        <dd>
+
+          <p>Netgraph sockets</p>
+        </dd>
+
+
+        <dt id="PF_NETLINK">PF_NETLINK</dt>
+
+        <dd>
+
+          <p>Kernel user interface device</p>
+        </dd>
+
+
+        <dt id="PF_NS">PF_NS</dt>
+
+        <dd>
+
+          <p>XEROX NS protocols</p>
+        </dd>
+
+
+        <dt id="PF_OSI">PF_OSI</dt>
+
+        <dd>
+
+          <p>ISO Open Systems Interconnection protocols</p>
+        </dd>
+
+
+        <dt id="PF_PACKET">PF_PACKET</dt>
+
+        <dd>
+
+          <p>Direct link-layer access</p>
+        </dd>
+
+
+        <dt id="PF_PIP">PF_PIP</dt>
+
+        <dd>
+
+          <p>Help Identify PIP packets</p>
+        </dd>
+
+
+        <dt id="PF_PPP">PF_PPP</dt>
+
+        <dd>
+
+          <p>Point-to-Point Protocol</p>
+        </dd>
+
+
+        <dt id="PF_PPPOX">PF_PPPOX</dt>
+
+        <dd>
+
+          <p>Generic PPP transport layer, for setting up L2 tunnels (L2TP and PPPoE)</p>
+        </dd>
+
+
+        <dt id="PF_PUP">PF_PUP</dt>
+
+        <dd>
+
+          <p>PARC Universal Packet protocol</p>
+        </dd>
+
+
+        <dt id="PF_RDS">PF_RDS</dt>
+
+        <dd>
+
+          <p>Reliable Datagram Sockets (RDS) protocol</p>
+        </dd>
+
+
+        <dt id="PF_ROUTE">PF_ROUTE</dt>
+
+        <dd>
+
+          <p>Internal routing protocol</p>
+        </dd>
+
+
+        <dt id="PF_RTIP">PF_RTIP</dt>
+
+        <dd>
+
+          <p>Help Identify RTIP packets</p>
+        </dd>
+
+
+        <dt id="PF_SIP">PF_SIP</dt>
+
+        <dd>
+
+          <p>Simple Internet Protocol</p>
+        </dd>
+
+
+        <dt id="PF_SNA">PF_SNA</dt>
+
+        <dd>
+
+          <p>IBM SNA protocol</p>
+        </dd>
+
+
+        <dt id="PF_SYSTEM">PF_SYSTEM</dt>
+
+        <dd>
+
+          <p>Kernel event messages</p>
+        </dd>
+
+
+        <dt id="PF_TIPC">PF_TIPC</dt>
+
+        <dd>
+
+          <p>TIPC, “cluster domain sockets” protocol</p>
+        </dd>
+
+
+        <dt id="PF_UNIX">PF_UNIX</dt>
+
+        <dd>
+
+          <p>UNIX sockets</p>
+        </dd>
+
+
+        <dt id="PF_UNSPEC">PF_UNSPEC</dt>
+
+        <dd>
+
+          <p>Unspecified protocol, any supported address family</p>
+        </dd>
+
+
+        <dt id="PF_VSOCK">PF_VSOCK</dt>
+
+        <dd>
+
+          <p>VSOCK (originally “VMWare VSockets”) protocol for hypervisor-guest communication</p>
+        </dd>
+
+
+        <dt id="PF_XDP">PF_XDP</dt>
+
+        <dd>
+
+          <p>XDP (express data path) interface</p>
+        </dd>
+
+
+        <dt id="PF_XTP">PF_XTP</dt>
+
+        <dd>
+
+          <p>eXpress Transfer Protocol</p>
+        </dd>
+
+
+        <dt id="SCM_BINTIME">SCM_BINTIME</dt>
+
+        <dd>
+
+          <p>Timestamp (bintime)</p>
+        </dd>
+
+
+        <dt id="SCM_CREDENTIALS">SCM_CREDENTIALS</dt>
+
+        <dd>
+
+          <p>The sender’s credentials</p>
+        </dd>
+
+
+        <dt id="SCM_CREDS">SCM_CREDS</dt>
+
+        <dd>
+
+          <p>Process credentials</p>
+        </dd>
+
+
+        <dt id="SCM_RIGHTS">SCM_RIGHTS</dt>
+
+        <dd>
+
+          <p>Access rights</p>
+        </dd>
+
+
+        <dt id="SCM_TIMESTAMP">SCM_TIMESTAMP</dt>
+
+        <dd>
+
+          <p>Timestamp (timeval)</p>
+        </dd>
+
+
+        <dt id="SCM_TIMESTAMPING">SCM_TIMESTAMPING</dt>
+
+        <dd>
+
+          <p>Timestamp (timespec list) (Linux 2.6.30)</p>
+        </dd>
+
+
+        <dt id="SCM_TIMESTAMPNS">SCM_TIMESTAMPNS</dt>
+
+        <dd>
+
+          <p>Timespec (timespec)</p>
+        </dd>
+
+
+        <dt id="SCM_UCRED">SCM_UCRED</dt>
+
+        <dd>
+
+          <p>User credentials</p>
+        </dd>
+
+
+        <dt id="SCM_WIFI_STATUS">SCM_WIFI_STATUS</dt>
+
+        <dd>
+
+          <p>Wifi status (Linux 3.3)</p>
+        </dd>
+
+
+        <dt id="SHUT_RD">SHUT_RD</dt>
+
+        <dd>
+
+          <p>Shut down the reading side of the socket</p>
+        </dd>
+
+
+        <dt id="SHUT_RDWR">SHUT_RDWR</dt>
+
+        <dd>
+
+          <p>Shut down the both sides of the socket</p>
+        </dd>
+
+
+        <dt id="SHUT_WR">SHUT_WR</dt>
+
+        <dd>
+
+          <p>Shut down the writing side of the socket</p>
+        </dd>
+
+
+        <dt id="SOCK_CLOEXEC">SOCK_CLOEXEC</dt>
+
+        <dd>
+
+          <p>Set the close-on-exec (FD_CLOEXEC) flag on the new file  descriptor.</p>
+        </dd>
+
+
+        <dt id="SOCK_DGRAM">SOCK_DGRAM</dt>
+
+        <dd>
+
+          <p>A datagram socket provides connectionless, unreliable messaging</p>
+        </dd>
+
+
+        <dt id="SOCK_NONBLOCK">SOCK_NONBLOCK</dt>
+
+        <dd>
+
+          <p>Set the O_NONBLOCK file status flag on the open file description (see open(2)) referred to by the new file descriptor.</p>
+        </dd>
+
+
+        <dt id="SOCK_PACKET">SOCK_PACKET</dt>
+
+        <dd>
+
+          <p>Device-level packet access</p>
+        </dd>
+
+
+        <dt id="SOCK_RAW">SOCK_RAW</dt>
+
+        <dd>
+
+          <p>A raw socket provides low-level access for direct access or implementing network protocols</p>
+        </dd>
+
+
+        <dt id="SOCK_RDM">SOCK_RDM</dt>
+
+        <dd>
+
+          <p>A reliable datagram socket provides reliable delivery of messages</p>
+        </dd>
+
+
+        <dt id="SOCK_SEQPACKET">SOCK_SEQPACKET</dt>
+
+        <dd>
+
+          <p>A sequential packet socket provides sequenced, reliable two-way connection for datagrams</p>
+        </dd>
+
+
+        <dt id="SOCK_STREAM">SOCK_STREAM</dt>
+
+        <dd>
+
+          <p>A stream socket provides a sequenced, reliable two-way connection for a byte stream</p>
+        </dd>
+
+
+        <dt id="SOL_ATALK">SOL_ATALK</dt>
+
+        <dd>
+
+          <p>AppleTalk socket options</p>
+        </dd>
+
+
+        <dt id="SOL_AX25">SOL_AX25</dt>
+
+        <dd>
+
+          <p>AX.25 socket options</p>
+        </dd>
+
+
+        <dt id="SOL_IP">SOL_IP</dt>
+
+        <dd>
+
+          <p>IP socket options</p>
+        </dd>
+
+
+        <dt id="SOL_IPX">SOL_IPX</dt>
+
+        <dd>
+
+          <p>IPX socket options</p>
+        </dd>
+
+
+        <dt id="SOL_SOCKET">SOL_SOCKET</dt>
+
+        <dd>
+
+          <p>Socket-level options</p>
+        </dd>
+
+
+        <dt id="SOL_TCP">SOL_TCP</dt>
+
+        <dd>
+
+          <p>TCP socket options</p>
+        </dd>
+
+
+        <dt id="SOL_UDP">SOL_UDP</dt>
+
+        <dd>
+
+          <p>UDP socket options</p>
+        </dd>
+
+
+        <dt id="SOMAXCONN">SOMAXCONN</dt>
+
+        <dd>
+
+          <p>Maximum connection requests that may be queued for a socket</p>
+        </dd>
+
+
+        <dt id="SOPRI_BACKGROUND">SOPRI_BACKGROUND</dt>
+
+        <dd>
+
+          <p>Background socket priority</p>
+        </dd>
+
+
+        <dt id="SOPRI_INTERACTIVE">SOPRI_INTERACTIVE</dt>
+
+        <dd>
+
+          <p>Interactive socket priority</p>
+        </dd>
+
+
+        <dt id="SOPRI_NORMAL">SOPRI_NORMAL</dt>
+
+        <dd>
+
+          <p>Normal socket priority</p>
+        </dd>
+
+
+        <dt id="SO_ACCEPTCONN">SO_ACCEPTCONN</dt>
+
+        <dd>
+
+          <p>Socket has had listen() called on it</p>
+        </dd>
+
+
+        <dt id="SO_ACCEPTFILTER">SO_ACCEPTFILTER</dt>
+
+        <dd>
+
+          <p>There is an accept filter</p>
+        </dd>
+
+
+        <dt id="SO_ALLZONES">SO_ALLZONES</dt>
+
+        <dd>
+
+          <p>Bypass zone boundaries</p>
+        </dd>
+
+
+        <dt id="SO_ATTACH_FILTER">SO_ATTACH_FILTER</dt>
+
+        <dd>
+
+          <p>Attach an accept filter</p>
+        </dd>
+
+
+        <dt id="SO_BINDTODEVICE">SO_BINDTODEVICE</dt>
+
+        <dd>
+
+          <p>Only send packets from the given interface</p>
+        </dd>
+
+
+        <dt id="SO_BINTIME">SO_BINTIME</dt>
+
+        <dd>
+
+          <p>Receive timestamp with datagrams (bintime)</p>
+        </dd>
+
+
+        <dt id="SO_BPF_EXTENSIONS">SO_BPF_EXTENSIONS</dt>
+
+        <dd>
+
+          <p>Query supported BPF extensions (Linux 3.14)</p>
+        </dd>
+
+
+        <dt id="SO_BROADCAST">SO_BROADCAST</dt>
+
+        <dd>
+
+          <p>Permit sending of broadcast messages</p>
+        </dd>
+
+
+        <dt id="SO_BUSY_POLL">SO_BUSY_POLL</dt>
+
+        <dd>
+
+          <p>Set the threshold in microseconds for low latency polling (Linux 3.11)</p>
+        </dd>
+
+
+        <dt id="SO_CONNECT_TIME">SO_CONNECT_TIME</dt>
+
+        <dd>
+
+          <p>Returns the number of seconds a socket has been connected. This option is only valid for connection-oriented protocols (Windows)</p>
+        </dd>
+
+
+        <dt id="SO_DEBUG">SO_DEBUG</dt>
+
+        <dd>
+
+          <p>Debug info recording</p>
+        </dd>
+
+
+        <dt id="SO_DETACH_FILTER">SO_DETACH_FILTER</dt>
+
+        <dd>
+
+          <p>Detach an accept filter</p>
+        </dd>
+
+
+        <dt id="SO_DOMAIN">SO_DOMAIN</dt>
+
+        <dd>
+
+          <p>Domain given for socket() (Linux 2.6.32)</p>
+        </dd>
+
+
+        <dt id="SO_DONTROUTE">SO_DONTROUTE</dt>
+
+        <dd>
+
+          <p>Use interface addresses</p>
+        </dd>
+
+
+        <dt id="SO_DONTTRUNC">SO_DONTTRUNC</dt>
+
+        <dd>
+
+          <p>Retain unread data</p>
+        </dd>
+
+
+        <dt id="SO_ERROR">SO_ERROR</dt>
+
+        <dd>
+
+          <p>Get and clear the error status</p>
+        </dd>
+
+
+        <dt id="SO_GET_FILTER">SO_GET_FILTER</dt>
+
+        <dd>
+
+          <p>Obtain filter set by <a href="Constants.html#SO_ATTACH_FILTER"><code>SO_ATTACH_FILTER</code></a> (Linux 3.8)</p>
+        </dd>
+
+
+        <dt id="SO_INCOMING_CPU">SO_INCOMING_CPU</dt>
+
+        <dd>
+
+          <p>Receive the cpu attached to the socket (Linux 3.19)</p>
+        </dd>
+
+
+        <dt id="SO_INCOMING_NAPI_ID">SO_INCOMING_NAPI_ID</dt>
+
+        <dd>
+
+          <p>Receive the napi ID attached to a RX queue (Linux 4.12)</p>
+        </dd>
+
+
+        <dt id="SO_KEEPALIVE">SO_KEEPALIVE</dt>
+
+        <dd>
+
+          <p>Keep connections alive</p>
+        </dd>
+
+
+        <dt id="SO_LINGER">SO_LINGER</dt>
+
+        <dd>
+
+          <p>Linger on close if data is present</p>
+        </dd>
+
+
+        <dt id="SO_LOCK_FILTER">SO_LOCK_FILTER</dt>
+
+        <dd>
+
+          <p>Lock the filter attached to a socket (Linux 3.9)</p>
+        </dd>
+
+
+        <dt id="SO_MAC_EXEMPT">SO_MAC_EXEMPT</dt>
+
+        <dd>
+
+          <p>Mandatory Access Control exemption for unlabeled peers</p>
+        </dd>
+
+
+        <dt id="SO_MARK">SO_MARK</dt>
+
+        <dd>
+
+          <p>Set the mark for mark-based routing (Linux 2.6.25)</p>
+        </dd>
+
+
+        <dt id="SO_MAX_PACING_RATE">SO_MAX_PACING_RATE</dt>
+
+        <dd>
+
+          <p>Cap the rate computed by transport layer. [bytes per second] (Linux 3.13)</p>
+        </dd>
+
+
+        <dt id="SO_NKE">SO_NKE</dt>
+
+        <dd>
+
+          <p>Install socket-level Network Kernel Extension</p>
+        </dd>
+
+
+        <dt id="SO_NOFCS">SO_NOFCS</dt>
+
+        <dd>
+
+          <p>Set netns of a socket (Linux 3.4)</p>
+        </dd>
+
+
+        <dt id="SO_NOSIGPIPE">SO_NOSIGPIPE</dt>
+
+        <dd>
+
+          <p>Don’t SIGPIPE on EPIPE</p>
+        </dd>
+
+
+        <dt id="SO_NO_CHECK">SO_NO_CHECK</dt>
+
+        <dd>
+
+          <p>Disable checksums</p>
+        </dd>
+
+
+        <dt id="SO_NREAD">SO_NREAD</dt>
+
+        <dd>
+
+          <p>Get first packet byte count</p>
+        </dd>
+
+
+        <dt id="SO_OOBINLINE">SO_OOBINLINE</dt>
+
+        <dd>
+
+          <p>Leave received out-of-band data in-line</p>
+        </dd>
+
+
+        <dt id="SO_PASSCRED">SO_PASSCRED</dt>
+
+        <dd>
+
+          <p>Receive <a href="Constants.html#SCM_CREDENTIALS"><code>SCM_CREDENTIALS</code></a> messages</p>
+        </dd>
+
+
+        <dt id="SO_PASSSEC">SO_PASSSEC</dt>
+
+        <dd>
+
+          <p>Toggle security context passing (Linux 2.6.18)</p>
+        </dd>
+
+
+        <dt id="SO_PEEK_OFF">SO_PEEK_OFF</dt>
+
+        <dd>
+
+          <p>Set the peek offset (Linux 3.4)</p>
+        </dd>
+
+
+        <dt id="SO_PEERCRED">SO_PEERCRED</dt>
+
+        <dd>
+
+          <p>The credentials of the foreign process connected to this socket</p>
+        </dd>
+
+
+        <dt id="SO_PEERNAME">SO_PEERNAME</dt>
+
+        <dd>
+
+          <p>Name of the connecting user</p>
+        </dd>
+
+
+        <dt id="SO_PEERSEC">SO_PEERSEC</dt>
+
+        <dd>
+
+          <p>Obtain the security credentials (Linux 2.6.2)</p>
+        </dd>
+
+
+        <dt id="SO_PRIORITY">SO_PRIORITY</dt>
+
+        <dd>
+
+          <p>The protocol-defined priority for all packets on this socket</p>
+        </dd>
+
+
+        <dt id="SO_PROTOCOL">SO_PROTOCOL</dt>
+
+        <dd>
+
+          <p>Protocol given for socket() (Linux 2.6.32)</p>
+        </dd>
+
+
+        <dt id="SO_RCVBUF">SO_RCVBUF</dt>
+
+        <dd>
+
+          <p>Receive buffer size</p>
+        </dd>
+
+
+        <dt id="SO_RCVBUFFORCE">SO_RCVBUFFORCE</dt>
+
+        <dd>
+
+          <p>Receive buffer size without rmem_max limit (Linux 2.6.14)</p>
+        </dd>
+
+
+        <dt id="SO_RCVLOWAT">SO_RCVLOWAT</dt>
+
+        <dd>
+
+          <p>Receive low-water mark</p>
+        </dd>
+
+
+        <dt id="SO_RCVTIMEO">SO_RCVTIMEO</dt>
+
+        <dd>
+
+          <p>Receive timeout</p>
+        </dd>
+
+
+        <dt id="SO_RECVUCRED">SO_RECVUCRED</dt>
+
+        <dd>
+
+          <p>Receive user credentials with datagram</p>
+        </dd>
+
+
+        <dt id="SO_REUSEADDR">SO_REUSEADDR</dt>
+
+        <dd>
+
+          <p>Allow local address reuse</p>
+        </dd>
+
+
+        <dt id="SO_REUSEPORT">SO_REUSEPORT</dt>
+
+        <dd>
+
+          <p>Allow local address and port reuse</p>
+        </dd>
+
+
+        <dt id="SO_RTABLE">SO_RTABLE</dt>
+
+        <dd>
+
+          <p>Set the routing table for this socket (OpenBSD)</p>
+        </dd>
+
+
+        <dt id="SO_RXQ_OVFL">SO_RXQ_OVFL</dt>
+
+        <dd>
+
+          <p>Toggle cmsg for number of packets dropped (Linux 2.6.33)</p>
+        </dd>
+
+
+        <dt id="SO_SECURITY_AUTHENTICATION">SO_SECURITY_AUTHENTICATION</dt>
+
+        <dd>
+
+          <p><a href="Constants.html#SO_SECURITY_AUTHENTICATION"><code>SO_SECURITY_AUTHENTICATION</code></a></p>
+        </dd>
+
+
+        <dt id="SO_SECURITY_ENCRYPTION_NETWORK">SO_SECURITY_ENCRYPTION_NETWORK</dt>
+
+        <dd>
+
+          <p><a href="Constants.html#SO_SECURITY_ENCRYPTION_NETWORK"><code>SO_SECURITY_ENCRYPTION_NETWORK</code></a></p>
+        </dd>
+
+
+        <dt id="SO_SECURITY_ENCRYPTION_TRANSPORT">SO_SECURITY_ENCRYPTION_TRANSPORT</dt>
+
+        <dd>
+
+          <p><a href="Constants.html#SO_SECURITY_ENCRYPTION_TRANSPORT"><code>SO_SECURITY_ENCRYPTION_TRANSPORT</code></a></p>
+        </dd>
+
+
+        <dt id="SO_SELECT_ERR_QUEUE">SO_SELECT_ERR_QUEUE</dt>
+
+        <dd>
+
+          <p>Make select() detect socket error queue with errorfds (Linux 3.10)</p>
+        </dd>
+
+
+        <dt id="SO_SETFIB">SO_SETFIB</dt>
+
+        <dd>
+
+          <p>Set the associated routing table for the socket (FreeBSD)</p>
+        </dd>
+
+
+        <dt id="SO_SNDBUF">SO_SNDBUF</dt>
+
+        <dd>
+
+          <p>Send buffer size</p>
+        </dd>
+
+
+        <dt id="SO_SNDBUFFORCE">SO_SNDBUFFORCE</dt>
+
+        <dd>
+
+          <p>Send buffer size without wmem_max limit (Linux 2.6.14)</p>
+        </dd>
+
+
+        <dt id="SO_SNDLOWAT">SO_SNDLOWAT</dt>
+
+        <dd>
+
+          <p>Send low-water mark</p>
+        </dd>
+
+
+        <dt id="SO_SNDTIMEO">SO_SNDTIMEO</dt>
+
+        <dd>
+
+          <p>Send timeout</p>
+        </dd>
+
+
+        <dt id="SO_TIMESTAMP">SO_TIMESTAMP</dt>
+
+        <dd>
+
+          <p>Receive timestamp with datagrams (timeval)</p>
+        </dd>
+
+
+        <dt id="SO_TIMESTAMPING">SO_TIMESTAMPING</dt>
+
+        <dd>
+
+          <p>Time stamping of incoming and outgoing packets (Linux 2.6.30)</p>
+        </dd>
+
+
+        <dt id="SO_TIMESTAMPNS">SO_TIMESTAMPNS</dt>
+
+        <dd>
+
+          <p>Receive nanosecond timestamp with datagrams (timespec)</p>
+        </dd>
+
+
+        <dt id="SO_TYPE">SO_TYPE</dt>
+
+        <dd>
+
+          <p>Get the socket type</p>
+        </dd>
+
+
+        <dt id="SO_USELOOPBACK">SO_USELOOPBACK</dt>
+
+        <dd>
+
+          <p>Bypass hardware when possible</p>
+        </dd>
+
+
+        <dt id="SO_USER_COOKIE">SO_USER_COOKIE</dt>
+
+        <dd>
+
+          <p>Setting an identifier for ipfw purpose mainly</p>
+        </dd>
+
+
+        <dt id="SO_WANTMORE">SO_WANTMORE</dt>
+
+        <dd>
+
+          <p>Give a hint when more data is ready</p>
+        </dd>
+
+
+        <dt id="SO_WANTOOBFLAG">SO_WANTOOBFLAG</dt>
+
+        <dd>
+
+          <p>OOB data is wanted in MSG_FLAG on receive</p>
+        </dd>
+
+
+        <dt id="SO_WIFI_STATUS">SO_WIFI_STATUS</dt>
+
+        <dd>
+
+          <p>Toggle cmsg for wifi status (Linux 3.3)</p>
+        </dd>
+
+
+        <dt id="TCP_CONGESTION">TCP_CONGESTION</dt>
+
+        <dd>
+
+          <p>TCP congestion control algorithm (Linux 2.6.13, glibc 2.6)</p>
+        </dd>
+
+
+        <dt id="TCP_CONNECTION_INFO">TCP_CONNECTION_INFO</dt>
+
+        <dd>
+
+          <p>Retrieve information about this socket (macOS)</p>
+        </dd>
+
+
+        <dt id="TCP_COOKIE_TRANSACTIONS">TCP_COOKIE_TRANSACTIONS</dt>
+
+        <dd>
+
+          <p>TCP Cookie Transactions (Linux 2.6.33, glibc 2.18)</p>
+        </dd>
+
+
+        <dt id="TCP_CORK">TCP_CORK</dt>
+
+        <dd>
+
+          <p>Don’t send partial frames (Linux 2.2, glibc 2.2)</p>
+        </dd>
+
+
+        <dt id="TCP_DEFER_ACCEPT">TCP_DEFER_ACCEPT</dt>
+
+        <dd>
+
+          <p>Don’t notify a listening socket until data is ready (Linux 2.4, glibc 2.2)</p>
+        </dd>
+
+
+        <dt id="TCP_FASTOPEN">TCP_FASTOPEN</dt>
+
+        <dd>
+
+          <p>Reduce step of the handshake process (Linux 3.7, glibc 2.18)</p>
+        </dd>
+
+
+        <dt id="TCP_INFO">TCP_INFO</dt>
+
+        <dd>
+
+          <p>Retrieve information about this socket (Linux 2.4, glibc 2.2)</p>
+        </dd>
+
+
+        <dt id="TCP_KEEPALIVE">TCP_KEEPALIVE</dt>
+
+        <dd>
+
+          <p>Idle time before keepalive probes are sent (macOS)</p>
+        </dd>
+
+
+        <dt id="TCP_KEEPCNT">TCP_KEEPCNT</dt>
+
+        <dd>
+
+          <p>Maximum number of keepalive probes allowed before dropping a connection (Linux 2.4, glibc 2.2)</p>
+        </dd>
+
+
+        <dt id="TCP_KEEPIDLE">TCP_KEEPIDLE</dt>
+
+        <dd>
+
+          <p>Idle time before keepalive probes are sent (Linux 2.4, glibc 2.2)</p>
+        </dd>
+
+
+        <dt id="TCP_KEEPINTVL">TCP_KEEPINTVL</dt>
+
+        <dd>
+
+          <p>Time between keepalive probes (Linux 2.4, glibc 2.2)</p>
+        </dd>
+
+
+        <dt id="TCP_LINGER2">TCP_LINGER2</dt>
+
+        <dd>
+
+          <p>Lifetime of orphaned FIN_WAIT2 sockets (Linux 2.4, glibc 2.2)</p>
+        </dd>
+
+
+        <dt id="TCP_MAXSEG">TCP_MAXSEG</dt>
+
+        <dd>
+
+          <p>Set maximum segment size</p>
+        </dd>
+
+
+        <dt id="TCP_MD5SIG">TCP_MD5SIG</dt>
+
+        <dd>
+
+          <p>Use MD5 digests (RFC2385, Linux 2.6.20, glibc 2.7)</p>
+        </dd>
+
+
+        <dt id="TCP_NODELAY">TCP_NODELAY</dt>
+
+        <dd>
+
+          <p>Don’t delay sending to coalesce packets</p>
+        </dd>
+
+
+        <dt id="TCP_NOOPT">TCP_NOOPT</dt>
+
+        <dd>
+
+          <p>Don’t use TCP options</p>
+        </dd>
+
+
+        <dt id="TCP_NOPUSH">TCP_NOPUSH</dt>
+
+        <dd>
+
+          <p>Don’t push the last block of write</p>
+        </dd>
+
+
+        <dt id="TCP_QUEUE_SEQ">TCP_QUEUE_SEQ</dt>
+
+        <dd>
+
+          <p>Sequence of a queue for repair mode (Linux 3.5, glibc 2.18)</p>
+        </dd>
+
+
+        <dt id="TCP_QUICKACK">TCP_QUICKACK</dt>
+
+        <dd>
+
+          <p>Enable quickack mode (Linux 2.4.4, glibc 2.3)</p>
+        </dd>
+
+
+        <dt id="TCP_REPAIR">TCP_REPAIR</dt>
+
+        <dd>
+
+          <p>Repair mode (Linux 3.5, glibc 2.18)</p>
+        </dd>
+
+
+        <dt id="TCP_REPAIR_OPTIONS">TCP_REPAIR_OPTIONS</dt>
+
+        <dd>
+
+          <p>Options for repair mode (Linux 3.5, glibc 2.18)</p>
+        </dd>
+
+
+        <dt id="TCP_REPAIR_QUEUE">TCP_REPAIR_QUEUE</dt>
+
+        <dd>
+
+          <p>Queue for repair mode (Linux 3.5, glibc 2.18)</p>
+        </dd>
+
+
+        <dt id="TCP_SYNCNT">TCP_SYNCNT</dt>
+
+        <dd>
+
+          <p>Number of SYN retransmits before a connection is dropped (Linux 2.4, glibc 2.2)</p>
+        </dd>
+
+
+        <dt id="TCP_THIN_DUPACK">TCP_THIN_DUPACK</dt>
+
+        <dd>
+
+          <p>Duplicated acknowledgments handling for thin-streams (Linux 2.6.34, glibc 2.18)</p>
+        </dd>
+
+
+        <dt id="TCP_THIN_LINEAR_TIMEOUTS">TCP_THIN_LINEAR_TIMEOUTS</dt>
+
+        <dd>
+
+          <p>Linear timeouts for thin-streams (Linux 2.6.34, glibc 2.18)</p>
+        </dd>
+
+
+        <dt id="TCP_TIMESTAMP">TCP_TIMESTAMP</dt>
+
+        <dd>
+
+          <p>TCP timestamp (Linux 3.9, glibc 2.18)</p>
+        </dd>
+
+
+        <dt id="TCP_USER_TIMEOUT">TCP_USER_TIMEOUT</dt>
+
+        <dd>
+
+          <p>Max timeout before a TCP connection is aborted (Linux 2.6.37, glibc 2.18)</p>
+        </dd>
+
+
+        <dt id="TCP_WINDOW_CLAMP">TCP_WINDOW_CLAMP</dt>
+
+        <dd>
+
+          <p>Clamp the size of the advertised window (Linux 2.4, glibc 2.2)</p>
+        </dd>
+
+
+        <dt id="UDP_CORK">UDP_CORK</dt>
+
+        <dd>
+
+          <p>Don’t send partial frames (Linux 2.5.44, glibc 2.11)</p>
+        </dd>
+
+
+      </dl>
+    </section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </section>
+
+</main>
+
+<aside class="table-of-contents" role="complementary" aria-label="Table of Contents">
+  <div class="toc-sticky">
+    <h3 class="toc-heading">On This Page</h3>
+    <nav class="toc-nav" id="toc-nav" aria-label="Page sections">
+      <!-- Generated by JavaScript based on page headings -->
+    </nav>
+  </div>
+</aside>
+
+
+<footer class="site-footer">
+  
+  <div class="footer-content">
+    
+    <div>
+      <h3>Ruby</h3>
+      <ul>
+        
+        <li><a href="../index.html">Documentation</a></li>
+        
+        <li><a href="https://www.ruby-lang.org/">Official Website</a></li>
+        
+        <li><a href="https://ruby.github.io/play-ruby/">Playground</a></li>
+        
+      </ul>
+    </div>
+    
+    <div>
+      <h3>Resources</h3>
+      <ul>
+        
+        <li><a href="https://github.com/ruby/ruby">GitHub</a></li>
+        
+        <li><a href="https://bugs.ruby-lang.org/projects/ruby-master/issues">Issue Tracker</a></li>
+        
+        <li><a href="https://rubygems.org/">RubyGems</a></li>
+        
+      </ul>
+    </div>
+    
+    <div>
+      <h3>Community</h3>
+      <ul>
+        
+        <li><a href="https://x.com/rubylangorg">X</a></li>
+        
+      </ul>
+    </div>
+    
+  </div>
+  
+
+  <div class="footer-bottom">
+    <p>
+      Generated by <a href="https://ruby.github.io/rdoc/">RDoc 7.0.3</a>
+      using the Aliki theme by <a href="http://st0012.dev">Stan Lo</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+

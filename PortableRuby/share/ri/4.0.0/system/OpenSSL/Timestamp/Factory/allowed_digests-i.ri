@@ -1,0 +1,2 @@
+U:RDoc::Attr[iI"allowed_digests:ETI"0OpenSSL::Timestamp::Factory#allowed_digests;TI"RW;T:privateo:RDoc::Markup::Document:@parts[o:RDoc::Markup::Paragraph;	[	I"?The list of digest algorithms that the factory is allowed ;TI"Ncreate timestamps for. Known vulnerable or weak algorithms should not be ;TI"Kallowed where possible. Must be an Array of String or OpenSSL::Digest ;TI"subclass instances.;T:
+@fileI"ext/openssl/ossl_ts.c;T:0@omit_headings_from_table_of_contents_below0F@I" OpenSSL::Timestamp::Factory;TcRDoc::NormalClass0

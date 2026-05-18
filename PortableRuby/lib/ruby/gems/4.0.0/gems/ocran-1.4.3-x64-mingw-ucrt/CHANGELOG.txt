@@ -1,0 +1,321 @@
+=== 1.4.3
+- Migrate edicon from C to Ruby: replace edicon.exe with a pure-Ruby implementation (ed_icon.rb), fixing incorrect BeginUpdateResource error checking and wrong GroupIconSize calculation. Shortens build times and removes the C binary from the build.
+- Include Gem.default_dir in GEM_PATH on all platforms: previously the exec_prefix gem directory was excluded on Windows, causing native-extension gems (e.g. fxruby/fox16) to fail at runtime with a LoadError even though they were bundled correctly.
+- Add FXRuby (fox16) test: verify that native extension DLLs are bundled correctly so the packaged executable does not raise a LoadError at runtime.
+- CI: start a virtual display (xpra + Xorg dummy driver with GLX) on Linux before running tests so FXRuby's X11 requirement is satisfied.
+- CI: install XQuartz on macOS runners and add it to the portability test job so FXRuby can connect to a display on both test and portability jobs.
+
+=== 1.4.2
+- Auto-bundle OpenSSL and all its transitive dependencies (openssl.rb, digest.so, etc.) when net/http is loaded but no HTTPS request was made during the dependency scan. OpenSSL is now required inside the OCRAN build process so every file it pulls in appears in the bundled executable.
+- Add companion DLL scan on windows: when a native extension (.so) within the Ruby installation is loaded, all DLLs in the same directory are proactively included. This ensures libssl-3-x64.dll, libcrypto-3-x64.dll, libwinpthread-1.dll, and libyaml-0-2.dll are bundled even when no HTTPS connection is made during the build scan.
+- Add `return if defined?(Ocran)` guards to test fixtures that have runtime-only side effects (file writes, Dir.chdir, file existence checks, network requests) to prevent them from running during the dependency scan, so we can check if the dependencies are included correctly.
+
+=== 1.4.1
+- Fix kernel_require.rb packed at wrong path when rubygems-update is installed (e.g. via asdf on Linux/macOS). kernel_require.rb is now located relative to the actually-loaded rubygems.rb from $LOADED_FEATURES, falling back to rubylibdir for standard Ruby installations.
+
+=== 1.4.0
+- Add Linux support: build and run self-extracting ELF executables on Linux. The stub compiles and runs natively on Linux using POSIX APIs.
+- Add macOS support: build and run self-extracting Mach-O executables on macOS.
+- Add `--output-dir` option: output all files to a directory with a platform-appropriate launch script (`.sh` on Linux/macOS, `.bat` on Windows) instead of a single executable.
+- Add `--output-zip` option: same as `--output-dir` but packages the result into a zip archive.
+- Add `--macosx-bundle` option: wrap the macOS executable in a `.app` bundle with a generated `Info.plist`, suitable for Finder, the Dock, and Authenticode-style code signing with `codesign` and `xcrun notarytool`. Use `--bundle-id` to set `CFBundleIdentifier` and `--icon` (`.icns`) to set the bundle icon.
+- Use symlinks for shared library aliases on POSIX (e.g. `libruby.so → libruby.so.4.0`) instead of copying files, matching the layout Ruby expects at runtime.
+- Fix crash on cleanup when a symlink target does not exist: `DeleteRecursively` now uses `lstat` instead of `stat` so dangling symlinks are removed correctly.
+- Publish platform-specific gems for Linux, macOS (ARM and Intel), and Windows so `gem install ocran` selects the right pre-built stub automatically.
+- Publish a source gem (`ruby` platform) with `ext/extconf.rb` so users on unlisted platforms can install by compiling the stub from source. Falls back to plain `make` if `ridk exec make` is unavailable on Windows.
+- CI: add GitHub Actions workflow to build and publish per-platform gems on tag push.
+- CI: run the packed Linux executable inside a Debian Docker container to verify cross-distro portability (no Ruby required on target).
+- CI: test against Ruby 3.2, 3.3, 3.4, and 4.0 on Linux, macOS (ARM and Intel), and Windows.
+
+=== 1.3.18
+- Support shipping IRB as .exe File
+- Fix SxS error 14001 when loading native extensions (e.g. openssl.so, date_core.so) at runtime. Each .so file may have a companion *.so-assembly.manifest in archdir defining its private SxS assembly; these manifests are now included alongside the .so files. All files in ruby_builtin_dlls/ (DLLs and manifest) are now included rather than the manifest alone.
+- Support for Ruby 4.0.
+- Include cacert.pem in the exe file to avoid SSL certificate verification issues.
+- Use wide (UTF-16) Win32 APIs throughout system_utils.c (CreateFileW, CreateDirectoryW, DeleteFileW, FindFirstFileW/FindNextFileW, RemoveDirectoryW, GetFileAttributesW, MoveFileExW, GetTempPathW, CreateProcessW) to correctly handle multibyte (UTF-8) file and directory paths in the stub.
+- Add Windows Authenticode code signing support. The stub now detects and skips PE security directory entries when searching for the OCRAN signature, so signed executables unpack correctly. Build time clears invalid security directory entries from PE headers to allow subsequent signing.
+- Fix incorrect buffer size passed to GetModuleFileNameW in LibraryDetector (passed bytesize instead of character count).
+- Fix pointer subtraction underflow in stub unpacker when a tampered offset places head past tail.
+- Add bounds checking for icon file entries in edicon to prevent out-of-bounds reads from malformed .ico files.
+- Support for Ruby 3.2 and above. Drop ruby 3.0 and 3.1 support.
+- Suppress user notifications during stub cleanup and log errors to DEBUG output
+- Fixes issue where two MessageBox dialogs appeared in GUI mode when a signature was not found.
+- No longer create a marker file when the stub fails to delete the installation directory during cleanup.
+- stub: During cleanup, switch to a safer working directory before removing the extraction directory.
+- stub: Truncate error messages originating from the stub to a fixed maximum length.
+- stub: Changed the name of the extraction directory to follow the mkdtemp style. The name is now generated using secure random numbers.
+- stub: Disabled path expansion of template characters for additional options passed to the script.
+- stub: Changed the script’s working directory switch to use Ruby’s `-C` option.
+
+=== 1.3.17
+- Modified `rake test` to no longer build stubs during test execution. Use `rake build_stub` when stub generation is necessary.
+- New `rake build` task as a unified build entry point, delegating to `build_stub`.
+- Updated GitHub Actions and internal scripts to use `rake build` instead of `rake build_stub`.
+- Add full support for multibyte (UTF-8) names across executables, scripts, and resources. Requires Windows 10 version 1903 or later.
+- Added UTF-8 manifest to stub.exe to enable UTF-8 support in ANSI API calls.
+- Update Bundler from 2.5.10 to 2.5.23. This is the last Bundler version officially supporting Ruby 3.0.
+- Added `bin/setup` and `bin/console` scripts for development (both Bash and Windows .bat versions).
+- `bin/setup` now installs dependencies and builds stub executables automatically.
+- Improved `spec.files` to explicitly include README, LICENSE, and CHANGELOG.
+- Introduced a `Development` section in the README with setup instructions and Windows shell compatibility.
+- Updated copyright year in README and LICENSE.
+
+=== 1.3.16
+- Support for Ruby 3.0 and above. Drop ruby 2.6 and 2.7 support.
+- At startup, OCRAN no longer automatically removes directories that were previously deployed but couldn't be deleted. This change has been made to enhance security by preventing processes other than the startup process from manipulating temporary files created by them.
+- The ability for the stub to launch any script during the unpacking of application files has been removed. This feature was not in use.
+- The exit code from the Ruby application is now returned when the stub is terminated.
+- The packed data no longer contains redundant directory information.
+- Fixed errors in the --debug option.
+- Upgraded LZMA decoder to version 22.01
+- The directory generation for file extraction has been changed to use unique directory names created with high-resolution timestamps. Additionally, a retry limit for directory creation has been introduced, reducing the risk of infinite loops due to name collisions.
+- Implemented variable-length buffer handling for path strings in stub, eliminating the risk of buffer overruns dependent on MAX_PATH.
+- In order to reduce security risks during the cleanup process before application termination, we have implemented a safe current directory change from the system directory and the root of the C drive to the user's temporary directory and the directory of the app executable.
+- The 'stub' executable has been enhanced for security, ensuring it prevents directory traversal attacks by verifying that path elements do not contain relative notations like '.' or '..'.
+- Removed OcranBuilder and split functionality into StubBuilder and InnoSetupBuilder to introduce delayed loading and improve resource efficiency.
+- InnoSetup installer now operates independently of stub, launching through its own batch file.
+- Moved LibraryDetector to a separate file for modularity and implemented delayed loading with standardized Fiddle usage.
+- Update Bundler from 2.4.13 to 2.5.10.
+- Fixed issue where the gem.build_complete file was not included in the package due to an incorrect change.
+- Changed error output from standard output to standard error (stderr).
+- ocransa (Ocran-stand-alone) has been discontinued.
+- The implementation of bin/ocran.rb has been refactored and split into multiple files. These files have been relocated to the lib directory.
+
+=== 1.3.15
+- Support for Ruby 2.6 and above.
+- Properly display errors from InnoSetup.
+- Fixed errors when creating an installer using InnoSetup. Previously, installer creation was not possible due to errors related to file sharing, which occurred only on Windows.
+- Retrieve the path of runtime DLLs even when the path is long. Note that stubs still do not support long paths, so creating executable files with long paths is not yet possible.
+- Fixed bugs in tests. All tests can now be executed.
+- Improved the speed of manifest file discovery. This manifest file is only required in the RubyInstaller environment.
+- Fixed bugs in the regular expressions of GEM_EXTRA_RE. This allows excluding C source files, etc., from the ocran executable package based on command options.
+- Added methods to Ocran::Pathname, making it closer to the implementation of Ruby's Pathname.
+- Reimplemented certain parts to match the implementation of Ruby 2.6 era, for compatibility with older Ruby versions. Therefore, the ocran command cannot be executed on Ruby versions earlier than 2.6.
+
+=== 1.3.14
+- Add option to suppress or override RUBYOPT environment variable #3 by ccorn90
+
+=== 1.3.13
+- Fixed the bug why Innosetup did not run because of missing encode method 
+- Fix an issue where rubyinstaller did not find the msys path by putting in an empty msys-2.0.dll into msys64/usr/bin/msys-2.0.dll
+- compatibility with the tiny_tds gem (see above)
+- GitHub builds through github action: making sure you can trust the included binaries.
+- Added some samples including the glimmer-libui GUI example. GUI that starts fast.
+
+=== 1.3.12
+* Forked from Ocra
+* Support Ruby up to 3.2
+* Update lzma.exe to version 22.01
+
+=== 1.3.11
+
+* Support Ruby 2.2-2.7
+* Add ruby2_keywords.rb to ignored modules
+* Update lzma.exe to version 19.00
+* Workaround for warning about deprecated Object#=~
+* Use Fiddle instead of Win32API
+* Fix for invalid argument to relative_path_from
+
+=== 1.3.10
+
+* Reduce memory usage while building & compressing (avoids out of
+  memory issue on really big programs).
+
+* Compile stub.exe with 32-bit compiler again
+
+=== 1.3.9
+
+* Support Ruby 2.4.1p111 (include manifest)
+
+=== 1.3.8
+
+* Use GetModuleFileNameW for DLL detection
+
+=== 1.3.7
+
+* Workaround for handling of file names and directory name with
+  non-ASCII characters (e.g. "invalid byte sequence in UTF-8")
+
+=== 1.3.6
+
+* More robust cleanup of temporary files. Deletes using manual
+  recursive method instead of using the shell. Will mark files for
+  later deletion both using Windows (requires Administrator
+  privileges) and a custom method that will remove old temporary files
+  when the executable is restarted.
+
+=== 1.3.5
+
+* Fixes for Ruby 2.2.2p95
+
+=== 1.3.4
+
+* Workarounds for Ruby 2.1.5
+
+=== 1.3.3
+
+* Rebuild executables with MinGW GCC 4.8.1-4.
+
+=== 1.3.2
+
+* Refactored Gemfile handling for better compatibility with Ruby
+  version.
+
+=== 1.3.1
+
+* Now includes $LOADED_FEATURES even when script is not run to check
+  dependencies. This fixes compatability with Ruby 1.9.3 where
+  rubygems is always loaded.
+
+* Fixed compatability with Ruby 2.0.0: Temp-path alias in binary
+  changed to be valid UTF-8 character.
+
+* README.txt updated related to --no-dep-run (karhatsu).
+
+* Fixes for Bundler handling (DavidMikeSimon).
+
+=== 1.3.0
+
+* Fixed some additional corner cases with absolute and relative
+  require & load paths. Extended test suite to cover a lot more
+  cases.
+
+* Now provides a meaningful exit status code (1 on error, 0 on
+  success). (DavidMikeSimon)
+
+* New option to _not_ run the script to detect dependencies
+  (--no-dep-run). (DavidMikeSimon)
+
+* Bundler support using the --gemfile option. (DavidMikeSimon)
+
+* Debug mode support in the stub (--debug). Also --debug-extract to
+  keep extracted files from executable. (DavidMikeSimon)
+
+* New gem behaviour yet again due to changes in Rubygems. See README
+  file.
+
+=== 1.2.0
+
+* Ignore console events (Ctrl-C, Ctrl-Break). Ruby process handles
+  them anyway and exist, allowing the stub to clean up temporary
+  files.
+
+* Temporary memory used for decompression is now freed before the ruby
+  interpreter is launched by the stub.
+
+* Progress dialog is no longer displayed when removing temporary
+  files.
+
+* Now includes most files from any require'd Rubygem (Now works with
+  mime-types, oledb and other gems that load additional data files
+  from the Gem installation). Some files are still ignored
+  (e.g. Readme's). Use "--no-gem-filter" to make Ocra unconditionally
+  include all files listed in the Gem specification (Thanks to Jorge
+  L. Cangas for patch & ideas).
+
+* NameErrors are now rescued when attempting to load autoloadable
+  constants. Hopefully resolves issues with ActiveRecord [#28488].
+
+* Now works if the script changes environment or working directory
+  while running.
+
+* Fixed a regression in 1.1.4 when resource files are specified;
+  directory layout would not be maintained, e.g. when running "ocra
+  bin/script share/data.dat".
+
+* Added support for passing arguments to script. Specify argument to
+  your script after a "--" marker. Arguments will be passed both at
+  compile time and run time. (#27815)
+
+* Now works if the source files are located beneath Ruby's
+  exec_prefix. (#28505)
+
+=== 1.1.4
+
+* The tempdir marker is now pretty-printed as "<tempdir>" in the
+  output.
+
+* Fixed various issues with path and filenames being handled case
+  sensitive.
+
+* Now uses config settings for Ruby executable names (should now also
+  work with ruby installations built with --program-suffix).
+
+* Supported invoking ocra with an absolute path to the script. Will
+  assume that the script is in the root of the source hierachy.
+
+=== 1.1.3
+
+* Use Win32API (provided with Ruby) instead of win32-api (gem).
+
+* No longer sets GEM_HOME (which would override the default gem
+  path). Instead sets GEM_PATH. Resolves issues with gems not loading
+  on Ruby 1.9.
+
+=== 1.1.2
+
+* Warnings can be disabled using --no-warnings.
+
+* Fixed not .exe being generated when script calls 'exit'.
+
+* Path to the generated executable is now avilable to the running
+  script in the OCRA_EXECUTABLE environment variable.
+
+* Directories on the command line will now be created.
+
+* Supports path globs, fx. "ocra script.rb assets/**/*.png". (See
+  documentation for Ruby's Dir class).
+
+* Fixed issue with spaces in temporary path (TMP environment).
+
+* Improved path comparison to ignore case (this is Windows after all)
+  and be a bit more robust.
+
+* Added support for RubyGems installed in GEM_HOME (or other part
+  handled by RubyGems). If not installed in the Ruby hierarchy, they
+  will now be installed in a directory named 'gemhome' under the
+  temporary directory.
+
+=== 1.1.1
+
+* Fixed duplicate entries in the RUBYLIB environment variable.
+
+* Another slight fix for relative load paths.
+
+* RUBYOPT is now set to the value it had when OCRA was invoked.
+
+=== 1.1.0
+
+* Added an icon to the executable. Can be replaced from a .ico file
+  using the --icon <ico> option.
+
+* Improved handling of load paths added either from the command line
+  (ruby -I), RUBYLIB environment variable or during the script (by
+  modifying $: or $LOAD_PATH).
+
+* Now automatically detects loaded DLLs through Win32::API. Disable
+  with --no-autodll.
+
+=== 1.0.3 / 2009-05-25
+
+* Fixed invokation of executables with spaces in path names (#25966).
+
+* Fixed inverted handling of --windows & --console (#25974)
+
+* Fixed installation issue with RubyGems (missing "lib")
+
+=== 1.0.2 / 2009-05-10
+
+* Added stubw.exe to gem (was missing 1.0.1)
+
+=== 1.0.1 / 2009-05-05
+
+* Added stub with windows runtime for windowed applications
+  (e.g. wxRuby) and fixed issue where OCRA would use ruby.exe instead
+  of rubyw.exe for such programs. [#25774]
+
+=== 1.0.0 / 2009-04-05
+
+* 1 major enhancement
+
+  * Birthday!

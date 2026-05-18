@@ -1,0 +1,294 @@
+U:RDoc::NormalClass[iI"StringIO:ET@I"Object;To:RDoc::Markup::Document:@parts[o;;[¨o:RDoc::Markup::Paragraph;[I"ã\Class \StringIO supports accessing a string as a stream,
+similar in some ways to {class IO}[https://docs.ruby-lang.org/en/master/IO.html].;To;	;[I"/You can create a \StringIO instance using:;To:RDoc::Markup::List:
+@type:BULLET:@items[o:RDoc::Markup::ListItem:@label0;[o;	;[I"NStringIO.new: returns a new \StringIO object containing the given string.;To;;0;[o;	;[I"EStringIO.open: passes a new \StringIO object to the given block.;To;	;[I"CLike an \IO stream, a \StringIO stream has certain properties:;To;
+;;;[o;;0;[o;	;[I"ê<b>Read/write mode</b>: whether the stream may be read, written, appended to, etc.;
+ see {Read/Write Mode}[rdoc-ref:StringIO@Read-2FWrite+Mode].;To;;0;[o;	;[I"Z<b>Data mode</b>: text-only or binary;
+ see {Data Mode}[rdoc-ref:StringIO@Data+Mode].;To;;0;[o;	;[I"a*Encodings*: internal and external encodings;
+ see {Encodings}[rdoc-ref:StringIO@Encodings].;To;;0;[o;	;[I"u*Position*: where in the stream the next read or write is to occur;
+ see {Position}[rdoc-ref:StringIO@Position].;To;;0;[o;	;[I"ö<b>Line number</b>: a special, line-oriented, "position" (different from the position mentioned above);
+ see {Line Number}[rdoc-ref:StringIO@Line+Number].;To;;0;[o;	;[I"ë*Open/closed*: whether the stream is open or closed, for reading or writing.
+ see {Open/Closed Streams}[rdoc-ref:StringIO@Open-2FClosed+Streams].;To;;0;[o;	;[I"a*BOM*: byte mark order;
+ see {Byte Order Mark}[rdoc-ref:StringIO@BOM+-28Byte+Order+Mark-29].;To:RDoc::Markup::Heading:@leveli:
+@textI"About the Examples;To;	;[I"CExamples on this page assume that \StringIO has been required:;To:RDoc::Markup::Verbatim;[I"require 'stringio'
+;T:@format:	rubyo;	;[I"-And that this constant has been defined:;To;;[I"ETEXT = <<EOT
+First line
+Second line
+
+Fourth line
+Fifth line
+EOT
+;T;;o;;i;I"Stream Properties;To;;i;I"Read/Write Mode;To;;i	;I"Summary;To:RDoc::Markup::Table:@header[	I"	Mode;TI"Initial Clear?;TI"	Read;TI"
+Write;T:@align[	:center;;;:
+@body[[	I"<tt>'r'</tt>: read-only;TI"No;TI"Anywhere;TI"
+Error;T[	I"<tt>'w'</tt>: write-only;TI"Yes;TI"
+Error;TI"Anywhere;T[	I"<tt>'a'</tt>: append-only;TI"No;TI"
+Error;TI"End only;T[	I"<tt>'r+'</tt>: read/write;TI"No;TI"Anywhere;TI"Anywhere;T[	I"<tt>'w+'</tt>: read-write;TI"Yes;TI"Anywhere;TI"Anywhere;T[	I"<tt>'a+'</tt>: read/append;TI"No;TI"Anywhere;TI"End only;To;	;[I"4Each section below describes a read/write mode.;To;	;[I"MAny of the modes may be given as a string or as file constants;
+example:;To;;[I"_strio = StringIO.new('foo', 'a')
+strio = StringIO.new('foo', File::WRONLY | File::APPEND)
+;T;;o;;i	;I" <code>'r'</code>: Read-Only;To;	;[I"Mode specified as one of:;To;
+;;;[o;;0;[o;	;[I"String: <code>'r'</code>.;To;;0;[o;	;[I")Constant: <code>File::RDONLY</code>.;To;	;[I"Initial state:;To;;[I"ãstrio = StringIO.new('foobarbaz', 'r')
+strio.pos    # => 0            # Beginning-of-stream.
+strio.string # => "foobarbaz"  # Not cleared.
+;T;;o;	;[I"May be read anywhere:;To;;[I"\strio.gets(3) # => "foo"
+strio.gets(3) # => "bar"
+strio.pos = 9
+strio.gets(3) # => nil
+;T;;o;	;[I"May not be written:;To;;[I"Bstrio.write('foo')  # Raises IOError: not opened for writing
+;T;;o;;i	;I"!<code>'w'</code>: Write-Only;To;	;[I"Mode specified as one of:;To;
+;;;[o;;0;[o;	;[I"String: <code>'w'</code>.;To;;0;[o;	;[I")Constant: <code>File::WRONLY</code>.;To;	;[I"Initial state:;To;;[I"~strio = StringIO.new('foo', 'w')
+strio.pos    # => 0   # Beginning of stream.
+strio.string # => ""  # Initially cleared.
+;T;;o;	;[I"7May be written anywhere (even past end-of-stream):;To;;[I"	strio.write('foobar')
+strio.string # => "foobar"
+strio.rewind
+strio.write('FOO')
+strio.string # => "FOObar"
+strio.pos = 3
+strio.write('BAR')
+strio.string # => "FOOBAR"
+strio.pos = 9
+strio.write('baz')
+strio.string # => "FOOBAR\u0000\u0000\u0000baz"  # Null-padded.
+;T;;o;	;[I"May not be read:;To;;[I":strio.read  # Raises IOError: not opened for reading
+;T;;o;;i	;I""<code>'a'</code>: Append-Only;To;	;[I"Mode specified as one of:;To;
+;;;[o;;0;[o;	;[I"String: <code>'a'</code>.;To;;0;[o;	;[I"8Constant: <code>File::WRONLY | File::APPEND</code>.;To;	;[I"Initial state:;To;;[I"~strio = StringIO.new('foo', 'a')
+strio.pos    # => 0      # Beginning-of-stream.
+strio.string # => "foo"  # Not cleared.
+;T;;o;	;[I"FMay be written only at the end; position does not affect writing:;To;;[I"£strio.write('bar')
+strio.string # => "foobar"
+strio.write('baz')
+strio.string # => "foobarbaz"
+strio.pos = 400
+strio.write('bat')
+strio.string # => "foobarbazbat"
+;T;;o;	;[I"May not be read:;To;;[I":strio.gets  # Raises IOError: not opened for reading
+;T;;o;;i	;I""<code>'r+'</code>: Read/Write;To;	;[I"Mode specified as one of:;To;
+;;;[o;;0;[o;	;[I"String: <code>'r+'</code>.;To;;0;[o;	;[I"'Constant: <code>File::RDRW</code>.;To;	;[I"Initial state:;To;;[I"Éstrio = StringIO.new('foobar', 'r+')
+strio.pos    # => 0         # Beginning-of-stream.
+strio.string # => "foobar"  # Not cleared.
+;T;;o;	;[I"7May be written anywhere (even past end-of-stream):;To;;[I"Ústrio.write('FOO')
+strio.string # => "FOObar"
+strio.write('BAR')
+strio.string # => "FOOBAR"
+strio.write('BAZ')
+strio.string # => "FOOBARBAZ"
+strio.pos = 12
+strio.write('BAT')
+strio.string # => "FOOBARBAZ\u0000\u0000\u0000BAT"  # Null padded.
+;T;;o;	;[I"May be read anywhere:;To;;[I"zstrio.pos = 0
+strio.gets(3) # => "FOO"
+strio.pos = 6
+strio.gets(3) # => "BAZ"
+strio.pos = 400
+strio.gets(3) # => nil
+;T;;o;;i	;I"4<code>'w+'</code>: Read/Write (Initially Clear);To;	;[I"Mode specified as one of:;To;
+;;;[o;;0;[o;	;[I"String: <code>'w+'</code>.;To;;0;[o;	;[I"5Constant: <code>File::RDWR | File::TRUNC</code>.;To;	;[I"Initial state:;To;;[I"wstrio = StringIO.new('foo', 'w+')
+strio.pos    # => 0   # Beginning-of-stream.
+strio.string # => ""  # Truncated.
+;T;;o;	;[I"7May be written anywhere (even past end-of-stream):;To;;[I"0strio.write('foobar')
+strio.string # => "foobar"
+strio.rewind
+strio.write('FOO')
+strio.string # => "FOObar"
+strio.write('BAR')
+strio.string # => "FOOBAR"
+strio.write('BAZ')
+strio.string # => "FOOBARBAZ"
+strio.pos = 12
+strio.write('BAT')
+strio.string # => "FOOBARBAZ\u0000\u0000\u0000BAT"  # Null-padded.
+;T;;o;	;[I"May be read anywhere:;To;;[I"éstrio.rewind
+strio.gets(3) # => "FOO"
+strio.gets(3) # => "BAR"
+strio.pos = 12
+strio.gets(3) # => "BAT"
+strio.pos = 400
+strio.gets(3) # => nil
+;T;;o;;i	;I"#<code>'a+'</code>: Read/Append;To;	;[I"Mode specified as one of:;To;
+;;;[o;;0;[o;	;[I"String: <code>'a+'</code>.;To;;0;[o;	;[I"6Constant: <code>File::RDWR | File::APPEND</code>.;To;	;[I"Initial state:;To;;[I"strio = StringIO.new('foo', 'a+')
+strio.pos    # => 0      # Beginning-of-stream.
+strio.string # => "foo"  # Not cleared.
+;T;;o;	;[I"OMay be written only at the end; #rewind; position does not affect writing:;To;;[I"£strio.write('bar')
+strio.string # => "foobar"
+strio.write('baz')
+strio.string # => "foobarbaz"
+strio.pos = 400
+strio.write('bat')
+strio.string # => "foobarbazbat"
+;T;;o;	;[I"May be read anywhere:;To;;[I"çstrio.rewind
+strio.gets(3) # => "foo"
+strio.gets(3) # => "bar"
+strio.pos = 9
+strio.gets(3) # => "bat"
+strio.pos = 400
+strio.gets(3) # => nil
+;T;;o;;i;I"Data Mode;To;	;[I"ûTo specify whether the stream is to be treated as text or as binary data,
+either of the following may be suffixed to any of the string read/write modes above:;To;
+;;;[o;;0;[o;	;[I"J<code>'t'</code>: Text;
+ initializes the encoding as Encoding::UTF_8.;To;;0;[o;	;[I"Q<code>'b'</code>: Binary;
+ initializes the encoding as Encoding::ASCII_8BIT.;To;	;[I";If neither is given, the stream defaults to text data.;To;	;[I"Examples:;To;;[I"◊strio = StringIO.new('foo', 'rt')
+strio.external_encoding # => #<Encoding:UTF-8>
+data = "\u9990\u9991\u9992\u9993\u9994"
+strio = StringIO.new(data, 'rb')
+strio.external_encoding # => #<Encoding:BINARY (ASCII-8BIT)>
+;T;;o;	;[I"MWhen the data mode is specified, the read/write mode may not be omitted:;To;;[I"LStringIO.new(data, 'b')  # Raises ArgumentError: invalid access mode b
+;T;;o;	;[I"|A text stream may be changed to binary by calling instance method #binmode;
+a binary stream may not be changed to text.;To;;i;I"Encodings;To;	;[I"rA stream has an encoding; see {Encodings}[https://docs.ruby-lang.org/en/master/language/encodings_rdoc.html].;To;	;[I"pThe initial encoding for a new or re-opened stream depends on its {data mode}[rdoc-ref:StringIO@Data+Mode]:;To;
+;;;[o;;0;[o;	;[I"(Text: <code>Encoding::UTF_8</code>.;To;;0;[o;	;[I"/Binary: <code>Encoding::ASCII_8BIT</code>.;To;	;[I")These instance methods are relevant:;To;
+;;;[	o;;0;[o;	;[I"g#external_encoding: returns the current encoding of the stream as an <code>Encoding</code> object.;To;;0;[o;	;[I"T#internal_encoding: returns +nil+; a stream does not have an internal encoding.;To;;0;[o;	;[I"5#set_encoding: sets the encoding for the stream.;To;;0;[o;	;[I"b#set_encoding_by_bom: sets the encoding for the stream to the stream's BOM (byte order mark).;To;	;[I"Examples:;To;;[I"êstrio = StringIO.new('foo', 'rt')  # Text mode.
+strio.external_encoding # => #<Encoding:UTF-8>
+data = "\u9990\u9991\u9992\u9993\u9994"
+strio = StringIO.new(data, 'rb') # Binary mode.
+strio.external_encoding # => #<Encoding:BINARY (ASCII-8BIT)>
+strio = StringIO.new('foo')
+strio.external_encoding # => #<Encoding:UTF-8>
+strio.set_encoding('US-ASCII')
+strio.external_encoding # => #<Encoding:US-ASCII>
+;T;;o;;i;I"Position;To;	;[I"xA stream has a _position_, and integer offset (in bytes) into the stream.
+The initial position of a stream is zero.;To;;i	;I"%Getting and Setting the Position;To;	;[I"[Each of these methods initializes (to zero) the position of a new or re-opened stream:;To;
+;;;[o;;0;[o;	;[I"!::new: returns a new stream.;To;;0;[o;	;[I".::open: passes a new stream to the block.;To;;0;[o;	;[I"(#reopen: re-initializes the stream.;To;	;[I"fEach of these methods queries, gets, or sets the position, without otherwise changing the stream:;To;
+;;;[
+o;;0;[o;	;[I"=#eof?: returns whether the position is at end-of-stream.;To;;0;[o;	;[I" #pos: returns the position.;To;;0;[o;	;[I"#pos=: sets the position.;To;;0;[o;	;[I"(#rewind: sets the position to zero.;To;;0;[o;	;[I"#seek: sets the position.;To;	;[I"Examples:;To;;[I"…strio = StringIO.new('foobar')
+strio.pos  # => 0
+strio.pos = 3
+strio.pos  # => 3
+strio.eof? # => false
+strio.rewind
+strio.pos  # => 0
+strio.seek(0, IO::SEEK_END)
+strio.pos  # => 6
+strio.eof? # => true
+;T;;o;;i	;I"&Position Before and After Reading;To;	;[I"âExcept for #pread, a stream reading method (see {Basic Reading}[rdoc-ref:StringIO@Basic+Reading])
+begins reading at the current position.;To;	;[I"TExcept for #pread, a read method advances the position past the read substring.;To;	;[I"Examples:;To;;[I"strio = StringIO.new(TEXT)
+strio.string # => "First line\nSecond line\n\nFourth line\nFifth line\n"
+strio.pos    # => 0
+strio.getc   # => "F"
+strio.pos    # => 1
+strio.gets   # => "irst line\n"
+strio.pos    # => 11
+strio.pos = 24
+strio.gets   # => "Fourth line\n"
+strio.pos    # => 36
+
+strio = StringIO.new('—Ç–µ—Å—Ç') # Four 2-byte characters.
+strio.pos = 0 # At first byte of first character.
+strio.read    # => "—Ç–µ—Å—Ç"
+strio.pos = 1 # At second byte of first character.
+strio.read    # => "\x82–µ—Å—Ç"
+strio.pos = 2 # At first of second character.
+strio.read    # => "–µ—Å—Ç"
+
+strio = StringIO.new(TEXT)
+strio.pos = 15
+a = []
+strio.each_line {|line| a.push(line) }
+a         # => ["nd line\n", "\n", "Fourth line\n", "Fifth line\n"]
+strio.pos # => 47  ## End-of-stream.
+;T;;o;;i	;I"&Position Before and After Writing;To;	;[I"|Each of these methods begins writing at the current position,
+and advances the position to the end of the written substring:;To;
+;;;[o;;0;[o;	;[I"'#putc: writes the given character.;To;;0;[o;	;[I"1#write: writes the given objects as strings.;To;;0;[o;	;[I"â{Kernel#puts}[https://docs.ruby-lang.org/en/master/Kernel.html#method-i-puts]: writes given objects as strings, each followed by newline.;To;	;[I"Examples:;To;;[I"Ostrio = StringIO.new('foo')
+strio.pos    # => 0
+strio.putc('b')
+strio.string # => "boo"
+strio.pos    # => 1
+strio.write('r')
+strio.string # => "bro"
+strio.pos    # => 2
+strio.puts('ew')
+strio.string # => "brew\n"
+strio.pos    # => 5
+strio.pos = 8
+strio.write('foo')
+strio.string # => "brew\n\u0000\u0000\u0000foo"
+strio.pos    # => 11
+;T;;o;	;[I"ÑEach of these methods writes _before_ the current position, and decrements the position
+so that the written data is next to be read:;To;
+;;;[o;;0;[o;	;[I")#ungetbyte: unshifts the given byte.;To;;0;[o;	;[I"+#ungetc: unshifts the given character.;To;	;[I"Examples:;To;;[I"¶strio = StringIO.new('foo')
+strio.pos = 2
+strio.ungetc('x')
+strio.pos    # => 1
+strio.string # => "fxo"
+strio.ungetc('x')
+strio.pos    # => 0
+strio.string # => "xxo"
+;T;;o;	;[I".This method does not affect the position:;To;
+;;;[o;;0;[o;	;[I"@#truncate: truncates the stream's string to the given size.;To;	;[I"Examples:;To;;[I"æstrio = StringIO.new('foobar')
+strio.pos    # => 0
+strio.truncate(3)
+strio.string # => "foo"
+strio.pos    # => 0
+strio.pos = 500
+strio.truncate(0)
+strio.string # => ""
+strio.pos    # => 500
+;T;;o;;i;I"Line Number;To;	;[I"9A stream has a line number, which initially is zero:;To;
+;;;[o;;0;[o;	;[I",Method #lineno returns the line number.;To;;0;[o;	;[I"*Method #lineno= sets the line number.;To;	;[I"≤The line number can be affected by reading (but never by writing);
+in general, the line number is incremented each time the record separator (default: <code>"\n"</code>) is read.;To;	;[I"Examples:;To;;[I"mstrio = StringIO.new(TEXT)
+strio.string # => "First line\nSecond line\n\nFourth line\nFifth line\n"
+strio.lineno # => 0
+strio.gets   # => "First line\n"
+strio.lineno # => 1
+strio.getc   # => "S"
+strio.lineno # => 1
+strio.gets   # => "econd line\n"
+strio.lineno # => 2
+strio.gets   # => "\n"
+strio.lineno # => 3
+strio.gets   # => "Fourth line\n"
+strio.lineno # => 4
+;T;;o;	;[I":Setting the position does not affect the line number:;To;;[I"qstrio.pos = 0
+strio.lineno # => 4
+strio.gets   # => "First line\n"
+strio.pos    # => 11
+strio.lineno # => 5
+;T;;o;	;[I">And setting the line number does not affect the position:;To;;[I"xstrio.lineno = 10
+strio.pos    # => 11
+strio.gets   # => "Second line\n"
+strio.lineno # => 11
+strio.pos    # => 23
+;T;;o;;i;I"Open/Closed Streams;To;	;[I"âA new stream is open for either reading or writing, and may be open for both;
+see {Read/Write Mode}[rdoc-ref:StringIO@Read-2FWrite+Mode].;To;	;[I"YEach of these methods initializes the read/write mode for a new or re-opened stream:;To;
+;;;[o;;0;[o;	;[I"!::new: returns a new stream.;To;;0;[o;	;[I".::open: passes a new stream to the block.;To;;0;[o;	;[I"(#reopen: re-initializes the stream.;To;	;[I"Other relevant methods:;To;
+;;;[o;;0;[o;	;[I"<#close: closes the stream for both reading and writing.;To;;0;[o;	;[I"0#close_read: closes the stream for reading.;To;;0;[o;	;[I"1#close_write: closes the stream for writing.;To;;0;[o;	;[I"Q#closed?: returns whether the stream is closed for both reading and writing.;To;;0;[o;	;[I"E#closed_read?: returns whether the stream is closed for reading.;To;;0;[o;	;[I"F#closed_write?: returns whether the stream is closed for writing.;To;;i;I"BOM (Byte Order Mark);To;	;[I"⁄The string provided for ::new, ::open, or #reopen
+may contain an optional {BOM}[https://en.wikipedia.org/wiki/Byte_order_mark] (byte order mark) at the beginning of the string;
+the BOM can affect the stream's encoding.;To;	;[I"The BOM (if provided):;To;
+;;;[o;;0;[o;	;[I".Is stored as part of the stream's string.;To;;0;[o;	;[I"0Does _not_ immediately affect the encoding.;To;;0;[o;	;[I"2Is _initially_ considered part of the stream.;To;;[I"utf8_bom = "\xEF\xBB\xBF"
+string = utf8_bom + 'foo'
+string.bytes               # => [239, 187, 191, 102, 111, 111]
+strio.string.bytes.take(3) # => [239, 187, 191]                  # The BOM.
+strio = StringIO.new(string, 'rb')
+strio.string.bytes         # => [239, 187, 191, 102, 111, 111]   # BOM is part of the stored string.
+strio.external_encoding    # => #<Encoding:BINARY (ASCII-8BIT)>  # Default for a binary stream.
+strio.gets                 # => "\xEF\xBB\xBFfoo"                # BOM is part of the stream.
+;T;;o;	;[I"lYou can call instance method #set_encoding_by_bom to "activate" the stored BOM;
+after doing so the BOM:;To;
+;;;[o;;0;[o;	;[I"6Is _still_ stored as part of the stream's string.;To;;0;[o;	;[I"?_Determines_ (and may have changed) the stream's encoding.;To;;0;[o;	;[I"9Is <em>no longer</em> considered part of the stream.;To;;[I"Ostrio.set_encoding_by_bom
+strio.string.bytes      # => [239, 187, 191, 102, 111, 111]  # BOM is still part of the stored string.
+strio.external_encoding # => #<Encoding:UTF-8>               # The new encoding.
+strio.rewind            # => 0
+strio.gets              # => "foo"                           # BOM is not part of the stream.
+;T;;o;;i;I"Basic Stream \IO;To;;i;I"Basic Reading;To;	;[I"?You can read from the stream using these instance methods:;To;
+;;;[o;;0;[o;	;[I"/#getbyte: reads and returns the next byte.;To;;0;[o;	;[I"1#getc: reads and returns the next character.;To;;0;[o;	;[I";#gets: reads and returns all or part of the next line.;To;;0;[o;	;[I"N#read: reads and returns all or part of the remaining data in the stream.;To;;0;[o;	;[I"W#readlines: reads the remaining data the stream and returns an array of its lines.;To;;0;[o;	;[I"è{Kernel#readline}[https://docs.ruby-lang.org/en/master/Kernel.html#method-i-readline]: like #gets, but raises an exception if at end-of-stream.;To;	;[I"BYou can iterate over the stream using these instance methods:;To;
+;;;[	o;;0;[o;	;[I"D#each_byte: reads each remaining byte, passing it to the block.;To;;0;[o;	;[I"I#each_char: reads each remaining character, passing it to the block.;To;;0;[o;	;[I"N#each_codepoint: reads each remaining codepoint, passing it to the block.;To;;0;[o;	;[I"_#each_line: reads all or part of each remaining line, passing the read string to the block;To;	;[I"DThis instance method is useful in a multi-threaded application:;To;
+;;;[o;;0;[o;	;[I"9#pread: reads and returns all or part of the stream.;To;;i;I"Basic Writing;To;	;[I"WYou can write to the stream, advancing the position, using these instance methods:;To;
+;;;[o;;0;[o;	;[I"%#putc: writes a given character.;To;;0;[o;	;[I"1#write: writes the given objects as strings.;To;;0;[o;	;[I"à{Kernel#puts}[https://docs.ruby-lang.org/en/master/Kernel.html#method-i-puts] writes given objects as strings, each followed by newline.;To;	;[I"±You can "unshift" to the stream using these instance methods;
+each writes _before_ the current position, and decrements the position
+so that the written data is next to be read.;To;
+;;;[o;;0;[o;	;[I")#ungetbyte: unshifts the given byte.;To;;0;[o;	;[I"+#ungetc: unshifts the given character.;To;	;[I"One more writing method:;To;
+;;;[o;;0;[o;	;[I"@#truncate: truncates the stream's string to the given size.;To;;i;I"Line \IO;To;	;[I"Reading:;To;
+;;;[	o;;0;[o;	;[I",#gets: reads and returns the next line.;To;;0;[o;	;[I"è{Kernel#readline}[https://docs.ruby-lang.org/en/master/Kernel.html#method-i-readline]: like #gets, but raises an exception if at end-of-stream.;To;;0;[o;	;[I"W#readlines: reads the remaining data the stream and returns an array of its lines.;To;;0;[o;	;[I"C#each_line: reads each remaining line, passing it to the block;To;	;[I"Writing:;To;
+;;;[o;;0;[o;	;[I"~{Kernel#puts}[https://docs.ruby-lang.org/en/master/Kernel.html#method-i-puts]: writes given objects, each followed by newline.;To;;i;I"Character \IO;To;	;[I"Reading:;To;
+;;;[o;;0;[o;	;[I"I#each_char: reads each remaining character, passing it to the block.;To;;0;[o;	;[I"1#getc: reads and returns the next character.;To;	;[I"Writing:;To;
+;;;[o;;0;[o;	;[I"'#putc: writes the given character.;To;;0;[o;	;[I",#ungetc.: unshifts the given character.;To;;i;I"Byte \IO;To;	;[I"Reading:;To;
+;;;[o;;0;[o;	;[I"D#each_byte: reads each remaining byte, passing it to the block.;To;;0;[o;	;[I"/#getbyte: reads and returns the next byte.;To;	;[I"Writing:;To;
+;;;[o;;0;[o;	;[I")#ungetbyte: unshifts the given byte.;To;;i;I"Codepoint \IO;To;	;[I"Reading:;To;
+;;;[o;;0;[o;	;[I"N#each_codepoint: reads each remaining codepoint, passing it to the block.;T:
+@fileI"ext/stringio/stringio.c;T:0@omit_headings_from_table_of_contents_below0;0;0[ [U:RDoc::Constant[i I"VERSION;TI"StringIO::VERSION;T:public0o;;[o;	;[I"The version string;To:RDoc::Markup::BlankLine ;@µ;0@µ@cRDoc::NormalClass0U;[i I"MAX_LENGTH;TI"StringIO::MAX_LENGTH;T;0o;;[o;	;[I"5Maximum length that a StringIO instance can hold;T@¡;@µ;0@µ@@¬0[[I"Enumerable;To;;[ ;@µ;0I"ext/stringio/stringio.c;T[I"IO::generic_readable;To;;[ ;@µ;0@—[I"IO::generic_writable;To;;[ ;@µ;0@—[[I"
+class;T[[;[ [:protected[ [:private[[I"new;T@—[I"	open;T@—[I"instance;T[[;[ [; [ [;![7[I"binmode;T@—[I"
+close;T@—[I"close_read;T@—[I"close_write;T@—[I"closed?;T@—[I"closed_read?;T@—[I"closed_write?;T@—[I"	each;T@—[I"each_byte;T@—[I"each_char;T@—[I"each_codepoint;T@—[I"each_line;T@—[I"eof;T@—[I"	eof?;T@—[I"external_encoding;T@—[I"
+fcntl;T@—[I"fileno;T@—[I"
+flush;T@—[I"
+fsync;T@—[I"getbyte;T@—[I"	getc;T@—[I"	gets;T@—[I"internal_encoding;T@—[I"isatty;T@—[I"length;T@—[I"lineno;T@—[I"lineno=;T@—[I"pid;T@—[I"pos;T@—[I"	pos=;T@—[I"
+pread;T@—[I"	putc;T@—[I"	read;T@—[I"readlines;T@—[I"reopen;T@—[I"rewind;T@—[I"	seek;T@—[I"set_encoding;T@—[I"set_encoding_by_bom;T@—[I"	size;T@—[I"string;T@—[I"string=;T@—[I"	sync;T@—[I"
+sync=;T@—[I"	tell;T@—[I"truncate;T@—[I"	tty?;T@—[I"ungetbyte;T@—[I"ungetc;T@—[I"
+write;T@—[ [U:RDoc::Context::Section[i 0o;;[ ;0;0[I"ext/stringio/stringio.c;T@µcRDoc::TopLevel

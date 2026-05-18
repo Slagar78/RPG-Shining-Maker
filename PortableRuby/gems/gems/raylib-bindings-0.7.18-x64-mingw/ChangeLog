@@ -1,0 +1,595 @@
+2026-02-22  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/11e3e6e0b994d0543cb83e253438e08402dba014 ) and raygui ( https://github.com/raysan5/raygui/commit/960f13b6e07ab9876fbba572fa5f17eed268d6b4 )
+
+2026-01-10  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/f2c8a9c085c26c0a7a0b5bf7d6e69a56618bd964 ) and raygui ( https://github.com/raysan5/raygui/commit/51e6bcb39346b3e363643f95c3532119af41f6fd )
+
+2025-12-28  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/05f5143603ba4db9b3157e981926a42c55c4c766 ) and raygui ( https://github.com/raysan5/raygui/commit/0b94b80c92c34c79f8d902f51f68dfc1edacf51b )
+
+2025-11-18  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/particles_fireworks.rb : Added
+
+2025-10-26  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/a818508158119f74e99b4dc98345c28ce112733c ) and raygui ( https://github.com/raysan5/raygui/commit/b9971133b2f7b7513904770d565b683a93fb3624 )
+
+2025-07-13  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/20a07a65d7b5625f9d165d2659cfc06bd67116a4 )
+
+2025-06-08  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/59bcf680aafb6f054e150f70c8c71deb44ad04b1) and raygui ( https://github.com/raysan5/raygui/commit/99b37e4d4fdc19e7bf73844d6b9f177cbb27ce24 )
+
+2025-05-10  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/7e072783683e8449c70e39148c4ac5ccc2ae8c49) and raygui ( https://github.com/raysan5/raygui/commit/cb78993237b4887fb0277317483b1c757d8ffc14 )
+
+2025-04-29  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/1ec281e86fa518dd8d8d85271e42cf8db4340f41) and raygui ( https://github.com/raysan5/raygui/commit/0895c8b8c4bf9e111492b19fba336d62d4a0b960 )
+
+2025-03-29  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/9a049d1d27e3fe92c2591bc190b7f497b5f0283e) and raygui ( https://github.com/raysan5/raygui/commit/ea928f56091078aad9af847a1607c22f06c5992f )
+
+2025-02-23  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/99d2119dd6795205352cab41ca1ed7efd5d35c4e) and raygui ( https://github.com/raysan5/raygui/commit/e4a59f0afa6a379007a74b0c565c2787525eda36 )
+
+2025-02-02  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/4f5a20a634918ca0fff893ad0ac586a515186c81) and raygui ( https://github.com/raysan5/raygui/commit/d36080ea7025b189374e85205bde5c8558b6561f )
+
+2025-01-18  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/0275d13aa84f8a464b5246abbef9205b94c73c5e) and raygui ( https://github.com/raysan5/raygui/commit/76b36b597edb70ffaf96f046076adc20d67e7827 )
+
+2025-01-11  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/62d8969a56909a4721114860cbe1350b5dcb20eb )
+
+2025-01-01  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/fa0eada61a1131a7413df9139ead6d018b169f22) and raygui ( https://github.com/raysan5/raygui/commit/1f813711063f0ff01bd3a89d50ebc17c5412e83c )
+
+2024-12-14  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/93a1e75741175b9a2136593064b3714e79a363e2 ) and raygui ( https://github.com/raysan5/raygui/commit/f11dc823d1c938def8f0a823fd5f51979caab94d )
+
+2024-11-23  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/47f83aa58f7a20110b0dc0d031b377faa50dd31e )
+
+2024-10-14  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/59417636ca956d64800e7e26d4f4ec331cf1b412 ) and raygui ( https://github.com/raysan5/raygui/commit/1e03efca48c50c5ea4b4a053d5bf04bad58d3e43 )
+
+2024-09-16  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/186787e31179eec8280a429fae50b65ef58368d3 ) and raygui ( https://github.com/raysan5/raygui/commit/b5a81fb76eec3521f4cbd6c02ace0dcc7b1cc810 )
+
+2024-09-07  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/10b01ba7c2139b9203045bb56aa8403ca810cc6b ) and raygui ( https://github.com/raysan5/raygui/commit/6aae83894ac20b7ac8bf511f43d368f0ad409534 )
+
+2024-08-12  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/418b8780533e6d7822aefcd1a1dd3cb6cca95fa5 )
+
+2024-07-28  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/e5a1fc4f20f9daca17a2f76ffe217b1128625d0b ) and raygui ( https://github.com/raysan5/raygui/commit/33f16596091e8147d01f948e7125db02cfae5faa )
+
+2024-07-14  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/5ede47618bd9f9a440af648da1b4817e51644994 ) and raygui ( https://github.com/raysan5/raygui/commit/3fb9d77a67243497e10ae0448374a52a2a65e26f )
+
+2024-06-29  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/c1ea32655aad97402ea3b215ab7b414d0809bb8d ) and raygui ( https://github.com/raysan5/raygui/commit/0f832e6a6edfa77a93c327617468b15755cb05ce )
+
+2024-06-15  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/b4fbdc028302f9a697f196e8d02a7dca28912f59 ) and raygui ( https://github.com/raysan5/raygui/commit/4b3d94f5df6a5a2aa86286350f7e20c0ca35f516 )
+
+2024-05-25  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/785ec74b92da4f91181ff7b1c89c8ae5ee19f1b6 ) and raygui ( https://github.com/raysan5/raygui/commit/7bb66e5c7f3e283995a43c68965ee82acc65637a )
+
+2024-05-12  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/f62202198e35161a9fe394a14bbd1a7c655107ad ) and raygui ( https://github.com/raysan5/raygui/commit/12804826d01bfb636e36f816bda19eaa23b4ace7 )
+	* Fixed constant redefinition warnings. (Ref.: https://github.com/raysan5/raylib/commit/33b32ca53a7817a9cfdb1840a8ab75fa7cb47723 https://github.com/raysan5/raylib/blob/f62202198e35161a9fe394a14bbd1a7c655107ad/src/config.h#L115-L121 )
+
+2024-05-04  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/f1007554a0a8145060797c0aa8169bdaf2c1c6b8 ) and raygui ( https://github.com/raysan5/raygui/commit/a3a0e86e215145c28726e6f469f13d0aa6647a5e )
+
+2024-04-27  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/e47ebec66134800e734710038ea4e5f070f3ef06 ) and raygui ( https://github.com/raysan5/raygui/commit/6f532337ff2d6dc14ba3a5f5b7ee63f9d90ff13b )
+
+2024-04-06  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/414229bcf93816daaa253a82cd54fbd7b18e6449 ) and raygui ( https://github.com/raysan5/raygui/commit/0a9a9f897a16968444e10fea4fbac33ba1d5d640 )
+
+2024-03-31  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/textures_bunnymark_plain.rb : Renamed from textures_bunnymark.rb
+	* examples/textures_bunnymark_optimized.rb : Added
+
+2024-03-24  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/35252fceefdeb7b0920d9c1513efb4b5c05633dc ) and raygui ( https://github.com/raysan5/raygui/commit/9060e3bf33795dad4fdb4f60585b07901ffa5dee )
+
+2024-03-10  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/f072497551d9f03b5fbded289f8af021c103a8c0) and raygui ( https://github.com/raysan5/raygui/commit/623bc61f29839d451061252e1cc93edb013c2f8c )
+
+2024-03-02  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/25caf14be8d0284aceaa0de28753b3012e71b7bb )
+
+2024-02-25  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/2a774a88f5532908e09b15602d1482be96470f7f ) and raygui ( https://github.com/raysan5/raygui/commit/bc67f42209cc32965c7d1c00028e3ed0c4158659 )
+
+2024-02-18  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/c251e9309e066b9d2aa5ecbd15bcee45b9bef528 ) and raygui ( https://github.com/raysan5/raygui/commit/a9e5e900586cc264d5af5c88552b66bafe9970f5 )
+
+2024-02-03  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/29ff658d9223068378269e4a705811f085fafdf4 ) and raygui ( https://github.com/raysan5/raygui/commit/58411f4cceb8ae82933f2001461db9940278fdeb )
+
+2024-01-27  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/snake_case_rlgl : Added
+
+2024-01-20  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Raylib.load_lib : Added 'method_naming' option to import APIs in snake case convention
+	* examples/snake_case_api.rb : Added
+
+2024-01-07  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated README
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/be0ea89f830cce2fcb62acfedc69da4faca11b43 )
+
+2024-01-05  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/eb6dcab308162037272edbad93ea1f10797c7352 ) and raygui ( https://github.com/raysan5/raygui/commit/e30a826909cefbce39bae4ceaee76da6b163e2b1 )
+
+2023-12-30  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/raylib_with_tileson.rb : Added
+
+2023-12-17  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/shaders_basic_pbr.rb : Added
+
+2023-12-16  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/fd84ab3cf735a643a074780ba73559d125e35aad ) and raygui ( https://github.com/raysan5/raygui/commit/2c8dc854d4e585761c2d4c77b4abbc46d298d5be )
+
+2023-12-09  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/a9ba51aa72cfc9c75c2230726a49e1d9065b3c01 ) and raygui ( https://github.com/raysan5/raygui/commit/dc103715435a258c68b00a89ba48b95c146e5b87 )
+
+2023-11-30  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/e7a486fa81adac1833253c849ca73c5b3f7ef361 )
+
+2023-11-20  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Removed unnecessary dependency
+
+2023-11-18  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/ae50bfa2cc569c0f8d5bc4315d39db64005b1b08 ) and raygui ( https://github.com/raysan5/raygui/commit/141ae0cd312656b7764b01079e43fc887aaaf4ce )
+
+2023-11-11  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/shapes_splines_drawing.rb : Added
+
+2023-11-10  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/text_font_sdf.rb : Added
+
+2023-11-09  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/21dc42d2ad02cafed83cd39afd7305212787c114 ) and raygui ( https://github.com/raysan5/raygui/commit/a2726c8600058cf2b1e6a2660d6d26312b0df424 )
+
+2023-10-28  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/b46505b13d4a85e26d1d5b6f9fc2a4264bf8b02f ) and raygui ( https://github.com/raysan5/raygui/commit/499e8bf7b1d9b0a92af8f685e646bc61f13c6dff )
+	* examples/core_automation_events.rb : Added
+
+2023-10-08  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/97c2744a16ad7e6cf6b546a7a6416ec6b21e3a6c ) and raygui ( https://github.com/raysan5/raygui/commit/85a5c104f509b183c8cc7db0d90c2ab7a2b198c8)
+
+2023-09-30  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Use Ruby-FFI 1.16 ( https://github.com/ffi/ffi )
+
+2023-09-23  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/raylib_with_imgui.rb : Added
+
+2023-09-16  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* lib/raygui_helper.rb: Added more APIs
+	* examples/gui_controls.rb: Added
+	* examples/shaders_basic_lighting.rb: Added
+
+2023-09-12  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/2e7a7877a51ca33487642bd7ed0367b017b54486 ) and raygui ( https://github.com/raysan5/raygui/commit/1c3305031d2dcab2fbd3c7d7ded8b7aee1738908)
+
+2023-09-09  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/37f60e75e72eebd5ff687b8857bf9043d291b0df ) and raygui ( https://github.com/raysan5/raygui/commit/0fccdc61fbd787fdfa9e254fd99def2cdb34fb10 )
+	* examples/template.rb: now calls UpdateCamera only when orbital model is on
+
+2023-09-02  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/ec6d3bb688ae8c137152eca7cdef9885badd9bee ) and raygui ( https://github.com/raysan5/raygui/commit/12fc56e5e1fe0888a4c73b98890914ca3806a8b4 )
+	* Linux (Cross): changed host OS (Ubuntu 22.04 LTS) and cross compiler version
+
+2023-08-10  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/0959f6ebf69f44d5bb0225cc94fd187ebedf8be5 ) and raygui ( https://github.com/raysan5/raygui/commit/41417db52d951bb08273c892d3e3db3723f1083a )
+	* lib/raylib_helper.rb: Added several initialization helper for Camera3D, Camera2D and BoundingBox
+	* examples: Fixed broken examples / Adoped new initialization helper APIs / Use accessor helpers for better readability
+
+2023-07-29  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/962030e70ad3dfcce5d4642ad65890fde93ad117 ) and raygui ( https://github.com/raysan5/raygui/commit/36365199b11dd967e7147e64c85ccfda8c5064d1 )
+
+2023-07-16  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/textures_image_rotate.rb: Added
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/22895ba14fab982ca74ec1526b48b924d1174e60 ) and raygui ( https://github.com/raysan5/raygui/commit/848569ce3399a8f6fe00091f968808f3ab042c4b )
+
+2023-06-26  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/0c126af7171e51fff9f94c4f2e498f43f60d617b ) and raygui ( https://github.com/raysan5/raygui/commit/fa1c93cdcc6df2cd45f5a1d9249291465a24cd8c )
+
+2023-06-10  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* lib/raygui_main.rb: Renamed from 'raygui.rb'
+	* lib/raygui_helper.rb: Minimal raygui wrapper to cope with raygui-4.0 API changes
+
+2023-05-27  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/aad51d47048f9eb5c13bbbd65dc5cd4d37aa68e5 ) and raygui ( https://github.com/raysan5/raygui/commit/ce358972efcc9c3c85f9806104f525210da08787 )
+
+2023-05-22  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/textures_image_generation.rb: Added
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/a4a6d4da8a26d131bc3f3e643f6fe51de281d15f ) and raygui ( https://github.com/raysan5/raygui/commit/135718ee04d57493039fd7b8fb1d73b49f3ec1ea )
+
+2023-05-14  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/5978358e5877b0033584334c5bf6ec7d8cf22ae8 ) and raygui ( https://github.com/raysan5/raygui/commit/aa81c167f10707ea173ea1190eda18e57d841b8f )
+
+2023-04-15  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/709b14180a6ed0379c134bd86612994cb2f36f80 ) and raygui ( https://github.com/raysan5/raygui/commit/5d7bc6b70adc195ccf3b556a23a1e2103f88ec7a )
+
+2023-03-19  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/2e02474b7aac2e6e3fe680a3aa996973585eeaad ) and raygui ( https://github.com/raysan5/raygui/commit/5d1de95ba2d16c44c4e777873a0e39f75dab8ffd )
+
+2023-03-09  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* generator: Now generates binding code for rcamera.h
+	* example: Removed SetCameaMode
+
+2023-02-26  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* generator/raylib_generator.py: Emits accessors for struct members
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/7fd2bf1a32c3ed7c932fe7c020858ecadb3b2056 ) and raygui ( https://github.com/raysan5/raygui/commit/c02a5883e0fa0bf78dbd65e70c530080deac5056 )
+
+2023-02-25  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* generator/raylib_generator.py: Emits appropriate spaces to align comments
+
+2023-02-18  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/generate_heightmap_obj.rb: Added
+
+2023-02-15  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/models_heightmap.rb: Added
+
+2023-02-04  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Updated with latest raylib ( https://github.com/raysan5/raylib/commit/7914332c40ee811ad08a90e4eb7d40c2d1e81f4e ) and raygui ( https://github.com/raysan5/raygui/commit/cec2de3440eac0ad0020d3ce3d546706c0749335 )
+
+2023-01-28  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Added Linux x86_64 binaries
+	* Added GitHub Actions scripts
+
+2023-01-23  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/util/setup_dll.rb: Fixed
+
+2023-01-21  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Added Linux x86_64 binaries
+
+2023-01-03  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/models_loading_gltf.rb: Added glTF animation playback
+
+2023-01-01  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/reversi_board.rb: Added
+
+2022-12-31  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/game_of_life_simple.rb: Added
+
+2022-12-30  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* generator: Now generates binding code for config.h
+
+2022-12-29  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* generator: Now generates enum descriptions
+	* Fixed several codes according to Rubocop warnings
+	* lib/raylib_helper.rb: Added several helper functions/classes
+
+2022-12-25  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Converted DrawModelEx into a wrapper function of rbDrawModelEx to avoid Matrix problem found in models_animation sample
+	* Attach functions with an explicit name - Ref.: https://www.rubydoc.info/github/ffi/ffi/FFI%2FLibrary:attach_function
+	* setup_xxx_symbols: name, retval and arguments of one function are now packed into one line
+	* generator: Now imports descriptions from original API schema
+	* Generated with the latest raylib ( https://github.com/raysan5/raylib/commit/03cc540d5f1df71bd7ad8118d0e11b492fa5cc18 )
+
+2022-12-24  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Experimental Linux (Chromebook) support
+
+2022-12-10  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/2c9d116a5ce835328dc3267313f1b34b2e7ad8c9 ) / and raygui ( https://github.com/raysan5/raygui/commit/64179558e425f6e05054d2a70eb12530e0fec103 )
+	* [Windows] Updated DLLs with the latest raylib
+	* examples/rlgl_compute_shader.rb: Fixed API usage
+
+2022-10-23  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/483f10397ee37ba551e57bad563a846f2dc5bb5b ) / and raygui ( https://github.com/raysan5/raygui/commit/d981abebd8f36dea9a297b2158b529ad8bf76a69a )
+	* [Windows] Updated DLLs with the latest raylib
+
+2022-10-16  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/c5e89241c515d12a739a0d0bacb6a05395bf2a95 ) / and raygui ( https://github.com/raysan5/raygui/commit/98df231227d87dbf5954520169af29e610cd6a87 )
+	* examples/models_loading_m3d.rb: Added
+	* examples/models_loading_gltf.rb: Fixed model paths
+	* [Windows] Updated DLLs with the latest raylib
+
+2022-08-28  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/template.rb: Added demonstration program included in gem package
+	* lib/raylib.rb: Added method 'Raylib.template' to generate template code
+
+2022-08-12  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/d658e6772d75bce52fbe46cc9789f0b33500bc0f ) and added raylib v4.2.0 features ( https://github.com/raysan5/raylib/releases/tag/4.2.0 )
+
+2022-07-18  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/core_storage_values.rb: Removed ( see https://github.com/raysan5/raylib/commit/e722a8dbef59cf0ecccf141af61e1e1c8a24849f )
+	* examples/core_drop_files.rb: Updated ( see https://github.com/raysan5/raylib/commit/b8f67c628553cb9199f51efc9b20eb5991d58e8f )
+	* Updated DLLs
+	* examples/textures_sprite_anim.rb: Added
+	* examples/textures_gif_player.rb: Added
+
+2022-07-17  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/49a534b5d478fd2f195380143ded4f0ab764c228 ) / and raygui ( https://github.com/raysan5/raygui/commit/9c826f213f5b287159a0b0e1a0670a27c09dcc7e )
+	* physac_dll now refers new repository ( https://github.com/raysan5/physac )
+
+2022-06-08  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/70ec71a373db426685590127122e77bfd66cbf69 ) / and raygui ( https://github.com/raysan5/raygui/commit/47269f30ce55f0399096d1bee4188b8b8c0d7186 )
+	* Updated submodules appropriately
+
+2022-04-29  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* script/rebuild_libs_windows.cmd: Added
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/5c66cc1c9bb4a3ae4af7cc6f82a521137ed5484d ) / Updated submodules appropriately 
+	* [Windows] Updated DLLs with the latest raylib ( https://github.com/raysan5/raylib/commit/5c66cc1c9bb4a3ae4af7cc6f82a521137ed5484d ) and raygui ( https://github.com/raysan5/raygui/commit/865bb293764073c01e74314ef647464f1f10fd96 )
+	* [macOS] Updated DLLs with the latest raylib
+
+2022-04-24  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/233cf3970c9148c4963cfdea20e49e761104f9de ) and raygui ( https://github.com/raysan5/raygui/commit/865bb293764073c01e74314ef647464f1f10fd96 )
+	* examples/models_mesh_picking.rb:  Applied changes done by https://github.com/raysan5/raylib/commit/90fc7c0376f39d7b19d632e1d69dec715ec3f2a8
+
+2022-02-26  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/ead8003044aab21f8d155b91ec0bce90cd193500 ), raygui ( https://github.com/raysan5/raygui/commit/c8d8fb5a865a6730cec2c609704333577463feb1 ) and Physac ( https://github.com/victorfisac/Physac/commit/c9c6b3e7054d609e93e52e70f17d5b4dd043575d )
+	* Fixed incomplete parsing flow
+
+2022-01-20  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/core_2d_camera.rb: Added
+	* examples/shapes_lines_bezier.rb: Added
+
+2022-01-19  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/lissajous_curve.rb: Added
+
+2022-01-17  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* raygui: Revert to https://github.com/raysan5/raygui/commit/7a2964302ada73438092d0ad11e54f9f9590547a (See https://github.com/vaiorabbit/raylib-bindings/issues/2 for details)
+
+2022-01-16  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/audio_raw_stream.rb: Added
+
+2022-01-15  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* raylib_dll/build_raylib_macos.sh: Stop copying symbolic links
+
+2022-01-10  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/models_animation.rb: Added
+
+2022-01-08  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/raylib_opengl_interop.rb: Use opengl-bindings2
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/549ca669aa42462662a610ff240aa4d5736240e5 ) and raygui ( https://github.com/raysan5/raygui/commit/c7eb9268535298ee25be90739c86d1be215f53e5 )
+
+2022-01-01  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* raylib-bindings.gemspec: Bump version
+
+2021-12-30  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* BoundingBox.create (lib/raylib.rb): Fixed wrong implementation
+
+2021-12-29  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/procedural_texture.rb: Added
+
+2021-12-26  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/shaders_raymarching.rb: Added
+
+2021-12-24  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/text_rectangle_bounds.rb: Added
+
+2021-12-20  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/text_draw_3d.rb: Added
+
+2021-12-19  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/models_mesh_picking.rb: Added
+	* examples/text_font_filters.rb: Added
+	* examples/utf8_font.rb: Modified to use texture filter
+	* examples/textures_mouse_painting.rb: Added
+
+2021-12-18  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/models_mesh_generation.rb: Added
+	* examples/utf8_font.rb: Added another font
+	* examples/core_3d_split_screen.rb: Added
+	* examples/core_world_screen.rb: Added
+	* examples/models_yaw_pitch_roll.rb: Added
+
+2021-12-16  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* raylib_parser.py: Typo
+	* Python cindex reports va_list as int on macOS
+	* examples/models_loading_gltf.rb: Added
+
+2021-12-15  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/0454acaacfaae4a3269d443d3d88045240f738c3 )
+	* Added generator scripts for Windows
+
+2021-11-14  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/core_storage_values.rb: Added
+
+2021-11-13  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/core_drop_files.rb: Added
+
+2021-11-09  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/models_first_person_maze.rb: Added
+
+2021-11-08  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/raylib_opengl_interop.rb: Added
+	* examples/models_geometric_shapes.rb: Added
+
+2021-11-07  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/rlgl_compute_shader.rb: Added
+	* examples/models_billboard.rb: Added
+
+2021-11-06  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/physics_demo.rb: Added
+	* examples/textures_background_scrolling.rb: Added
+	* Added dll build scripts for Windows
+
+2021-11-05  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/models_box_collisions.rb: Added
+	* Added physac wrapper and wrapper generator
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/2021f09db4df72aea9f963666435bddf0718df94 )
+
+2021-11-04  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Bugfix: Generate correct signatures for raymath and rlgl
+	* Pulled latest raylib ( https://github.com/raysan5/raylib/commit/d18f3fca30858916546908e40cc2e0cea2be03ca )
+	* Bugfix: Fixed wrong signature in raymath.rb
+	* examples/audio_sound_loading.rb: Added
+	* examples/audio_music_stream.rb: Added
+
+2021-11-03  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Added raygui wrapper and wrapper generator
+	* examples/shapes_draw_circle_sector.rb: Added
+
+2021-10-31  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/text_unicode.rb: Added
+	* examples/textures_bunnymark.rb: Added
+
+2021-10-28  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/core_loading_thread.rb: Added
+	* examples/bitmap_font.rb and font/VP16Font_XNA.png: Added
+
+2021-10-27  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/models_waving_cubes.rb: Added
+
+2021-10-26  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/models_rlgl_solar_system.rb: Added
+	* Bugfix: DEG2RAD and RAD2DEG duplication
+	* examples/models_cubicmap.rb: Added
+
+2021-10-25  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* examples/utf8_font.rb: Added
+
+2021-10-24  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* generator: Add ".by_value" to struct arguments
+	* generator: Add struct alias hook
+	* examples: Added
+	* examples/shapes_basic_shapes.rb: Added
+	* generator: Now correctly handles variable-length arguments (TextFormat and TraceLog)
+	* Added helper functions (Color.from_u8, Vector2.create, etc.)
+	* examples/core_3d_camera_first_person.rb: Added
+	* generator: Now correctly handles return values
+	* Bugfix: Removed duplicated enums / Names of some structs must start with capital letter
+
+2021-10-23  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Experimental raylib header parser
+
+2021-10-17  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* initial commit
