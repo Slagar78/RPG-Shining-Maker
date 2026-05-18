@@ -1,6 +1,6 @@
 # lib/battleManager/hp_mp_panel.rb
 class HpMpPanel
-  BASE_W = 168
+  BASE_W = 120
   BASE_H = 88
   PADDING_LEFT = 12
   PADDING_TOP = 8
@@ -42,7 +42,7 @@ class HpMpPanel
     tex
   end
 
-  def draw(unit, db)
+def draw(unit, db)
     return unless unit
 
     if unit[:actor]
@@ -71,18 +71,21 @@ class HpMpPanel
     sticks_width = max_sticks * STICK_W
 
     content_width = PADDING_LEFT + label_w + STICK_GAP + sticks_width + STICK_GAP + max_number_w + PADDING_LEFT
-    raw_width = [BASE_W, content_width].max
+
+    name_line = "#{name}  LV #{lvl}"
+    name_line_w = measure_text(name_line)
+    name_content_width = name_line_w + PADDING_LEFT * 2
+
+    raw_width = [BASE_W, content_width, name_content_width].max
 
     mid_area = raw_width - LEFT_EDGE_W - RIGHT_EDGE_W
     tiles = (mid_area.to_f / MID_TILE_W).ceil
     panel_width = LEFT_EDGE_W + RIGHT_EDGE_W + tiles * MID_TILE_W
 
-    name_line = "#{name}  LV #{lvl}"
-
     x = 576 - panel_width - 8
     y = 8
 
-    # 2. Фон панели (без изменений)
+    # 2. Фон панели
     if @texture
       left_src = Rectangle.create(0, 0, LEFT_EDGE_W, @tex_height)
       left_dst = Rectangle.create(x, y, LEFT_EDGE_W, BASE_H)
@@ -110,7 +113,7 @@ class HpMpPanel
 
     draw_hpmp_bar(x, y, panel_width, tx, ty + LINE_HEIGHT, "HP", hp, max_hp, label_w)
     draw_hpmp_bar(x, y, panel_width, tx, ty + LINE_HEIGHT * 2, "MP", mp, max_mp, label_w)
-  end
+end
 
   private
 

@@ -314,7 +314,7 @@ class BattleScene
   end
 
   # ---------- Отрисовка панели с текстом и полосками ----------
-    def draw_panel_with_sprite(unit, x, y, right_aligned)
+def draw_panel_with_sprite(unit, x, y, right_aligned)
     return unless @panel_tex
 
     font_size = 36
@@ -323,20 +323,25 @@ class BattleScene
 
     font = @battle_manager.battle_scene_font || @battle_manager.instance_variable_get(:@font)
 
-    name = if unit[:actor]
-             unit[:actor]["name"] || "Ally"
-           elsif unit[:enemy]
-             unit[:enemy]["name"] || "Enemy"
-           else
-             "Unit"
-           end
+    # ─── Имя и уровень ───
+    if unit[:actor]
+      name = unit[:actor]["name"] || "Ally"
+      lvl  = unit[:actor]["level"] || 1
+    elsif unit[:enemy]
+      e = unit[:enemy]
+      name = e["name"] || "Enemy"
+      lvl  = e["level"] || 1
+    else
+      name = "Unit"
+      lvl  = 1
+    end
 
-    hp = unit[:hp].to_i
+    hp     = unit[:hp].to_i
     max_hp = unit[:max_hp].to_i
-    mp = unit[:mp].to_i
+    mp     = unit[:mp].to_i
     max_mp = unit[:max_mp].to_i
 
-    # ─── Расчёт ширины панели под содержимое ───
+    # ─── Расчёт ширины панели (теперь учитываем длину имени+уровня) ───
     label_w = [measure_text_ex("HP", font, font_size), measure_text_ex("MP", font, font_size)].max
     max_hp_str = "#{max_hp}/#{max_hp}"
     max_mp_str = "#{max_mp}/#{max_mp}"
@@ -345,17 +350,22 @@ class BattleScene
     max_sticks = [[hp, mp].max, 100].min
     sticks_w = max_sticks * STICK_W
 
-    # Ширина содержимого: метка + палочки + число + отступы
+    # Ширина, требуемая для полосок + меток + чисел
     content_w = text_margin_x + label_w + 8 + sticks_w + 8 + max_number_w + text_margin_x
 
-    # Ширина панели с учётом тайлов (как в старом hp_mp_panel.rb)
+    # Ширина, требуемая для строки имени и уровня
+    name_line = "#{name}  LV #{lvl}"
+    name_line_w = measure_text_ex(name_line, font, font_size)
+    name_content_w = text_margin_x + name_line_w + text_margin_x
+
     base_w = 170
-    raw_w = [base_w, content_w].max
+    raw_w = [base_w, content_w, name_content_w].max
+
     mid_area = raw_w - LEFT_EDGE_W - RIGHT_EDGE_W
     tiles = (mid_area.to_f / MID_TILE_W).ceil
     panel_w = LEFT_EDGE_W + RIGHT_EDGE_W + tiles * MID_TILE_W
 
-    # Позиция панели 
+    # Позиция панели
     if right_aligned
       px = x - panel_w
     else
@@ -366,39 +376,35 @@ class BattleScene
     # ─── Рисуем фон панели (тайлинг) ───
     tex = @panel_tex
     if tex
-      # Левый край
       left_src = Raylib::Rectangle.create(0, 0, LEFT_EDGE_W, tex.height)
       left_dst = Raylib::Rectangle.create(px, py, LEFT_EDGE_W, tex.height)
       Raylib.DrawTexturePro(tex, left_src, left_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
 
-      # Правый край (сдвинут на panel_w - RIGHT_EDGE_W)
       right_src = Raylib::Rectangle.create(tex.width - RIGHT_EDGE_W, 0, RIGHT_EDGE_W, tex.height)
       right_dst = Raylib::Rectangle.create(px + panel_w - RIGHT_EDGE_W, py, RIGHT_EDGE_W, tex.height)
       Raylib.DrawTexturePro(tex, right_src, right_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
 
-      # Середина (повторяем тайл)
-      mid_src = Raylib::Rectangle.create(LEFT_EDGE_W + 2, 0, MID_TILE_W, tex.height)  # +2 чтобы избежать швов
+      mid_src = Raylib::Rectangle.create(LEFT_EDGE_W + 2, 0, MID_TILE_W, tex.height)
       tiles.times do |i|
         tile_x = px + LEFT_EDGE_W + i * MID_TILE_W
         tile_dst = Raylib::Rectangle.create(tile_x, py, MID_TILE_W, tex.height)
         Raylib.DrawTexturePro(tex, mid_src, tile_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
       end
     else
-      # Если текстура не загружена – фон
       Raylib.DrawRectangle(px, py, panel_w, tex.height, Raylib::Fade(Raylib::BLACK, 0.8))
     end
 
     # ─── Рисуем текст и палочки ───
     tx = px + text_margin_x
     ty_name = py + text_margin_y_name
-    ty_hp   = py + 44   # те же значения, что и раньше
-    ty_mp   = py + 78   # MP на 78 (без изменений)
+    ty_hp   = py + 44
+    ty_mp   = py + 78
 
-    # Имя
+    # Имя + уровень
     if font
-      Raylib.DrawTextEx(font, name, Raylib::Vector2.create(tx, ty_name), font_size, 1, Raylib::WHITE)
+      Raylib.DrawTextEx(font, name_line, Raylib::Vector2.create(tx, ty_name), font_size, 1, Raylib::WHITE)
     else
-      Raylib.DrawText(name, tx, ty_name, font_size, Raylib::WHITE)
+      Raylib.DrawText(name_line, tx, ty_name, font_size, Raylib::WHITE)
     end
 
     # HP и MP
@@ -406,7 +412,7 @@ class BattleScene
     bar_area_w = panel_w - text_margin_x * 2
     draw_stick_bar(bar_area_x, ty_hp, bar_area_w, hp, max_hp, font, font_size, "HP")
     draw_stick_bar(bar_area_x, ty_mp, bar_area_w, mp, max_mp, font, font_size, "MP")
-  end
+end
 
   # ---------- Рисование шкалы (HP или MP) ----------
  def draw_stick_bar(base_x, base_y, area_width, current, max_val, font, font_size, label)
