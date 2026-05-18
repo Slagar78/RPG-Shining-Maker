@@ -501,7 +501,7 @@ def handle_input
       case @battle_menu.selected_index
 
   when 0  # Attack
-    targets = find_adjacent_enemies(@current_unit)
+     targets = find_adjacent_enemies(@current_unit)
   if targets.any?
     @attack_targets = sort_targets_by_angle(targets, @current_unit[:x], @current_unit[:y])
     @attack_target_index = 0
@@ -509,6 +509,10 @@ def handle_input
     @target_highlight = @attack_targets[0]       # ← и подсветку тоже
     @battle_menu.close
     @battle_state = :attack_targeting
+	
+  if @battle_player
+     @battle_player.face_target(@attack_target[:x], @attack_target[:y])
+  end
     @audio.play_sfx("cursor") if @audio
   else
     @battle_menu.close
@@ -641,21 +645,23 @@ end
     when :action_menu
       @battle_player&.update_animation
 
-when :attack_targeting
+  when :attack_targeting
   @battle_player&.update_animation  # только анимация, без движения
   if @attack_targets.any?
     # Переключение цели стрелками
-  if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_UP)
-  @attack_target_index = (@attack_target_index - 1) % @attack_targets.size
-  @attack_target = @attack_targets[@attack_target_index]
-  @target_highlight = @attack_target
-  @audio.play_sfx("cursor") if @audio
-elsif IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_DOWN)
-  @attack_target_index = (@attack_target_index + 1) % @attack_targets.size
-  @attack_target = @attack_targets[@attack_target_index]
-  @target_highlight = @attack_target
-  @audio.play_sfx("cursor") if @audio
-end
+    if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_UP)
+      @attack_target_index = (@attack_target_index - 1) % @attack_targets.size
+      @attack_target = @attack_targets[@attack_target_index]
+      @target_highlight = @attack_target
+      @battle_player&.face_target(@attack_target[:x], @attack_target[:y])
+      @audio.play_sfx("cursor") if @audio
+    elsif IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_DOWN)
+      @attack_target_index = (@attack_target_index + 1) % @attack_targets.size
+      @attack_target = @attack_targets[@attack_target_index]
+      @target_highlight = @attack_target
+      @battle_player&.face_target(@attack_target[:x], @attack_target[:y])
+      @audio.play_sfx("cursor") if @audio
+    end
 
     # Ждём отпускания A/D, чтобы избежать мгновенного срабатывания
     if IsKeyUp(KEY_A) && IsKeyUp(KEY_D)

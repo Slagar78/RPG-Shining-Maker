@@ -73,13 +73,27 @@ class BattlePlayer
     try_move(dir, battle_manager)
   end
 
-def teleport(new_x, new_y)
-  @x = new_x
-  @y = new_y
-  @pixel_offset = 0
-  @moving = false
-  @move_dir = DIR_DOWN   # значение по умолчанию
-end
+  def teleport(new_x, new_y)
+    @x = new_x
+    @y = new_y
+    @pixel_offset = 0
+    @moving = false
+    @move_dir = DIR_DOWN   # значение по умолчанию
+  end
+
+  def face_target(target_x, target_y)
+    dx = target_x - @x
+    dy = target_y - @y
+  if dx > 0
+    @direction = DIR_RIGHT
+  elsif dx < 0
+    @direction = DIR_LEFT
+  elsif dy > 0
+    @direction = DIR_DOWN
+  elsif dy < 0
+    @direction = DIR_UP
+    end
+  end
 
   def handle_input(battle_manager = nil)
     return if @moving
