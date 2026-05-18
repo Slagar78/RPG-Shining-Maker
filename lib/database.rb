@@ -3,7 +3,7 @@ require 'json'
 require 'ostruct'
 
 class Database
-  attr_reader :items, :actors, :classes, :spells, :growth_curves, :globals, :enemies
+  attr_reader :items, :actors, :classes, :spells, :growth_curves, :globals, :enemies, :movetypes
 
   def initialize
     @items = []
@@ -11,14 +11,17 @@ class Database
     @classes = []
     @spells = []
     @growth_curves = []
+    @enemies = []
+    @movetypes = {}
 
     load_items
     load_actors
     load_classes
     load_spells
     load_growth_curves
-	  load_globals
+    load_globals
     load_enemies
+    load_movetypes        # ← новая загрузка
   end
 
   # ---------- предметы ----------
@@ -76,22 +79,23 @@ class Database
     end
   end
 
-# ----------Global----------
-def load_globals
-  if File.exist?("data/global.json")
-    data = JSON.parse(File.read("data/global.json"))
-    @globals = data
-    puts "Загружены глобальные настройки"
-  else
-    @globals = {
-      "start_map" => "Granseal",   # fallback
-      "start_x" => 10,
-      "start_y" => 10,
-      "gold" => 100
-    }
+  # ---------- глобальные настройки ----------
+  def load_globals
+    if File.exist?("data/global.json")
+      data = JSON.parse(File.read("data/global.json"))
+      @globals = data
+      puts "Загружены глобальные настройки"
+    else
+      @globals = {
+        "start_map" => "Granseal",
+        "start_x" => 10,
+        "start_y" => 10,
+        "gold" => 100
+      }
+    end
   end
-end
-# ---------- враги ----------
+
+  # ---------- враги ----------
   def load_enemies
     if File.exist?("data/enemies/enemies.json")
       data = JSON.parse(File.read("data/enemies/enemies.json"))
@@ -100,6 +104,21 @@ end
     else
       @enemies = []
       puts "Файл data/enemies/enemies.json не найден!"
+    end
+  end
+
+  # ---------- типы передвижения ----------
+  def load_movetypes
+    path = "data/movetypes.json"
+    if File.exist?(path)
+      data = JSON.parse(File.read(path))
+      # Превращаем массив в хэш по ключу "key" (например "flying")
+      @movetypes = data.each_with_object({}) do |entry, hash|
+        hash[entry["key"]] = entry
+      end
+      puts "Загружено типов передвижения: #{@movetypes.size}"
+    else
+      puts "Файл #{path} не найден, типы передвижения не загружены!"
     end
   end
 
@@ -129,5 +148,15 @@ end
 
     a = curve["levels"][index][0]
     growth["start"] + (a * diff / 256.0).round
+  end
+
+  # Шанс уклонения от магии для типа передвижения
+  def magic_dodge_chance(movetype_key)
+    @movetypes.dig(movetype_key, "magic_dodge") || 0
+  end
+
+  # Шанс уклонения от стрел (на будущее)
+  def ranged_dodge_chance(movetype_key)
+    @movetypes.dig(movetype_key, "ranged_dodge") || 0
   end
 end

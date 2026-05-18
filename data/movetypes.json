@@ -1,0 +1,15 @@
+[
+  { "id": 1,  "key": "regular",           "name": "Пеший",              "magic_dodge": 0,  "ranged_dodge": 0,  "ranged_bonus": 0 },
+  { "id": 2,  "key": "centaur",           "name": "Кентавр",           "magic_dodge": 0,  "ranged_dodge": 0,  "ranged_bonus": 0 },
+  { "id": 3,  "key": "stealth",           "name": "Скрытный",          "magic_dodge": 0,  "ranged_dodge": 10, "ranged_bonus": 0 },
+  { "id": 4,  "key": "brass_gunner",      "name": "Брасс-ганнер",     "magic_dodge": 0,  "ranged_dodge": 0,  "ranged_bonus": 0 },
+  { "id": 5,  "key": "flying",            "name": "Летающий",          "magic_dodge": 50, "ranged_dodge": 50, "ranged_bonus": 50 },
+  { "id": 6,  "key": "hovering",          "name": "Парящий",           "magic_dodge": 20, "ranged_dodge": 20, "ranged_bonus": 25 },
+  { "id": 7,  "key": "aquatic",           "name": "Водный",            "magic_dodge": 35, "ranged_dodge": 0,  "ranged_bonus": 0 },
+  { "id": 8,  "key": "archer",            "name": "Лучник",            "magic_dodge": 0,  "ranged_dodge": 0,  "ranged_bonus": 0 },
+  { "id": 9,  "key": "centaur_archer",    "name": "Кентавр-лучник",   "magic_dodge": 0,  "ranged_dodge": 0,  "ranged_bonus": 0 },
+  { "id": 10, "key": "stealth_archer",    "name": "Скрытный лучник",   "magic_dodge": 0,  "ranged_dodge": 10, "ranged_bonus": 0 },
+  { "id": 11, "key": "mage",              "name": "Маг",               "magic_dodge": 5,  "ranged_dodge": 0,  "ranged_bonus": 0 },
+  { "id": 12, "key": "healer",            "name": "Целитель",          "magic_dodge": 0,  "ranged_dodge": 0,  "ranged_bonus": 0 },
+  { "id": 13, "key": "ghost",             "name": "Призрак",           "magic_dodge": 75, "ranged_dodge": 60, "ranged_bonus": 0 }
+]

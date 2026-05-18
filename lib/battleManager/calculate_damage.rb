@@ -16,19 +16,19 @@ module DamageCalculator
   MATTACK_MIN = 90
   MATTACK_MAX = 110
 
-  # Шанс уклонения от магии (в процентах)
-  MAGIC_DODGE_CHANCES = {
-    flying:   50,   # драконы, орлы — резкий манёвр
-    aquatic:  35,   # акулы, кальмары — вода рассеивает
-    ghost:    75,   # призраки — почти бесплотны
-    mage:      5    # вражеский маг — редкое антизаклятие
-  }.freeze
+  # ------------------------------------------------------------
+  # Хранилище для данных о типах передвижения (из movetypes.json)
+  # ------------------------------------------------------------
+  @movetypes = {}
+
+  def self.movetypes=(data)
+    @movetypes = data
+  end
 
   # ------------------------------------------------------------
   #  ФИЗИЧЕСКИЙ УРОН
   # ------------------------------------------------------------
 
-  # Рассчитать урон по базовым значениям атаки и защиты
   def self.calculate_physical(attack, defense)
     attack_mod  = rand(ATTACK_MIN..ATTACK_MAX) / 100.0
     defense_mod = rand(DEFENSE_MIN..DEFENSE_MAX) / 100.0
@@ -37,17 +37,15 @@ module DamageCalculator
     effective_defense = (defense * defense_mod).to_i
 
     raw = effective_attack - effective_defense
-    [raw, 1].max   # минимум 1
+    [raw, 1].max
   end
 
-  # Рассчитать урон, передав хеши юнитов
   def self.physical_for_units(attacker, defender)
     atk = attacker[:atk] || attacker[:attack] || 0
     def_val = defender[:def] || defender[:defense] || 0
     calculate_physical(atk, def_val)
   end
 
-  # Диапазон возможного физического урона (для UI)
   def self.physical_damage_range(attack, defense)
     min_dmg = (attack * ATTACK_MIN / 100.0).to_i - (defense * DEFENSE_MAX / 100.0).to_i
     max_dmg = (attack * ATTACK_MAX / 100.0).to_i - (defense * DEFENSE_MIN / 100.0).to_i
@@ -58,13 +56,12 @@ module DamageCalculator
   #  МАГИЧЕСКИЙ УРОН
   # ------------------------------------------------------------
 
-  # Проверка уклонения от магии
-  def self.magic_dodge?(movetype)
-    chance = MAGIC_DODGE_CHANCES[movetype] || 0
+  # Проверка уклонения от магии – теперь данные из movetypes.json
+  def self.magic_dodge?(movetype_key)
+    chance = @movetypes.dig(movetype_key.to_s, "magic_dodge") || 0
     rand(1..100) <= chance
   end
 
-  # Рассчитать магический урон (без вычета защиты)
   def self.calculate_magic(matk, defender_movetype)
     return 0 if magic_dodge?(defender_movetype)
 
@@ -73,22 +70,20 @@ module DamageCalculator
     [effective_matk, 1].max
   end
 
-  # Магический урон с хешами юнитов
   def self.magic_for_units(attacker, defender)
     matk  = attacker[:matk] || attacker[:magic_attack] || 0
-    mtype = defender[:movetype] || :regular
+    mtype = defender[:movetype] || "regular"   # теперь строка, не символ
     calculate_magic(matk, mtype)
   end
 
-  # Диапазон магического урона (при попадании), без учёта уклонения
   def self.magic_damage_range(matk)
     min_dmg = (matk * MATTACK_MIN / 100.0).to_i
     max_dmg = (matk * MATTACK_MAX / 100.0).to_i
     [[min_dmg, 1].max, [max_dmg, 1].max]
   end
 
-  # Вероятность попадания магией (в процентах) для интерфейса
   def self.magic_hit_chance(movetype)
-    100 - (MAGIC_DODGE_CHANCES[movetype] || 0)
+    chance = @movetypes.dig(movetype.to_s, "magic_dodge") || 0
+    100 - chance
   end
 end
