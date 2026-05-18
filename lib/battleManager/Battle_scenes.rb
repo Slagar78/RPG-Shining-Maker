@@ -536,11 +536,15 @@ end
         idx = frame_idx % anim_data[:frames].size
         frame_info = anim_data[:frames][idx]
         tex = frame_info[:tex]
-        x = base_x + anim_data[:offset_x]
+        # Учитываем покадровые смещения (если есть)
+        frame_off_x = frame_info[:offset_x] || 0
+        frame_off_y = frame_info[:offset_y] || 0
+
+        x = base_x + anim_data[:offset_x] + frame_off_x
         y = if use_top_left
-              base_y + anim_data[:offset_y]
+              base_y + anim_data[:offset_y] + frame_off_y
             else
-              base_y + anim_data[:offset_y] - (tex.height / 2.0)
+              base_y + anim_data[:offset_y] + frame_off_y - (tex.height / 2.0)
             end
         src = Raylib::Rectangle.create(0, 0, flip_h ? -tex.width : tex.width, tex.height)
         dst = Raylib::Rectangle.create(x, y, tex.width, tex.height)
@@ -556,5 +560,5 @@ end
     src = Raylib::Rectangle.create(0, 2 * TILE_SIZE, TILE_SIZE, TILE_SIZE)
     dst = Raylib::Rectangle.create(x, y, TILE_SIZE, TILE_SIZE)
     Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-  end
-end
+   end
+ end

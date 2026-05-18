@@ -32,7 +32,13 @@ class BattleSpriteAnimation
       next unless File.exist?(tex_path)
       tex = Raylib.LoadTexture(tex_path)
       Raylib.SetTextureFilter(tex, Raylib::TEXTURE_FILTER_POINT)
-      { tex: tex, duration: f["duration"] }
+      # Теперь сохраняем покадровые offset_x и offset_y (если они есть)
+      {
+        tex: tex,
+        duration: f["duration"],
+        offset_x: f["offset_x"] || 0,
+        offset_y: f["offset_y"] || 0
+      }
     end.compact
 
     return nil if frames.empty?

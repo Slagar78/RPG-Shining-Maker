@@ -6,7 +6,7 @@
 			"start_level":	1,
 			"items":	[{
 					"item":	"Short Sword",
-					"equipped":	false
+					"equipped":	true
 				}, {
 					"item":	"Antidote",
 					"equipped":	false

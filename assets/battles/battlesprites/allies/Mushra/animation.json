@@ -13,5 +13,20 @@
 			}],
 		"offset_x":	0,
 		"offset_y":	0
+	},
+	"attack":	{
+		"frames":	[{
+				"file":	"frame_attack_1.png",
+				"duration":	0.3,
+				"offset_x":	-200,
+				"offset_y":	-60
+			}, {
+				"file":	"frame_attack_2.png",
+				"duration":	0.3,
+				"offset_x":	-300,
+				"offset_y":	-50
+			}],
+		"offset_x":	0,
+		"offset_y":	0
 	}
 }
