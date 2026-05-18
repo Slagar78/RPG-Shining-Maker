@@ -17,6 +17,7 @@ require_relative 'lib/battleManager/ai'
 require_relative 'lib/battleManager/cursor'
 require_relative 'lib/battleManager/camera_battle'
 require_relative 'lib/battleManager/Battle_scenes'
+require_relative 'lib/battleManager/calculate_damage'
 
 class BattleManager
   attr_reader :game_map, :battle_entry, :battle_state, :battle_menu
@@ -168,7 +169,11 @@ class BattleManager
         battle_anim: ally_battle_anim,
         sprite_frame: 0, sprite_timer: 0, sprite_speed: 14,
         hp: max_hp, max_hp: max_hp,
-        mp: max_mp, max_mp: max_mp
+        mp: max_mp, max_mp: max_mp,
+
+        atk: actor ? (actor["atk"] || 10) : 10,
+        def: actor ? (actor["def"] || 5) : 5,
+        movetype: klass ? (klass["movetype"] || "regular") : "regular"
       }
     end
 
@@ -204,7 +209,11 @@ class BattleManager
         ai_type: info["ai_type"] || 0,
         battle_anim: battle_anim,
         hp: base_hp, max_hp: base_hp,
-        mp: base_mp, max_mp: base_mp
+        mp: base_mp, max_mp: base_mp,
+
+        atk: enemy ? (enemy["stats"]["atk"] || 12) : 12,
+        def: enemy ? (enemy["stats"]["def"] || 6) : 6,
+        movetype: enemy ? (enemy["movetype"] || "regular") : "regular"
       }
     end
   end
@@ -630,6 +639,12 @@ when :attack_targeting
     end
 
     if @attack_confirm_ready && (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D))
+      # Рассчитываем физический урон
+      dmg = DamageCalculator.physical_for_units(@current_unit, @attack_target)
+      # Отнимаем HP у цели (не ниже нуля)
+      @attack_target[:hp] = [@attack_target[:hp] - dmg, 0].max
+      puts "Dealt #{dmg} damage to enemy, HP now #{@attack_target[:hp]}"
+      # Запускаем боевую сцену
       @battle_scene.start(@current_unit, @attack_target)
       @battle_state = :battle_scene
       @attack_target = nil
@@ -638,6 +653,7 @@ when :attack_targeting
       @cursor.visible = false
       @attack_confirm_ready = false
       @audio.play_sfx("confirm") if @audio
+
     elsif IsKeyPressed(KEY_S)
       @attack_target = nil
       @target_highlight = nil
@@ -804,6 +820,7 @@ if __FILE__ == $0
   InitAudioDevice()
 
   db = Database.new
+  DamageCalculator.movetypes = db.movetypes
 
   # Загрузка шрифтов
   codepoints = []

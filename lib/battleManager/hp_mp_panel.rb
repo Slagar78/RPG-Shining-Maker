@@ -42,7 +42,7 @@ class HpMpPanel
     tex
   end
 
-def draw(unit, db)
+  def draw(unit, db)
     return unless unit
 
     if unit[:actor]
@@ -113,7 +113,7 @@ def draw(unit, db)
 
     draw_hpmp_bar(x, y, panel_width, tx, ty + LINE_HEIGHT, "HP", hp, max_hp, label_w)
     draw_hpmp_bar(x, y, panel_width, tx, ty + LINE_HEIGHT * 2, "MP", mp, max_mp, label_w)
-end
+  end
 
   private
 
@@ -129,32 +129,23 @@ end
     total_positions = [(available / STICK_W).floor, MAX_DISPLAY_STICKS].min
     total_positions = 0 if total_positions < 0
 
-    # Сколько палочек надо отрисовать всего (с учётом макс. шкалы)
-    sticks_to_draw = [current, maximum, total_positions].min
     stick_y = base_y + (FONT_SIZE - STICK_H) / 2
 
-    # Вспомогательная функция для отрисовки текстуры на позиции
-    def draw_stick_at(index, tex, fallback_color)
-      x = @bar_start_x + index * STICK_W
-      if tex
-        src = Rectangle.create(0, 0, tex.width, tex.height)
-        dst = Rectangle.create(x, @stick_y, STICK_W, STICK_H)
-        DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
-      else
-        DrawRectangle(x, @stick_y, STICK_W, STICK_H, fallback_color)
-      end
+    # Красные палочки ТОЛЬКО для потерянного HP (от current до maximum, но не больше total_positions)
+    max_visible = [maximum, total_positions].min
+    (current...max_visible).each do |i|
+      stick_x = bar_start_x + i * STICK_W
+      red = Color.new
+      red.r = 220; red.g = 40; red.b = 40; red.a = 200
+      DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, red)
     end
 
-    # Сохраняем нужные переменные как локальные для замыкания
-    bar_start = bar_start_x
-    stk_y = stick_y
-
-    # Рисуем слои от нижнего к верхнему (жёлтый -> зелёный -> фиолетовый -> чёрный)
+    # Затем рисуем цветные палочки текущего здоровья (поверх красных)
     layers = [
-      { tex: @stick_tex,      start_idx: 0, count: [current, 100].min },
-      { tex: @stick_tex_lvl1, start_idx: 0, count: [current - 100, 100].min },
-      { tex: @stick_tex_lvl2, start_idx: 0, count: [current - 200, 100].min },
-      { tex: @stick_tex_lvl3, start_idx: 0, count: [current - 300, 100].min }
+      { tex: @stick_tex,      count: [current, 100].min },
+      { tex: @stick_tex_lvl1, count: [current - 100, 100].min },
+      { tex: @stick_tex_lvl2, count: [current - 200, 100].min },
+      { tex: @stick_tex_lvl3, count: [current - 300, 100].min }
     ]
 
     layers.each do |layer|
@@ -162,27 +153,25 @@ end
       next if count <= 0
       tex = layer[:tex]
       (0...count).each do |i|
-        stick_x = bar_start + i * STICK_W
+        stick_x = bar_start_x + i * STICK_W
         if tex
           src = Rectangle.create(0, 0, tex.width, tex.height)
-          dst = Rectangle.create(stick_x, stk_y, STICK_W, STICK_H)
+          dst = Rectangle.create(stick_x, stick_y, STICK_W, STICK_H)
           DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
         else
-          color = Color.new; color.r = 194; color.g = 178; color.b = 128; color.a = 255
-          DrawRectangle(stick_x, stk_y, STICK_W, STICK_H, color)
+          fallback = Color.new
+          fallback.r = 194; fallback.g = 178; fallback.b = 128; fallback.a = 255
+          DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, fallback)
         end
       end
-      # Останавливаемся, если уже нарисовали все палочки (sticks_to_draw)
-      # Но в данном случае слои перекрывают друг друга, и мы должны дать верхним перекрыть нижние.
-      # Не останавливаемся, потому что верхний слой должен перекрыть нижний на тех же позициях.
     end
 
-    # Число
-    numbers_x = bar_start_x + sticks_to_draw * STICK_W + STICK_GAP
-    if numbers_x + number_w > panel_x + panel_width - PADDING_LEFT
-      numbers_x = panel_x + panel_width - PADDING_LEFT - number_w
+    # Число справа
+    number_x = bar_start_x + total_positions * STICK_W + STICK_GAP
+    if number_x + number_w > panel_x + panel_width - PADDING_LEFT
+      number_x = panel_x + panel_width - PADDING_LEFT - number_w
     end
-    draw_text(number_str, numbers_x, base_y, WHITE)
+    draw_text(number_str, number_x, base_y, WHITE)
   end
 
   def measure_text(text)
