@@ -44,7 +44,7 @@ typedef struct {
     int is_numeric;
     int max_len;
     SDL_Rect rect;
-    int is_special;   // 0=обычное, 1=race, 2=status, 3=portrait, 4=mapsprite, -1=только чтение
+    int is_special;   // 0=обычное, 1=race, 2=status, 3=portrait, 4=mapsprite, 5=movetype, -1=только чтение
 } EditField;
 
 static EditField edit_fields[EF_COUNT];
@@ -73,6 +73,53 @@ static const char *status_options[] = {"normal", "hyper", "ultra"};
 static const int status_count = 3;
 static int status_index = 0;
 
+// ---- НОВЫЕ ДАННЫЕ ДЛЯ MOVE TYPE и RESISTANCE ----
+static const char *movetype_options[] = {
+    "regular", "centaur", "stealth", "brass_gunner", "flying",
+    "hovering", "aquatic", "archer", "centaur_archer",
+    "stealth_archer", "mage", "healer", "ghost"
+};
+static const int movetype_count = 13;
+static int movetype_index = 0;
+
+static const char *resistance_labels[] = {
+    "wind", "lightning", "ice", "fire", "aqua", "earth", "neutral", "affliction"
+};
+// 4 варианта для всех, кроме affliction
+static const char *resistance_options_normal[] = {"none", "minor", "major", "weakness"};
+// affliction дополнительно имеет "immunity"
+static const char *resistance_options_affliction[] = {"none", "minor", "major", "weakness", "immunity"};
+static const int resistance_options_count_normal = 4;
+static const int resistance_options_count_affliction = 5;
+
+static int resistance_indices[8] = {0};  // индексы текущих значений
+
+// ---- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ОБНОВЛЕНИЯ ----
+static void update_movetype_in_json(void) {
+    cJSON *enemy = cJSON_GetArrayItem(enemies_array, selected_index);
+    if (!enemy) return;
+    cJSON *mt = cJSON_GetObjectItem(enemy, "move_type");
+    if (mt && cJSON_IsString(mt))
+        cJSON_SetValuestring(mt, movetype_options[movetype_index]);
+}
+
+static void update_resistance_in_json(int idx) {
+    cJSON *enemy = cJSON_GetArrayItem(enemies_array, selected_index);
+    if (!enemy) return;
+    cJSON *res = cJSON_GetObjectItem(enemy, "resistance");
+    if (!res) {
+        res = cJSON_CreateObject();
+        cJSON_AddItemToObject(enemy, "resistance", res);
+    }
+    const char **opts = (idx == 7) ? resistance_options_affliction : resistance_options_normal;
+    const char *new_val = opts[resistance_indices[idx]];
+    cJSON *item = cJSON_GetObjectItem(res, resistance_labels[idx]);
+    if (item && cJSON_IsString(item))
+        cJSON_SetValuestring(item, new_val);
+    else
+        cJSON_AddStringToObject(res, resistance_labels[idx], new_val);
+}
+
 // Буферы для редактируемых полей
 static char name_buf[64] = "";
 static char portrait_buf[64] = "";
@@ -82,7 +129,7 @@ static char battlesprite_buf[64] = "";
 // ---------- ПРОТОТИПЫ ----------
 static void open_edit_fields(cJSON *enemy);
 
-// ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
+// ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (без изменений) ----------
 static const char* json_string(cJSON *item, const char *key) {
     cJSON *f = cJSON_GetObjectItem(item, key);
     return (f && cJSON_IsString(f)) ? f->valuestring : "";
@@ -146,7 +193,7 @@ static void draw_button(SDL_Renderer *r, SDL_Rect btn, const char *label, SDL_Co
 static void scan_portrait_folder(void);
 static void scan_mapsprite_folder(void);
 
-// Инициализация редактора
+// Инициализация редактора (без изменений)
 void enemies_init(cJSON *arr, int count) {
     enemies_array = arr;
     enemies_count = count;
@@ -280,7 +327,7 @@ static void open_edit_fields(cJSON *enemy) {
     if (!enemy) return;
 
     int base_x = 360 + 10;
-    int base_y = 60;                // исправлено с 80 на 60
+    int base_y = 60;
     int field_offset = 100;
     int line_h = 22, gap = 28;
 
@@ -379,32 +426,49 @@ static void open_edit_fields(cJSON *enemy) {
         edit_field_count = EF_MAXHP + i + 1;
     }
 
-    // Остальные поля только для чтения (код без изменений)
-    for (int i = EF_RESISTANCE; i < EF_COUNT; i++) {
+    // ---- Move Type (выбор стрелками) ----
+    const char *mt = json_string(enemy, "move_type");
+    movetype_index = 0;
+    for (int i = 0; i < movetype_count; i++) {
+        if (strcmp(mt, movetype_options[i]) == 0) { movetype_index = i; break; }
+    }
+    f = &edit_fields[EF_MOVETYPE];
+    snprintf(f->text, sizeof(f->text), "%s", movetype_options[movetype_index]);
+    f->active = 0; f->json_obj = enemy; f->json_key = "move_type"; f->is_numeric = 0; f->max_len = 0; f->is_special = 5;   // special=5 для move_type
+    f->rect = (SDL_Rect){base_x+field_offset, base_y + EF_MOVETYPE*gap, 150, line_h};
+    edit_field_count = EF_MOVETYPE+1;
+
+    // ---- Resistance - инициализируем индексы ----
+    cJSON *res = cJSON_GetObjectItem(enemy, "resistance");
+    for (int i = 0; i < 8; i++) {
+        const char *val = "none";
+        if (res) {
+            cJSON *el = cJSON_GetObjectItem(res, resistance_labels[i]);
+            if (el && cJSON_IsString(el)) val = el->valuestring;
+        }
+        const char **opts = (i == 7) ? resistance_options_affliction : resistance_options_normal;
+        int cnt = (i == 7) ? resistance_options_count_affliction : resistance_options_count_normal;
+        int idx = 0;
+        for (int j = 0; j < cnt; j++) {
+            if (strcmp(val, opts[j]) == 0) { idx = j; break; }
+        }
+        resistance_indices[i] = idx;
+    }
+
+    // Остальные поля (EF_RESISTANCE ... EF_AIBITFIELD) оставляем как заглушки,
+    // они не будут рисоваться, но чтобы edit_field_count был корректным.
+    for (int i = EF_RESISTANCE; i < EF_MOVETYPE; i++) {
         f = &edit_fields[i];
         f->active = 0; f->is_special = 0; f->json_obj = NULL; f->json_key = NULL;
-        if (i == EF_RESISTANCE) {
-            cJSON *res = cJSON_GetObjectItem(enemy, "resistance");
-            char *tmp = res ? cJSON_PrintUnformatted(res) : strdup("{}");
-            snprintf(f->text, sizeof(f->text), "%s", tmp); free(tmp);
-        }
-        else if (i >= EF_PROVESS && i <= EF_SPELLS) {
-            const char *arr_keys[] = {"prowess","items","spells"};
-            int idx2 = i - EF_PROVESS;
-            cJSON *arr = cJSON_GetObjectItem(enemy, arr_keys[idx2]);
-            char *tmp = arr ? cJSON_PrintUnformatted(arr) : strdup("[]");
-            snprintf(f->text, sizeof(f->text), "%s", tmp); free(tmp);
-        }
-        else if (i == EF_INITSTATUS) { snprintf(f->text, sizeof(f->text), "%s", json_string(enemy, "initial_status")); }
-        else if (i == EF_MOVETYPE) { snprintf(f->text, sizeof(f->text), "%s", json_string(enemy, "move_type")); }
-        else if (i == EF_AIBITFIELD) {
-            cJSON *ai = cJSON_GetObjectItem(enemy, "ai_bitfield");
-            char *tmp = ai ? cJSON_PrintUnformatted(ai) : strdup("[]");
-            snprintf(f->text, sizeof(f->text), "%s", tmp); free(tmp);
-        }
         f->rect = (SDL_Rect){base_x+field_offset, base_y + i*gap, 200, line_h};
-        edit_field_count = i+1;
+        f->text[0] = '\0';
     }
+    // EF_AIBITFIELD
+    f = &edit_fields[EF_AIBITFIELD];
+    f->active = 0; f->is_special = 0; f->json_obj = NULL; f->json_key = NULL;
+    f->rect = (SDL_Rect){base_x+field_offset, base_y + EF_AIBITFIELD*gap, 200, line_h};
+    f->text[0] = '\0';
+    edit_field_count = EF_COUNT;   // все поля учтены
 }
 
 static void commit_field(int idx) {
@@ -422,6 +486,10 @@ static void commit_field(int idx) {
     if (f->is_special == 4) {
         cJSON *str = cJSON_GetObjectItem(f->json_obj, "mapsprite");
         if (str) cJSON_SetValuestring(str, mapsprite_buf);
+        return;
+    }
+    if (f->is_special == 5) {
+        update_movetype_in_json();
         return;
     }
 
@@ -552,7 +620,8 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
     }
 
     SDL_Color white = {255,255,255}, black = {0,0,0}, yellow = {255,255,0};
-    SDL_Rect panel = {px, py, 580, 590};
+    // Увеличим высоту панели для одного столбца Resistance (8 строк)
+    SDL_Rect panel = {px, py, 580, 660};
     SDL_SetRenderDrawColor(r, 60,60,60,255); SDL_RenderFillRect(r, &panel);
     SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &panel);
 
@@ -664,17 +733,67 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
         y += 28;
     }
 
-    // Кнопки действий
-    int btn_y = py + 480;
+    // ----- Move Type (после статов) -----
+    draw_text(r, base_x, y+3, "MoveType:", white);
+    draw_text(r, base_x+field_offset, y+3, movetype_options[movetype_index], white);
+    SDL_Rect mt_prev = {base_x+field_offset+150+5, y, 20, 22};
+    SDL_SetRenderDrawColor(r, 70,70,120,255); SDL_RenderFillRect(r, &mt_prev);
+    SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &mt_prev);
+    draw_text(r, mt_prev.x+5, mt_prev.y+3, "<", white);
+    SDL_Rect mt_next = {mt_prev.x + 25, y, 20, 22};
+    SDL_SetRenderDrawColor(r, 70,70,120,255); SDL_RenderFillRect(r, &mt_next);
+    SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &mt_next);
+    draw_text(r, mt_next.x+5, mt_next.y+3, ">", white);
+    extern SDL_Rect movetype_prev_rect, movetype_next_rect;
+    movetype_prev_rect = mt_prev;
+    movetype_next_rect = mt_next;
+    y += 28;
+
+    // ===== Resistance (ОДИН СТОЛБЕЦ, 8 строк) =====
+    int res_x = px + 270;                         // позиция по X (не меняется)
+    int res_y = py + 10 + EF_LEVEL * 28;          // начинаем на строке Level
+    draw_text(r, res_x, res_y, "Resistance:", white);
+    res_y += 22;                                   // отступ после заголовка
+
+    for (int i = 0; i < 8; i++) {
+        const char *label = resistance_labels[i];
+        const char **opts = (i == 7) ? resistance_options_affliction : resistance_options_normal;
+        int idx = resistance_indices[i];
+
+        draw_text(r, res_x, res_y+3, label, white);
+        int val_x = res_x + 80;                    // позиция значения
+        draw_text(r, val_x, res_y+3, opts[idx], white);
+        // Кнопки < >
+        SDL_Rect prev = {val_x + 100, res_y, 20, 22};
+        SDL_SetRenderDrawColor(r, 70,70,120,255); SDL_RenderFillRect(r, &prev);
+        SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &prev);
+        draw_text(r, prev.x+5, prev.y+3, "<", white);
+        SDL_Rect next = {prev.x + 25, res_y, 20, 22};
+        SDL_SetRenderDrawColor(r, 70,70,120,255); SDL_RenderFillRect(r, &next);
+        SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &next);
+        draw_text(r, next.x+5, next.y+3, ">", white);
+
+        // Сохраняем прямоугольники для кликов
+        extern SDL_Rect resistance_prev_rects[8];
+        extern SDL_Rect resistance_next_rects[8];
+        resistance_prev_rects[i] = prev;
+        resistance_next_rects[i] = next;
+
+        res_y += 24;   // следующая строка
+    }
+
+    // Кнопки действий (опускаем ниже из-за увеличившейся высоты)
+    int btn_y = py + 570;
     int pad_x = 10, pad_y = 5;
-    int next_x = px + 10;   // первый отступ от левого края панели
+    int next_x = px + 10;
 
     del_btn_rect = make_button(next_x, btn_y, "Del Enemy", pad_x, pad_y);
     draw_button(r, del_btn_rect, "Del Enemy", (SDL_Color){200,80,80}, white, white);
-    next_x += del_btn_rect.w + 10;   // отступ 10 между кнопками
+    next_x += del_btn_rect.w + 10;
 
+    SDL_Color save_col = (save_timer > 0) ? (SDL_Color){0, 255, 0, 255} : yellow;
     save_btn_rect = make_button(next_x, btn_y, "Save", pad_x, pad_y);
-    draw_button(r, save_btn_rect, "Save", yellow, black, black);
+    draw_button(r, save_btn_rect, "Save", save_col, black, black);
     next_x += save_btn_rect.w + 10;
 
     add_btn_rect = make_button(next_x, btn_y, "Add Enemy", pad_x, pad_y);
@@ -685,14 +804,18 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
     draw_button(r, refresh_btn_rect, "Refresh", (SDL_Color){180,180,255}, black, black);
 }
 
+// Глобальные переменные для хранения rect'ов MoveType и Resistance (используются в отрисовке и кликах)
+SDL_Rect movetype_prev_rect, movetype_next_rect;
+SDL_Rect resistance_prev_rects[8];
+SDL_Rect resistance_next_rects[8];
+
 // Обработка кликов по панели редактирования
 void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
     if (selected_index < 0) return;
     int base_x = px + 10;
     int field_offset = 100;
 
-    // Обработка стрелок и кнопок
-    int y = py + 10;
+    int y = py + 10;  // базовая Y-координата
 
     // Portrait
     int y_port = y + EF_PORTRAIT*28;
@@ -815,6 +938,40 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         return;
     }
 
+    // ---- Move Type стрелки ----
+    if (mx >= movetype_prev_rect.x && mx < movetype_prev_rect.x+movetype_prev_rect.w &&
+        my >= movetype_prev_rect.y && my < movetype_prev_rect.y+movetype_prev_rect.h) {
+        movetype_index = (movetype_index - 1 + movetype_count) % movetype_count;
+        update_movetype_in_json();
+        snprintf(edit_fields[EF_MOVETYPE].text, sizeof(edit_fields[EF_MOVETYPE].text), "%s", movetype_options[movetype_index]);
+        return;
+    }
+    if (mx >= movetype_next_rect.x && mx < movetype_next_rect.x+movetype_next_rect.w &&
+        my >= movetype_next_rect.y && my < movetype_next_rect.y+movetype_next_rect.h) {
+        movetype_index = (movetype_index + 1) % movetype_count;
+        update_movetype_in_json();
+        snprintf(edit_fields[EF_MOVETYPE].text, sizeof(edit_fields[EF_MOVETYPE].text), "%s", movetype_options[movetype_index]);
+        return;
+    }
+
+    // ---- Resistance стрелки ----
+    for (int i = 0; i < 8; i++) {
+        SDL_Rect *prev = &resistance_prev_rects[i];
+        SDL_Rect *next = &resistance_next_rects[i];
+        if (mx >= prev->x && mx < prev->x+prev->w && my >= prev->y && my < prev->y+prev->h) {
+            int cnt = (i == 7) ? resistance_options_count_affliction : resistance_options_count_normal;
+            resistance_indices[i] = (resistance_indices[i] - 1 + cnt) % cnt;
+            update_resistance_in_json(i);
+            return;
+        }
+        if (mx >= next->x && mx < next->x+next->w && my >= next->y && my < next->y+next->h) {
+            int cnt = (i == 7) ? resistance_options_count_affliction : resistance_options_count_normal;
+            resistance_indices[i] = (resistance_indices[i] + 1) % cnt;
+            update_resistance_in_json(i);
+            return;
+        }
+    }
+
     // Кнопки действий (используем динамические прямоугольники)
     if (mx >= save_btn_rect.x && mx < save_btn_rect.x+save_btn_rect.w &&
         my >= save_btn_rect.y && my < save_btn_rect.y+save_btn_rect.h) {
@@ -861,6 +1018,18 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         cJSON_AddStringToObject(new_enemy, "battle_sprite", "");
         cJSON_AddStringToObject(new_enemy, "race", "Enterran");
         cJSON_AddStringToObject(new_enemy, "status", "normal");
+        // Добавим значения по умолчанию для новых полей
+        cJSON *res = cJSON_CreateObject();
+        cJSON_AddStringToObject(res, "wind", "none");
+        cJSON_AddStringToObject(res, "lightning", "none");
+        cJSON_AddStringToObject(res, "ice", "none");
+        cJSON_AddStringToObject(res, "fire", "none");
+        cJSON_AddStringToObject(res, "aqua", "none");
+        cJSON_AddStringToObject(res, "earth", "none");
+        cJSON_AddStringToObject(res, "neutral", "none");
+        cJSON_AddStringToObject(res, "affliction", "none");
+        cJSON_AddItemToObject(new_enemy, "resistance", res);
+        cJSON_AddStringToObject(new_enemy, "move_type", "regular");
         cJSON_AddItemToArray(enemies_array, new_enemy);
         enemies_count++;
         selected_index = enemies_count - 1;
@@ -893,13 +1062,13 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         return;
     }
 
-    // Активация текстовых полей (is_special == 0 или -1, но -1 только для чтения)
+    // Активация текстовых полей (is_special == 0 или -1)
     if (active_field_index >= 0) {
         commit_field(active_field_index);
         active_field_index = -1;
     }
     for (int i = 0; i < edit_field_count; i++) {
-        if (edit_fields[i].is_special != 0 && edit_fields[i].is_special != -1) continue; // пропускаем специальные (1,2,3,4)
+        if (edit_fields[i].is_special != 0 && edit_fields[i].is_special != -1) continue;
         SDL_Rect r = edit_fields[i].rect;
         if (mx >= r.x && mx < r.x+r.w && my >= r.y && my < r.y+r.h) {
             active_field_index = i;
