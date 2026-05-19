@@ -22,7 +22,7 @@ static SDL_Texture *transparent_bg_tex = NULL;   // шахматный фон
 
 #define LEFT_PANEL_W 300
 #define RIGHT_PANEL_W 200
-#define SCROLLBAR_SIZE 56   // 48 (тайл) + 8 отступ
+#define SCROLLBAR_SIZE 48
 
 #define MAP_X LEFT_PANEL_W
 #define MAP_Y TOOLBAR_H
@@ -1096,21 +1096,21 @@ void render_map(Editor *ed) {
 
     SDL_Rect map_area = { MAP_X, MAP_Y, MAP_W, MAP_H };
     SDL_RenderSetClipRect(ed->renderer, &map_area);
-	
-	// Шахматный фон (статичный)
-if (transparent_bg_tex) {
-    for (int y = MAP_Y; y < MAP_Y + MAP_H; y += TILE_SIZE) {
-        for (int x = MAP_X; x < MAP_X + MAP_W; x += TILE_SIZE) {
+
+    // Шахматный фон (статичный)
+    if (transparent_bg_tex) {
+        for (int y = MAP_Y; y < MAP_Y + MAP_H; y += TILE_SIZE) {
+            for (int x = MAP_X; x < MAP_X + MAP_W; x += TILE_SIZE) {
                 int draw_w = TILE_SIZE;
                 int draw_h = TILE_SIZE;
-            if (x + draw_w > MAP_X + MAP_W) draw_w = (MAP_X + MAP_W) - x;
-            if (y + draw_h > MAP_Y + MAP_H) draw_h = (MAP_Y + MAP_H) - y;
+                if (x + draw_w > MAP_X + MAP_W) draw_w = (MAP_X + MAP_W) - x;
+                if (y + draw_h > MAP_Y + MAP_H) draw_h = (MAP_Y + MAP_H) - y;
                 SDL_Rect src = {0, 0, draw_w, draw_h};
                 SDL_Rect dst = {x, y, draw_w, draw_h};
                 SDL_RenderCopy(ed->renderer, transparent_bg_tex, &src, &dst);
+            }
         }
     }
-}
 
     int start_x = (int)(ed->cam_x / TILE_SIZE);
     int start_y = (int)(ed->cam_y / TILE_SIZE);
@@ -1252,40 +1252,66 @@ if (transparent_bg_tex) {
         }
     }
 
-    // ─── ПОЛОСЫ ПРОКРУТКИ ───
+    // ========== ВАЖНО: снимаем клип карты перед рисованием скроллбаров ==========
+    SDL_RenderSetClipRect(ed->renderer, NULL);
+
+    // ─── ПОЛОСЫ ПРОКРУТКИ (ВСЕГДА РИСУЕМ ФОН, ЧТОБЫ БЫЛО ВИДНО) ───
     float map_pixel_w = map->width * TILE_SIZE;
     float map_pixel_h = map->height * TILE_SIZE;
     float view_w = MAP_W / zoom;
     float view_h = MAP_H / zoom;
 
-    if (map_pixel_h > view_h) {
-        SDL_Rect v_track = { MAP_X + MAP_W, MAP_Y, SCROLLBAR_SIZE, MAP_H };
-        SDL_SetRenderDrawColor(ed->renderer, 50, 50, 50, 255);
-        SDL_RenderFillRect(ed->renderer, &v_track);
-        float thumb_h = (view_h / map_pixel_h) * MAP_H;
-        if (thumb_h < 8) thumb_h = 8;
-        float max_cam_y = map_pixel_h - view_h;
-        if (max_cam_y < 0) max_cam_y = 0;
-        float thumb_y = (max_cam_y > 0) ? MAP_Y + (ed->cam_y / max_cam_y) * (MAP_H - thumb_h) : MAP_Y;
-        SDL_Rect v_thumb = { MAP_X + MAP_W + 4, (int)thumb_y, SCROLLBAR_SIZE - 8, (int)thumb_h };
-        SDL_SetRenderDrawColor(ed->renderer, 140, 140, 140, 255);
-        SDL_RenderFillRect(ed->renderer, &v_thumb);
-    }
-    if (map_pixel_w > view_w) {
-        SDL_Rect h_track = { MAP_X, MAP_Y + MAP_H, MAP_W, SCROLLBAR_SIZE };
-        SDL_SetRenderDrawColor(ed->renderer, 50, 50, 50, 255);
-        SDL_RenderFillRect(ed->renderer, &h_track);
-        float thumb_w = (view_w / map_pixel_w) * MAP_W;
-        if (thumb_w < 8) thumb_w = 8;
-        float max_cam_x = map_pixel_w - view_w;
-        if (max_cam_x < 0) max_cam_x = 0;
-        float thumb_x = (max_cam_x > 0) ? MAP_X + (ed->cam_x / max_cam_x) * (MAP_W - thumb_w) : MAP_X;
-        SDL_Rect h_thumb = { (int)thumb_x, MAP_Y + MAP_H + 4, (int)thumb_w, SCROLLBAR_SIZE - 8 };
-        SDL_SetRenderDrawColor(ed->renderer, 140, 140, 140, 255);
-        SDL_RenderFillRect(ed->renderer, &h_thumb);
+    // Вертикальный скроллбар
+    // (если хочешь показывать только когда нужен, верни условие if (map_pixel_h > view_h))
+    {
+        SDL_Rect track_v = { MAP_X + MAP_W + 2, MAP_Y,
+                             SCROLLBAR_SIZE - 4, MAP_H };
+        SDL_SetRenderDrawColor(ed->renderer, 200, 200, 200, 255);  // светло-серый трек
+        SDL_RenderFillRect(ed->renderer, &track_v);
+        SDL_SetRenderDrawColor(ed->renderer, 120, 120, 120, 255);  // рамка трека
+        SDL_RenderDrawRect(ed->renderer, &track_v);
+
+        // Бегунок рисуем только если нужна прокрутка
+        if (map_pixel_h > view_h) {
+            float thumb_h = (view_h / map_pixel_h) * MAP_H;
+            if (thumb_h < 14) thumb_h = 14;
+            float max_cam_y = map_pixel_h - view_h;
+            if (max_cam_y < 0) max_cam_y = 0;
+            float thumb_y = MAP_Y + (max_cam_y > 0 ? (ed->cam_y / max_cam_y) * (MAP_H - thumb_h) : 0);
+
+            SDL_Rect thumb_v = { track_v.x + 2, (int)thumb_y + 2,
+                                 track_v.w - 4, (int)thumb_h - 4 };
+            SDL_SetRenderDrawColor(ed->renderer, 100, 100, 100, 255); // тёмный бегунок
+            SDL_RenderFillRect(ed->renderer, &thumb_v);
+            SDL_SetRenderDrawColor(ed->renderer, 60, 60, 60, 255);    // обводка
+            SDL_RenderDrawRect(ed->renderer, &thumb_v);
+        }
     }
 
-    SDL_RenderSetClipRect(ed->renderer, NULL);
+    // Горизонтальный скроллбар
+    {
+        SDL_Rect track_h = { MAP_X + 2, MAP_Y + MAP_H,
+                             MAP_W - 4, SCROLLBAR_SIZE };
+        SDL_SetRenderDrawColor(ed->renderer, 200, 200, 200, 255);
+        SDL_RenderFillRect(ed->renderer, &track_h);
+        SDL_SetRenderDrawColor(ed->renderer, 120, 120, 120, 255);
+        SDL_RenderDrawRect(ed->renderer, &track_h);
+
+        if (map_pixel_w > view_w) {
+            float thumb_w = (view_w / map_pixel_w) * MAP_W;
+            if (thumb_w < 14) thumb_w = 14;
+            float max_cam_x = map_pixel_w - view_w;
+            if (max_cam_x < 0) max_cam_x = 0;
+            float thumb_x = MAP_X + (max_cam_x > 0 ? (ed->cam_x / max_cam_x) * (MAP_W - thumb_w) : 0);
+
+            SDL_Rect thumb_h_rect = { (int)thumb_x + 2, track_h.y + 2,
+                                      (int)thumb_w - 4, SCROLLBAR_SIZE - 4 };
+            SDL_SetRenderDrawColor(ed->renderer, 100, 100, 100, 255);
+            SDL_RenderFillRect(ed->renderer, &thumb_h_rect);
+            SDL_SetRenderDrawColor(ed->renderer, 60, 60, 60, 255);
+            SDL_RenderDrawRect(ed->renderer, &thumb_h_rect);
+        }
+    }
 }
 
 void render_right_panel(Editor *ed) {

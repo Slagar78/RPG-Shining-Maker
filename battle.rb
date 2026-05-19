@@ -320,6 +320,10 @@ def find_adjacent_enemies(unit)
   end
 end
 
+def adjacent_enemy?(unit)
+  !find_adjacent_enemies(unit).empty?
+end
+
 def sort_targets_by_angle(targets, from_x, from_y)
   targets.sort_by do |t|
     dx = t[:x] - from_x
@@ -478,7 +482,7 @@ end
   start_cursor_transition(@current_unit, nxt)
 end
 
-def handle_input
+ def handle_input
   case @battle_state
   when :cursor_moving
     # ничего не делаем — движение обрабатывается в update
@@ -499,29 +503,26 @@ def handle_input
 
     if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
       case @battle_menu.selected_index
-
-  when 0  # Attack
-     targets = find_adjacent_enemies(@current_unit)
-  if targets.any?
-    @attack_targets = sort_targets_by_angle(targets, @current_unit[:x], @current_unit[:y])
-    @attack_target_index = 0
-    @attack_target = @attack_targets[0]          # ← теперь берём из отсортированного
-    @target_highlight = @attack_targets[0]       # ← и подсветку тоже
-    @battle_menu.close
-    @battle_state = :attack_targeting
-	
-  if @battle_player
-     @battle_player.face_target(@attack_target[:x], @attack_target[:y])
-  end
-    @audio.play_sfx("cursor") if @audio
-  else
-    @battle_menu.close
-    @battle_state = :player_turn
-    @cursor.visible = true
-    sync_cursor_to_unit
-    @audio.play_sfx("error") if @audio
-  end
-
+      when 0  # Attack
+        targets = find_adjacent_enemies(@current_unit)
+        if targets.any?
+          @attack_targets = sort_targets_by_angle(targets, @current_unit[:x], @current_unit[:y])
+          @attack_target_index = 0
+          @attack_target = @attack_targets[0]
+          @target_highlight = @attack_targets[0]
+          @battle_menu.close
+          @battle_state = :attack_targeting
+          if @battle_player
+            @battle_player.face_target(@attack_target[:x], @attack_target[:y])
+          end
+          @audio.play_sfx("cursor") if @audio
+        else
+          @battle_menu.close
+          @battle_state = :player_turn
+          @cursor.visible = true
+          sync_cursor_to_unit
+          @audio.play_sfx("error") if @audio
+        end
       when 3  # Stay
         end_current_turn
       else
@@ -541,7 +542,7 @@ def handle_input
   end
 end
 
-    def update
+  def update
     @battle_menu.update
     @cursor.update
     update_units_animation
@@ -580,7 +581,6 @@ end
         @battle_player.update
         
         unless @battle_player.moving
-          # Синхронизация реальной позиции юнита с визуальной
           if @current_unit[:x] != @battle_player.x || @current_unit[:y] != @battle_player.y
             if cell_free?(@battle_player.x, @battle_player.y, @current_unit)
               @current_unit[:x] = @battle_player.x
@@ -589,7 +589,8 @@ end
           end
           sync_cursor_to_unit
           if @pending_menu
-            open_battle_menu
+            can_attack = adjacent_enemy?(@current_unit)
+            open_battle_menu(can_attack)
             @pending_menu = false
           end
         end
@@ -598,7 +599,8 @@ end
           if @battle_player.moving
             @pending_menu = true
           else
-            open_battle_menu
+            can_attack = adjacent_enemy?(@current_unit)
+            open_battle_menu(can_attack)
           end
         end
 
@@ -834,9 +836,9 @@ end
     sync_cursor_to_unit
   end
 
-  def open_battle_menu
+  def open_battle_menu(can_attack = false)
     @cursor.visible = false
-    @battle_menu.open
+    @battle_menu.open(can_attack)
     @battle_state = :action_menu
     @audio.play_sfx("confirm") if @audio
   end

@@ -53,9 +53,9 @@ class BattleMenu
     end
   end
 
-  def open
+  def open(can_attack = false)
     @visible = true
-    @selected_index = 0
+    @selected_index = can_attack ? 0 : 3   # 0 = Attack, 3 = Stay
     @anim_timer = 0
   end
 

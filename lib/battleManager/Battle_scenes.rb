@@ -26,8 +26,8 @@ class BattleScene
   RIGHT_EDGE_W = 12
   MID_TILE_W   = 8
 
-  IDLE_BEFORE_DURATION = 2.0
-  IDLE_AFTER_DURATION  = 2.0
+  IDLE_BEFORE_DURATION = 1.5
+  IDLE_AFTER_DURATION  = 1.5
 
   def initialize(battle_manager)
     @battle_manager = battle_manager
