@@ -2,10 +2,16 @@
 
 class EnemyAI
   def self.decide_moves(unit, allies, enemies, highlight_tiles)
-    decide_moves_aggressive(unit, allies, enemies, highlight_tiles)
+    # Выбираем тактику по полю ai (по умолчанию 0)
+    case unit[:ai]
+    when 1
+      decide_moves_defensive(unit, allies, enemies, highlight_tiles)
+    else
+      decide_moves_aggressive(unit, allies, enemies, highlight_tiles)
+    end
   end
 
-  # Агрессивный ИИ – идёт к ближайшему герою, но только на свободную клетку
+  # Агрессивный ИИ – идёт к ближайшему герою
   def self.decide_moves_aggressive(unit, allies, enemies, highlight_tiles)
     return [] if allies.empty?
 
@@ -38,6 +44,12 @@ class EnemyAI
 
     best = free_tiles.min_by { |pos| (pos[0] - tx).abs + (pos[1] - ty).abs }
     build_path_to(unit, best, highlight_tiles)
+  end
+
+  # Защитный ИИ – стоит на месте, ждёт героя
+  def self.decide_moves_defensive(unit, allies, enemies, highlight_tiles)
+    # Не двигаемся, остаёмся на текущей клетке
+    []
   end
 
   # Построение жадного пути от юнита к целевой клетке

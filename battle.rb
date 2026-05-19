@@ -208,7 +208,7 @@ class BattleManager
         x: pos[0], y: pos[1],
         enemy: enemy, tex: tex,
         sprite_frame: 0, sprite_timer: 0, sprite_speed: 14,
-        ai_type: info["ai_type"] || 0,
+        ai_type: info["ai"] || 0,
         battle_anim: battle_anim,
         hp: base_hp, max_hp: base_hp,
         mp: base_mp, max_mp: base_mp,

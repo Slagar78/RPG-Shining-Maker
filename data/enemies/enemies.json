@@ -43,8 +43,7 @@
 				}],
 			"spells":	["Nothing", "Nothing", "Nothing", "Nothing"],
 			"initial_status":	"none",
-			"move_type":	"flying",
-			"ai_bitfield":	["prioritymod_2", "bit4"]
+			"move_type":	"flying"
 		}, {
 			"id":	1,
 			"name":	"Dark King",
@@ -89,7 +88,6 @@
 				}],
 			"spells":	["Drain", "Nothing", "Nothing", "Nothing"],
 			"initial_status":	"none",
-			"move_type":	"stealth",
-			"ai_bitfield":	["prioritymod_2", "bit5"]
+			"move_type":	"stealth"
 		}]
 }
