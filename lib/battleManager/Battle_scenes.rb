@@ -1,42 +1,33 @@
 # lib/battleManager/Battle_scenes.rb
 
 class BattleScene
-  SCENE_DURATION      = 3.0
   DELAY_DURATION      = 0.4
   END_DELAY_DURATION  = 0.5
   BAR_HEIGHT          = 144
   TILE_SIZE           = 48
-
-  WORK_WIDTH  = 1152
-  WORK_HEIGHT = 960 - 2 * BAR_HEIGHT   # 672
-
-  ENEMY_X = 124
-  ENEMY_Y = 370
-
-  ALLY_X = 750
-  ALLY_Y = 480
-
-  # ─── Настройки отрисовки земли (ground) ───
-  GROUND_SCALE   = 2.0    # ×2 для рендера 1152×960 → на экране 576×480
-  GROUND_OFFSET_X = 136
-  GROUND_OFFSET_Y = 422
-
-  # ─── Анимация выезда игрока и панели ───
-  SLIDE_IN_DURATION  = 0.5   # секунд
-  SLIDE_IN_OFFSET_X  = 500   # на сколько пикселей правее стартуют
-
-  # ─── Текстуры и параметры палочек HP/MP (sticks) ───
-  STICK_W = 3
-  STICK_H = 26
+  WORK_WIDTH          = 1152
+  WORK_HEIGHT         = 960 - 2 * BAR_HEIGHT
+  ENEMY_X             = 124
+  ENEMY_Y             = 370
+  ALLY_X              = 750
+  ALLY_Y              = 480
+  GROUND_SCALE        = 2.0
+  GROUND_OFFSET_X     = 136
+  GROUND_OFFSET_Y     = 422
+  STICK_W             = 3
+  STICK_H             = 26
   STICK_TEXTURE_PATHS = [
-    "assets/ui/Hp_Mp_Points_big.png",      # жёлтый (0-100)
-    "assets/ui/Hp_Mp_Points_2_big.png",    # зелёный (100-200)
-    "assets/ui/Hp_Mp_Points_3_big.png",    # фиолетовый (200-300)
-    "assets/ui/Hp_Mp_Points_4_big.png"     # чёрный (300+)
+    "assets/ui/Hp_Mp_Points_big.png",
+    "assets/ui/Hp_Mp_Points_2_big.png",
+    "assets/ui/Hp_Mp_Points_3_big.png",
+    "assets/ui/Hp_Mp_Points_4_big.png"
   ]
-  LEFT_EDGE_W  = 12   # левый край панели (как в  hp_mp_panel)
-  RIGHT_EDGE_W = 12   # правый край панели
-  MID_TILE_W   = 8    # ширина тайла для растягивания середины
+  LEFT_EDGE_W  = 12
+  RIGHT_EDGE_W = 12
+  MID_TILE_W   = 8
+
+  IDLE_BEFORE_DURATION = 2.0
+  IDLE_AFTER_DURATION  = 2.0
 
   def initialize(battle_manager)
     @battle_manager = battle_manager
@@ -51,7 +42,9 @@ class BattleScene
 
     @attacker = nil
     @defender = nil
-    @anim_timer = 0.0
+
+    @attacker_anim_timer = 0.0
+    @defender_anim_timer = 0.0
 
     @attacker_current_frame = 0
     @defender_current_frame = 0
@@ -59,16 +52,9 @@ class BattleScene
     @sub_phase = :idle_before
     @sub_phase_timer = 0.0
     @attack_duration = 0.0
-    @defense_duration = 0.0
-    @idle_duration = 0.0
 
-    @slide_in = false
-    @slide_in_timer = 0.0
-
-    # Палочки HP/MP
     @stick_textures = []
     load_stick_textures
-
     load_background
   end
 
@@ -122,30 +108,20 @@ class BattleScene
     @phase = :delay
     @render_texture = Raylib.LoadRenderTexture(1152, 960)
 
-    @anim_timer = 0.0
+    @attacker_anim_timer = 0.0
+    @defender_anim_timer = 0.0
     @attacker_current_frame = 0
     @defender_current_frame = 0
 
     attacker_anim = @attacker ? @attacker[:battle_anim] : nil
-    defender_anim = @defender ? @defender[:battle_anim] : nil
-
     @attack_duration = attacker_anim ? attacker_anim.total_duration(:attack) : 0.5
-    @defense_duration = defender_anim ? defender_anim.total_duration(:defense) : 0.5
-    @idle_duration = attacker_anim ? attacker_anim.total_duration(:idle) : 0.8
-
     @attack_duration = 0.5 if @attack_duration < 0.1
-    @defense_duration = 0.5 if @defense_duration < 0.1
-    @idle_duration = 0.8 if @idle_duration < 0.1
 
-    @sub_phase = :slide_in           # начинаем с выезда
+    @sub_phase = :idle_before
     @sub_phase_timer = 0.0
-    @slide_in = true
-    @slide_in_timer = 0.0
 
     load_ground
-
     puts ">>> Battle scene starting: #{attacker_unit[:enemy] ? 'Enemy' : 'Ally'} vs #{defender_unit[:enemy] ? 'Enemy' : 'Ally'}"
-    puts "    attack: #{@attack_duration.round(2)}s, defense: #{@defense_duration.round(2)}s, idle: #{@idle_duration.round(2)}s"
   end
 
   def finish
@@ -173,26 +149,43 @@ class BattleScene
   def update
     return unless @active
     dt = Raylib.GetFrameTime()
-    @timer -= dt
 
-    if @phase == :display
-      update_sub_phase(dt)
-      update_animation(dt)
-    end
-
-    case @phase
-    when :delay
+    # Переход из фазы delay в display
+    if @phase == :delay
+      @timer -= dt
       if @timer <= 0
-        @timer = SCENE_DURATION
         @phase = :display
       end
-    when :display
-      if @timer <= 0
-        @timer = END_DELAY_DURATION
-        @phase = :end_delay
+      return
+    end
+
+    # Основная фаза отображения
+    if @phase == :display
+      @sub_phase_timer += dt
+
+      case @sub_phase
+      when :idle_before
+        update_animation(dt)
+        if @sub_phase_timer >= IDLE_BEFORE_DURATION
+          @sub_phase = :attack
+          @sub_phase_timer = 0.0
+          @attacker_current_frame = 0
+          @defender_current_frame = 0
+        end
+      when :attack
+        update_animation(dt)
+        if @sub_phase_timer >= @attack_duration
+          @sub_phase = :idle_after
+          @sub_phase_timer = 0.0
+          @attacker_current_frame = 0
+          @defender_current_frame = 0
+        end
+      when :idle_after
+        update_animation(dt)
+        if @sub_phase_timer >= IDLE_AFTER_DURATION
+          finish
+        end
       end
-    when :end_delay
-      finish if @timer <= 0
     end
   end
 
@@ -218,26 +211,14 @@ class BattleScene
       Raylib.DrawRectangle(0, 0, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
       Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
 
-      # ──────────────────────────────────────
-      #  Вычисляем смещение для анимации выезда (только для союзника и его земли)
-      # ──────────────────────────────────────
-      slide_offset = 0
-      if @sub_phase == :slide_in
-        t = (@sub_phase_timer / SLIDE_IN_DURATION).clamp(0.0, 1.0)
-        ease = 1.0 - (1.0 - t) ** 2   # ease out quad
-        slide_offset = SLIDE_IN_OFFSET_X * (1.0 - ease)
-      end
-
-      # ──────────────────────────────────────
-      #  GROUND – только под союзником, ×2
-      # ──────────────────────────────────────
+      # ─── GROUND – только под союзником, ×2 ───
       if @attacker && !@attacker[:enemy] && @ground_tex
         gw = @ground_tex.width
         gh = @ground_tex.height
         scaled_w = gw * GROUND_SCALE
         scaled_h = gh * GROUND_SCALE
 
-        gx = ALLY_X - scaled_w / 2 + GROUND_OFFSET_X + slide_offset   # земля тоже сдвигается
+        gx = ALLY_X - scaled_w / 2 + GROUND_OFFSET_X
         gy = ALLY_Y - scaled_h + GROUND_OFFSET_Y
 
         src = Raylib::Rectangle.create(0, 0, gw, gh)
@@ -245,30 +226,27 @@ class BattleScene
         Raylib.DrawTexturePro(@ground_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
       end
 
-      # ── Рисуем юнитов (враг без смещения, союзник с учётом slide_offset) ──
-      ally_draw_x = ALLY_X + slide_offset
+      # ── Рисуем юнитов ──
       if @sub_phase == :attack
-        draw_unit(@attacker, :attack, ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
+        draw_unit(@attacker, :attack, ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, :defense, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       else
-        draw_unit(@attacker, :idle,    ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
+        draw_unit(@attacker, :idle,    ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       end
 
       # === Панели HP/MP ===
-      # Панель союзника — без выезда (фиксированная позиция)
       if @attacker && @attacker[:max_hp]
         load_panel_texture
         if @panel_tex
           panel_w = @panel_tex.width
           panel_h = @panel_tex.height
-          panel_x = WORK_WIDTH - 16 - panel_w               # базовая позиция без slide_offset
+          panel_x = WORK_WIDTH - 16 - panel_w
           panel_y = (BAR_HEIGHT - panel_h) / 2
           draw_panel_with_sprite(@attacker, panel_x + panel_w, panel_y, true)
         end
       end
 
-      # Панель врага — как и раньше, без смещения
       if @defender && @defender[:max_hp]
         load_panel_texture
         if @panel_tex
@@ -314,7 +292,7 @@ class BattleScene
   end
 
   # ---------- Отрисовка панели с текстом и полосками ----------
-def draw_panel_with_sprite(unit, x, y, right_aligned)
+  def draw_panel_with_sprite(unit, x, y, right_aligned)
     return unless @panel_tex
 
     font_size = 36
@@ -323,7 +301,6 @@ def draw_panel_with_sprite(unit, x, y, right_aligned)
 
     font = @battle_manager.battle_scene_font || @battle_manager.instance_variable_get(:@font)
 
-    # ─── Имя и уровень ───
     if unit[:actor]
       name = unit[:actor]["name"] || "Ally"
       lvl  = unit[:actor]["level"] || 1
@@ -341,7 +318,6 @@ def draw_panel_with_sprite(unit, x, y, right_aligned)
     mp     = unit[:mp].to_i
     max_mp = unit[:max_mp].to_i
 
-    # ─── Расчёт ширины панели (теперь учитываем длину имени+уровня) ───
     label_w = [measure_text_ex("HP", font, font_size), measure_text_ex("MP", font, font_size)].max
     max_hp_str = "#{max_hp}/#{max_hp}"
     max_mp_str = "#{max_mp}/#{max_mp}"
@@ -350,10 +326,8 @@ def draw_panel_with_sprite(unit, x, y, right_aligned)
     max_sticks = [[hp, mp].max, 100].min
     sticks_w = max_sticks * STICK_W
 
-    # Ширина, требуемая для полосок + меток + чисел
     content_w = text_margin_x + label_w + 8 + sticks_w + 8 + max_number_w + text_margin_x
 
-    # Ширина, требуемая для строки имени и уровня
     name_line = "#{name}  LV #{lvl}"
     name_line_w = measure_text_ex(name_line, font, font_size)
     name_content_w = text_margin_x + name_line_w + text_margin_x
@@ -365,7 +339,6 @@ def draw_panel_with_sprite(unit, x, y, right_aligned)
     tiles = (mid_area.to_f / MID_TILE_W).ceil
     panel_w = LEFT_EDGE_W + RIGHT_EDGE_W + tiles * MID_TILE_W
 
-    # Позиция панели
     if right_aligned
       px = x - panel_w
     else
@@ -373,7 +346,6 @@ def draw_panel_with_sprite(unit, x, y, right_aligned)
     end
     py = y
 
-    # ─── Рисуем фон панели (тайлинг) ───
     tex = @panel_tex
     if tex
       left_src = Raylib::Rectangle.create(0, 0, LEFT_EDGE_W, tex.height)
@@ -394,136 +366,102 @@ def draw_panel_with_sprite(unit, x, y, right_aligned)
       Raylib.DrawRectangle(px, py, panel_w, tex.height, Raylib::Fade(Raylib::BLACK, 0.8))
     end
 
-    # ─── Рисуем текст и палочки ───
     tx = px + text_margin_x
     ty_name = py + text_margin_y_name
     ty_hp   = py + 44
     ty_mp   = py + 78
 
-    # Имя + уровень
     if font
       Raylib.DrawTextEx(font, name_line, Raylib::Vector2.create(tx, ty_name), font_size, 1, Raylib::WHITE)
     else
       Raylib.DrawText(name_line, tx, ty_name, font_size, Raylib::WHITE)
     end
 
-    # HP и MP
     bar_area_x = tx
     bar_area_w = panel_w - text_margin_x * 2
     draw_stick_bar(bar_area_x, ty_hp, bar_area_w, hp, max_hp, font, font_size, "HP")
     draw_stick_bar(bar_area_x, ty_mp, bar_area_w, mp, max_mp, font, font_size, "MP")
-end
-
-  # ---------- Рисование шкалы (HP или MP) ----------
- def draw_stick_bar(base_x, base_y, area_width, current, max_val, font, font_size, label)
-  # Метка "HP"/"MP"
-  if font
-    Raylib.DrawTextEx(font, label, Raylib::Vector2.create(base_x, base_y), font_size, 1, Raylib::WHITE)
-  else
-    Raylib.DrawText(label, base_x, base_y, font_size, Raylib::WHITE)
   end
 
-  label_w = measure_text_ex(label, font, font_size)
-  number_str = "#{current}/#{max_val}"
-  number_w = measure_text_ex(number_str, font, font_size)
-
-  gap = 8
-  available_sticks_w = area_width - label_w - number_w - gap * 2
-  total_positions = [(available_sticks_w / STICK_W).floor, 100].min
-  total_positions = 0 if total_positions < 0
-
-  # Сколько всего палочек можем нарисовать (но не больше current/max)
-  sticks_to_draw = [current, max_val, total_positions].min
-
-  bar_start_x = base_x + label_w + gap
-  stick_y = base_y + (font_size - STICK_H) / 2
-
-  # Слои: жёлтый (0-100), зелёный (100-200), фиолетовый (200-300), чёрный (>300)
-  limits = [100, 200, 300, 9999]
-  prev_limit = 0
-
-  limits.each_with_index do |limit, idx|
-    # Сколько палочек этого слоя: от 0 до min(current, limit) минус уже нарисованные
-    layer_max = [current, limit].min - prev_limit
-    layer_max = 0 if layer_max < 0
-    count = [sticks_to_draw, layer_max].min
-    next if count <= 0
-
-    tex = @stick_textures[idx]
-    (0...count).each do |i|
-      stick_x = bar_start_x + i * STICK_W   # рисуем всегда с начала, перекрывая предыдущий слой
-      if tex
-        src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
-        dst = Raylib::Rectangle.create(stick_x, stick_y, STICK_W, STICK_H)
-        Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-      end
+  # ---------- Рисование шкалы ----------
+  def draw_stick_bar(base_x, base_y, area_width, current, max_val, font, font_size, label)
+    if font
+      Raylib.DrawTextEx(font, label, Raylib::Vector2.create(base_x, base_y), font_size, 1, Raylib::WHITE)
+    else
+      Raylib.DrawText(label, base_x, base_y, font_size, Raylib::WHITE)
     end
-    prev_limit = limit
-  end
 
-  # Число справа от палочек
-  number_x = bar_start_x + total_positions * STICK_W + gap
-  if font
-    Raylib.DrawTextEx(font, number_str, Raylib::Vector2.create(number_x, base_y), font_size, 1, Raylib::WHITE)
-  else
-    Raylib.DrawText(number_str, number_x, base_y, font_size, Raylib::WHITE)
-  end
-end
+    label_w = measure_text_ex(label, font, font_size)
+    number_str = "#{current}/#{max_val}"
+    number_w = measure_text_ex(number_str, font, font_size)
 
-  # ─── Методы анимации (обновлённые с поддержкой slide_in) ───
-  def update_sub_phase(dt)
-    @sub_phase_timer += dt
-    case @sub_phase
-    when :slide_in
-      if @sub_phase_timer >= SLIDE_IN_DURATION
-        @sub_phase = :idle_before
-        @sub_phase_timer = 0.0
-        @slide_in = false
+    gap = 8
+    available_sticks_w = area_width - label_w - number_w - gap * 2
+    total_positions = [(available_sticks_w / STICK_W).floor, 100].min
+    total_positions = 0 if total_positions < 0
+
+    sticks_to_draw = [current, max_val, total_positions].min
+
+    bar_start_x = base_x + label_w + gap
+    stick_y = base_y + (font_size - STICK_H) / 2
+
+    limits = [100, 200, 300, 9999]
+    prev_limit = 0
+
+    limits.each_with_index do |limit, idx|
+      layer_max = [current, limit].min - prev_limit
+      layer_max = 0 if layer_max < 0
+      count = [sticks_to_draw, layer_max].min
+      next if count <= 0
+
+      tex = @stick_textures[idx]
+      (0...count).each do |i|
+        stick_x = bar_start_x + i * STICK_W
+        if tex
+          src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
+          dst = Raylib::Rectangle.create(stick_x, stick_y, STICK_W, STICK_H)
+          Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+        end
       end
-    when :idle_before
-      if @sub_phase_timer >= @idle_duration
-        @sub_phase = :attack
-        @sub_phase_timer = 0.0
-        @attacker_current_frame = 0
-        @defender_current_frame = 0
-      end
-    when :attack
-      if @sub_phase_timer >= @attack_duration
-        @sub_phase = :idle_after
-        @sub_phase_timer = 0.0
-        @attacker_current_frame = 0
-        @defender_current_frame = 0
-      end
-    when :idle_after
-      # idle до конца сцены
+      prev_limit = limit
+    end
+
+    number_x = bar_start_x + total_positions * STICK_W + gap
+    if font
+      Raylib.DrawTextEx(font, number_str, Raylib::Vector2.create(number_x, base_y), font_size, 1, Raylib::WHITE)
+    else
+      Raylib.DrawText(number_str, number_x, base_y, font_size, Raylib::WHITE)
     end
   end
 
+  # ---------- Анимация ----------
   def update_animation(dt)
-    @anim_timer += dt
     case @sub_phase
-    when :slide_in, :idle_before, :idle_after
-      @attacker_current_frame = advance_frame(@attacker, :idle, @attacker_current_frame)
-      @defender_current_frame = advance_frame(@defender, :idle, @defender_current_frame)
+    when :idle_before, :idle_after
+      @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :idle, @attacker_current_frame, @attacker_anim_timer, dt)
+      @defender_current_frame, @defender_anim_timer = advance_frame(@defender, :idle, @defender_current_frame, @defender_anim_timer, dt)
     when :attack
-      @attacker_current_frame = advance_frame(@attacker, :attack, @attacker_current_frame)
-      @defender_current_frame = advance_frame(@defender, :defense, @defender_current_frame)
+      @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :attack, @attacker_current_frame, @attacker_anim_timer, dt)
+      @defender_current_frame, @defender_anim_timer = advance_frame(@defender, :defense, @defender_current_frame, @defender_anim_timer, dt)
     end
   end
 
-  def advance_frame(unit, anim_key, current_frame)
-    return 0 unless unit
+  def advance_frame(unit, anim_key, current_frame, timer, dt)
+    return [0, timer] unless unit
     anim = unit[:battle_anim]
-    return 0 unless anim
+    return [0, timer] unless anim
     anim_data = anim.send(anim_key)
-    return 0 unless anim_data && !anim_data[:frames].empty?
+    return [0, timer] unless anim_data && !anim_data[:frames].empty?
     frames = anim_data[:frames]
     frame_info = frames[current_frame % frames.size]
-    if @anim_timer >= frame_info[:duration]
-      @anim_timer -= frame_info[:duration]
-      (current_frame + 1) % frames.size
+
+    timer += dt
+    if timer >= frame_info[:duration]
+      timer -= frame_info[:duration]
+      new_frame = (current_frame + 1) % frames.size
+      [new_frame, timer]
     else
-      current_frame
+      [current_frame, timer]
     end
   end
 
@@ -536,7 +474,6 @@ end
         idx = frame_idx % anim_data[:frames].size
         frame_info = anim_data[:frames][idx]
         tex = frame_info[:tex]
-        # Учитываем покадровые смещения (если есть)
         frame_off_x = frame_info[:offset_x] || 0
         frame_off_y = frame_info[:offset_y] || 0
 
@@ -560,5 +497,5 @@ end
     src = Raylib::Rectangle.create(0, 2 * TILE_SIZE, TILE_SIZE, TILE_SIZE)
     dst = Raylib::Rectangle.create(x, y, TILE_SIZE, TILE_SIZE)
     Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-   end
- end
+  end
+end

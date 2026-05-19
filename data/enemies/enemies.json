@@ -47,10 +47,10 @@
 			"ai_bitfield":	["prioritymod_2", "bit4"]
 		}, {
 			"id":	1,
-			"name":	"Vary",
+			"name":	"Dark King",
 			"portrait":	"Huper_Ryuma",
 			"mapsprite":	"mapsprite107",
-			"battle_sprite_path":	"assets/battles/battlesprites/enemies/Vary",
+			"battle_sprite_path":	"assets/battles/battlesprites/enemies/Dark_King",
 			"race":	"Cadrian",
 			"status":	"normal",
 			"level":	10,

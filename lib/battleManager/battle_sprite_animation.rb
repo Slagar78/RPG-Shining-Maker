@@ -20,33 +20,32 @@ class BattleSpriteAnimation
   private
 
   def load_anim(name)
-    return nil unless @base_path && !@base_path.empty?
-    json_path = File.join(@base_path, "animation.json")
-    return nil unless File.exist?(json_path)
+  return nil unless @base_path && !@base_path.empty?
+  json_path = File.join(@base_path, "animation.json")
+  return nil unless File.exist?(json_path)
 
-    data = JSON.parse(File.read(json_path))[name]
-    return nil unless data
+  data = JSON.parse(File.read(json_path))[name]
+  return nil unless data
 
-    frames = data["frames"].map do |f|
-      tex_path = File.join(@base_path, f["file"])
-      next unless File.exist?(tex_path)
-      tex = Raylib.LoadTexture(tex_path)
-      Raylib.SetTextureFilter(tex, Raylib::TEXTURE_FILTER_POINT)
-      # Теперь сохраняем покадровые offset_x и offset_y (если они есть)
-      {
-        tex: tex,
-        duration: f["duration"],
-        offset_x: f["offset_x"] || 0,
-        offset_y: f["offset_y"] || 0
-      }
-    end.compact
-
-    return nil if frames.empty?
-
+  frames = data["frames"].map do |f|
+    tex_path = File.join(@base_path, f["file"])
+    next unless File.exist?(tex_path)
+    tex = Raylib.LoadTexture(tex_path)
+    Raylib.SetTextureFilter(tex, Raylib::TEXTURE_FILTER_POINT)
     {
-      frames: frames,
-      offset_x: data["offset_x"] || 0,
-      offset_y: data["offset_y"] || 0
+      tex: tex,
+      duration: f["duration"],
+      offset_x: f["offset_x"] || 0,
+      offset_y: f["offset_y"] || 0
     }
+  end.compact
+
+  return nil if frames.empty?
+
+  {
+    frames: frames,
+    offset_x: data["offset_x"] || 0,
+    offset_y: data["offset_y"] || 0
+  }
   end
 end
