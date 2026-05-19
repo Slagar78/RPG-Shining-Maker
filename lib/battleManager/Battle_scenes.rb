@@ -53,6 +53,8 @@ def initialize(battle_manager)
     @sub_phase = :idle_before
     @sub_phase_timer = 0.0
     @attack_duration = 0.0
+	
+	@defender_anim = :defense
 
     @stick_textures = []
     load_stick_textures
@@ -159,54 +161,70 @@ end
     puts "<<< Battle scene finished"	
   end
 
-  def update
-    return unless @active
-    dt = Raylib.GetFrameTime()
+ def update
+  return unless @active
+  dt = Raylib.GetFrameTime()
 
-    # Переход из фазы delay в display
-    if @phase == :delay
-      @timer -= dt
-      if @timer <= 0
-        @phase = :display
-      end
-      return
+  # Переход из фазы delay в display
+  if @phase == :delay
+    @timer -= dt
+    if @timer <= 0
+      @phase = :display
     end
-
-    # Основная фаза отображения
-    if @phase == :display
-      @sub_phase_timer += dt
-
-case @sub_phase
-when :idle_before
-  update_animation(dt)
-  if @sub_phase_timer >= IDLE_BEFORE_DURATION
-    @sub_phase = :pre_attack          # ← было :attack, теперь pre_attack
-    @sub_phase_timer = 0.0
+    return
   end
-when :pre_attack                      # ← новый блок
-  update_animation(dt)
-  if @sub_phase_timer >= PRE_ATTACK_DURATION
-    @sub_phase = :attack
-    @sub_phase_timer = 0.0
-    @attacker_current_frame = 0
-    @defender_current_frame = 0
-  end
-when :attack
-        update_animation(dt)
-        if @sub_phase_timer >= @attack_duration
-          @sub_phase = :idle_after
-          @sub_phase_timer = 0.0
-          @attacker_current_frame = 0
-          @defender_current_frame = 0
-        end
-      when :idle_after
-        update_animation(dt)
-        if @sub_phase_timer >= IDLE_AFTER_DURATION
-          finish
-        end
+
+  # Основная фаза отображения
+  if @phase == :display
+    @sub_phase_timer += dt
+
+    case @sub_phase
+    when :idle_before
+      update_animation(dt)
+      if @sub_phase_timer >= IDLE_BEFORE_DURATION
+        @sub_phase = :pre_attack
+        @sub_phase_timer = 0.0
+      end
+
+    when :pre_attack
+      update_animation(dt)
+      if @sub_phase_timer >= PRE_ATTACK_DURATION
+        # Определяем анимацию защитника через DamageCalculator
+        movetype_key = @defender[:movetype] || "regular"
+        dodge_chance = DamageCalculator.physical_dodge_chance(movetype_key)
+        @defender_anim = dodge_chance > 30 ? :defense : :idle
+
+        @sub_phase = :attack
+        @sub_phase_timer = 0.0
+        @attacker_current_frame = 0
+        @defender_current_frame = 0
+      end
+
+    when :attack
+      # Атакующий всегда играет анимацию атаки
+      @attacker_current_frame, @attacker_anim_timer = advance_frame(
+        @attacker, :attack, @attacker_current_frame, @attacker_anim_timer, dt
+      )
+      # Защитник играет выбранную анимацию (idle или defense)
+      @defender_current_frame, @defender_anim_timer = advance_frame(
+        @defender, @defender_anim, @defender_current_frame, @defender_anim_timer, dt
+      )
+
+      if @sub_phase_timer >= @attack_duration
+        @sub_phase = :idle_after
+        @sub_phase_timer = 0.0
+        @attacker_current_frame = 0
+        @defender_current_frame = 0
+      end
+
+    when :idle_after
+      update_animation(dt)
+      if @sub_phase_timer >= IDLE_AFTER_DURATION
+        finish
       end
     end
   end
+end
 
   def draw
     return unless @active && @render_texture
@@ -248,7 +266,7 @@ when :attack
       # ── Рисуем юнитов ──
       if @sub_phase == :attack
         draw_unit(@attacker, :attack, ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
-        draw_unit(@defender, :defense, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
+        draw_unit(@defender, @defender_anim, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       else
         draw_unit(@attacker, :idle,    ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)

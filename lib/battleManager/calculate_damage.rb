@@ -86,4 +86,10 @@ module DamageCalculator
     chance = @movetypes.dig(movetype.to_s, "magic_dodge") || 0
     100 - chance
   end
+  
+    # Шанс физического уклонения (пока берём ranged_dodge)
+  def self.physical_dodge_chance(movetype_key)
+    @movetypes.dig(movetype_key.to_s, "ranged_dodge") || 0
+  end
+  
 end
