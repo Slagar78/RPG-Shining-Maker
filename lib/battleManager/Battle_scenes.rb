@@ -28,8 +28,9 @@ class BattleScene
 
   IDLE_BEFORE_DURATION = 1.5
   IDLE_AFTER_DURATION  = 1.5
+  PRE_ATTACK_DURATION = 0.5   # длительность панели перед атакой
 
-  def initialize(battle_manager)
+def initialize(battle_manager)
     @battle_manager = battle_manager
     @timer = 0.0
     @active = false
@@ -56,7 +57,19 @@ class BattleScene
     @stick_textures = []
     load_stick_textures
     load_background
-  end
+
+    # Загрузка панели сообщения перед атакой
+    @message_panel_tex = nil
+    panel_path = "assets/ui/message_battle_panel.png"
+    if File.exist?(panel_path)
+      img = Raylib.LoadImage(panel_path)
+      @message_panel_tex = Raylib.LoadTextureFromImage(img)
+      Raylib.UnloadImage(img)
+      Raylib.SetTextureFilter(@message_panel_tex, Raylib::TEXTURE_FILTER_POINT)
+    else
+      puts "WARNING: message_battle_panel.png not found"
+    end
+end 
 
   # ---------- Загрузка фона битвы ----------
   def load_background
@@ -144,6 +157,11 @@ class BattleScene
 
     @battle_manager.end_current_turn
     puts "<<< Battle scene finished"
+	
+	if @message_panel_tex
+  Raylib.UnloadTexture(@message_panel_tex)
+  @message_panel_tex = nil
+end
   end
 
   def update
@@ -163,16 +181,22 @@ class BattleScene
     if @phase == :display
       @sub_phase_timer += dt
 
-      case @sub_phase
-      when :idle_before
-        update_animation(dt)
-        if @sub_phase_timer >= IDLE_BEFORE_DURATION
-          @sub_phase = :attack
-          @sub_phase_timer = 0.0
-          @attacker_current_frame = 0
-          @defender_current_frame = 0
-        end
-      when :attack
+case @sub_phase
+when :idle_before
+  update_animation(dt)
+  if @sub_phase_timer >= IDLE_BEFORE_DURATION
+    @sub_phase = :pre_attack          # ← было :attack, теперь pre_attack
+    @sub_phase_timer = 0.0
+  end
+when :pre_attack                      # ← новый блок
+  update_animation(dt)
+  if @sub_phase_timer >= PRE_ATTACK_DURATION
+    @sub_phase = :attack
+    @sub_phase_timer = 0.0
+    @attacker_current_frame = 0
+    @defender_current_frame = 0
+  end
+when :attack
         update_animation(dt)
         if @sub_phase_timer >= @attack_duration
           @sub_phase = :idle_after
@@ -258,6 +282,18 @@ class BattleScene
         end
       end
     end
+
+  # Панель сообщения перед атакой (только в idle_before)
+if @sub_phase == :pre_attack && @message_panel_tex
+  panel_w = @message_panel_tex.width
+  panel_h = @message_panel_tex.height
+  # Низ панели на 96 px выше нижнего края (960 - 96 = 864)
+  panel_y = 960 - 96 - panel_h
+  panel_x = (1152 - panel_w) / 2
+  src = Raylib::Rectangle.create(0, 0, panel_w, panel_h)
+  dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
+  Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+end
 
     Raylib.EndTextureMode()
 
@@ -437,7 +473,7 @@ class BattleScene
   # ---------- Анимация ----------
   def update_animation(dt)
     case @sub_phase
-    when :idle_before, :idle_after
+    when :idle_before, :pre_attack, :idle_after
       @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :idle, @attacker_current_frame, @attacker_anim_timer, dt)
       @defender_current_frame, @defender_anim_timer = advance_frame(@defender, :idle, @defender_current_frame, @defender_anim_timer, dt)
     when :attack
