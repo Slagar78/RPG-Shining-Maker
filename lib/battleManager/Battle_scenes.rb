@@ -156,12 +156,7 @@ end
     end
 
     @battle_manager.end_current_turn
-    puts "<<< Battle scene finished"
-	
-	if @message_panel_tex
-  Raylib.UnloadTexture(@message_panel_tex)
-  @message_panel_tex = nil
-end
+    puts "<<< Battle scene finished"	
   end
 
   def update
@@ -287,8 +282,8 @@ when :attack
 if @sub_phase == :pre_attack && @message_panel_tex
   panel_w = @message_panel_tex.width
   panel_h = @message_panel_tex.height
-  # Низ панели на 96 px выше нижнего края (960 - 96 = 864)
-  panel_y = 960 - 96 - panel_h
+  # Низ панели на 16 px выше нижнего края
+  panel_y = 960 - 16 - panel_h
   panel_x = (1152 - panel_w) / 2
   src = Raylib::Rectangle.create(0, 0, panel_w, panel_h)
   dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
