@@ -511,8 +511,17 @@ end
           @attack_target = @attack_targets[0]
           @target_highlight = @attack_targets[0]
           @battle_menu.close
+
           @battle_state = :attack_targeting
-          @highlight_tiles.clear   # ← убираем зону хода
+          # Радиус атаки 
+          neighbors = [
+            [@current_unit[:x] + 1, @current_unit[:y]],
+            [@current_unit[:x] - 1, @current_unit[:y]],
+            [@current_unit[:x],     @current_unit[:y] + 1],
+            [@current_unit[:x],     @current_unit[:y] - 1]
+          ].select { |nx, ny| nx >= 0 && nx < @battle_w && ny >= 0 && ny < @battle_h }
+          @highlight_tiles = neighbors
+
           if @battle_player
             @battle_player.face_target(@attack_target[:x], @attack_target[:y])
           end
