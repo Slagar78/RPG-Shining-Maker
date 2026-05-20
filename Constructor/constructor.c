@@ -6,12 +6,19 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <windows.h>
-
-#include <stdio.h>
 #include <string.h>
+void Log(const char *msg);
 
 #define LOGICAL_W 1024
 #define LOGICAL_H 768
+
+#define CONSOLE_H 200                     // высота консольной панели
+#define CONSOLE_Y (LOGICAL_H - CONSOLE_H)  // Y-координата начала консоли
+#define MAX_CONSOLE_LINES 500              // максимум хранимых строк
+
+static char *consoleBuffer[MAX_CONSOLE_LINES]; // кольцевой буфер строк
+static int consoleLineCount = 0;               // число строк в буфере
+static int consoleScroll = 0;                  // смещение прокрутки (0 = последние строки)
 
 static const SDL_Color BG_COLOR          = { 20,  20,  30, 255 };
 static const SDL_Color MENU_BG           = { 30,  30,  45, 255 };
@@ -29,7 +36,7 @@ typedef enum {
     MODE_BATTLE_SCENES,   // новая кнопка
     MODE_TEXT_EDITOR,
     MODE_DATABASE,
-	MODE_PLAYTEST,
+    MODE_PLAYTEST,
     MODE_COUNT
 } EditorMode;
 
@@ -102,11 +109,11 @@ void RunPlaytest(const char *projectRoot) {
     snprintf(binDir, sizeof(binDir), "%sPortableRuby\\bin", projectRoot);
 
     if (!file_exists(rubyExe) || !file_exists(gameRb)) {
-        MessageBox(NULL, "ruby.exe or game.rb not found!\n\nCheck paths:", "Playtest Error", MB_OK | MB_ICONERROR);
+        MessageBox(NULL, "ruby.exe or game.rb not found!", "Playtest Error", MB_OK | MB_ICONERROR);
         return;
     }
 
-    // === Создаём временный bat-файл с явным указанием рабочей директории ===
+    // Создаём временный bat-файл
     char batPath[MAX_PATH];
     GetTempPath(MAX_PATH, batPath);
     strcat(batPath, "playtest.bat");
@@ -118,22 +125,25 @@ void RunPlaytest(const char *projectRoot) {
     }
 
     fprintf(f, "@echo off\r\n");
-    fprintf(f, "chcp 65001 >nul\r\n");                    // UTF-8
-    fprintf(f, "cd /d \"%s\"\r\n", projectRoot);           // ← переходим в корень проекта
+    fprintf(f, "chcp 65001 >nul\r\n");
+    fprintf(f, "cd /d \"%s\"\r\n", projectRoot);
     fprintf(f, "set \"GEM_HOME=%s\"\r\n", gemHome);
     fprintf(f, "set \"GEM_PATH=%s\"\r\n", gemHome);
     fprintf(f, "set \"PATH=%s;%s;%%PATH%%\"\r\n", dllDir, binDir);
     fprintf(f, "\"%s\" \"%s\" --playtest\r\n", rubyExe, gameRb);
     fclose(f);
 
-    // Запускаем bat-файл и ждём завершения игры
+    // Запускаем bat-файл со свёрнутой консолью
     STARTUPINFO si = { sizeof(STARTUPINFO) };
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_MINIMIZE;   // консоль появится, но сразу свернётся
+
     PROCESS_INFORMATION pi;
     char cmdLine[4096];
     snprintf(cmdLine, sizeof(cmdLine), "cmd /c \"%s\"", batPath);
 
-    if (CreateProcess(NULL, cmdLine, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi)) {
-        // Ожидаем закрытия консольного окна (игры)
+    if (CreateProcess(NULL, cmdLine, NULL, NULL, FALSE,
+                      0, NULL, NULL, &si, &pi)) {
         WaitForSingleObject(pi.hProcess, INFINITE);
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
@@ -141,15 +151,62 @@ void RunPlaytest(const char *projectRoot) {
         MessageBox(NULL, "Failed to start playtest", "Error", MB_OK | MB_ICONERROR);
     }
 
-    // Удаляем временный bat-файл
     DeleteFile(batPath);
 }
 
+void Log(const char *msg) {
+    if (consoleLineCount < MAX_CONSOLE_LINES) {
+        consoleBuffer[consoleLineCount] = _strdup(msg);
+        consoleLineCount++;
+    } else {
+        free(consoleBuffer[0]);
+        for (int i = 0; i < MAX_CONSOLE_LINES - 1; i++)
+            consoleBuffer[i] = consoleBuffer[i + 1];
+        consoleBuffer[MAX_CONSOLE_LINES - 1] = _strdup(msg);
+    }
+    consoleScroll = consoleLineCount;
+}
+
+void DrawConsole(SDL_Renderer *ren, TTF_Font *font) {
+    SDL_Rect consoleRect = {0, CONSOLE_Y, LOGICAL_W, CONSOLE_H};
+    SDL_SetRenderDrawColor(ren, 15, 15, 25, 255);
+    SDL_RenderFillRect(ren, &consoleRect);
+    SDL_SetRenderDrawColor(ren, 80, 80, 110, 255);
+    SDL_RenderDrawLine(ren, 0, CONSOLE_Y, LOGICAL_W, CONSOLE_Y);
+
+    int lineHeight = 16;
+    int visibleLines = CONSOLE_H / lineHeight;
+    int startLine = consoleScroll - visibleLines;
+    if (startLine < 0) startLine = 0;
+
+    SDL_Color textColor = {180, 180, 200, 255};
+    int y = CONSOLE_Y + 4;
+    for (int i = startLine; i < consoleLineCount && i < startLine + visibleLines; i++) {
+        SDL_Surface *s = TTF_RenderUTF8_Blended(font, consoleBuffer[i], textColor);
+        if (s) {
+            SDL_Texture *t = SDL_CreateTextureFromSurface(ren, s);
+            SDL_Rect dst = {6, y, s->w, s->h};
+            SDL_RenderCopy(ren, t, NULL, &dst);
+            y += lineHeight;
+            SDL_FreeSurface(s);
+            SDL_DestroyTexture(t);
+        }
+    }
+
+    if (consoleLineCount > visibleLines) {
+        float ratio = (float)visibleLines / consoleLineCount;
+        int thumbH = (int)(CONSOLE_H * ratio);
+        if (thumbH < 16) thumbH = 16;
+        int thumbY = CONSOLE_Y + (int)((CONSOLE_H - thumbH) * ((float)consoleScroll - visibleLines) / (consoleLineCount - visibleLines));
+        SDL_Rect thumb = {LOGICAL_W - 8, thumbY, 6, thumbH};
+        SDL_SetRenderDrawColor(ren, 100, 100, 130, 255);
+        SDL_RenderFillRect(ren, &thumb);
+    }
+}
+
 int main(int argc, char *argv[]) {
-    // Скрываем консольное окно (если запущено с консолью)
     FreeConsole();
 
-    // Unicode-поиск папки dll
     wchar_t baseW[MAX_PATH];
     GetModuleFileNameW(NULL, baseW, MAX_PATH);
     wchar_t *last = wcsrchr(baseW, L'\\');
@@ -161,7 +218,6 @@ int main(int argc, char *argv[]) {
     IMG_Init(IMG_INIT_PNG);
     TTF_Init();
 
-    // === Адаптация под размер экрана (как в map_editor.c) ===
     RECT workArea;
     SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
     int screenW = workArea.right - workArea.left;
@@ -169,7 +225,6 @@ int main(int argc, char *argv[]) {
 
     int winW = LOGICAL_W;
     int winH = LOGICAL_H;
-
     if (screenW < LOGICAL_W || screenH < LOGICAL_H) {
         float scale = fminf((float)screenW / LOGICAL_W, (float)screenH / LOGICAL_H) * 0.92f;
         winW = (int)(LOGICAL_W * scale);
@@ -191,7 +246,6 @@ int main(int argc, char *argv[]) {
     GetModuleFileName(NULL, exePath, MAX_PATH);
     char *lastSlash = strrchr(exePath, '\\');
     if (lastSlash) *(lastSlash + 1) = '\0';
-    // Корень проекта (на уровень выше папки конструктора)
     char projectRoot[1024];
     snprintf(projectRoot, sizeof(projectRoot), "%s..\\", exePath);
 
@@ -206,6 +260,8 @@ int main(int argc, char *argv[]) {
     if (!font_bold) font_bold = TTF_OpenFont("arial.ttf", 20);
 
     if (!font || !font_bold) { printf("Font error\n"); return 1; }
+
+    Log("Constructor ready.");
 
     const char *iconFilenames[MODE_COUNT] = {
         "map.png", "terrain.png", "battle.png",
@@ -239,7 +295,7 @@ int main(int argc, char *argv[]) {
         { {200,35, 48, 48}, MODE_BATTLE_SCENES, icons[3], 0.0f, "Maker/BattleScenes.exe" },
         { {260,35, 48, 48}, MODE_TEXT_EDITOR,   icons[4], 0.0f, "Maker/text_editor.exe" },
         { {320,35, 48, 48}, MODE_DATABASE,      icons[5], 0.0f, "Maker/Database.exe" },
-		{ {380,35, 48,48}, MODE_PLAYTEST, NULL, 0.0f, NULL },   // EXE‑путь не нужен
+        { {380,35, 48,48}, MODE_PLAYTEST, NULL, 0.0f, NULL },
     };
 
     EditorMode currentMode = MODE_MAP_EDITOR;
@@ -257,22 +313,32 @@ int main(int argc, char *argv[]) {
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) running = false;
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) running = false;
-			
+
+            if (e.type == SDL_MOUSEWHEEL) {
+                consoleScroll -= e.wheel.y * 3;
+                if (consoleScroll < 0) consoleScroll = 0;
+                if (consoleScroll > consoleLineCount) consoleScroll = consoleLineCount;
+            }
+
             if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-            for (int i = 0; i < MODE_COUNT; i++) {
-            SDL_Point pt = {mx, my};
-            if (SDL_PointInRect(&pt, &buttons[i].rect)) {
-            if (buttons[i].mode == MODE_PLAYTEST) {
-                RunPlaytest(projectRoot);
-            } else {
-                currentMode = buttons[i].mode;
-                run_program_with_dll(buttons[i].exe_path);
-                }
-                break;
+                for (int i = 0; i < MODE_COUNT; i++) {
+                    SDL_Point pt = {mx, my};
+                    if (SDL_PointInRect(&pt, &buttons[i].rect)) {
+                        if (buttons[i].mode == MODE_PLAYTEST) {
+                            Log("Playtest started");
+                            RunPlaytest(projectRoot);
+                        } else {
+                            currentMode = buttons[i].mode;
+                            char logMsg[256];
+                            snprintf(logMsg, sizeof(logMsg), "Started: %s", buttons[i].exe_path);
+                            Log(logMsg);
+                            run_program_with_dll(buttons[i].exe_path);
+                        }
+                        break;
+                    }
                 }
             }
         }
-    }
 
         for (int i = 0; i < MODE_COUNT; i++) {
             SDL_Point pt = {mx, my};
@@ -335,9 +401,11 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        SDL_Rect content = {0, 92, LOGICAL_W, LOGICAL_H - 92};
+        SDL_Rect content = {0, 92, LOGICAL_W, LOGICAL_H - 92 - CONSOLE_H};
         SDL_SetRenderDrawColor(ren, 25,25,38,255);
         SDL_RenderFillRect(ren, &content);
+
+        DrawConsole(ren, font);
 
         SDL_RenderPresent(ren);
         SDL_Delay(16);
@@ -351,5 +419,8 @@ int main(int argc, char *argv[]) {
     TTF_Quit();
     IMG_Quit();
     SDL_Quit();
+
+    for (int i = 0; i < consoleLineCount; i++) free(consoleBuffer[i]);
+
     return 0;
 }
