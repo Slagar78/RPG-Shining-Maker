@@ -108,6 +108,11 @@ class BattleManager
     @attack_targets = []
     @attack_target_index = 0
     @highlight_tex = load_highlight_texture
+	
+	@fade_alpha = 0
+    @pending_attacker = nil
+    @pending_defender = nil
+    @pending_damage = 0
 
     prepare_turn_order
 
@@ -681,11 +686,15 @@ end
     end
 
     if @attack_confirm_ready && (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D))
-      # Рассчитываем физический урон
       dmg = DamageCalculator.physical_for_units(@current_unit, @attack_target)
-      # Запускаем боевую сцену, передавая урон – здоровье уменьшится на последнем кадре атаки
-      @battle_scene.start(@current_unit, @attack_target, dmg)
-      @battle_state = :battle_scene
+      # Запоминаем данные для боевой сцены
+      @pending_attacker = @current_unit
+      @pending_defender = @attack_target
+      @pending_damage = dmg
+      # Запускаем затемнение
+      @fade_alpha = 0
+      @battle_state = :fade_to_battle
+      # Чистим состояние выбора цели
       @attack_target = nil
       @target_highlight = nil
       @attack_targets.clear
@@ -714,10 +723,20 @@ end
   end
 
     when :battle_scene
-      @battle_scene.update
-    end  # конец case
-  end    # конец метода update
+    @battle_scene.update
 
+    when :fade_to_battle
+      @fade_alpha += 600 * GetFrameTime()
+      if @fade_alpha >= 255
+        @fade_alpha = 255
+        @battle_scene.start(@pending_attacker, @pending_defender, @pending_damage)
+        @pending_attacker = nil
+        @pending_defender = nil
+        @pending_damage = 0
+        @battle_state = :battle_scene
+      end
+    end  # ← конец case
+  end    # ← конец метода update
 
   def update_units_animation
     (@allies + @enemies).each do |unit|
@@ -822,6 +841,10 @@ def draw
 
     @battle_menu.draw
     @battle_scene.draw
+	# Затемнение при переходе
+    if @battle_state == :fade_to_battle
+    DrawRectangle(0, 0, 576, 480, Fade(BLACK, @fade_alpha / 255.0))
+	end
 end
 
   def draw_active_unit_with_camera(cam_x, cam_y)
