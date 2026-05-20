@@ -88,6 +88,7 @@ class BattleManager
     @current_unit = nil
     @highlight_tiles = []
     @highlight_timer = 0
+	@saved_highlight_tiles = []
     @battle_player = nil
     @enemy_action_timer = 0
     @enemy_move_queue = []
@@ -348,6 +349,7 @@ end
     @start_y = @current_unit[:y]
 
     @highlight_tiles = calculate_move_range(@current_unit)
+	@saved_highlight_tiles = @highlight_tiles.dup
     @highlight_timer = 0
     @enemy_move_queue.clear
     @enemy_move_index = 0
@@ -707,7 +709,7 @@ end
       @target_highlight = nil
       @attack_targets.clear
       @battle_state = :player_turn
-      @highlight_tiles = calculate_move_range(@current_unit)   # ← вернули подсветку хода
+      @highlight_tiles = @saved_highlight_tiles.dup  # ← вернули подсветку хода
 	  @battle_player&.update_highlight_tiles(@highlight_tiles)
       @cursor.visible = true
       sync_cursor_to_unit
@@ -716,7 +718,7 @@ end
     end
   else
     @battle_state = :player_turn
-    @highlight_tiles = calculate_move_range(@current_unit)   # ← вернули подсветку хода
+    @highlight_tiles = @saved_highlight_tiles.dup  # ← вернули подсветку хода
 	@battle_player&.update_highlight_tiles(@highlight_tiles)
     @cursor.visible = true
     sync_cursor_to_unit

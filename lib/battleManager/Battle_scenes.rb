@@ -29,7 +29,7 @@ class BattleScene
   IDLE_BEFORE_DURATION = 1.5
   IDLE_AFTER_DURATION  = 1.5
   PRE_ATTACK_DURATION = 0.5
-  RUN_IN_DURATION      = 0.5   # длительность выезда персонажа
+  RUN_IN_DURATION      = 0.35   # длительность выезда персонажа
 
   def initialize(battle_manager)
     @battle_manager = battle_manager
