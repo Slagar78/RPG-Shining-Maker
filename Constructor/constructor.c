@@ -7,6 +7,9 @@
 #include <stdbool.h>
 #include <windows.h>
 
+#include <stdio.h>
+#include <string.h>
+
 #define LOGICAL_W 1024
 #define LOGICAL_H 768
 
@@ -26,6 +29,7 @@ typedef enum {
     MODE_BATTLE_SCENES,   // новая кнопка
     MODE_TEXT_EDITOR,
     MODE_DATABASE,
+	MODE_PLAYTEST,
     MODE_COUNT
 } EditorMode;
 
@@ -88,6 +92,59 @@ void run_program_with_dll(const char *exe_name) {
     SetEnvironmentVariable("PATH", oldPath);
 }
 
+void RunPlaytest(const char *projectRoot) {
+    char rubyExe[1024], gameRb[1024], gemHome[1024], dllDir[1024], binDir[1024];
+
+    snprintf(rubyExe, sizeof(rubyExe), "%sPortableRuby\\bin\\ruby.exe", projectRoot);
+    snprintf(gameRb, sizeof(gameRb), "%sgame.rb", projectRoot);
+    snprintf(gemHome, sizeof(gemHome), "%sPortableRuby\\gems", projectRoot);
+    snprintf(dllDir, sizeof(dllDir), "%sPortableRuby\\dll", projectRoot);
+    snprintf(binDir, sizeof(binDir), "%sPortableRuby\\bin", projectRoot);
+
+    if (!file_exists(rubyExe) || !file_exists(gameRb)) {
+        MessageBox(NULL, "ruby.exe or game.rb not found!\n\nCheck paths:", "Playtest Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    // === Создаём временный bat-файл с явным указанием рабочей директории ===
+    char batPath[MAX_PATH];
+    GetTempPath(MAX_PATH, batPath);
+    strcat(batPath, "playtest.bat");
+
+    FILE *f = fopen(batPath, "w");
+    if (!f) {
+        MessageBox(NULL, "Cannot create temp bat file", "Playtest Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    fprintf(f, "@echo off\r\n");
+    fprintf(f, "chcp 65001 >nul\r\n");                    // UTF-8
+    fprintf(f, "cd /d \"%s\"\r\n", projectRoot);           // ← переходим в корень проекта
+    fprintf(f, "set \"GEM_HOME=%s\"\r\n", gemHome);
+    fprintf(f, "set \"GEM_PATH=%s\"\r\n", gemHome);
+    fprintf(f, "set \"PATH=%s;%s;%%PATH%%\"\r\n", dllDir, binDir);
+    fprintf(f, "\"%s\" \"%s\" --playtest\r\n", rubyExe, gameRb);
+    fclose(f);
+
+    // Запускаем bat-файл и ждём завершения игры
+    STARTUPINFO si = { sizeof(STARTUPINFO) };
+    PROCESS_INFORMATION pi;
+    char cmdLine[4096];
+    snprintf(cmdLine, sizeof(cmdLine), "cmd /c \"%s\"", batPath);
+
+    if (CreateProcess(NULL, cmdLine, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi)) {
+        // Ожидаем закрытия консольного окна (игры)
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    } else {
+        MessageBox(NULL, "Failed to start playtest", "Error", MB_OK | MB_ICONERROR);
+    }
+
+    // Удаляем временный bat-файл
+    DeleteFile(batPath);
+}
+
 int main(int argc, char *argv[]) {
     // Скрываем консольное окно (если запущено с консолью)
     FreeConsole();
@@ -134,6 +191,9 @@ int main(int argc, char *argv[]) {
     GetModuleFileName(NULL, exePath, MAX_PATH);
     char *lastSlash = strrchr(exePath, '\\');
     if (lastSlash) *(lastSlash + 1) = '\0';
+    // Корень проекта (на уровень выше папки конструктора)
+    char projectRoot[1024];
+    snprintf(projectRoot, sizeof(projectRoot), "%s..\\", exePath);
 
     TTF_Font *font = TTF_OpenFont("Font/NotoSans-Regular.ttf", 14);
     if (!font) font = TTF_OpenFont("Font/main.ttf", 14);
@@ -147,14 +207,14 @@ int main(int argc, char *argv[]) {
 
     if (!font || !font_bold) { printf("Font error\n"); return 1; }
 
-    // Иконки: теперь 6 штук
     const char *iconFilenames[MODE_COUNT] = {
         "map.png", "terrain.png", "battle.png",
-        "battle_scenes.png",   // новая иконка
-        "text.png", "database.png"
+        "battle_scenes.png",
+        "text.png", "database.png",
+        "play.png"
     };
-    SDL_Texture *icons[MODE_COUNT] = { NULL };
 
+    SDL_Texture *icons[MODE_COUNT] = { NULL };
     for (int i = 0; i < MODE_COUNT; i++) {
         char fullPath[512];
         snprintf(fullPath, sizeof(fullPath), "%sicons/%s", exePath, iconFilenames[i]);
@@ -179,6 +239,7 @@ int main(int argc, char *argv[]) {
         { {200,35, 48, 48}, MODE_BATTLE_SCENES, icons[3], 0.0f, "Maker/BattleScenes.exe" },
         { {260,35, 48, 48}, MODE_TEXT_EDITOR,   icons[4], 0.0f, "Maker/text_editor.exe" },
         { {320,35, 48, 48}, MODE_DATABASE,      icons[5], 0.0f, "Maker/Database.exe" },
+		{ {380,35, 48,48}, MODE_PLAYTEST, NULL, 0.0f, NULL },   // EXE‑путь не нужен
     };
 
     EditorMode currentMode = MODE_MAP_EDITOR;
@@ -196,17 +257,22 @@ int main(int argc, char *argv[]) {
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) running = false;
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) running = false;
+			
             if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-                for (int i = 0; i < MODE_COUNT; i++) {
-                    SDL_Point pt = {mx, my};
-                    if (SDL_PointInRect(&pt, &buttons[i].rect)) {
-                        currentMode = buttons[i].mode;
-                        run_program_with_dll(buttons[i].exe_path);
-                        break;
-                    }
+            for (int i = 0; i < MODE_COUNT; i++) {
+            SDL_Point pt = {mx, my};
+            if (SDL_PointInRect(&pt, &buttons[i].rect)) {
+            if (buttons[i].mode == MODE_PLAYTEST) {
+                RunPlaytest(projectRoot);
+            } else {
+                currentMode = buttons[i].mode;
+                run_program_with_dll(buttons[i].exe_path);
+                }
+                break;
                 }
             }
         }
+    }
 
         for (int i = 0; i < MODE_COUNT; i++) {
             SDL_Point pt = {mx, my};

@@ -714,7 +714,7 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
         draw_text_ext(renderer, res_x, res_y+3, label, white);
         int val_x = res_x + 80;
         draw_text_ext(renderer, val_x, res_y+3, opts[idx], white);
-        SDL_Rect prev = {val_x + 50, res_y, 20, 22};
+        SDL_Rect prev = {val_x + 95, res_y, 20, 22};
         SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255); SDL_RenderFillRect(renderer, &prev);
         SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255); SDL_RenderDrawRect(renderer, &prev);
         draw_text_ext(renderer, prev.x+5, prev.y+3, "<", white);

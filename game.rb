@@ -1,4 +1,7 @@
 # game.rb
+
+$playtest_mode = ARGV.include?("--playtest")
+
 require 'raylib'
 require_relative 'lib/camera'
 require_relative 'lib/database'
