@@ -650,7 +650,7 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
 
         char buf[128];
         snprintf(buf, sizeof(buf), "%s (Lv %d)", class_spells[i].spell_name, class_spells[i].spell_level);
-        SDL_Rect rr = {px+70, y, 360, 20};
+        SDL_Rect rr = {px+70, y, 200, 20};
         if (i == selected_spell_entry) {
             SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 128);
             SDL_RenderFillRect(renderer, &rr);
@@ -844,7 +844,7 @@ void classes_handle_input(SDL_Event *evt) {
             return;
         }
 
-        // --- Список заклинаний (проверяем ПЕРЕД Resistance) ---
+        // --- Список заклинаний ---
         SDL_Rect up_arrow = {px + 20, up_arrow_rect_y, 30, 30};
         if (spell_list_scroll > 0 && mx >= up_arrow.x && mx < up_arrow.x + up_arrow.w &&
             my >= up_arrow.y && my < up_arrow.y + up_arrow.h) {
@@ -860,6 +860,7 @@ void classes_handle_input(SDL_Event *evt) {
             int item_y = first_item_y + (i - spell_list_scroll) * 20;
 
             if (i == selected_spell_entry) {
+                // Кнопки смены имени заклинания
                 SDL_Rect prev_name_btn = {px + 20, item_y, 20, 20};
                 if (mx >= prev_name_btn.x && mx < prev_name_btn.x + prev_name_btn.w &&
                     my >= prev_name_btn.y && my < prev_name_btn.y + prev_name_btn.h) {
@@ -911,36 +912,38 @@ void classes_handle_input(SDL_Event *evt) {
                     }
                     return;
                 }
+
+                // Кнопки смены уровня заклинания (ПРОВЕРЯЮТСЯ ПЕРЕД ТЕКСТОМ)
+                if (spell_levels_count > 0) {
+                    SDL_Rect prev_lvl = {px + 240, item_y, 20, 20};
+                    if (mx >= prev_lvl.x && mx < prev_lvl.x + prev_lvl.w &&
+                        my >= prev_lvl.y && my < prev_lvl.y + prev_lvl.h) {
+                        if (selected_spell_level_idx > 0) {
+                            selected_spell_level_idx--;
+                            class_spells[selected_spell_entry].spell_level = spell_levels[selected_spell_level_idx];
+                            commit_class_changes();
+                        }
+                        return;
+                    }
+                    SDL_Rect next_lvl = {px + 265, item_y, 20, 20};
+                    if (mx >= next_lvl.x && mx < next_lvl.x + next_lvl.w &&
+                        my >= next_lvl.y && my < next_lvl.y + next_lvl.h) {
+                        if (selected_spell_level_idx < spell_levels_count - 1) {
+                            selected_spell_level_idx++;
+                            class_spells[selected_spell_entry].spell_level = spell_levels[selected_spell_level_idx];
+                            commit_class_changes();
+                        }
+                        return;
+                    }
+                }
             }
 
+            // Клик по тексту заклинания (выделение строки)
             SDL_Rect item = {px + 70, item_y, 360, 20};
             if (mx >= item.x && mx < item.x + item.w && my >= item.y && my < item.y + item.h) {
                 selected_spell_entry = i;
                 update_spell_levels();
                 return;
-            }
-
-            if (i == selected_spell_entry && spell_levels_count > 0) {
-                SDL_Rect prev_lvl = {px + 240, item_y, 20, 20};
-                if (mx >= prev_lvl.x && mx < prev_lvl.x + prev_lvl.w &&
-                    my >= prev_lvl.y && my < prev_lvl.y + prev_lvl.h) {
-                    if (selected_spell_level_idx > 0) {
-                        selected_spell_level_idx--;
-                        class_spells[selected_spell_entry].spell_level = spell_levels[selected_spell_level_idx];
-                        commit_class_changes();
-                    }
-                    return;
-                }
-                SDL_Rect next_lvl = {px + 265, item_y, 20, 20};
-                if (mx >= next_lvl.x && mx < next_lvl.x + next_lvl.w &&
-                    my >= next_lvl.y && my < next_lvl.y + next_lvl.h) {
-                    if (selected_spell_level_idx < spell_levels_count - 1) {
-                        selected_spell_level_idx++;
-                        class_spells[selected_spell_entry].spell_level = spell_levels[selected_spell_level_idx];
-                        commit_class_changes();
-                    }
-                    return;
-                }
             }
         }
 
@@ -985,7 +988,7 @@ void classes_handle_input(SDL_Event *evt) {
             return;
         }
 
-        // Resistance стрелки (теперь после списка заклинаний)
+        // Resistance стрелки
         for (int i = 0; i < 8; i++) {
             SDL_Rect *prev = &resistance_prev_rects[i];
             SDL_Rect *next = &resistance_next_rects[i];
