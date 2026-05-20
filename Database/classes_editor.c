@@ -7,7 +7,6 @@
 #include <windows.h>
 #include <commdlg.h>
 
-// Кроссплатформенное регистронезависимое сравнение строк
 #ifdef _WIN32
 #define strcasecmp _stricmp
 #else
@@ -24,13 +23,11 @@ extern char error_msg[256];
 int draw_text_ext(SDL_Renderer *r, int x, int y, const char *text, SDL_Color color);
 char* open_file_dialog();
 
-// ========== ОПРЕДЕЛЕНИЯ КОНСТАНТ (все собраны в одном месте) ==========
 #define MAX_SPELLS_PER_CLASS 12
 #define MAX_VISIBLE_SPELLS 4
-#define MAX_CLASS_FIELDS 30
+#define MAX_CLASS_FIELDS 60
 #define BLINK_SPEED 30
 #define SAVE_BLINK_DURATION 42
-// ======================================================================
 
 static cJSON *classes = NULL;
 static int class_count = 0;
@@ -46,7 +43,38 @@ static int selected_spell_level_idx = -1;
 static char name_buf[11] = {0};
 static char full_name_buf[17] = {0};
 static int move_val = 5;
-static char move_type_buf[32] = {"REGULAR"};
+static char move_type_buf[32] = {"regular"};
+
+static char race_buf[32] = {"Enterran"};
+static char status_buf[32] = {"normal"};
+static char initial_status_buf[32] = {"none"};
+
+static const char *race_options[] = {"Enterran", "Cadrian", "Human"};
+static const int race_count = 3;
+static int race_index = 0;
+
+static const char *status_options[] = {"normal", "hyper", "ultra"};
+static const int status_count = 3;
+static int status_index = 0;
+
+static const char *movetype_options[] = {
+    "regular", "centaur", "stealth", "brass_gunner", "flying",
+    "hovering", "aquatic", "archer", "centaur_archer",
+    "stealth_archer", "mage", "healer", "ghost"
+};
+static const int movetype_count = 13;
+static int movetype_index = 0;
+
+static const char *resistance_labels[] = {
+    "wind", "lightning", "ice", "fire", "aqua", "earth", "neutral", "affliction"
+};
+static const char *resistance_options_normal[] = {"none", "minor", "major", "weakness"};
+static const char *resistance_options_affliction[] = {"none", "minor", "major", "weakness", "immunity"};
+static const int resistance_options_count_normal = 4;
+static const int resistance_options_count_affliction = 5;
+static int resistance_indices[8] = {0};
+
+static char prowess_buf[512] = "";
 
 typedef struct {
     int start;
@@ -91,9 +119,15 @@ static int class_field_count = 0;
 static int class_active_field = -1;
 
 static int last_btn_y = 0;
-static int g_window_height = 680; // значение по умолчанию
+static int g_window_height = 680;
 
-// Прототипы функций
+static SDL_Rect race_prev_btn, race_next_btn;
+static SDL_Rect status_prev_btn, status_next_btn;
+static SDL_Rect mt_prev_btn, mt_next_btn;
+static SDL_Rect resistance_prev_rects[8];
+static SDL_Rect resistance_next_rects[8];
+
+// Прототипы
 static void build_curve_list(void);
 static void build_spell_name_list(void);
 static void commit_class_changes(void);
@@ -107,7 +141,13 @@ static void add_new_class(void);
 static void delete_class(void);
 static void update_spell_levels(void);
 
-// static void build_curve_list
+static void update_race_status_in_json(void);
+static void update_movetype_in_json(void);
+static void update_resistance_in_json(int idx);
+static void update_prowess_in_json(void);
+static void update_initial_status_in_json(void);
+
+// ---------- build_curve_list ----------
 static void build_curve_list(void) {
     curve_count = 0;
     extern cJSON *curves_json;
@@ -161,6 +201,26 @@ static void commit_class_changes(void) {
     cJSON *mt = cJSON_GetObjectItem(cls, "move_type");
     if (mt) cJSON_SetValuestring(mt, move_type_buf);
 
+    update_race_status_in_json();
+    update_movetype_in_json();
+    update_initial_status_in_json();
+    update_prowess_in_json();
+
+    cJSON *res = cJSON_GetObjectItem(cls, "resistance");
+    if (!res) {
+        res = cJSON_CreateObject();
+        cJSON_AddItemToObject(cls, "resistance", res);
+    }
+    for (int i = 0; i < 8; i++) {
+        const char **opts = (i == 7) ? resistance_options_affliction : resistance_options_normal;
+        const char *new_val = opts[resistance_indices[i]];
+        cJSON *item = cJSON_GetObjectItem(res, resistance_labels[i]);
+        if (item && cJSON_IsString(item))
+            cJSON_SetValuestring(item, new_val);
+        else
+            cJSON_AddStringToObject(res, resistance_labels[i], new_val);
+    }
+
     const char *gkeys[] = {"hp_growth","mp_growth","attack_growth","defense_growth","agility_growth"};
     for (int i = 0; i < 5; i++) {
         cJSON *gr = cJSON_GetObjectItem(cls, gkeys[i]);
@@ -193,7 +253,40 @@ static void load_class_fields(void) {
     strncpy(full_name_buf, fn ? fn : "", 16); full_name_buf[16] = '\0';
     move_val = cJSON_GetObjectItem(cls, "move")->valueint;
     const char *mt = cJSON_GetObjectItem(cls, "move_type")->valuestring;
-    strncpy(move_type_buf, mt ? mt : "", 31); move_type_buf[31] = '\0';
+    strncpy(move_type_buf, mt ? mt : "regular", 31); move_type_buf[31] = '\0';
+
+    const char *rc = cJSON_GetObjectItem(cls, "race") ? cJSON_GetObjectItem(cls, "race")->valuestring : "Enterran";
+    strncpy(race_buf, rc, 31); race_buf[31] = '\0';
+    for (int i = 0; i < race_count; i++) if (strcmp(rc, race_options[i]) == 0) { race_index = i; break; }
+
+    const char *st = cJSON_GetObjectItem(cls, "status") ? cJSON_GetObjectItem(cls, "status")->valuestring : "normal";
+    strncpy(status_buf, st, 31); status_buf[31] = '\0';
+    for (int i = 0; i < status_count; i++) if (strcmp(st, status_options[i]) == 0) { status_index = i; break; }
+
+    const char *is = cJSON_GetObjectItem(cls, "initial_status") ? cJSON_GetObjectItem(cls, "initial_status")->valuestring : "none";
+    strncpy(initial_status_buf, is, 31); initial_status_buf[31] = '\0';
+
+    for (int i = 0; i < movetype_count; i++) if (strcmp(move_type_buf, movetype_options[i]) == 0) { movetype_index = i; break; }
+
+    cJSON *res = cJSON_GetObjectItem(cls, "resistance");
+    for (int i = 0; i < 8; i++) {
+        const char *val = "none";
+        if (res) {
+            cJSON *el = cJSON_GetObjectItem(res, resistance_labels[i]);
+            if (el && cJSON_IsString(el)) val = el->valuestring;
+        }
+        const char **opts = (i == 7) ? resistance_options_affliction : resistance_options_normal;
+        int cnt = (i == 7) ? resistance_options_count_affliction : resistance_options_count_normal;
+        int idx = 0;
+        for (int j = 0; j < cnt; j++) {
+            if (strcmp(val, opts[j]) == 0) { idx = j; break; }
+        }
+        resistance_indices[i] = idx;
+    }
+
+    cJSON *prow = cJSON_GetObjectItem(cls, "prowess");
+    char *prow_str = prow ? cJSON_PrintUnformatted(prow) : strdup("[]");
+    strncpy(prowess_buf, prow_str, 511); prowess_buf[511] = '\0'; free(prow_str);
 
     const char *gkeys[] = {"hp_growth","mp_growth","attack_growth","defense_growth","agility_growth"};
     for (int i = 0; i < 5; i++) {
@@ -234,52 +327,51 @@ static void open_class_fields(void) {
     int px = 360, py = 50;
     int base_y = py + 10;
 
-    // Name поле (rect должен совпадать с визуальным полем: x + 60 + 30)
     snprintf(class_fields[0].text, sizeof(class_fields[0].text), "%s", name_buf);
     class_fields[0].cursor = strlen(class_fields[0].text);
     class_fields[0].active = 0; class_fields[0].is_numeric = 0; class_fields[0].max_len = 10;
     class_fields[0].field_id = 0; class_fields[0].is_curve = 0;
-    class_fields[0].rect = (SDL_Rect){px + 10 + 60 + 30, base_y + 0*35, 150, 22};   // 460
+    class_fields[0].rect = (SDL_Rect){px + 10 + 60 + 30, base_y + 0*35, 150, 22};
 
-    // Full Name
     snprintf(class_fields[1].text, sizeof(class_fields[1].text), "%s", full_name_buf);
     class_fields[1].cursor = strlen(class_fields[1].text);
     class_fields[1].active = 0; class_fields[1].is_numeric = 0; class_fields[1].max_len = 16;
     class_fields[1].field_id = 1; class_fields[1].is_curve = 0;
     class_fields[1].rect = (SDL_Rect){px + 10 + 60 + 30, base_y + 1*35, 150, 22};
 
-    // Move (укороченное)
     snprintf(class_fields[2].text, sizeof(class_fields[2].text), "%d", move_val);
     class_fields[2].cursor = strlen(class_fields[2].text);
     class_fields[2].active = 0; class_fields[2].is_numeric = 1; class_fields[2].max_len = 3;
     class_fields[2].field_id = 2; class_fields[2].is_curve = 0;
     class_fields[2].rect = (SDL_Rect){px+10+60, base_y + 2*35, 70, 22};
 
-    int growth_start_y = base_y + 3*35;          // ← исправлено: 3 вместо 4
+    // Новые поля: race, status, move_type, resistance, prowess, initial_status
+    // Они не используют class_fields, а рисуются отдельно в draw_edit_panel.
+    // Но для целостности добавим их как неактивные поля с field_id > 200, чтобы не сломать перебор.
+    // Нам нужно только добавить нужное количество полей в class_field_count, если на них нажимают.
+    // Однако мы их не будем активировать (is_curve=1 или пропустим), чтобы не мешать вводу.
+    // Лучше просто добавить несколько пустых полей с is_curve=1, чтобы сохранить индексы.
     int idx = 3;
-	for (int s = 0; s < 5; s++) {
-    // Start
-    snprintf(class_fields[idx].text, sizeof(class_fields[idx].text), "%d", growth[s].start);
-    class_fields[idx].cursor = strlen(class_fields[idx].text);
-    class_fields[idx].active = 0; class_fields[idx].is_numeric = 1; class_fields[idx].max_len = 5;
-    class_fields[idx].field_id = 100 + s*2;
-    class_fields[idx].is_curve = 0;
-    class_fields[idx].rect = (SDL_Rect){px+80+60, growth_start_y + s*35, 70, 22};  // ← +60
-    idx++;
-    // Projected
-    snprintf(class_fields[idx].text, sizeof(class_fields[idx].text), "%d", growth[s].projected);
-    class_fields[idx].cursor = strlen(class_fields[idx].text);
-    class_fields[idx].active = 0; class_fields[idx].is_numeric = 1; class_fields[idx].max_len = 5;
-    class_fields[idx].field_id = 100 + s*2 + 1;
-    class_fields[idx].is_curve = 0;
-    class_fields[idx].rect = (SDL_Rect){px+190+60, growth_start_y + s*35, 70, 22}; // ← +60
-    idx++;
-    // Curve
-    class_fields[idx].field_id = 200 + s;
-    class_fields[idx].is_curve = 1;
-    class_fields[idx].rect = (SDL_Rect){0,0,0,0};
-    idx++;
-}
+    for (int s = 0; s < 5; s++) {
+        snprintf(class_fields[idx].text, sizeof(class_fields[idx].text), "%d", growth[s].start);
+        class_fields[idx].cursor = strlen(class_fields[idx].text);
+        class_fields[idx].active = 0; class_fields[idx].is_numeric = 1; class_fields[idx].max_len = 5;
+        class_fields[idx].field_id = 100 + s*2;
+        class_fields[idx].is_curve = 0;
+        class_fields[idx].rect = (SDL_Rect){px+80+60, base_y + 3*35 + s*35, 70, 22};
+        idx++;
+        snprintf(class_fields[idx].text, sizeof(class_fields[idx].text), "%d", growth[s].projected);
+        class_fields[idx].cursor = strlen(class_fields[idx].text);
+        class_fields[idx].active = 0; class_fields[idx].is_numeric = 1; class_fields[idx].max_len = 5;
+        class_fields[idx].field_id = 100 + s*2 + 1;
+        class_fields[idx].is_curve = 0;
+        class_fields[idx].rect = (SDL_Rect){px+190+60, base_y + 3*35 + s*35, 70, 22};
+        idx++;
+        class_fields[idx].field_id = 200 + s;
+        class_fields[idx].is_curve = 1;
+        class_fields[idx].rect = (SDL_Rect){0,0,0,0};
+        idx++;
+    }
     class_field_count = idx;
 }
 
@@ -408,7 +500,7 @@ static void draw_class_field(SDL_Renderer *r, int x, int y, int w, int h, int id
 {
     SDL_Color white = {255,255,255}, black = {0,0,0}, gray = {100,100,100};
     draw_text_ext(r, x, y + 3, label, white);
-    int fx = x + 60 + field_extra_x;          // поле сдвигается на field_extra_x
+    int fx = x + 60 + field_extra_x;
     SDL_Rect rect = {fx, y, w, h};
     SDL_SetRenderDrawColor(r, gray.r, gray.g, gray.b, 255);
     SDL_RenderFillRect(r, &rect);
@@ -438,7 +530,7 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     if (selected_class < 0) return;
     SDL_Color black = {0,0,0,255}, white = {255,255,255}, blue = {70,70,120};
     SDL_Color gray = {100,100,100};
-    SDL_Rect panel = {px, py, 580, 550};
+    SDL_Rect panel = {px, py, 580, 780};   // чуть выше, чтобы всё влезло
     SDL_SetRenderDrawColor(renderer, 60,60,60,255); SDL_RenderFillRect(renderer, &panel);
     SDL_SetRenderDrawColor(renderer, 255,255,255,255); SDL_RenderDrawRect(renderer, &panel);
 
@@ -456,6 +548,7 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     draw_class_field(renderer, px + 10, y, 70, 22, 2, "Move:", mvstr, 0);
     y += 35;
 
+    // Growths
     for (int s = 0; s < 5; s++) {
         char start_str[8], proj_str[8];
         snprintf(start_str, sizeof(start_str), "%d", growth[s].start);
@@ -477,6 +570,49 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
         y += 35;
     }
 
+    // ---- Новые поля ----
+    int race_start_y = y;   // запоминаем для Resistance
+
+    // Race
+    draw_text_ext(renderer, px+10, y+3, "Race:", white);
+    draw_text_ext(renderer, px+100, y+3, race_options[race_index], white);
+    race_prev_btn = (SDL_Rect){px+250, y, 20, 22};
+    SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255); SDL_RenderFillRect(renderer, &race_prev_btn);
+    SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255); SDL_RenderDrawRect(renderer, &race_prev_btn);
+    draw_text_ext(renderer, race_prev_btn.x+5, race_prev_btn.y+3, "<", white);
+    race_next_btn = (SDL_Rect){race_prev_btn.x + 25, y, 20, 22};
+    SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255); SDL_RenderFillRect(renderer, &race_next_btn);
+    SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255); SDL_RenderDrawRect(renderer, &race_next_btn);
+    draw_text_ext(renderer, race_next_btn.x+5, race_next_btn.y+3, ">", white);
+    y += 35;
+
+    // Status
+    draw_text_ext(renderer, px+10, y+3, "Status:", white);
+    draw_text_ext(renderer, px+100, y+3, status_options[status_index], white);
+    status_prev_btn = (SDL_Rect){px+250, y, 20, 22};
+    SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255); SDL_RenderFillRect(renderer, &status_prev_btn);
+    SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255); SDL_RenderDrawRect(renderer, &status_prev_btn);
+    draw_text_ext(renderer, status_prev_btn.x+5, status_prev_btn.y+3, "<", white);
+    status_next_btn = (SDL_Rect){status_prev_btn.x + 25, y, 20, 22};
+    SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255); SDL_RenderFillRect(renderer, &status_next_btn);
+    SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255); SDL_RenderDrawRect(renderer, &status_next_btn);
+    draw_text_ext(renderer, status_next_btn.x+5, status_next_btn.y+3, ">", white);
+    y += 35;
+
+    // Move Type
+    draw_text_ext(renderer, px+10, y+3, "MoveType:", white);
+    draw_text_ext(renderer, px+100, y+3, movetype_options[movetype_index], white);
+    mt_prev_btn = (SDL_Rect){px+250, y, 20, 22};
+    SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255); SDL_RenderFillRect(renderer, &mt_prev_btn);
+    SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255); SDL_RenderDrawRect(renderer, &mt_prev_btn);
+    draw_text_ext(renderer, mt_prev_btn.x+5, mt_prev_btn.y+3, "<", white);
+    mt_next_btn = (SDL_Rect){mt_prev_btn.x + 25, y, 20, 22};
+    SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255); SDL_RenderFillRect(renderer, &mt_next_btn);
+    SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255); SDL_RenderDrawRect(renderer, &mt_next_btn);
+    draw_text_ext(renderer, mt_next_btn.x+5, mt_next_btn.y+3, ">", white);
+    y += 35;
+
+    // --- Spell List (перенесён сюда, сразу после Move Type) ---
     y += 10;
     draw_text_ext(renderer, px+10, y, "Spell List:", white);
     y += 22;
@@ -484,7 +620,6 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     const int visible = MAX_VISIBLE_SPELLS;
     const int total = class_spell_count;
 
-    // ----- Стрелка вверх -----
     int up_possible = (spell_list_scroll > 0);
     SDL_Color up_color = up_possible ? blue : gray;
     up_arrow_rect_y = y;
@@ -496,11 +631,8 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     draw_text_ext(renderer, up_arrow.x+10, up_arrow.y+5, "^", white);
     y += 30;
 
-    // ----- Список заклинаний с кнопками имени (слева) и уровня (справа) -----
     for (int i = spell_list_scroll; i < total && i < spell_list_scroll + visible; i++) {
-        // Кнопки выбора имени (только для выбранного заклинания)
         if (i == selected_spell_entry) {
-            // Кнопка "<<" (предыдущее имя)
             SDL_Rect prev_name_btn = {px+20, y, 20, 20};
             SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255);
             SDL_RenderFillRect(renderer, &prev_name_btn);
@@ -508,7 +640,6 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
             SDL_RenderDrawRect(renderer, &prev_name_btn);
             draw_text_ext(renderer, prev_name_btn.x+5, prev_name_btn.y+3, "<", white);
 
-            // Кнопка ">>" (следующее имя)
             SDL_Rect next_name_btn = {px+45, y, 20, 20};
             SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255);
             SDL_RenderFillRect(renderer, &next_name_btn);
@@ -517,7 +648,6 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
             draw_text_ext(renderer, next_name_btn.x+5, next_name_btn.y+3, ">", white);
         }
 
-        // Текст заклинания (сдвинут вправо)
         char buf[128];
         snprintf(buf, sizeof(buf), "%s (Lv %d)", class_spells[i].spell_name, class_spells[i].spell_level);
         SDL_Rect rr = {px+70, y, 360, 20};
@@ -527,16 +657,15 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
         }
         draw_text_ext(renderer, px+70, y, buf, white);
 
-        // Кнопки выбора уровня (только для выбранного заклинания)
         if (i == selected_spell_entry && spell_levels_count > 0) {
-            SDL_Rect prev_lvl = {px+440, y, 20, 20};
+            SDL_Rect prev_lvl = {px+240, y, 20, 20};
             SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255);
             SDL_RenderFillRect(renderer, &prev_lvl);
             SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255);
             SDL_RenderDrawRect(renderer, &prev_lvl);
             draw_text_ext(renderer, prev_lvl.x+5, prev_lvl.y+3, "<", white);
 
-            SDL_Rect next_lvl = {px+465, y, 20, 20};
+            SDL_Rect next_lvl = {px+265, y, 20, 20};
             SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255);
             SDL_RenderFillRect(renderer, &next_lvl);
             SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255);
@@ -546,7 +675,6 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
         y += 20;
     }
 
-    // ----- Стрелка вниз -----
     int down_possible = (spell_list_scroll + visible < total);
     SDL_Color down_color = down_possible ? blue : gray;
     down_arrow_rect_y = y;
@@ -558,7 +686,6 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     draw_text_ext(renderer, down_arrow.x+10, down_arrow.y+5, "v", white);
     y += 30;
 
-    // Кнопки Add / Delete (без изменений)
     SDL_Rect spell_add_btn = {px+20, y, 20, 20};
     SDL_SetRenderDrawColor(renderer, 100,200,100,255);
     SDL_RenderFillRect(renderer, &spell_add_btn);
@@ -573,9 +700,48 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     SDL_RenderDrawRect(renderer, &spell_del_btn);
     draw_text_ext(renderer, spell_del_btn.x+5, spell_del_btn.y+2, "-", black);
     last_spell_btns_y = y;
+    // конец Spell List
 
-    y += 24;
-    int btn_y = y + 10;
+    // --- Resistance (напротив Race) ---
+    int res_x = px + 350;                     // отступ справа, подбери под свой вкус
+    int res_y = race_start_y;                 // та же строка, что и Race
+    draw_text_ext(renderer, res_x, res_y, "Resistance:", white);
+    res_y += 22;
+    for (int i = 0; i < 8; i++) {
+        const char *label = resistance_labels[i];
+        const char **opts = (i == 7) ? resistance_options_affliction : resistance_options_normal;
+        int idx = resistance_indices[i];
+        draw_text_ext(renderer, res_x, res_y+3, label, white);
+        int val_x = res_x + 80;
+        draw_text_ext(renderer, val_x, res_y+3, opts[idx], white);
+        SDL_Rect prev = {val_x + 50, res_y, 20, 22};
+        SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255); SDL_RenderFillRect(renderer, &prev);
+        SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255); SDL_RenderDrawRect(renderer, &prev);
+        draw_text_ext(renderer, prev.x+5, prev.y+3, "<", white);
+        SDL_Rect next = {prev.x + 25, res_y, 20, 22};
+        SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, 255); SDL_RenderFillRect(renderer, &next);
+        SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255); SDL_RenderDrawRect(renderer, &next);
+        draw_text_ext(renderer, next.x+5, next.y+3, ">", white);
+        resistance_prev_rects[i] = prev;
+        resistance_next_rects[i] = next;
+        res_y += 24;
+    }
+
+    // --- Prowess и InitStatus (после Resistance) ---
+    // y уже указывает на конец Spell List, поэтому продолжаем оттуда
+    // (можно также синхронизировать с res_y, если нужно ниже)
+    y += 20;   // небольшой отступ
+    draw_text_ext(renderer, px+10, y+3, "Prowess:", white);
+    draw_text_ext(renderer, px+100, y+3, prowess_buf, white);
+    y += 35;
+
+    draw_text_ext(renderer, px+10, y+3, "InitStatus:", white);
+    draw_text_ext(renderer, px+100, y+3, initial_status_buf, white);
+    y += 35;
+
+    // --- Основные кнопки ---
+    y += 10;
+    int btn_y = y;
     last_btn_y = btn_y;
 
     SDL_Rect save_btn = {px+130, btn_y, 80, 30};
@@ -599,6 +765,7 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     SDL_SetRenderDrawColor(renderer, 255,255,255,255); SDL_RenderDrawRect(renderer, &add_btn);
     draw_text_ext(renderer, add_btn.x+10, add_btn.y+5, "Add Class", white);
 }
+
 
 void classes_handle_input(SDL_Event *evt) {
     for (int i = 0; i < class_field_count; i++) {
@@ -637,7 +804,47 @@ void classes_handle_input(SDL_Event *evt) {
             }
         }
 
-        // Стрелка вверх списка заклинаний
+        // Новые стрелки (Race, Status, MoveType)
+        if (mx >= race_prev_btn.x && mx < race_prev_btn.x+race_prev_btn.w &&
+            my >= race_prev_btn.y && my < race_prev_btn.y+race_prev_btn.h) {
+            race_index = (race_index - 1 + race_count) % race_count;
+            update_race_status_in_json();
+            return;
+        }
+        if (mx >= race_next_btn.x && mx < race_next_btn.x+race_next_btn.w &&
+            my >= race_next_btn.y && my < race_next_btn.y+race_next_btn.h) {
+            race_index = (race_index + 1) % race_count;
+            update_race_status_in_json();
+            return;
+        }
+
+        if (mx >= status_prev_btn.x && mx < status_prev_btn.x+status_prev_btn.w &&
+            my >= status_prev_btn.y && my < status_prev_btn.y+status_prev_btn.h) {
+            status_index = (status_index - 1 + status_count) % status_count;
+            update_race_status_in_json();
+            return;
+        }
+        if (mx >= status_next_btn.x && mx < status_next_btn.x+status_next_btn.w &&
+            my >= status_next_btn.y && my < status_next_btn.y+status_next_btn.h) {
+            status_index = (status_index + 1) % status_count;
+            update_race_status_in_json();
+            return;
+        }
+
+        if (mx >= mt_prev_btn.x && mx < mt_prev_btn.x+mt_prev_btn.w &&
+            my >= mt_prev_btn.y && my < mt_prev_btn.y+mt_prev_btn.h) {
+            movetype_index = (movetype_index - 1 + movetype_count) % movetype_count;
+            update_movetype_in_json();
+            return;
+        }
+        if (mx >= mt_next_btn.x && mx < mt_next_btn.x+mt_next_btn.w &&
+            my >= mt_next_btn.y && my < mt_next_btn.y+mt_next_btn.h) {
+            movetype_index = (movetype_index + 1) % movetype_count;
+            update_movetype_in_json();
+            return;
+        }
+
+        // --- Список заклинаний (проверяем ПЕРЕД Resistance) ---
         SDL_Rect up_arrow = {px + 20, up_arrow_rect_y, 30, 30};
         if (spell_list_scroll > 0 && mx >= up_arrow.x && mx < up_arrow.x + up_arrow.w &&
             my >= up_arrow.y && my < up_arrow.y + up_arrow.h) {
@@ -645,21 +852,17 @@ void classes_handle_input(SDL_Event *evt) {
             return;
         }
 
-        // Y первого элемента списка (с учётом стрелки вверх)
         int first_item_y = up_arrow_rect_y + 30;
         int visible = MAX_VISIBLE_SPELLS;
         int total = class_spell_count;
 
-        // Элементы списка, кнопки имени и уровня
         for (int i = spell_list_scroll; i < total && i < spell_list_scroll + visible; i++) {
             int item_y = first_item_y + (i - spell_list_scroll) * 20;
 
-            // Кнопки выбора имени (только для выделенного заклинания)
             if (i == selected_spell_entry) {
                 SDL_Rect prev_name_btn = {px + 20, item_y, 20, 20};
                 if (mx >= prev_name_btn.x && mx < prev_name_btn.x + prev_name_btn.w &&
                     my >= prev_name_btn.y && my < prev_name_btn.y + prev_name_btn.h) {
-                    // Переключиться на предыдущее имя заклинания
                     if (spell_name_count > 0) {
                         int current_idx = -1;
                         for (int k = 0; k < spell_name_count; k++) {
@@ -673,7 +876,6 @@ void classes_handle_input(SDL_Event *evt) {
                         if (new_idx < 0) new_idx = spell_name_count - 1;
                         strncpy(class_spells[i].spell_name, spell_names[new_idx], 63);
                         class_spells[i].spell_name[63] = '\0';
-                        // Сбросить уровень на минимальный доступный для нового имени
                         update_spell_levels();
                         if (spell_levels_count > 0)
                             class_spells[i].spell_level = spell_levels[0];
@@ -687,7 +889,6 @@ void classes_handle_input(SDL_Event *evt) {
                 SDL_Rect next_name_btn = {px + 45, item_y, 20, 20};
                 if (mx >= next_name_btn.x && mx < next_name_btn.x + next_name_btn.w &&
                     my >= next_name_btn.y && my < next_name_btn.y + next_name_btn.h) {
-                    // Переключиться на следующее имя заклинания
                     if (spell_name_count > 0) {
                         int current_idx = -1;
                         for (int k = 0; k < spell_name_count; k++) {
@@ -712,7 +913,6 @@ void classes_handle_input(SDL_Event *evt) {
                 }
             }
 
-            // Область клика по тексту заклинания (сдвинута вправо)
             SDL_Rect item = {px + 70, item_y, 360, 20};
             if (mx >= item.x && mx < item.x + item.w && my >= item.y && my < item.y + item.h) {
                 selected_spell_entry = i;
@@ -720,9 +920,8 @@ void classes_handle_input(SDL_Event *evt) {
                 return;
             }
 
-            // Кнопки выбора уровня (только для выделенного заклинания)
             if (i == selected_spell_entry && spell_levels_count > 0) {
-                SDL_Rect prev_lvl = {px + 440, item_y, 20, 20};
+                SDL_Rect prev_lvl = {px + 240, item_y, 20, 20};
                 if (mx >= prev_lvl.x && mx < prev_lvl.x + prev_lvl.w &&
                     my >= prev_lvl.y && my < prev_lvl.y + prev_lvl.h) {
                     if (selected_spell_level_idx > 0) {
@@ -732,7 +931,7 @@ void classes_handle_input(SDL_Event *evt) {
                     }
                     return;
                 }
-                SDL_Rect next_lvl = {px + 465, item_y, 20, 20};
+                SDL_Rect next_lvl = {px + 265, item_y, 20, 20};
                 if (mx >= next_lvl.x && mx < next_lvl.x + next_lvl.w &&
                     my >= next_lvl.y && my < next_lvl.y + next_lvl.h) {
                     if (selected_spell_level_idx < spell_levels_count - 1) {
@@ -745,7 +944,6 @@ void classes_handle_input(SDL_Event *evt) {
             }
         }
 
-        // Стрелка вниз
         SDL_Rect down_arrow = {px + 20, down_arrow_rect_y, 30, 30};
         if (spell_list_scroll + visible < total &&
             mx >= down_arrow.x && mx < down_arrow.x + down_arrow.w &&
@@ -754,7 +952,6 @@ void classes_handle_input(SDL_Event *evt) {
             return;
         }
 
-        // Кнопки + / - (без изменений)
         SDL_Rect spell_add_btn = {px + 20, last_spell_btns_y, 20, 20};
         SDL_Rect spell_del_btn = {px + 50, last_spell_btns_y, 20, 20};
 
@@ -788,6 +985,24 @@ void classes_handle_input(SDL_Event *evt) {
             return;
         }
 
+        // Resistance стрелки (теперь после списка заклинаний)
+        for (int i = 0; i < 8; i++) {
+            SDL_Rect *prev = &resistance_prev_rects[i];
+            SDL_Rect *next = &resistance_next_rects[i];
+            if (mx >= prev->x && mx < prev->x+prev->w && my >= prev->y && my < prev->y+prev->h) {
+                int cnt = (i == 7) ? resistance_options_count_affliction : resistance_options_count_normal;
+                resistance_indices[i] = (resistance_indices[i] - 1 + cnt) % cnt;
+                update_resistance_in_json(i);
+                return;
+            }
+            if (mx >= next->x && mx < next->x+next->w && my >= next->y && my < next->y+next->h) {
+                int cnt = (i == 7) ? resistance_options_count_affliction : resistance_options_count_normal;
+                resistance_indices[i] = (resistance_indices[i] + 1) % cnt;
+                update_resistance_in_json(i);
+                return;
+            }
+        }
+
         // Основные кнопки
         int btn_y = last_btn_y;
         SDL_Rect save_btn   = {px + 130, btn_y, 80, 30};
@@ -797,24 +1012,18 @@ void classes_handle_input(SDL_Event *evt) {
 
         if (mx >= save_btn.x && mx < save_btn.x + save_btn.w &&
             my >= save_btn.y && my < save_btn.y + save_btn.h) {
-            // Фиксируем активное поле (если есть)
             if (class_active_field >= 0)
                 commit_class_field(class_active_field);
-            // Переносим все буферы (name, move, growth…) в JSON-структуру
             commit_class_changes();
-            // Теперь сохраняем актуальные данные на диск
             classes_save_to_file();
             return;
         }
         if (mx >= refresh_btn.x && mx < refresh_btn.x + refresh_btn.w &&
             my >= refresh_btn.y && my < refresh_btn.y + refresh_btn.h) {
-            // Сначала фиксируем всё, что наредактировали
             if (class_active_field >= 0)
                 commit_class_field(class_active_field);
             commit_class_changes();
-            // Сохраняем, чтобы не потерять правки при перечитывании файла
             classes_save_to_file();
-            // Теперь перечитываем файл (увидим только что сохранённые данные)
             classes_reload();
             return;
         }
@@ -831,6 +1040,66 @@ void classes_handle_input(SDL_Event *evt) {
     }
 }
 
+// Вспомогательные функции обновления JSON
+static void update_race_status_in_json(void) {
+    if (selected_class < 0) return;
+    cJSON *cls = cJSON_GetArrayItem(classes, selected_class);
+    cJSON *rc = cJSON_GetObjectItem(cls, "race");
+    if (rc && cJSON_IsString(rc)) cJSON_SetValuestring(rc, race_options[race_index]);
+    else cJSON_AddStringToObject(cls, "race", race_options[race_index]);
+
+    cJSON *st = cJSON_GetObjectItem(cls, "status");
+    if (st && cJSON_IsString(st)) cJSON_SetValuestring(st, status_options[status_index]);
+    else cJSON_AddStringToObject(cls, "status", status_options[status_index]);
+}
+
+static void update_movetype_in_json(void) {
+    if (selected_class < 0) return;
+    cJSON *cls = cJSON_GetArrayItem(classes, selected_class);
+    cJSON *mt = cJSON_GetObjectItem(cls, "move_type");
+    if (mt && cJSON_IsString(mt))
+        cJSON_SetValuestring(mt, movetype_options[movetype_index]);
+    else
+        cJSON_AddStringToObject(cls, "move_type", movetype_options[movetype_index]);
+}
+
+static void update_resistance_in_json(int idx) {
+    if (selected_class < 0) return;
+    cJSON *cls = cJSON_GetArrayItem(classes, selected_class);
+    cJSON *res = cJSON_GetObjectItem(cls, "resistance");
+    if (!res) {
+        res = cJSON_CreateObject();
+        cJSON_AddItemToObject(cls, "resistance", res);
+    }
+    const char **opts = (idx == 7) ? resistance_options_affliction : resistance_options_normal;
+    const char *new_val = opts[resistance_indices[idx]];
+    cJSON *item = cJSON_GetObjectItem(res, resistance_labels[idx]);
+    if (item && cJSON_IsString(item))
+        cJSON_SetValuestring(item, new_val);
+    else
+        cJSON_AddStringToObject(res, resistance_labels[idx], new_val);
+}
+
+static void update_prowess_in_json(void) {
+    if (selected_class < 0) return;
+    cJSON *cls = cJSON_GetArrayItem(classes, selected_class);
+    cJSON *parsed = cJSON_Parse(prowess_buf);
+    if (parsed) {
+        cJSON_ReplaceItemInObject(cls, "prowess", parsed);
+    }
+}
+
+static void update_initial_status_in_json(void) {
+    if (selected_class < 0) return;
+    cJSON *cls = cJSON_GetArrayItem(classes, selected_class);
+    cJSON *is = cJSON_GetObjectItem(cls, "initial_status");
+    if (is && cJSON_IsString(is))
+        cJSON_SetValuestring(is, initial_status_buf);
+    else
+        cJSON_AddStringToObject(cls, "initial_status", initial_status_buf);
+}
+
+// ---- Старые функции (без изменений в логике, но с добавлением новых полей в add_new_class) ----
 static void add_new_class(void) {
     if (!classes) return;
     int new_id = 0;
@@ -852,7 +1121,28 @@ static void add_new_class(void) {
     cJSON_AddStringToObject(cls, "name", new_name);
     cJSON_AddStringToObject(cls, "full_name", "FullName");
     cJSON_AddNumberToObject(cls, "move", 5);
-    cJSON_AddStringToObject(cls, "move_type", "REGULAR");
+    cJSON_AddStringToObject(cls, "move_type", "regular");
+    cJSON_AddStringToObject(cls, "race", "Enterran");
+    cJSON_AddStringToObject(cls, "status", "normal");
+    cJSON_AddStringToObject(cls, "initial_status", "none");
+
+    cJSON *res = cJSON_CreateObject();
+    cJSON_AddStringToObject(res, "wind", "none");
+    cJSON_AddStringToObject(res, "lightning", "none");
+    cJSON_AddStringToObject(res, "ice", "none");
+    cJSON_AddStringToObject(res, "fire", "none");
+    cJSON_AddStringToObject(res, "aqua", "none");
+    cJSON_AddStringToObject(res, "earth", "none");
+    cJSON_AddStringToObject(res, "neutral", "none");
+    cJSON_AddStringToObject(res, "affliction", "none");
+    cJSON_AddItemToObject(cls, "resistance", res);
+
+    cJSON *prowess = cJSON_CreateArray();
+    cJSON_AddItemToArray(prowess, cJSON_CreateString("critical150_1in32"));
+    cJSON_AddItemToArray(prowess, cJSON_CreateString("double_1in32"));
+    cJSON_AddItemToArray(prowess, cJSON_CreateString("counter_1in32"));
+    cJSON_AddItemToObject(cls, "prowess", prowess);
+
     const char *gkeys[] = {"hp_growth","mp_growth","attack_growth","defense_growth","agility_growth"};
     for (int i = 0; i < 5; i++) {
         cJSON *gr = cJSON_CreateObject();
@@ -949,11 +1239,9 @@ void classes_reset_selection(void) {
 }
 void classes_adjust_scroll(int delta) {
     class_scroll -= delta;
-    // Не выше первого элемента
     if (class_scroll < 0) class_scroll = 0;
-    // Не ниже последнего элемента
     int total_h = classes_get_total_height();
-    int visible_h = g_window_height - 35; // 35 = tab_h + 5 (высота вкладок и отступ)
+    int visible_h = g_window_height - 35;
     int max_scroll = total_h > visible_h ? total_h - visible_h : 0;
     if (class_scroll > max_scroll) class_scroll = max_scroll;
 }
@@ -1010,7 +1298,6 @@ static void update_spell_levels(void) {
         }
     }
     
-    // Сортируем уровни для удобства
     for (int i = 0; i < spell_levels_count - 1; i++) {
         for (int j = i + 1; j < spell_levels_count; j++) {
             if (spell_levels[i] > spell_levels[j]) {
@@ -1021,7 +1308,6 @@ static void update_spell_levels(void) {
         }
     }
     
-    // Находим текущий уровень
     int current_level = class_spells[selected_spell_entry].spell_level;
     for (int i = 0; i < spell_levels_count; i++) {
         if (spell_levels[i] == current_level) {
