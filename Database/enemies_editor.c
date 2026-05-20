@@ -1258,6 +1258,12 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         cJSON *spell_levels = cJSON_CreateArray();
         for (int i = 0; i < ENEMY_MAX_SPELLS; i++) cJSON_AddItemToArray(spell_levels, cJSON_CreateNumber(1));
         cJSON_AddItemToObject(new_enemy, "spell_levels", spell_levels);
+        // prowess по умолчанию
+        cJSON *prowess_arr = cJSON_CreateArray();
+        cJSON_AddItemToArray(prowess_arr, cJSON_CreateString("critical150_1in32"));
+        cJSON_AddItemToArray(prowess_arr, cJSON_CreateString("double_1in32"));
+        cJSON_AddItemToArray(prowess_arr, cJSON_CreateString("counter_1in32"));
+        cJSON_AddItemToObject(new_enemy, "prowess", prowess_arr);
         cJSON_AddItemToArray(enemies_array, new_enemy);
         enemies_count++;
         selected_index = enemies_count - 1;
