@@ -145,6 +145,16 @@ static void update_enemy_spells_in_json(void) {
     cJSON_ReplaceItemInObject(enemy, "spells", spells);
 }
 
+static void update_enemy_spell_levels_in_json(void) {
+    cJSON *enemy = cJSON_GetArrayItem(enemies_array, selected_index);
+    if (!enemy) return;
+    cJSON *lvl_arr = cJSON_CreateArray();
+    for (int i = 0; i < ENEMY_MAX_SPELLS; i++) {
+        cJSON_AddItemToArray(lvl_arr, cJSON_CreateNumber(enemy_spell_levels[i]));
+    }
+    cJSON_ReplaceItemInObject(enemy, "spell_levels", lvl_arr);
+}
+
 static void build_spell_list(void) {
     extern cJSON *spells_json;
     extern int spells_count;
@@ -529,6 +539,16 @@ static void open_edit_fields(cJSON *enemy) {
         }
     }
 
+    // Уровни заклинаний (из spell_levels, иначе 1)
+    cJSON *spell_levels_arr = cJSON_GetObjectItem(enemy, "spell_levels");
+    for (int i = 0; i < ENEMY_MAX_SPELLS; i++) {
+        if (spell_levels_arr && cJSON_IsArray(spell_levels_arr) && i < cJSON_GetArraySize(spell_levels_arr)) {
+            enemy_spell_levels[i] = cJSON_GetArrayItem(spell_levels_arr, i)->valueint;
+        } else {
+            enemy_spell_levels[i] = 1;
+        }
+    }
+
     // ---- Prowess ----
     cJSON *prow = cJSON_GetObjectItem(enemy, "prowess");
     char *prow_str = prow ? cJSON_PrintUnformatted(prow) : strdup("[]");
@@ -858,8 +878,28 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
 
         extern SDL_Rect spell_prev_rects[ENEMY_MAX_SPELLS];
         extern SDL_Rect spell_next_rects[ENEMY_MAX_SPELLS];
+        extern SDL_Rect spell_lvl_prev_rects[ENEMY_MAX_SPELLS];
+        extern SDL_Rect spell_lvl_next_rects[ENEMY_MAX_SPELLS];
         spell_prev_rects[i] = sp_prev;
         spell_next_rects[i] = sp_next;
+
+                // ---- Уровень заклинания ----
+        char lvl_text[8];
+        snprintf(lvl_text, sizeof(lvl_text), "Lv %d", enemy_spell_levels[i]);
+        int lvl_x = sp_next.x + sp_next.w + 10;   // правее стрелок имени
+        draw_text(r, lvl_x, y+3, lvl_text, white);
+        SDL_Rect lvl_prev = {lvl_x + 50, y, 20, 22};
+        SDL_SetRenderDrawColor(r, 70,70,120,255); SDL_RenderFillRect(r, &lvl_prev);
+        SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &lvl_prev);
+        draw_text(r, lvl_prev.x+5, lvl_prev.y+3, "<", white);
+        SDL_Rect lvl_next = {lvl_prev.x + 25, y, 20, 22};
+        SDL_SetRenderDrawColor(r, 70,70,120,255); SDL_RenderFillRect(r, &lvl_next);
+        SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &lvl_next);
+        draw_text(r, lvl_next.x+5, lvl_next.y+3, ">", white);
+
+        // Сохраняем прямоугольники для обработки кликов
+        spell_lvl_prev_rects[i] = lvl_prev;
+        spell_lvl_next_rects[i] = lvl_next;
 
         y += 24;
     }
@@ -927,6 +967,8 @@ SDL_Rect resistance_prev_rects[8];
 SDL_Rect resistance_next_rects[8];
 SDL_Rect spell_prev_rects[ENEMY_MAX_SPELLS];
 SDL_Rect spell_next_rects[ENEMY_MAX_SPELLS];
+SDL_Rect spell_lvl_prev_rects[ENEMY_MAX_SPELLS];
+SDL_Rect spell_lvl_next_rects[ENEMY_MAX_SPELLS];
 
 // Обработка кликов по панели редактирования
 void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
@@ -1113,6 +1155,26 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         }
     }
 
+    // Spell level стрелки
+    for (int i = 0; i < ENEMY_MAX_SPELLS; i++) {
+        SDL_Rect *prev = &spell_lvl_prev_rects[i];
+        SDL_Rect *next = &spell_lvl_next_rects[i];
+        if (mx >= prev->x && mx < prev->x+prev->w && my >= prev->y && my < prev->y+prev->h) {
+            if (enemy_spell_levels[i] > 1) {
+                enemy_spell_levels[i]--;
+                update_enemy_spell_levels_in_json();
+            }
+            return;
+        }
+        if (mx >= next->x && mx < next->x+next->w && my >= next->y && my < next->y+next->h) {
+            if (enemy_spell_levels[i] < 9) {
+                enemy_spell_levels[i]++;
+                update_enemy_spell_levels_in_json();
+            }
+            return;
+        }
+    }
+
     // Кнопки действий
     if (mx >= save_btn_rect.x && mx < save_btn_rect.x+save_btn_rect.w &&
         my >= save_btn_rect.y && my < save_btn_rect.y+save_btn_rect.h) {
@@ -1174,6 +1236,9 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         cJSON *spells = cJSON_CreateArray();
         for (int i = 0; i < ENEMY_MAX_SPELLS; i++) cJSON_AddItemToArray(spells, cJSON_CreateString("Nothing"));
         cJSON_AddItemToObject(new_enemy, "spells", spells);
+        cJSON *spell_levels = cJSON_CreateArray();
+        for (int i = 0; i < ENEMY_MAX_SPELLS; i++) cJSON_AddItemToArray(spell_levels, cJSON_CreateNumber(1));
+        cJSON_AddItemToObject(new_enemy, "spell_levels", spell_levels);
         cJSON_AddItemToArray(enemies_array, new_enemy);
         enemies_count++;
         selected_index = enemies_count - 1;
