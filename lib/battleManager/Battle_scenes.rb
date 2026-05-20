@@ -176,7 +176,7 @@ class BattleScene
     @fade_out_alpha = 0
   end
 
-  def update
+    def update
     return unless @active
     dt = Raylib.GetFrameTime()
 
@@ -189,30 +189,19 @@ class BattleScene
       return
     end
 
-    # Затемнение в конце боевой сцены
     if @phase == :fade_out
-      @fade_out_alpha += 280 * dt   # чуть быстрее, чтобы красиво
-
+      @fade_out_alpha += 280 * dt
       if @fade_out_alpha >= 255
         @fade_out_alpha = 255
-        @phase = :finished
+        Raylib.UnloadRenderTexture(@render_texture) if @render_texture
+        @render_texture = nil
+        @ground_tex = nil
+        @panel_tex = nil
+        @phase = nil
+        @active = false
+        @battle_manager.end_current_turn
+        return
       end
-      return
-    end
-
-    # Финальное завершение
-    if @phase == :finished
-      # Выгружаем ресурсы
-      Raylib.UnloadRenderTexture(@render_texture) if @render_texture
-      @render_texture = nil
-      @ground_tex = nil
-      @panel_tex = nil
-
-      @battle_manager.return_from_battle_scene()
-
-      @phase = nil
-      @active = false
-      @finished = true
       return
     end
 
@@ -222,7 +211,6 @@ class BattleScene
 
       case @sub_phase
       when :running_in
-        # Выезд справа налево
         progress = @sub_phase_timer / RUN_IN_DURATION
         @ally_draw_x = WORK_WIDTH + 100 - (WORK_WIDTH + 100 - ALLY_X) * progress
         if @sub_phase_timer >= RUN_IN_DURATION
@@ -244,7 +232,6 @@ class BattleScene
           movetype_key = @defender[:movetype] || "regular"
           dodge_chance = DamageCalculator.physical_dodge_chance(movetype_key)
           @defender_anim = dodge_chance > 30 ? :defense : :idle
-
           @sub_phase = :attack
           @sub_phase_timer = 0.0
           @attacker_current_frame = 0
@@ -258,7 +245,6 @@ class BattleScene
         @defender_current_frame, @defender_anim_timer = advance_frame(
           @defender, @defender_anim, @defender_current_frame, @defender_anim_timer, dt
         )
-
         if !@damage_applied && @damage > 0
           attacker_anim = @attacker[:battle_anim]
           if attacker_anim
@@ -269,7 +255,6 @@ class BattleScene
             end
           end
         end
-
         if @sub_phase_timer >= @attack_duration
           @sub_phase = :idle_after
           @sub_phase_timer = 0.0
@@ -286,7 +271,7 @@ class BattleScene
     end
   end
 
-  def draw
+    def draw
     return unless @active && @render_texture
 
     Raylib.BeginTextureMode(@render_texture)
@@ -294,6 +279,11 @@ class BattleScene
     case @phase
     when :delay, :end_delay
       Raylib.ClearBackground(Raylib::BLACK)
+    when :fade_out
+      # Рисуем чёрный фон и текущий кадр сцены поверх него
+      Raylib.ClearBackground(Raylib::BLACK)
+      # Здесь можно было бы нарисовать содержимое сцены, 
+      # но так как альфа растёт, мы просто затемняем то, что уже есть
     when :display
       Raylib.ClearBackground(Raylib::BLACK)
 
@@ -311,16 +301,13 @@ class BattleScene
         gh = @ground_tex.height
         scaled_w = gw * GROUND_SCALE
         scaled_h = gh * GROUND_SCALE
-
         gx = @ally_draw_x - scaled_w / 2 + GROUND_OFFSET_X
         gy = ALLY_Y - scaled_h + GROUND_OFFSET_Y
-
         src = Raylib::Rectangle.create(0, 0, gw, gh)
         dst = Raylib::Rectangle.create(gx, gy, scaled_w, scaled_h)
         Raylib.DrawTexturePro(@ground_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
       end
 
-      # ── Рисуем юнитов ──
       if @sub_phase == :attack
         draw_unit(@attacker, :attack, @ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, @defender_anim, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
@@ -329,7 +316,6 @@ class BattleScene
         draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       end
 
-      # === Панели HP/MP ===
       if @attacker && @attacker[:max_hp]
         load_panel_texture
         if @panel_tex
@@ -353,7 +339,6 @@ class BattleScene
       end
     end
 
-    # Панель сообщения перед атакой
     if @sub_phase == :pre_attack && @message_panel_tex
       panel_w = @message_panel_tex.width
       panel_h = @message_panel_tex.height
@@ -362,6 +347,11 @@ class BattleScene
       src = Raylib::Rectangle.create(0, 0, panel_w, panel_h)
       dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
       Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+    end
+
+    # Затемнение рисуем только если мы в фазе fade_out
+    if @phase == :fade_out
+      Raylib.DrawRectangle(0, 0, WORK_WIDTH, 960, Raylib.Fade(Raylib::BLACK, @fade_out_alpha / 255.0))
     end
 
     Raylib.EndTextureMode()
