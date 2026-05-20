@@ -28,9 +28,10 @@ class BattleScene
 
   IDLE_BEFORE_DURATION = 1.5
   IDLE_AFTER_DURATION  = 1.5
-  PRE_ATTACK_DURATION = 0.5   # длительность панели перед атакой
+  PRE_ATTACK_DURATION = 0.5
+  RUN_IN_DURATION      = 0.5   # длительность выезда персонажа
 
-def initialize(battle_manager)
+  def initialize(battle_manager)
     @battle_manager = battle_manager
     @timer = 0.0
     @active = false
@@ -52,24 +53,23 @@ def initialize(battle_manager)
 
     @sub_phase = :idle_before
     @sub_phase_timer = 0.0
-    @attack_duration = 0.0	
-	@damage = 0
+    @attack_duration = 0.0
+    @damage = 0
     @damage_applied = false
-	
-	@defender_anim = :defense
+    @defender_anim = :defense
 
     @stick_textures = []
-	# Загрузка окантовки для полосок HP/MP
+    # Загрузка окантовки для полосок HP/MP
     @edging_tex = nil
     edging_path = "assets/ui/Panel_Edging_Big.png"
     if File.exist?(edging_path)
-    img = Raylib.LoadImage(edging_path)
-    @edging_tex = Raylib.LoadTextureFromImage(img)
-    Raylib.UnloadImage(img)
-    Raylib.SetTextureFilter(@edging_tex, Raylib::TEXTURE_FILTER_POINT)
-  else
-    puts "WARNING: Panel_Edging_Big.png not found"
-  end
+      img = Raylib.LoadImage(edging_path)
+      @edging_tex = Raylib.LoadTextureFromImage(img)
+      Raylib.UnloadImage(img)
+      Raylib.SetTextureFilter(@edging_tex, Raylib::TEXTURE_FILTER_POINT)
+    else
+      puts "WARNING: Panel_Edging_Big.png not found"
+    end
     load_stick_textures
     load_background
 
@@ -84,7 +84,11 @@ def initialize(battle_manager)
     else
       puts "WARNING: message_battle_panel.png not found"
     end
-end 
+
+    # Переменные для анимации выезда
+    @ally_draw_x = ALLY_X
+    @run_in_active = false
+  end
 
   # ---------- Загрузка фона битвы ----------
   def load_background
@@ -102,7 +106,6 @@ end
   def load_ground
     ground_path = @battle_manager.battle_entry["ground"]
     return unless ground_path && !ground_path.empty? && File.exist?(ground_path)
-
     img = Raylib.LoadImage(ground_path)
     @ground_tex = Raylib.LoadTextureFromImage(img)
     Raylib.UnloadImage(img)
@@ -127,10 +130,10 @@ end
     end
   end
 
-  def start(attacker_unit, defender_unit, damage = 0)
+    def start(attacker_unit, defender_unit, damage = 0)
     @attacker = attacker_unit
     @defender = defender_unit
-	@damage = damage
+    @damage = damage
     @damage_applied = false
     @timer = DELAY_DURATION
     @active = true
@@ -147,10 +150,21 @@ end
     @attack_duration = attacker_anim ? attacker_anim.total_duration(:attack) : 0.5
     @attack_duration = 0.5 if @attack_duration < 0.1
 
-    @sub_phase = :idle_before
-    @sub_phase_timer = 0.0
-
     load_ground
+
+    # Запускаем выезд справа только для союзника
+    if @attacker && !@attacker[:enemy]
+      @run_in_active = true
+      @ally_draw_x = WORK_WIDTH + 100       # старт за правым краем
+      @sub_phase = :running_in
+      @sub_phase_timer = 0.0
+    else
+      @run_in_active = false
+      @ally_draw_x = ALLY_X
+      @sub_phase = :idle_before
+      @sub_phase_timer = 0.0
+    end
+
     puts ">>> Battle scene starting: #{attacker_unit[:enemy] ? 'Enemy' : 'Ally'} vs #{defender_unit[:enemy] ? 'Enemy' : 'Ally'}"
   end
 
@@ -171,89 +185,95 @@ end
       Raylib.UnloadTexture(@panel_tex)
       @panel_tex = nil
     end
-	
-  # @edging_tex не трогаем – он будет использоваться при следующих атаках
+
+    # @edging_tex не трогаем – он будет использоваться при следующих атаках
 
     @battle_manager.end_current_turn
-    puts "<<< Battle scene finished"	
-   end
-
- def update
-  return unless @active
-  dt = Raylib.GetFrameTime()
-
-  # Переход из фазы delay в display
-  if @phase == :delay
-    @timer -= dt
-    if @timer <= 0
-      @phase = :display
-    end
-    return
+    puts "<<< Battle scene finished"
   end
 
-  # Основная фаза отображения
-  if @phase == :display
-    @sub_phase_timer += dt
+  def update
+    return unless @active
+    dt = Raylib.GetFrameTime()
 
-    case @sub_phase
-    when :idle_before
-      update_animation(dt)
-      if @sub_phase_timer >= IDLE_BEFORE_DURATION
-        @sub_phase = :pre_attack
-        @sub_phase_timer = 0.0
+    # Переход из фазы delay в display
+    if @phase == :delay
+      @timer -= dt
+      if @timer <= 0
+        @phase = :display
       end
+      return
+    end
 
-    when :pre_attack
-      update_animation(dt)
-      if @sub_phase_timer >= PRE_ATTACK_DURATION
-        # Определяем анимацию защитника через DamageCalculator
-        movetype_key = @defender[:movetype] || "regular"
-        dodge_chance = DamageCalculator.physical_dodge_chance(movetype_key)
-        @defender_anim = dodge_chance > 30 ? :defense : :idle
+    # Основная фаза отображения
+    if @phase == :display
+      @sub_phase_timer += dt
 
-        @sub_phase = :attack
-        @sub_phase_timer = 0.0
-        @attacker_current_frame = 0
-        @defender_current_frame = 0
-      end
+      case @sub_phase
+    when :running_in
+        # Выезд справа налево
+        progress = @sub_phase_timer / RUN_IN_DURATION
+        @ally_draw_x = WORK_WIDTH + 100 - (WORK_WIDTH + 100 - ALLY_X) * progress
+        if @sub_phase_timer >= RUN_IN_DURATION
+          @ally_draw_x = ALLY_X
+          @sub_phase = :idle_before
+          @sub_phase_timer = 0.0
+        end
 
-    when :attack
-      # Атакующий всегда играет анимацию атаки
-      @attacker_current_frame, @attacker_anim_timer = advance_frame(
-        @attacker, :attack, @attacker_current_frame, @attacker_anim_timer, dt
-      )
-      # Защитник играет выбранную анимацию (idle или defense)
-      @defender_current_frame, @defender_anim_timer = advance_frame(
-        @defender, @defender_anim, @defender_current_frame, @defender_anim_timer, dt
-      )
+      when :idle_before
+        update_animation(dt)
+        if @sub_phase_timer >= IDLE_BEFORE_DURATION
+          @sub_phase = :pre_attack
+          @sub_phase_timer = 0.0
+        end
 
-      # Нанесение урона на последнем кадре атаки (только один раз)
-      if !@damage_applied && @damage > 0
-        attacker_anim = @attacker[:battle_anim]
-        if attacker_anim
-          attack_frames = attacker_anim.attack[:frames]
-          if @attacker_current_frame == attack_frames.size - 1
-            @defender[:hp] = [@defender[:hp] - @damage, 0].max
-            @damage_applied = true
+      when :pre_attack
+        update_animation(dt)
+        if @sub_phase_timer >= PRE_ATTACK_DURATION
+          movetype_key = @defender[:movetype] || "regular"
+          dodge_chance = DamageCalculator.physical_dodge_chance(movetype_key)
+          @defender_anim = dodge_chance > 30 ? :defense : :idle
+
+          @sub_phase = :attack
+          @sub_phase_timer = 0.0
+          @attacker_current_frame = 0
+          @defender_current_frame = 0
+        end
+
+      when :attack
+        @attacker_current_frame, @attacker_anim_timer = advance_frame(
+          @attacker, :attack, @attacker_current_frame, @attacker_anim_timer, dt
+        )
+        @defender_current_frame, @defender_anim_timer = advance_frame(
+          @defender, @defender_anim, @defender_current_frame, @defender_anim_timer, dt
+        )
+
+        if !@damage_applied && @damage > 0
+          attacker_anim = @attacker[:battle_anim]
+          if attacker_anim
+            attack_frames = attacker_anim.attack[:frames]
+            if @attacker_current_frame == attack_frames.size - 1
+              @defender[:hp] = [@defender[:hp] - @damage, 0].max
+              @damage_applied = true
+            end
           end
         end
-      end
 
-      if @sub_phase_timer >= @attack_duration
-        @sub_phase = :idle_after
-        @sub_phase_timer = 0.0
-        @attacker_current_frame = 0
-        @defender_current_frame = 0
-      end
+        if @sub_phase_timer >= @attack_duration
+          @sub_phase = :idle_after
+          @sub_phase_timer = 0.0
+          @attacker_current_frame = 0
+          @defender_current_frame = 0
+        end
 
-    when :idle_after
-      update_animation(dt)
-      if @sub_phase_timer >= IDLE_AFTER_DURATION
-        finish
+      when :idle_after
+        update_animation(dt)
+        if @sub_phase_timer >= IDLE_AFTER_DURATION
+          finish
+        end
       end
     end
   end
-end
 
   def draw
     return unless @active && @render_texture
@@ -266,25 +286,22 @@ end
     when :display
       Raylib.ClearBackground(Raylib::BLACK)
 
-      # Фон битвы
       if @background_tex
         src = Raylib::Rectangle.create(0, 0, @background_tex.width, @background_tex.height)
         dst = Raylib::Rectangle.create(0, BAR_HEIGHT, WORK_WIDTH, WORK_HEIGHT)
         Raylib.DrawTexturePro(@background_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
       end
 
-      # Чёрные полосы сверху и снизу (под панели)
       Raylib.DrawRectangle(0, 0, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
       Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
 
-      # ─── GROUND – только под союзником, ×2 ───
       if @attacker && !@attacker[:enemy] && @ground_tex
         gw = @ground_tex.width
         gh = @ground_tex.height
         scaled_w = gw * GROUND_SCALE
         scaled_h = gh * GROUND_SCALE
 
-        gx = ALLY_X - scaled_w / 2 + GROUND_OFFSET_X
+        gx = @ally_draw_x - scaled_w / 2 + GROUND_OFFSET_X
         gy = ALLY_Y - scaled_h + GROUND_OFFSET_Y
 
         src = Raylib::Rectangle.create(0, 0, gw, gh)
@@ -294,10 +311,10 @@ end
 
       # ── Рисуем юнитов ──
       if @sub_phase == :attack
-        draw_unit(@attacker, :attack, ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
+        draw_unit(@attacker, :attack, @ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, @defender_anim, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       else
-        draw_unit(@attacker, :idle,    ALLY_X, ALLY_Y, false, @attacker_current_frame, true)
+        draw_unit(@attacker, :idle,    @ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
         draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
       end
 
@@ -325,21 +342,19 @@ end
       end
     end
 
-  # Панель сообщения перед атакой (только в idle_before)
-if @sub_phase == :pre_attack && @message_panel_tex
-  panel_w = @message_panel_tex.width
-  panel_h = @message_panel_tex.height
-  # Низ панели на 16 px выше нижнего края
-  panel_y = 960 - 16 - panel_h
-  panel_x = (1152 - panel_w) / 2
-  src = Raylib::Rectangle.create(0, 0, panel_w, panel_h)
-  dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
-  Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
-end
+    # Панель сообщения перед атакой
+    if @sub_phase == :pre_attack && @message_panel_tex
+      panel_w = @message_panel_tex.width
+      panel_h = @message_panel_tex.height
+      panel_y = 960 - 16 - panel_h
+      panel_x = (1152 - panel_w) / 2
+      src = Raylib::Rectangle.create(0, 0, panel_w, panel_h)
+      dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
+      Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+    end
 
     Raylib.EndTextureMode()
 
-    # Масштабирование в окно 576x480
     src = Raylib::Rectangle.create(0, 0, 1152, -960)
     dst = Raylib::Rectangle.create(0, 0, 576, 480)
     Raylib.DrawTexturePro(@render_texture.texture, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
@@ -347,7 +362,6 @@ end
 
   private
 
-  # ---------- Загрузка текстуры панели ----------
   def load_panel_texture
     return if @panel_tex
     path = "assets/ui/HpMpPanel_x2.png"
@@ -369,14 +383,13 @@ end
     end
   end
 
-  # ---------- Отрисовка панели с текстом и полосками ----------
   def draw_panel_with_sprite(unit, x, y, right_aligned)
+    # ... (весь существующий код без изменений)
+    # Оставляю как есть, он не менялся.
     return unless @panel_tex
-
     font_size = 36
     text_margin_x = 20
     text_margin_y_name = 10
-
     font = @battle_manager.battle_scene_font || @battle_manager.instance_variable_get(:@font)
 
     if unit[:actor]
@@ -461,8 +474,8 @@ end
     draw_stick_bar(bar_area_x, ty_mp, bar_area_w, mp, max_mp, font, font_size, "MP")
   end
 
-  # ---------- Рисование шкалы ----------
   def draw_stick_bar(base_x, base_y, area_width, current, max_val, font, font_size, label)
+    # ... (весь существующий код без изменений)
     if font
       Raylib.DrawTextEx(font, label, Raylib::Vector2.create(base_x, base_y), font_size, 1, Raylib::WHITE)
     else
@@ -478,12 +491,11 @@ end
     total_positions = [(available_sticks_w / STICK_W).floor, 100].min
     total_positions = 0 if total_positions < 0
 
-    sticks_to_draw = [current, max_val, total_positions].min   # сколько палочек текущего здоровья
+    sticks_to_draw = [current, max_val, total_positions].min
 
     bar_start_x = base_x + label_w + gap
     stick_y = base_y + (font_size - STICK_H) / 2
 
-    # Красные палочки (только для HP, потерянное здоровье)
     if label == "HP"
       max_visible = [max_val, total_positions].min
       (sticks_to_draw...max_visible).each do |i|
@@ -494,7 +506,6 @@ end
       end
     end
 
-    # Цветные палочки текущего здоровья
     limits = [100, 200, 300, 9999]
     prev_limit = 0
     limits.each_with_index do |limit, idx|
@@ -515,7 +526,6 @@ end
       prev_limit = limit
     end
 
-    # Окантовка (на всю видимую шкалу, включая красные для HP)
     if @edging_tex
       if label == "HP"
         actual_positions = [max_val, total_positions].min
@@ -524,41 +534,36 @@ end
       end
       total_w = actual_positions * STICK_W
 
-      if total_w >= 2 * 3   # минимум для левого и правого колпачков по 3px
+      if total_w >= 2 * 3
         left_src  = Raylib::Rectangle.create(0, 0, 3, @edging_tex.height)
         mid_src   = Raylib::Rectangle.create(3, 0, 3, @edging_tex.height)
         right_src = Raylib::Rectangle.create(6, 0, 3, @edging_tex.height)
 
-        # Левый колпачок
         left_dst = Raylib::Rectangle.create(bar_start_x, stick_y, 3, STICK_H)
         Raylib.DrawTexturePro(@edging_tex, left_src, left_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
 
-        # Средние сегменты
         mid_count = actual_positions - 2
         mid_count.times do |i|
           mid_dst = Raylib::Rectangle.create(bar_start_x + 3 + i * 3, stick_y, 3, STICK_H)
           Raylib.DrawTexturePro(@edging_tex, mid_src, mid_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
         end
 
-        # Правый колпачок
         right_dst = Raylib::Rectangle.create(bar_start_x + (actual_positions - 1) * 3, stick_y, 3, STICK_H)
         Raylib.DrawTexturePro(@edging_tex, right_src, right_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
       end
     end
 
-    # Число справа
     number_x = bar_start_x + total_positions * STICK_W + gap
     if font
       Raylib.DrawTextEx(font, number_str, Raylib::Vector2.create(number_x, base_y), font_size, 1, Raylib::WHITE)
     else
       Raylib.DrawText(number_str, number_x, base_y, font_size, Raylib::WHITE)
     end
-end
+  end
 
-  # ---------- Анимация ----------
   def update_animation(dt)
     case @sub_phase
-    when :idle_before, :pre_attack, :idle_after
+    when :running_in, :idle_before, :pre_attack, :idle_after
       @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :idle, @attacker_current_frame, @attacker_anim_timer, dt)
       @defender_current_frame, @defender_anim_timer = advance_frame(@defender, :idle, @defender_current_frame, @defender_anim_timer, dt)
     when :attack

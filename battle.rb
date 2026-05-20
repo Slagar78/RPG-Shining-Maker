@@ -725,7 +725,7 @@ end
     when :battle_scene
     @battle_scene.update
 
-    when :fade_to_battle
+     when :fade_to_battle
       @fade_alpha += 600 * GetFrameTime()
       if @fade_alpha >= 255
         @fade_alpha = 255
@@ -735,6 +735,7 @@ end
         @pending_damage = 0
         @battle_state = :battle_scene
       end
+	  
     end  # ← конец case
   end    # ← конец метода update
 
