@@ -22,7 +22,7 @@
 #endif
 
 #define WINDOW_WIDTH 960
-#define WINDOW_HEIGHT 680
+#define WINDOW_HEIGHT 800
 
 // Глобальные данные
 cJSON *spells_json = NULL;

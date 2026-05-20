@@ -36,7 +36,7 @@ enum {
 };
 
 typedef struct {
-    char text[256];
+    char text[600];
     int cursor;
     int active;
     cJSON *json_obj;
@@ -73,7 +73,7 @@ static const char *status_options[] = {"normal", "hyper", "ultra"};
 static const int status_count = 3;
 static int status_index = 0;
 
-// ---- НОВЫЕ ДАННЫЕ ДЛЯ MOVE TYPE и RESISTANCE ----
+// ---- ДАННЫЕ ДЛЯ MOVE TYPE и RESISTANCE ----
 static const char *movetype_options[] = {
     "regular", "centaur", "stealth", "brass_gunner", "flying",
     "hovering", "aquatic", "archer", "centaur_archer",
@@ -85,14 +85,29 @@ static int movetype_index = 0;
 static const char *resistance_labels[] = {
     "wind", "lightning", "ice", "fire", "aqua", "earth", "neutral", "affliction"
 };
-// 4 варианта для всех, кроме affliction
 static const char *resistance_options_normal[] = {"none", "minor", "major", "weakness"};
-// affliction дополнительно имеет "immunity"
 static const char *resistance_options_affliction[] = {"none", "minor", "major", "weakness", "immunity"};
 static const int resistance_options_count_normal = 4;
 static const int resistance_options_count_affliction = 5;
+static int resistance_indices[8] = {0};
 
-static int resistance_indices[8] = {0};  // индексы текущих значений
+// ---- НОВЫЕ ДАННЫЕ ДЛЯ SPELLS ----
+#define ENEMY_MAX_SPELLS 4
+static char enemy_spell_names[ENEMY_MAX_SPELLS][64] = {"Nothing","Nothing","Nothing","Nothing"};
+static int enemy_spell_levels[ENEMY_MAX_SPELLS] = {1,1,1,1};
+
+static char spell_list_names[200][64];
+static int spell_list_name_count = 0;
+
+static int selected_spell_slot = -1;
+static int selected_spell_name_idx[ENEMY_MAX_SPELLS] = {0,0,0,0};
+static int selected_spell_level_idx[ENEMY_MAX_SPELLS] = {0,0,0,0};
+
+// ---- ДАННЫЕ ДЛЯ PROWESS ----
+static char prowess_buf[512] = "";
+
+// ---- БУФЕР ДЛЯ INITIAL STATUS ----
+static char initstatus_buf[32] = "";
 
 // ---- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ОБНОВЛЕНИЯ ----
 static void update_movetype_in_json(void) {
@@ -120,6 +135,35 @@ static void update_resistance_in_json(int idx) {
         cJSON_AddStringToObject(res, resistance_labels[idx], new_val);
 }
 
+static void update_enemy_spells_in_json(void) {
+    cJSON *enemy = cJSON_GetArrayItem(enemies_array, selected_index);
+    if (!enemy) return;
+    cJSON *spells = cJSON_CreateArray();
+    for (int i = 0; i < ENEMY_MAX_SPELLS; i++) {
+        cJSON_AddItemToArray(spells, cJSON_CreateString(enemy_spell_names[i]));
+    }
+    cJSON_ReplaceItemInObject(enemy, "spells", spells);
+}
+
+static void build_spell_list(void) {
+    extern cJSON *spells_json;
+    extern int spells_count;
+    spell_list_name_count = 0;
+    for (int i = 0; i < spells_count; i++) {
+        cJSON *sp = cJSON_GetArrayItem(spells_json, i);
+        const char *nm = cJSON_GetObjectItem(sp, "name")->valuestring;
+        int exists = 0;
+        for (int j = 0; j < spell_list_name_count; j++) {
+            if (strcmp(spell_list_names[j], nm) == 0) { exists = 1; break; }
+        }
+        if (!exists && spell_list_name_count < 200) {
+            strncpy(spell_list_names[spell_list_name_count], nm, 63);
+            spell_list_names[spell_list_name_count][63] = '\0';
+            spell_list_name_count++;
+        }
+    }
+}
+
 // Буферы для редактируемых полей
 static char name_buf[64] = "";
 static char portrait_buf[64] = "";
@@ -129,7 +173,7 @@ static char battlesprite_buf[64] = "";
 // ---------- ПРОТОТИПЫ ----------
 static void open_edit_fields(cJSON *enemy);
 
-// ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (без изменений) ----------
+// ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
 static const char* json_string(cJSON *item, const char *key) {
     cJSON *f = cJSON_GetObjectItem(item, key);
     return (f && cJSON_IsString(f)) ? f->valuestring : "";
@@ -174,26 +218,23 @@ static SDL_Rect make_button(int x, int y, const char *label, int pad_x, int pad_
 }
 
 static void draw_button(SDL_Renderer *r, SDL_Rect btn, const char *label, SDL_Color bg, SDL_Color border, SDL_Color text_col) {
-    // Фон
     SDL_SetRenderDrawColor(r, bg.r, bg.g, bg.b, 255);
     SDL_RenderFillRect(r, &btn);
-    // Рамка
     SDL_SetRenderDrawColor(r, border.r, border.g, border.b, 255);
     SDL_RenderDrawRect(r, &btn);
-    // Текст по центру
     int text_w = get_text_width(label);
     int text_h = 0;
     TTF_SizeUTF8(g_font, label, NULL, &text_h);
     int text_x = btn.x + (btn.w - text_w) / 2;
     int text_y = btn.y + (btn.h - text_h) / 2;
-    if (text_x < btn.x + 5) text_x = btn.x + 5;  // минимальный отступ
+    if (text_x < btn.x + 5) text_x = btn.x + 5;
     draw_text(r, text_x, text_y, label, text_col);
 }
 
 static void scan_portrait_folder(void);
 static void scan_mapsprite_folder(void);
 
-// Инициализация редактора (без изменений)
+// Инициализация редактора
 void enemies_init(cJSON *arr, int count) {
     enemies_array = arr;
     enemies_count = count;
@@ -203,6 +244,7 @@ void enemies_init(cJSON *arr, int count) {
     active_field_index = -1;
     scan_portrait_folder();
     scan_mapsprite_folder();
+    build_spell_list();
     if (enemies_count > 0) {
         selected_index = 0;
         open_edit_fields(cJSON_GetArrayItem(enemies_array, 0));
@@ -331,7 +373,7 @@ static void open_edit_fields(cJSON *enemy) {
     int field_offset = 100;
     int line_h = 22, gap = 28;
 
-    // ID (только для чтения)
+    // ID
     EditField *f = &edit_fields[EF_ID];
     snprintf(f->text, sizeof(f->text), "%d", json_int(enemy, "id", -1));
     f->active = 0; f->json_obj = enemy; f->json_key = "id"; f->is_numeric = 1; f->max_len = 0; f->is_special = -1;
@@ -426,7 +468,7 @@ static void open_edit_fields(cJSON *enemy) {
         edit_field_count = EF_MAXHP + i + 1;
     }
 
-    // ---- Move Type (выбор стрелками) ----
+    // ---- Move Type ----
     const char *mt = json_string(enemy, "move_type");
     movetype_index = 0;
     for (int i = 0; i < movetype_count; i++) {
@@ -434,11 +476,11 @@ static void open_edit_fields(cJSON *enemy) {
     }
     f = &edit_fields[EF_MOVETYPE];
     snprintf(f->text, sizeof(f->text), "%s", movetype_options[movetype_index]);
-    f->active = 0; f->json_obj = enemy; f->json_key = "move_type"; f->is_numeric = 0; f->max_len = 0; f->is_special = 5;   // special=5 для move_type
+    f->active = 0; f->json_obj = enemy; f->json_key = "move_type"; f->is_numeric = 0; f->max_len = 0; f->is_special = 5;
     f->rect = (SDL_Rect){base_x+field_offset, base_y + EF_MOVETYPE*gap, 150, line_h};
     edit_field_count = EF_MOVETYPE+1;
 
-    // ---- Resistance - инициализируем индексы ----
+    // ---- Resistance ----
     cJSON *res = cJSON_GetObjectItem(enemy, "resistance");
     for (int i = 0; i < 8; i++) {
         const char *val = "none";
@@ -455,9 +497,59 @@ static void open_edit_fields(cJSON *enemy) {
         resistance_indices[i] = idx;
     }
 
-    // Остальные поля (EF_RESISTANCE ... EF_AIBITFIELD) оставляем как заглушки,
-    // они не будут рисоваться, но чтобы edit_field_count был корректным.
-    for (int i = EF_RESISTANCE; i < EF_MOVETYPE; i++) {
+    // ---- Spells (4 слота) ----
+    cJSON *spells_arr = cJSON_GetObjectItem(enemy, "spells");
+    if (spells_arr && cJSON_IsArray(spells_arr)) {
+        int sz = cJSON_GetArraySize(spells_arr);
+        for (int i = 0; i < ENEMY_MAX_SPELLS && i < sz; i++) {
+            const char *sp = cJSON_GetArrayItem(spells_arr, i)->valuestring;
+            strncpy(enemy_spell_names[i], sp ? sp : "Nothing", 63);
+            enemy_spell_names[i][63] = '\0';
+            enemy_spell_levels[i] = 1;
+        }
+        for (int i = sz; i < ENEMY_MAX_SPELLS; i++) {
+            strncpy(enemy_spell_names[i], "Nothing", 63);
+            enemy_spell_levels[i] = 1;
+        }
+    } else {
+        for (int i = 0; i < ENEMY_MAX_SPELLS; i++) {
+            strncpy(enemy_spell_names[i], "Nothing", 63);
+            enemy_spell_levels[i] = 1;
+        }
+    }
+    selected_spell_slot = -1;
+    for (int i = 0; i < ENEMY_MAX_SPELLS; i++) {
+        selected_spell_name_idx[i] = 0;
+        selected_spell_level_idx[i] = 0;
+        for (int j = 0; j < spell_list_name_count; j++) {
+            if (strcmp(spell_list_names[j], enemy_spell_names[i]) == 0) {
+                selected_spell_name_idx[i] = j;
+                break;
+            }
+        }
+    }
+
+    // ---- Prowess ----
+    cJSON *prow = cJSON_GetObjectItem(enemy, "prowess");
+    char *prow_str = prow ? cJSON_PrintUnformatted(prow) : strdup("[]");
+    strncpy(prowess_buf, prow_str, 511); prowess_buf[511] = '\0'; free(prow_str);
+    f = &edit_fields[EF_PROVESS];
+    snprintf(f->text, sizeof(f->text), "%s", prowess_buf);
+    f->active = 0; f->json_obj = enemy; f->json_key = "prowess"; f->is_numeric = 0; f->max_len = 0; f->is_special = 0;
+    f->rect = (SDL_Rect){base_x+field_offset, base_y + EF_PROVESS*gap, 150, line_h};
+    edit_field_count = EF_PROVESS+1;
+
+    // ---- Initial Status ----
+    const char *is = json_string(enemy, "initial_status");
+    strncpy(initstatus_buf, is, 31); initstatus_buf[31] = '\0';
+    f = &edit_fields[EF_INITSTATUS];
+    snprintf(f->text, sizeof(f->text), "%s", initstatus_buf);
+    f->active = 0; f->json_obj = enemy; f->json_key = "initial_status"; f->is_numeric = 0; f->max_len = 0; f->is_special = 0;
+    f->rect = (SDL_Rect){base_x+field_offset, base_y + EF_INITSTATUS*gap, 150, line_h};
+    edit_field_count = EF_INITSTATUS+1;
+
+    // Остальные поля (заглушки)
+    for (int i = EF_ITEMS; i < EF_MOVETYPE; i++) {
         f = &edit_fields[i];
         f->active = 0; f->is_special = 0; f->json_obj = NULL; f->json_key = NULL;
         f->rect = (SDL_Rect){base_x+field_offset, base_y + i*gap, 200, line_h};
@@ -468,7 +560,7 @@ static void open_edit_fields(cJSON *enemy) {
     f->active = 0; f->is_special = 0; f->json_obj = NULL; f->json_key = NULL;
     f->rect = (SDL_Rect){base_x+field_offset, base_y + EF_AIBITFIELD*gap, 200, line_h};
     f->text[0] = '\0';
-    edit_field_count = EF_COUNT;   // все поля учтены
+    edit_field_count = EF_COUNT;
 }
 
 static void commit_field(int idx) {
@@ -600,7 +692,6 @@ void enemies_handle_click(int mx, int my, int start_y, int scroll) {
     for (int i = 0; i < enemies_count; i++) {
         if (my >= y && my < y + line_h && mx >= 10 && mx < 260) {
             if (selected_index != i) {
-                // коммитим предыдущее поле
                 if (active_field_index >= 0) commit_field(active_field_index);
                 active_field_index = -1;
                 selected_index = i;
@@ -620,8 +711,7 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
     }
 
     SDL_Color white = {255,255,255}, black = {0,0,0}, yellow = {255,255,0};
-    // Увеличим высоту панели для одного столбца Resistance (8 строк)
-    SDL_Rect panel = {px, py, 580, 660};
+    SDL_Rect panel = {px, py, 580, 700};   // увеличена высота
     SDL_SetRenderDrawColor(r, 60,60,60,255); SDL_RenderFillRect(r, &panel);
     SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &panel);
 
@@ -733,7 +823,11 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
         y += 28;
     }
 
-    // ----- Move Type (после статов) -----
+    // ----- Initial Status -----
+    draw_enemy_field(r, base_x, y, 150, 22, EF_INITSTATUS, "InitStatus:", initstatus_buf);
+    y += 28;
+
+    // ----- Move Type -----
     draw_text(r, base_x, y+3, "MoveType:", white);
     draw_text(r, base_x+field_offset, y+3, movetype_options[movetype_index], white);
     SDL_Rect mt_prev = {base_x+field_offset+150+5, y, 20, 22};
@@ -749,11 +843,36 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
     movetype_next_rect = mt_next;
     y += 28;
 
-    // ===== Resistance (ОДИН СТОЛБЕЦ, 8 строк) =====
-    int res_x = px + 270;                         // позиция по X (не меняется)
-    int res_y = py + 10 + EF_LEVEL * 28;          // начинаем на строке Level
+    // ----- Spells (4 слота) -----
+    for (int i = 0; i < ENEMY_MAX_SPELLS; i++) {
+        draw_text(r, base_x, y+3, "Spell:", white);
+        draw_text(r, base_x+field_offset, y+3, enemy_spell_names[i], white);
+        SDL_Rect sp_prev = {base_x+field_offset+150+5, y, 20, 22};
+        SDL_SetRenderDrawColor(r, 70,70,120,255); SDL_RenderFillRect(r, &sp_prev);
+        SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &sp_prev);
+        draw_text(r, sp_prev.x+5, sp_prev.y+3, "<", white);
+        SDL_Rect sp_next = {sp_prev.x + 25, y, 20, 22};
+        SDL_SetRenderDrawColor(r, 70,70,120,255); SDL_RenderFillRect(r, &sp_next);
+        SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &sp_next);
+        draw_text(r, sp_next.x+5, sp_next.y+3, ">", white);
+
+        extern SDL_Rect spell_prev_rects[ENEMY_MAX_SPELLS];
+        extern SDL_Rect spell_next_rects[ENEMY_MAX_SPELLS];
+        spell_prev_rects[i] = sp_prev;
+        spell_next_rects[i] = sp_next;
+
+        y += 24;
+    }
+
+    // ----- Prowess -----
+    draw_enemy_field(r, base_x, y, 150, 22, EF_PROVESS, "Prowess:", prowess_buf);
+    y += 28;
+
+    // ===== Resistance (правая колонка) =====
+    int res_x = px + 270;
+    int res_y = py + 10 + EF_LEVEL * 28;
     draw_text(r, res_x, res_y, "Resistance:", white);
-    res_y += 22;                                   // отступ после заголовка
+    res_y += 22;
 
     for (int i = 0; i < 8; i++) {
         const char *label = resistance_labels[i];
@@ -761,9 +880,8 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
         int idx = resistance_indices[i];
 
         draw_text(r, res_x, res_y+3, label, white);
-        int val_x = res_x + 80;                    // позиция значения
+        int val_x = res_x + 80;
         draw_text(r, val_x, res_y+3, opts[idx], white);
-        // Кнопки < >
         SDL_Rect prev = {val_x + 100, res_y, 20, 22};
         SDL_SetRenderDrawColor(r, 70,70,120,255); SDL_RenderFillRect(r, &prev);
         SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &prev);
@@ -773,17 +891,16 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
         SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &next);
         draw_text(r, next.x+5, next.y+3, ">", white);
 
-        // Сохраняем прямоугольники для кликов
         extern SDL_Rect resistance_prev_rects[8];
         extern SDL_Rect resistance_next_rects[8];
         resistance_prev_rects[i] = prev;
         resistance_next_rects[i] = next;
 
-        res_y += 24;   // следующая строка
+        res_y += 24;
     }
 
-    // Кнопки действий (опускаем ниже из-за увеличившейся высоты)
-    int btn_y = py + 570;
+    // Кнопки действий
+    int btn_y = py + 620;
     int pad_x = 10, pad_y = 5;
     int next_x = px + 10;
 
@@ -791,8 +908,8 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
     draw_button(r, del_btn_rect, "Del Enemy", (SDL_Color){200,80,80}, white, white);
     next_x += del_btn_rect.w + 10;
 
-    SDL_Color save_col = (save_timer > 0) ? (SDL_Color){0, 255, 0, 255} : yellow;
     save_btn_rect = make_button(next_x, btn_y, "Save", pad_x, pad_y);
+    SDL_Color save_col = (save_timer > 0) ? (SDL_Color){0,255,0,255} : yellow;
     draw_button(r, save_btn_rect, "Save", save_col, black, black);
     next_x += save_btn_rect.w + 10;
 
@@ -804,10 +921,12 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
     draw_button(r, refresh_btn_rect, "Refresh", (SDL_Color){180,180,255}, black, black);
 }
 
-// Глобальные переменные для хранения rect'ов MoveType и Resistance (используются в отрисовке и кликах)
+// Глобальные переменные для хранения rect'ов
 SDL_Rect movetype_prev_rect, movetype_next_rect;
 SDL_Rect resistance_prev_rects[8];
 SDL_Rect resistance_next_rects[8];
+SDL_Rect spell_prev_rects[ENEMY_MAX_SPELLS];
+SDL_Rect spell_next_rects[ENEMY_MAX_SPELLS];
 
 // Обработка кликов по панели редактирования
 void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
@@ -815,7 +934,7 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
     int base_x = px + 10;
     int field_offset = 100;
 
-    int y = py + 10;  // базовая Y-координата
+    int y = py + 10;
 
     // Portrait
     int y_port = y + EF_PORTRAIT*28;
@@ -938,7 +1057,7 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         return;
     }
 
-    // ---- Move Type стрелки ----
+    // Move Type стрелки
     if (mx >= movetype_prev_rect.x && mx < movetype_prev_rect.x+movetype_prev_rect.w &&
         my >= movetype_prev_rect.y && my < movetype_prev_rect.y+movetype_prev_rect.h) {
         movetype_index = (movetype_index - 1 + movetype_count) % movetype_count;
@@ -954,7 +1073,7 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         return;
     }
 
-    // ---- Resistance стрелки ----
+    // Resistance стрелки
     for (int i = 0; i < 8; i++) {
         SDL_Rect *prev = &resistance_prev_rects[i];
         SDL_Rect *next = &resistance_next_rects[i];
@@ -972,7 +1091,29 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         }
     }
 
-    // Кнопки действий (используем динамические прямоугольники)
+    // Spells стрелки
+    for (int i = 0; i < ENEMY_MAX_SPELLS; i++) {
+        SDL_Rect *prev = &spell_prev_rects[i];
+        SDL_Rect *next = &spell_next_rects[i];
+        if (mx >= prev->x && mx < prev->x+prev->w && my >= prev->y && my < prev->y+prev->h) {
+            if (spell_list_name_count > 0) {
+                selected_spell_name_idx[i] = (selected_spell_name_idx[i] - 1 + spell_list_name_count) % spell_list_name_count;
+                strncpy(enemy_spell_names[i], spell_list_names[selected_spell_name_idx[i]], 63);
+                update_enemy_spells_in_json();
+            }
+            return;
+        }
+        if (mx >= next->x && mx < next->x+next->w && my >= next->y && my < next->y+next->h) {
+            if (spell_list_name_count > 0) {
+                selected_spell_name_idx[i] = (selected_spell_name_idx[i] + 1) % spell_list_name_count;
+                strncpy(enemy_spell_names[i], spell_list_names[selected_spell_name_idx[i]], 63);
+                update_enemy_spells_in_json();
+            }
+            return;
+        }
+    }
+
+    // Кнопки действий
     if (mx >= save_btn_rect.x && mx < save_btn_rect.x+save_btn_rect.w &&
         my >= save_btn_rect.y && my < save_btn_rect.y+save_btn_rect.h) {
         if (active_field_index >= 0) commit_field(active_field_index);
@@ -1018,7 +1159,6 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         cJSON_AddStringToObject(new_enemy, "battle_sprite", "");
         cJSON_AddStringToObject(new_enemy, "race", "Enterran");
         cJSON_AddStringToObject(new_enemy, "status", "normal");
-        // Добавим значения по умолчанию для новых полей
         cJSON *res = cJSON_CreateObject();
         cJSON_AddStringToObject(res, "wind", "none");
         cJSON_AddStringToObject(res, "lightning", "none");
@@ -1030,6 +1170,10 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         cJSON_AddStringToObject(res, "affliction", "none");
         cJSON_AddItemToObject(new_enemy, "resistance", res);
         cJSON_AddStringToObject(new_enemy, "move_type", "regular");
+        cJSON_AddStringToObject(new_enemy, "initial_status", "none");
+        cJSON *spells = cJSON_CreateArray();
+        for (int i = 0; i < ENEMY_MAX_SPELLS; i++) cJSON_AddItemToArray(spells, cJSON_CreateString("Nothing"));
+        cJSON_AddItemToObject(new_enemy, "spells", spells);
         cJSON_AddItemToArray(enemies_array, new_enemy);
         enemies_count++;
         selected_index = enemies_count - 1;
@@ -1062,7 +1206,7 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         return;
     }
 
-    // Активация текстовых полей (is_special == 0 или -1)
+    // Активация текстовых полей
     if (active_field_index >= 0) {
         commit_field(active_field_index);
         active_field_index = -1;
