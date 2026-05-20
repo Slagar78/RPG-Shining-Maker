@@ -22,7 +22,7 @@
 				"curve":	"LINEAR"
 			},
 			"defense_growth":	{
-				"start":	4,
+				"start":	5,
 				"projected":	36,
 				"curve":	"LINEAR"
 			},
