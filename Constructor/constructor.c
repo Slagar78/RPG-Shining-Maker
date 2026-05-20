@@ -37,6 +37,7 @@ typedef enum {
     MODE_TEXT_EDITOR,
     MODE_DATABASE,
     MODE_PLAYTEST,
+    MODE_BATTLE_TEST,
     MODE_COUNT
 } EditorMode;
 
@@ -136,7 +137,7 @@ void RunPlaytest(const char *projectRoot) {
     // Запускаем bat-файл со свёрнутой консолью
     STARTUPINFO si = { sizeof(STARTUPINFO) };
     si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_MINIMIZE;   // консоль появится, но сразу свернётся
+    si.wShowWindow = SW_MINIMIZE;
 
     PROCESS_INFORMATION pi;
     char cmdLine[4096];
@@ -149,6 +150,61 @@ void RunPlaytest(const char *projectRoot) {
         CloseHandle(pi.hThread);
     } else {
         MessageBox(NULL, "Failed to start playtest", "Error", MB_OK | MB_ICONERROR);
+    }
+
+    DeleteFile(batPath);
+}
+
+void RunBattleTest(const char *projectRoot) {
+    char rubyExe[1024], battleRb[1024], gemHome[1024], dllDir[1024], binDir[1024];
+
+    snprintf(rubyExe, sizeof(rubyExe), "%sPortableRuby\\bin\\ruby.exe", projectRoot);
+    snprintf(battleRb, sizeof(battleRb), "%sbattle.rb", projectRoot);
+    snprintf(gemHome, sizeof(gemHome), "%sPortableRuby\\gems", projectRoot);
+    snprintf(dllDir, sizeof(dllDir), "%sPortableRuby\\dll", projectRoot);
+    snprintf(binDir, sizeof(binDir), "%sPortableRuby\\bin", projectRoot);
+
+    if (!file_exists(rubyExe) || !file_exists(battleRb)) {
+        MessageBox(NULL, "ruby.exe or battle.rb not found!", "Battle Test Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    // Создаём временный bat-файл
+    char batPath[MAX_PATH];
+    GetTempPath(MAX_PATH, batPath);
+    strcat(batPath, "battletest.bat");
+
+    FILE *f = fopen(batPath, "w");
+    if (!f) {
+        MessageBox(NULL, "Cannot create temp bat file", "Battle Test Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    fprintf(f, "@echo off\r\n");
+    fprintf(f, "chcp 65001 >nul\r\n");
+    fprintf(f, "cd /d \"%s\"\r\n", projectRoot);
+    fprintf(f, "set \"GEM_HOME=%s\"\r\n", gemHome);
+    fprintf(f, "set \"GEM_PATH=%s\"\r\n", gemHome);
+    fprintf(f, "set \"PATH=%s;%s;%%PATH%%\"\r\n", dllDir, binDir);
+    fprintf(f, "\"%s\" \"%s\" --playtest\r\n", rubyExe, battleRb);
+    fclose(f);
+
+    // Запускаем bat-файл со свёрнутой консолью
+    STARTUPINFO si = { sizeof(STARTUPINFO) };
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_MINIMIZE;
+
+    PROCESS_INFORMATION pi;
+    char cmdLine[4096];
+    snprintf(cmdLine, sizeof(cmdLine), "cmd /c \"%s\"", batPath);
+
+    if (CreateProcess(NULL, cmdLine, NULL, NULL, FALSE,
+                      0, NULL, NULL, &si, &pi)) {
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    } else {
+        MessageBox(NULL, "Failed to start battle test", "Error", MB_OK | MB_ICONERROR);
     }
 
     DeleteFile(batPath);
@@ -267,7 +323,8 @@ int main(int argc, char *argv[]) {
         "map.png", "terrain.png", "battle.png",
         "battle_scenes.png",
         "text.png", "database.png",
-        "play.png"
+        "play.png",
+        "battle_test.png"   // новая иконка
     };
 
     SDL_Texture *icons[MODE_COUNT] = { NULL };
@@ -295,7 +352,8 @@ int main(int argc, char *argv[]) {
         { {200,35, 48, 48}, MODE_BATTLE_SCENES, icons[3], 0.0f, "Maker/BattleScenes.exe" },
         { {260,35, 48, 48}, MODE_TEXT_EDITOR,   icons[4], 0.0f, "Maker/text_editor.exe" },
         { {320,35, 48, 48}, MODE_DATABASE,      icons[5], 0.0f, "Maker/Database.exe" },
-        { {380,35, 48,48}, MODE_PLAYTEST, NULL, 0.0f, NULL },
+        { {380,35, 48,48}, MODE_PLAYTEST,       icons[6], 0.0f, NULL },
+        { {440,35, 48,48}, MODE_BATTLE_TEST,    icons[7], 0.0f, NULL },
     };
 
     EditorMode currentMode = MODE_MAP_EDITOR;
@@ -327,6 +385,9 @@ int main(int argc, char *argv[]) {
                         if (buttons[i].mode == MODE_PLAYTEST) {
                             Log("Playtest started");
                             RunPlaytest(projectRoot);
+                        } else if (buttons[i].mode == MODE_BATTLE_TEST) {
+                            Log("Battle test started");
+                            RunBattleTest(projectRoot);
                         } else {
                             currentMode = buttons[i].mode;
                             char logMsg[256];
