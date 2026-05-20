@@ -56,7 +56,6 @@ class BattleScene
     @attack_duration = 0.0
     @damage = 0
     @damage_applied = false
-	@fade_out_alpha = 0
 	
     @defender_anim = :defense
 
@@ -192,17 +191,28 @@ class BattleScene
 
     # Затемнение в конце боевой сцены
     if @phase == :fade_out
-      @fade_out_alpha += 200 * dt
+      @fade_out_alpha += 280 * dt   # чуть быстрее, чтобы красиво
+
       if @fade_out_alpha >= 255
         @fade_out_alpha = 255
-        Raylib.UnloadRenderTexture(@render_texture) if @render_texture
-        @render_texture = nil
-        @ground_tex = nil
-        @panel_tex = nil
-        @battle_manager.end_current_turn
-        @phase = nil
-        @active = false
+        @phase = :finished
       end
+      return
+    end
+
+    # Финальное завершение
+    if @phase == :finished
+      # Выгружаем ресурсы
+      Raylib.UnloadRenderTexture(@render_texture) if @render_texture
+      @render_texture = nil
+      @ground_tex = nil
+      @panel_tex = nil
+
+      @battle_manager.return_from_battle_scene()
+
+      @phase = nil
+      @active = false
+      @finished = true
       return
     end
 
@@ -354,9 +364,6 @@ class BattleScene
       Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
     end
 
-    if @phase == :fade_out
-      Raylib.DrawRectangle(0, 0, WORK_WIDTH, 960, Raylib.Fade(Raylib::BLACK, @fade_out_alpha / 255.0))
-    end
     Raylib.EndTextureMode()
 
     src = Raylib::Rectangle.create(0, 0, 1152, -960)
