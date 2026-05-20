@@ -57,6 +57,17 @@ def initialize(battle_manager)
 	@defender_anim = :defense
 
     @stick_textures = []
+	# Загрузка окантовки для полосок HP/MP
+    @edging_tex = nil
+    edging_path = "assets/ui/Panel_Edging_Big.png"
+    if File.exist?(edging_path)
+    img = Raylib.LoadImage(edging_path)
+    @edging_tex = Raylib.LoadTextureFromImage(img)
+    Raylib.UnloadImage(img)
+    Raylib.SetTextureFilter(@edging_tex, Raylib::TEXTURE_FILTER_POINT)
+  else
+    puts "WARNING: Panel_Edging_Big.png not found"
+  end
     load_stick_textures
     load_background
 
@@ -156,10 +167,12 @@ end
       Raylib.UnloadTexture(@panel_tex)
       @panel_tex = nil
     end
+	
+  # @edging_tex не трогаем – он будет использоваться при следующих атаках
 
     @battle_manager.end_current_turn
     puts "<<< Battle scene finished"	
-  end
+   end
 
  def update
   return unless @active
@@ -454,6 +467,7 @@ end
     bar_start_x = base_x + label_w + gap
     stick_y = base_y + (font_size - STICK_H) / 2
 
+    # Цветные палочки
     limits = [100, 200, 300, 9999]
     prev_limit = 0
 
@@ -475,13 +489,35 @@ end
       prev_limit = limit
     end
 
+    # === Окантовка (только на реально нарисованные палочки) ===
+    if @edging_tex && sticks_to_draw >= 2
+      left_src  = Raylib::Rectangle.create(0, 0, 3, @edging_tex.height)
+      mid_src   = Raylib::Rectangle.create(3, 0, 3, @edging_tex.height)
+      right_src = Raylib::Rectangle.create(6, 0, 3, @edging_tex.height)
+
+      # Левый колпачок
+      left_dst = Raylib::Rectangle.create(bar_start_x, stick_y, 3, STICK_H)
+      Raylib.DrawTexturePro(@edging_tex, left_src, left_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+
+      # Средняя часть (sticks_to_draw - 2 раз, потому что левый и правый уже заняли 2 палочки)
+      (sticks_to_draw - 2).times do |i|
+        mid_dst = Raylib::Rectangle.create(bar_start_x + 3 + i * 3, stick_y, 3, STICK_H)
+        Raylib.DrawTexturePro(@edging_tex, mid_src, mid_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+      end
+
+      # Правый колпачок
+      right_dst = Raylib::Rectangle.create(bar_start_x + (sticks_to_draw - 1) * 3, stick_y, 3, STICK_H)
+      Raylib.DrawTexturePro(@edging_tex, right_src, right_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+    end
+
+    # Число справа
     number_x = bar_start_x + total_positions * STICK_W + gap
     if font
       Raylib.DrawTextEx(font, number_str, Raylib::Vector2.create(number_x, base_y), font_size, 1, Raylib::WHITE)
     else
       Raylib.DrawText(number_str, number_x, base_y, font_size, Raylib::WHITE)
     end
-  end
+end
 
   # ---------- Анимация ----------
   def update_animation(dt)
