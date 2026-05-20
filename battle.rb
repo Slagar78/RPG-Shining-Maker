@@ -673,11 +673,8 @@ end
     if @attack_confirm_ready && (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D))
       # Рассчитываем физический урон
       dmg = DamageCalculator.physical_for_units(@current_unit, @attack_target)
-      # Отнимаем HP у цели (не ниже нуля)
-      @attack_target[:hp] = [@attack_target[:hp] - dmg, 0].max
-      puts "Dealt #{dmg} damage to enemy, HP now #{@attack_target[:hp]}"
-      # Запускаем боевую сцену
-      @battle_scene.start(@current_unit, @attack_target)
+      # Запускаем боевую сцену, передавая урон – здоровье уменьшится на последнем кадре атаки
+      @battle_scene.start(@current_unit, @attack_target, dmg)
       @battle_state = :battle_scene
       @attack_target = nil
       @target_highlight = nil

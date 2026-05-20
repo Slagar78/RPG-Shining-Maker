@@ -52,7 +52,9 @@ def initialize(battle_manager)
 
     @sub_phase = :idle_before
     @sub_phase_timer = 0.0
-    @attack_duration = 0.0
+    @attack_duration = 0.0	
+	@damage = 0
+    @damage_applied = false
 	
 	@defender_anim = :defense
 
@@ -125,9 +127,11 @@ end
     end
   end
 
-  def start(attacker_unit, defender_unit)
+  def start(attacker_unit, defender_unit, damage = 0)
     @attacker = attacker_unit
     @defender = defender_unit
+	@damage = damage
+    @damage_applied = false
     @timer = DELAY_DURATION
     @active = true
     @finished = false
@@ -222,6 +226,18 @@ end
       @defender_current_frame, @defender_anim_timer = advance_frame(
         @defender, @defender_anim, @defender_current_frame, @defender_anim_timer, dt
       )
+
+      # Нанесение урона на последнем кадре атаки (только один раз)
+      if !@damage_applied && @damage > 0
+        attacker_anim = @attacker[:battle_anim]
+        if attacker_anim
+          attack_frames = attacker_anim.attack[:frames]
+          if @attacker_current_frame == attack_frames.size - 1
+            @defender[:hp] = [@defender[:hp] - @damage, 0].max
+            @damage_applied = true
+          end
+        end
+      end
 
       if @sub_phase_timer >= @attack_duration
         @sub_phase = :idle_after
@@ -385,7 +401,7 @@ end
     max_mp_str = "#{max_mp}/#{max_mp}"
     max_number_w = [measure_text_ex(max_hp_str, font, font_size), measure_text_ex(max_mp_str, font, font_size)].max
 
-    max_sticks = [[hp, mp].max, 100].min
+    max_sticks = [[max_hp, max_mp].max, 100].min
     sticks_w = max_sticks * STICK_W
 
     content_w = text_margin_x + label_w + 8 + sticks_w + 8 + max_number_w + text_margin_x
@@ -462,15 +478,25 @@ end
     total_positions = [(available_sticks_w / STICK_W).floor, 100].min
     total_positions = 0 if total_positions < 0
 
-    sticks_to_draw = [current, max_val, total_positions].min
+    sticks_to_draw = [current, max_val, total_positions].min   # сколько палочек текущего здоровья
 
     bar_start_x = base_x + label_w + gap
     stick_y = base_y + (font_size - STICK_H) / 2
 
-    # Цветные палочки
+    # Красные палочки (только для HP, потерянное здоровье)
+    if label == "HP"
+      max_visible = [max_val, total_positions].min
+      (sticks_to_draw...max_visible).each do |i|
+        stick_x = bar_start_x + i * STICK_W
+        red = Raylib::Color.new
+        red.r = 220; red.g = 40; red.b = 40; red.a = 200
+        Raylib.DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, red)
+      end
+    end
+
+    # Цветные палочки текущего здоровья
     limits = [100, 200, 300, 9999]
     prev_limit = 0
-
     limits.each_with_index do |limit, idx|
       layer_max = [current, limit].min - prev_limit
       layer_max = 0 if layer_max < 0
@@ -489,25 +515,35 @@ end
       prev_limit = limit
     end
 
-    # === Окантовка (только на реально нарисованные палочки) ===
-    if @edging_tex && sticks_to_draw >= 2
-      left_src  = Raylib::Rectangle.create(0, 0, 3, @edging_tex.height)
-      mid_src   = Raylib::Rectangle.create(3, 0, 3, @edging_tex.height)
-      right_src = Raylib::Rectangle.create(6, 0, 3, @edging_tex.height)
-
-      # Левый колпачок
-      left_dst = Raylib::Rectangle.create(bar_start_x, stick_y, 3, STICK_H)
-      Raylib.DrawTexturePro(@edging_tex, left_src, left_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
-
-      # Средняя часть (sticks_to_draw - 2 раз, потому что левый и правый уже заняли 2 палочки)
-      (sticks_to_draw - 2).times do |i|
-        mid_dst = Raylib::Rectangle.create(bar_start_x + 3 + i * 3, stick_y, 3, STICK_H)
-        Raylib.DrawTexturePro(@edging_tex, mid_src, mid_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+    # Окантовка (на всю видимую шкалу, включая красные для HP)
+    if @edging_tex
+      if label == "HP"
+        actual_positions = [max_val, total_positions].min
+      else
+        actual_positions = [current, total_positions].min
       end
+      total_w = actual_positions * STICK_W
 
-      # Правый колпачок
-      right_dst = Raylib::Rectangle.create(bar_start_x + (sticks_to_draw - 1) * 3, stick_y, 3, STICK_H)
-      Raylib.DrawTexturePro(@edging_tex, right_src, right_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+      if total_w >= 2 * 3   # минимум для левого и правого колпачков по 3px
+        left_src  = Raylib::Rectangle.create(0, 0, 3, @edging_tex.height)
+        mid_src   = Raylib::Rectangle.create(3, 0, 3, @edging_tex.height)
+        right_src = Raylib::Rectangle.create(6, 0, 3, @edging_tex.height)
+
+        # Левый колпачок
+        left_dst = Raylib::Rectangle.create(bar_start_x, stick_y, 3, STICK_H)
+        Raylib.DrawTexturePro(@edging_tex, left_src, left_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+
+        # Средние сегменты
+        mid_count = actual_positions - 2
+        mid_count.times do |i|
+          mid_dst = Raylib::Rectangle.create(bar_start_x + 3 + i * 3, stick_y, 3, STICK_H)
+          Raylib.DrawTexturePro(@edging_tex, mid_src, mid_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+        end
+
+        # Правый колпачок
+        right_dst = Raylib::Rectangle.create(bar_start_x + (actual_positions - 1) * 3, stick_y, 3, STICK_H)
+        Raylib.DrawTexturePro(@edging_tex, right_src, right_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+      end
     end
 
     # Число справа
