@@ -41,7 +41,8 @@
 					"item":	"Nothing",
 					"equipped":	false
 				}],
-			"spells":	["Nothing", "Nothing", "Nothing", "Nothing"],
+			"spells":	["Nothing", "Aura", "Nothing", "Nothing"],
+			"spell_levels":	[1, 1, 1, 3],
 			"initial_status":	"none",
 			"move_type":	"flying"
 		}, {
@@ -87,6 +88,7 @@
 					"equipped":	false
 				}],
 			"spells":	["Drain", "Nothing", "Nothing", "Nothing"],
+			"spell_levels":	[1, 1, 1, 1],
 			"initial_status":	"none",
 			"move_type":	"stealth"
 		}]

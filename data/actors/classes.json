@@ -27,7 +27,7 @@
 				"curve":	"LINEAR"
 			},
 			"agility_growth":	{
-				"start":	4,
+				"start":	5,
 				"projected":	32,
 				"curve":	"EARLY"
 			},

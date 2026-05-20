@@ -549,6 +549,25 @@ static void open_edit_fields(cJSON *enemy) {
         }
     }
 
+    // Убедимся, что spell_levels присутствует в JSON-объекте врага (для корректного сохранения)
+    if (!spell_levels_arr) {
+        spell_levels_arr = cJSON_CreateArray();
+        for (int i = 0; i < ENEMY_MAX_SPELLS; i++)
+            cJSON_AddItemToArray(spell_levels_arr, cJSON_CreateNumber(enemy_spell_levels[i]));
+        cJSON_AddItemToObject(enemy, "spell_levels", spell_levels_arr);
+    } else {
+        // Обновим значения на случай рассинхронизации
+        int sz = cJSON_GetArraySize(spell_levels_arr);
+        for (int i = 0; i < ENEMY_MAX_SPELLS; i++) {
+            if (i < sz) {
+                cJSON *item = cJSON_GetArrayItem(spell_levels_arr, i);
+                if (item && cJSON_IsNumber(item)) item->valueint = enemy_spell_levels[i];
+            } else {
+                cJSON_AddItemToArray(spell_levels_arr, cJSON_CreateNumber(enemy_spell_levels[i]));
+            }
+        }
+    }
+
     // ---- Prowess ----
     cJSON *prow = cJSON_GetObjectItem(enemy, "prowess");
     char *prow_str = prow ? cJSON_PrintUnformatted(prow) : strdup("[]");
