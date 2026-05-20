@@ -36,6 +36,11 @@ class BattlePlayer
     @draw_origin = Vector2.create(0, 0)
   end
 
+  # Новый метод: обновить разрешённые для хода клетки
+  def update_highlight_tiles(new_tiles)
+    @highlight_tiles = new_tiles
+  end
+
   def try_move(dir, battle_manager = nil)
     return if @moving
 
@@ -84,14 +89,14 @@ class BattlePlayer
   def face_target(target_x, target_y)
     dx = target_x - @x
     dy = target_y - @y
-  if dx > 0
-    @direction = DIR_RIGHT
-  elsif dx < 0
-    @direction = DIR_LEFT
-  elsif dy > 0
-    @direction = DIR_DOWN
-  elsif dy < 0
-    @direction = DIR_UP
+    if dx > 0
+      @direction = DIR_RIGHT
+    elsif dx < 0
+      @direction = DIR_LEFT
+    elsif dy > 0
+      @direction = DIR_DOWN
+    elsif dy < 0
+      @direction = DIR_UP
     end
   end
 

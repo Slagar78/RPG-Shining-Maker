@@ -512,6 +512,7 @@ end
           @target_highlight = @attack_targets[0]
           @battle_menu.close
           @battle_state = :attack_targeting
+          @highlight_tiles.clear   # ← убираем зону хода
           if @battle_player
             @battle_player.face_target(@attack_target[:x], @attack_target[:y])
           end
@@ -688,6 +689,8 @@ end
       @target_highlight = nil
       @attack_targets.clear
       @battle_state = :player_turn
+      @highlight_tiles = calculate_move_range(@current_unit)   # ← вернули подсветку хода
+	  @battle_player&.update_highlight_tiles(@highlight_tiles)
       @cursor.visible = true
       sync_cursor_to_unit
       @attack_confirm_ready = false
@@ -695,6 +698,8 @@ end
     end
   else
     @battle_state = :player_turn
+    @highlight_tiles = calculate_move_range(@current_unit)   # ← вернули подсветку хода
+	@battle_player&.update_highlight_tiles(@highlight_tiles)
     @cursor.visible = true
     sync_cursor_to_unit
   end
