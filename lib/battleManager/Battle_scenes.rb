@@ -89,6 +89,7 @@ class BattleScene
     # Переменные для анимации выезда
     @ally_draw_x = ALLY_X
     @run_in_active = false
+	@black_screen_timer = 0.0
   end
 
   # ---------- Загрузка фона битвы ----------
@@ -172,11 +173,11 @@ class BattleScene
   def finish
     return if @finished
     @finished = true
-    @phase = :fade_out
-    @fade_out_alpha = 0
+    @phase = :black_screen
+    @black_screen_timer = 0.5   # полсекунды чёрного
   end
 
-  def update
+    def update
   return unless @active
   dt = Raylib.GetFrameTime()
 
@@ -188,22 +189,25 @@ class BattleScene
     return
   end
 
-  if @phase == :fade_out
-    update_animation(dt)                     # анимация idle во время затемнения
-    @fade_out_alpha += 280 * dt
-    if @fade_out_alpha >= 255
-      @fade_out_alpha = 255
-      # Завершаем ход и переходим к следующему юниту
-      @battle_manager.end_current_turn
-      # Очистка ресурсов
-      Raylib.UnloadRenderTexture(@render_texture) if @render_texture
-      @render_texture = nil
-      @ground_tex = nil
-      @panel_tex = nil
-      @phase = nil
-      @active = false
-      @finished = true
+  if @phase == :black_screen
+    @black_screen_timer -= dt
+    if @black_screen_timer <= 0
+      @phase = :finished
     end
+    return
+  end
+
+  if @phase == :finished
+    # Завершаем ход и переходим к следующему юниту
+    @battle_manager.end_current_turn
+    # Очистка ресурсов
+    Raylib.UnloadRenderTexture(@render_texture) if @render_texture
+    @render_texture = nil
+    @ground_tex = nil
+    @panel_tex = nil
+    @phase = nil
+    @active = false
+    @finished = true
     return
   end
 
@@ -263,7 +267,8 @@ class BattleScene
   end
 end
 
-  def draw
+
+def draw
   return unless @active && @render_texture
 
   Raylib.BeginTextureMode(@render_texture)
@@ -272,7 +277,7 @@ end
   when :delay, :end_delay
     Raylib.ClearBackground(Raylib::BLACK)
 
-  when :display, :fade_out   # <-- теперь fade_out тоже рисует сцену
+  when :display
     Raylib.ClearBackground(Raylib::BLACK)
 
     if @background_tex
@@ -335,10 +340,8 @@ end
       Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
     end
 
-    # Затемнение ТОЛЬКО в фазе fade_out
-    if @phase == :fade_out
-      Raylib.DrawRectangle(0, 0, WORK_WIDTH, 960, Raylib.Fade(Raylib::BLACK, @fade_out_alpha / 255.0))
-    end
+  when :black_screen, :finished
+    Raylib.ClearBackground(Raylib::BLACK)
   end
 
   Raylib.EndTextureMode()
