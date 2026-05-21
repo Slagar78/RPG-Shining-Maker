@@ -372,8 +372,6 @@ end
   end
 
   def draw_panel_with_sprite(unit, x, y, right_aligned)
-    # ... (весь существующий код без изменений)
-    # Оставляю как есть, он не менялся.
     return unless @panel_tex
     font_size = 36
     text_margin_x = 20
