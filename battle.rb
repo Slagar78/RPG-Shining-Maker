@@ -18,9 +18,16 @@ require_relative 'lib/battleManager/cursor'
 require_relative 'lib/battleManager/camera_battle'
 require_relative 'lib/battleManager/Battle_scenes'
 require_relative 'lib/battleManager/calculate_damage'
+require_relative 'lib/battleManager/battle_renderer'
 
 class BattleManager
   attr_reader :game_map, :battle_entry, :battle_state, :battle_menu
+  attr_reader :camera, :static_bg, :layer2, :top_layer,
+              :highlight_tiles, :highlight_timer, :current_unit,
+              :allies, :enemies, :battle_player, :cursor,
+              :battle_scene, :target_highlight, :highlight_tex,
+              :attack_target, :hp_mp_panel, :target_hp_panel,
+              :fade_alpha, :db, :battle_x, :battle_y
   attr_accessor :audio
   attr_accessor :battle_scene_font
 
@@ -101,6 +108,7 @@ class BattleManager
     @cursor_hide_timer = 0
     @pending_menu = false
     @battle_scene = BattleScene.new(self)
+	@renderer = BattleRenderer.new(self)
     @start_x = 0
     @start_y = 0
     @attack_target = nil
@@ -752,119 +760,8 @@ end
     end
   end
 
-def draw
-    cam_x = -@camera.x
-    cam_y = -@camera.y
-    
-    # Вычисляем смещение, чтобы показать нужный кусок карты
-    bg_offset_x = -@battle_x * TILE_SIZE
-    bg_offset_y = -@battle_y * TILE_SIZE
-
-    DrawTexturePro(@static_bg.texture,
-      Rectangle.create(0, 0, @static_bg.texture.width, -@static_bg.texture.height),
-      Rectangle.create(cam_x + bg_offset_x, cam_y + bg_offset_y,
-                       @static_bg.texture.width, @static_bg.texture.height),
-      Vector2.create(0, 0), 0, WHITE)
-
-    if @layer2
-      DrawTexturePro(@layer2.texture,
-        Rectangle.create(0, 0, @layer2.texture.width, -@layer2.texture.height),
-        Rectangle.create(cam_x + bg_offset_x, cam_y + bg_offset_y,
-                         @layer2.texture.width, @layer2.texture.height),
-        Vector2.create(0, 0), 0, WHITE)
-    end
-
-  if @highlight_tiles.any? && @current_unit
-    # Ледяной холодный оттенок (почти белый, с голубизной)
-    base_color = Raylib::Color.new
-    base_color.r = 220
-    base_color.g = 240
-    base_color.b = 255   # холодный голубоватый
-    base_color.a = 50    # очень прозрачный, как лёд
-
-    @highlight_tiles.each do |tx, ty|
-    # Лёгкое мерцание: альфа гуляет около 50–120
-    alpha = (Math.sin(@highlight_timer * 0.2) * 35 + 85).to_i.clamp(0, 255)
-    color = Raylib::Color.new
-    color.r = base_color.r
-    color.g = base_color.g
-    color.b = base_color.b
-    color.a = alpha
-
-    dst = Rectangle.create(tx * TILE_SIZE + cam_x, ty * TILE_SIZE + cam_y, TILE_SIZE, TILE_SIZE)
-    DrawRectangleRec(dst, color)
-    end
-  end
-
-    @cursor.draw(cam_x, cam_y)
-
-    @allies.each do |ally|
-      next if ally == @current_unit && @battle_player
-      tex = ally[:tex]; next unless tex
-      src = Rectangle.create(ally[:sprite_frame] * TILE_SIZE, 2 * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-      dst = Rectangle.create(ally[:x] * TILE_SIZE + cam_x, ally[:y] * TILE_SIZE + cam_y - 16, TILE_SIZE, TILE_SIZE)
-      DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
-    end
-
-    # РАМКА ЦЕЛИ (из текстуры, под врагами)
-    if @battle_state == :attack_targeting && @target_highlight && @highlight_tex
-      tx = @target_highlight[:x] * TILE_SIZE + cam_x
-      ty = @target_highlight[:y] * TILE_SIZE + cam_y
-      src = Rectangle.create(0, 0, @highlight_tex.width, @highlight_tex.height)
-      dst = Rectangle.create(tx, ty, TILE_SIZE, TILE_SIZE)
-      DrawTexturePro(@highlight_tex, src, dst, Vector2.create(0,0), 0, WHITE)
-    end
-
-    # ПОТОМ враги (они будут нарисованы поверх рамки)
-    @enemies.each do |enemy|
-      next if enemy == @current_unit && @battle_player
-      tex = enemy[:tex]; next unless tex
-      src = Rectangle.create(enemy[:sprite_frame] * TILE_SIZE, 2 * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-      dst = Rectangle.create(enemy[:x] * TILE_SIZE + cam_x, enemy[:y] * TILE_SIZE + cam_y - 16, TILE_SIZE, TILE_SIZE)
-      DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
-    end
-
-    if @battle_player
-      draw_active_unit_with_camera(cam_x, cam_y)
-    end
-
-    DrawTexturePro(@top_layer.texture,
-      Rectangle.create(0, 0, @top_layer.texture.width, -@top_layer.texture.height),
-      Rectangle.create(cam_x + bg_offset_x, cam_y + bg_offset_y,
-                       @top_layer.texture.width, @top_layer.texture.height),
-      Vector2.create(0, 0), 0, WHITE)
-
-    # Панель HP/MP поверх карты, но под меню
-    @hp_mp_panel.draw(@current_unit, @db) if @current_unit
-
-    # Панель цели атаки в правом нижнем углу
-    if @battle_state == :attack_targeting && @attack_target
-      @target_hp_panel.draw_bottom_right(@attack_target, @db)
-    end
-
-    @battle_menu.draw
-    @battle_scene.draw
-	# Затемнение при переходе
-    if @battle_state == :fade_to_battle
-    DrawRectangle(0, 0, 576, 480, Fade(BLACK, @fade_alpha / 255.0))
-	end
-end
-
-  def draw_active_unit_with_camera(cam_x, cam_y)
-    bp = @battle_player
-    tex = bp.instance_variable_get(:@tex)
-    return unless tex
-    row = case bp.direction
-          when 8 then 0
-          when 4, 6 then 1
-          else 2
-          end
-    px = bp.visual_x + cam_x
-    py = (bp.visual_y - 16) + cam_y
-    src = Rectangle.create(bp.instance_variable_get(:@pattern) * TILE_SIZE, row * TILE_SIZE,
-                           bp.direction == 6 ? -TILE_SIZE : TILE_SIZE, TILE_SIZE)
-    dst = Rectangle.create(px, py, TILE_SIZE, TILE_SIZE)
-    DrawTexturePro(tex, src, dst, Vector2.create(0, 0), 0, WHITE)
+  def draw
+    @renderer.draw
   end
 
   def return_from_battle_scene
