@@ -176,166 +176,152 @@ class BattleScene
     @fade_out_alpha = 0
   end
 
-    def update
-    return unless @active
-    dt = Raylib.GetFrameTime()
+  def update
+  return unless @active
+  dt = Raylib.GetFrameTime()
 
-    # Переход из фазы delay в display
-    if @phase == :delay
-      @timer -= dt
-      if @timer <= 0
-        @phase = :display
-      end
-      return
+  if @phase == :delay
+    @timer -= dt
+    if @timer <= 0
+      @phase = :display
     end
+    return
+  end
 
-    if @phase == :fade_out
-      @fade_out_alpha += 280 * dt
-      if @fade_out_alpha >= 255
-        @fade_out_alpha = 255
-        Raylib.UnloadRenderTexture(@render_texture) if @render_texture
-        @render_texture = nil
-        @ground_tex = nil
-        @panel_tex = nil
-        @phase = nil
-        @active = false
-        @battle_manager.end_current_turn
-        return
-      end
-      return
+  if @phase == :fade_out
+    update_animation(dt)                     # анимация idle во время затемнения
+    @fade_out_alpha += 280 * dt
+    if @fade_out_alpha >= 255
+      @fade_out_alpha = 255
+      # Завершаем ход и переходим к следующему юниту
+      @battle_manager.end_current_turn
+      # Очистка ресурсов
+      Raylib.UnloadRenderTexture(@render_texture) if @render_texture
+      @render_texture = nil
+      @ground_tex = nil
+      @panel_tex = nil
+      @phase = nil
+      @active = false
+      @finished = true
     end
+    return
+  end
 
-    # Основная фаза отображения
-    if @phase == :display
-      @sub_phase_timer += dt
-
-      case @sub_phase
-      when :running_in
-        progress = @sub_phase_timer / RUN_IN_DURATION
-        @ally_draw_x = WORK_WIDTH + 100 - (WORK_WIDTH + 100 - ALLY_X) * progress
-        if @sub_phase_timer >= RUN_IN_DURATION
-          @ally_draw_x = ALLY_X
-          @sub_phase = :idle_before
-          @sub_phase_timer = 0.0
-        end
-
-      when :idle_before
-        update_animation(dt)
-        if @sub_phase_timer >= IDLE_BEFORE_DURATION
-          @sub_phase = :pre_attack
-          @sub_phase_timer = 0.0
-        end
-
-      when :pre_attack
-        update_animation(dt)
-        if @sub_phase_timer >= PRE_ATTACK_DURATION
-          movetype_key = @defender[:movetype] || "regular"
-          dodge_chance = DamageCalculator.physical_dodge_chance(movetype_key)
-          @defender_anim = dodge_chance > 30 ? :defense : :idle
-          @sub_phase = :attack
-          @sub_phase_timer = 0.0
-          @attacker_current_frame = 0
-          @defender_current_frame = 0
-        end
-
-      when :attack
-        @attacker_current_frame, @attacker_anim_timer = advance_frame(
-          @attacker, :attack, @attacker_current_frame, @attacker_anim_timer, dt
-        )
-        @defender_current_frame, @defender_anim_timer = advance_frame(
-          @defender, @defender_anim, @defender_current_frame, @defender_anim_timer, dt
-        )
-        if !@damage_applied && @damage > 0
-          attacker_anim = @attacker[:battle_anim]
-          if attacker_anim
-            attack_frames = attacker_anim.attack[:frames]
-            if @attacker_current_frame == attack_frames.size - 1
-              @defender[:hp] = [@defender[:hp] - @damage, 0].max
-              @damage_applied = true
-            end
+  if @phase == :display
+    @sub_phase_timer += dt
+    case @sub_phase
+    when :running_in
+      progress = @sub_phase_timer / RUN_IN_DURATION
+      @ally_draw_x = WORK_WIDTH + 100 - (WORK_WIDTH + 100 - ALLY_X) * progress
+      if @sub_phase_timer >= RUN_IN_DURATION
+        @ally_draw_x = ALLY_X
+        @sub_phase = :idle_before
+        @sub_phase_timer = 0.0
+      end
+    when :idle_before
+      update_animation(dt)
+      if @sub_phase_timer >= IDLE_BEFORE_DURATION
+        @sub_phase = :pre_attack
+        @sub_phase_timer = 0.0
+      end
+    when :pre_attack
+      update_animation(dt)
+      if @sub_phase_timer >= PRE_ATTACK_DURATION
+        movetype_key = @defender[:movetype] || "regular"
+        dodge_chance = DamageCalculator.physical_dodge_chance(movetype_key)
+        @defender_anim = dodge_chance > 30 ? :defense : :idle
+        @sub_phase = :attack
+        @sub_phase_timer = 0.0
+        @attacker_current_frame = 0
+        @defender_current_frame = 0
+      end
+    when :attack
+      @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :attack, @attacker_current_frame, @attacker_anim_timer, dt)
+      @defender_current_frame, @defender_anim_timer = advance_frame(@defender, @defender_anim, @defender_current_frame, @defender_anim_timer, dt)
+      if !@damage_applied && @damage > 0
+        attacker_anim = @attacker[:battle_anim]
+        if attacker_anim
+          attack_frames = attacker_anim.attack[:frames]
+          if @attacker_current_frame == attack_frames.size - 1
+            @defender[:hp] = [@defender[:hp] - @damage, 0].max
+            @damage_applied = true
           end
         end
-        if @sub_phase_timer >= @attack_duration
-          @sub_phase = :idle_after
-          @sub_phase_timer = 0.0
-          @attacker_current_frame = 0
-          @defender_current_frame = 0
-        end
-
-      when :idle_after
-        update_animation(dt)
-        if @sub_phase_timer >= IDLE_AFTER_DURATION
-          finish
-        end
+      end
+      if @sub_phase_timer >= @attack_duration
+        @sub_phase = :idle_after
+        @sub_phase_timer = 0.0
+        @attacker_current_frame = 0
+        @defender_current_frame = 0
+      end
+    when :idle_after
+      update_animation(dt)
+      if @sub_phase_timer >= IDLE_AFTER_DURATION
+        finish
       end
     end
   end
+end
 
-    def draw
-    return unless @active && @render_texture
+  def draw
+  return unless @active && @render_texture
 
-    Raylib.BeginTextureMode(@render_texture)
+  Raylib.BeginTextureMode(@render_texture)
 
-    case @phase
-    when :delay, :end_delay
-      Raylib.ClearBackground(Raylib::BLACK)
-    when :fade_out
-      # Рисуем чёрный фон и текущий кадр сцены поверх него
-      Raylib.ClearBackground(Raylib::BLACK)
-      # Здесь можно было бы нарисовать содержимое сцены, 
-      # но так как альфа растёт, мы просто затемняем то, что уже есть
-    when :display
-      Raylib.ClearBackground(Raylib::BLACK)
+  case @phase
+  when :delay, :end_delay
+    Raylib.ClearBackground(Raylib::BLACK)
 
-      if @background_tex
-        src = Raylib::Rectangle.create(0, 0, @background_tex.width, @background_tex.height)
-        dst = Raylib::Rectangle.create(0, BAR_HEIGHT, WORK_WIDTH, WORK_HEIGHT)
-        Raylib.DrawTexturePro(@background_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+  when :display, :fade_out   # <-- теперь fade_out тоже рисует сцену
+    Raylib.ClearBackground(Raylib::BLACK)
+
+    if @background_tex
+      src = Raylib::Rectangle.create(0, 0, @background_tex.width, @background_tex.height)
+      dst = Raylib::Rectangle.create(0, BAR_HEIGHT, WORK_WIDTH, WORK_HEIGHT)
+      Raylib.DrawTexturePro(@background_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+    end
+
+    Raylib.DrawRectangle(0, 0, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
+    Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
+
+    if @attacker && !@attacker[:enemy] && @ground_tex
+      gw = @ground_tex.width
+      gh = @ground_tex.height
+      scaled_w = gw * GROUND_SCALE
+      scaled_h = gh * GROUND_SCALE
+      gx = @ally_draw_x - scaled_w / 2 + GROUND_OFFSET_X
+      gy = ALLY_Y - scaled_h + GROUND_OFFSET_Y
+      src = Raylib::Rectangle.create(0, 0, gw, gh)
+      dst = Raylib::Rectangle.create(gx, gy, scaled_w, scaled_h)
+      Raylib.DrawTexturePro(@ground_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+    end
+
+    if @sub_phase == :attack
+      draw_unit(@attacker, :attack, @ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
+      draw_unit(@defender, @defender_anim, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
+    else
+      draw_unit(@attacker, :idle,    @ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
+      draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
+    end
+
+    if @attacker && @attacker[:max_hp]
+      load_panel_texture
+      if @panel_tex
+        panel_w = @panel_tex.width
+        panel_h = @panel_tex.height
+        panel_x = WORK_WIDTH - 16 - panel_w
+        panel_y = (BAR_HEIGHT - panel_h) / 2
+        draw_panel_with_sprite(@attacker, panel_x + panel_w, panel_y, true)
       end
-
-      Raylib.DrawRectangle(0, 0, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
-      Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
-
-      if @attacker && !@attacker[:enemy] && @ground_tex
-        gw = @ground_tex.width
-        gh = @ground_tex.height
-        scaled_w = gw * GROUND_SCALE
-        scaled_h = gh * GROUND_SCALE
-        gx = @ally_draw_x - scaled_w / 2 + GROUND_OFFSET_X
-        gy = ALLY_Y - scaled_h + GROUND_OFFSET_Y
-        src = Raylib::Rectangle.create(0, 0, gw, gh)
-        dst = Raylib::Rectangle.create(gx, gy, scaled_w, scaled_h)
-        Raylib.DrawTexturePro(@ground_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-      end
-
-      if @sub_phase == :attack
-        draw_unit(@attacker, :attack, @ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
-        draw_unit(@defender, @defender_anim, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
-      else
-        draw_unit(@attacker, :idle,    @ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
-        draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
-      end
-
-      if @attacker && @attacker[:max_hp]
-        load_panel_texture
-        if @panel_tex
-          panel_w = @panel_tex.width
-          panel_h = @panel_tex.height
-          panel_x = WORK_WIDTH - 16 - panel_w
-          panel_y = (BAR_HEIGHT - panel_h) / 2
-          draw_panel_with_sprite(@attacker, panel_x + panel_w, panel_y, true)
-        end
-      end
-
-      if @defender && @defender[:max_hp]
-        load_panel_texture
-        if @panel_tex
-          panel_w = @panel_tex.width
-          panel_h = @panel_tex.height
-          panel_x = 16
-          panel_y = 960 - BAR_HEIGHT + (BAR_HEIGHT - panel_h) / 2
-          draw_panel_with_sprite(@defender, panel_x, panel_y, false)
-        end
+    end
+    if @defender && @defender[:max_hp]
+      load_panel_texture
+      if @panel_tex
+        panel_w = @panel_tex.width
+        panel_h = @panel_tex.height
+        panel_x = 16
+        panel_y = 960 - BAR_HEIGHT + (BAR_HEIGHT - panel_h) / 2
+        draw_panel_with_sprite(@defender, panel_x, panel_y, false)
       end
     end
 
@@ -349,17 +335,18 @@ class BattleScene
       Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
     end
 
-    # Затемнение рисуем только если мы в фазе fade_out
+    # Затемнение ТОЛЬКО в фазе fade_out
     if @phase == :fade_out
       Raylib.DrawRectangle(0, 0, WORK_WIDTH, 960, Raylib.Fade(Raylib::BLACK, @fade_out_alpha / 255.0))
     end
-
-    Raylib.EndTextureMode()
-
-    src = Raylib::Rectangle.create(0, 0, 1152, -960)
-    dst = Raylib::Rectangle.create(0, 0, 576, 480)
-    Raylib.DrawTexturePro(@render_texture.texture, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
   end
+
+  Raylib.EndTextureMode()
+
+  src = Raylib::Rectangle.create(0, 0, 1152, -960)
+  dst = Raylib::Rectangle.create(0, 0, 576, 480)
+  Raylib.DrawTexturePro(@render_texture.texture, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+end
 
   private
 
