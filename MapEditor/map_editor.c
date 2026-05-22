@@ -1593,7 +1593,7 @@ void draw_dialog(Editor *ed) {
             draw_text_centered(ed->renderer, ed->font, "Name:", dlg.x + 50, y_text + 10, black);
             field1 = (SDL_Rect){ dlg.x + 110, y_text - 2, 200, 24 };
             draw_input_field(ed, field1, ed->input_text, ed->dialog_active_field == 0, show_cursor);
-            draw_text_centered(ed->renderer, ed->font, "Size (WxH):", dlg.x + 50, y_text + 45, black);
+            draw_text_centered(ed->renderer, ed->font, "Size (WxH):", dlg.x + 60, y_text + 45, black);
             field2 = (SDL_Rect){ dlg.x + 110, y_text + 33, 200, 24 };
             draw_input_field(ed, field2, ed->input_text2, ed->dialog_active_field == 1, show_cursor);
             break;
@@ -1611,24 +1611,24 @@ void draw_dialog(Editor *ed) {
             draw_input_field(ed, field2, ed->input_text2, ed->dialog_active_field == 1, show_cursor);
             break;
         case DIALOG_MUSIC_MAP:
-            draw_text_centered(ed->renderer, ed->font, "Music file:", dlg.x + 50, y_text + 5, black);
+            draw_text_centered(ed->renderer, ed->font, "Music file:", dlg.x + 60, y_text + 5, black);
             field1 = (SDL_Rect){ dlg.x + 120, y_text - 2, 150, 24 };
             draw_input_field(ed, field1, ed->input_text, ed->dialog_active_field == 0, show_cursor);
             { SDL_Rect browse_btn = { dlg.x + 280, y_text - 2, 65, 24 };
             SDL_SetRenderDrawColor(ed->renderer, 150, 150, 150, 255);
             SDL_RenderFillRect(ed->renderer, &browse_btn);
             draw_text_centered(ed->renderer, ed->font, "...", browse_btn.x + browse_btn.w/2, browse_btn.y + browse_btn.h/2, black); }
-            draw_text_centered(ed->renderer, ed->font, "Volume (0-1):", dlg.x + 50, y_text + 40, black);
+            draw_text_centered(ed->renderer, ed->font, "Volume (0-1):", dlg.x + 70, y_text + 40, black);
             field2 = (SDL_Rect){ dlg.x + 140, y_text + 28, 80, 24 };
             draw_input_field(ed, field2, ed->input_text2, ed->dialog_active_field == 1, show_cursor);
             break;
         case DIALOG_AREAS:
-            draw_text_centered(ed->renderer, ed->font, "Edit Area", dlg.x + 180, y_text, black);
-            draw_text_centered(ed->renderer, ed->font, "Start (x,y):", dlg.x + 50, y_text + 30, black);
-            field1 = (SDL_Rect){ dlg.x + 160, y_text + 18, 160, 24 };
+            draw_text_centered(ed->renderer, ed->font, "Edit Area", dlg.x + 220, y_text, black);
+            draw_text_centered(ed->renderer, ed->font, "Start (x,y):", dlg.x + 100, y_text + 30, black);
+            field1 = (SDL_Rect){ dlg.x + 180, y_text + 18, 140, 24 };
             draw_input_field(ed, field1, ed->input_text, ed->dialog_active_field == 0, show_cursor);
-            draw_text_centered(ed->renderer, ed->font, "End (x,y):", dlg.x + 50, y_text + 65, black);
-            field2 = (SDL_Rect){ dlg.x + 160, y_text + 53, 160, 24 };
+            draw_text_centered(ed->renderer, ed->font, "End (x,y):", dlg.x + 100, y_text + 65, black);
+            field2 = (SDL_Rect){ dlg.x + 180, y_text + 53, 140, 24 };
             draw_input_field(ed, field2, ed->input_text2, ed->dialog_active_field == 1, show_cursor);
             break;      
     }
