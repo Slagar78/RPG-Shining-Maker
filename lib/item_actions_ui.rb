@@ -392,7 +392,6 @@ end
 
       if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
         @status_view_mode = 1 - @status_view_mode
-		$audio.play_sfx(:confirm) if $audio
       end
 
       if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
