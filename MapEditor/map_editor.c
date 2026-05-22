@@ -1739,7 +1739,7 @@ void handle_input(Editor *ed, bool *running) {
                     case SDLK_ESCAPE: close_dialog(ed); break;
                     case SDLK_TAB:
                         if (ed->dialog_type == DIALOG_NEW_MAP || ed->dialog_type == DIALOG_RESIZE_MAP ||
-                            ed->dialog_type == DIALOG_MUSIC_MAP)
+                            ed->dialog_type == DIALOG_MUSIC_MAP || ed->dialog_type == DIALOG_AREAS)
                             ed->dialog_active_field = !ed->dialog_active_field;
                         break;
                     case SDLK_BACKSPACE: {
@@ -1749,15 +1749,31 @@ void handle_input(Editor *ed, bool *running) {
                         break;
                     }
                 }
+            
             } else if (e.type == SDL_TEXTINPUT) {
                 if (ed->dialog_type == DIALOG_MUSIC_MAP && ed->dialog_active_field == 0) break;
                 char *dest = (ed->dialog_active_field == 0) ? ed->input_text : ed->input_text2;
                 int max_len = (ed->dialog_active_field == 1) ? 15 : 63;
-                if (dest && strlen(dest) < max_len) strcat(dest, e.text.text);
+                if (dest && strlen(dest) < max_len) {
+                    if (ed->dialog_type == DIALOG_AREAS) {
+                        // разрешаем только цифры и запятую
+                        const char *ch = e.text.text;
+                        while (*ch) {
+                            if ((*ch >= '0' && *ch <= '9') || *ch == ',') {
+                                char tmp[2] = { *ch, 0 };
+                                strcat(dest, tmp);
+                            }
+                            ch++;
+                        }
+                    } else {
+                        strcat(dest, e.text.text);
+                    }
+                }
+
             } else if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
                 SDL_Rect dlg = { WINDOW_W/2 - 180, WINDOW_H/2 - 110, 360, 220 };
                 if (ed->dialog_type == DIALOG_NEW_MAP || ed->dialog_type == DIALOG_RESIZE_MAP ||
-                    ed->dialog_type == DIALOG_MUSIC_MAP) {
+                    ed->dialog_type == DIALOG_MUSIC_MAP || ed->dialog_type == DIALOG_AREAS) {
                     int y_base = dlg.y + 20;
                     SDL_Rect f1, f2;
                     if (ed->dialog_type == DIALOG_NEW_MAP) {
@@ -1766,7 +1782,11 @@ void handle_input(Editor *ed, bool *running) {
                     } else if (ed->dialog_type == DIALOG_RESIZE_MAP) {
                         f1 = (SDL_Rect){ dlg.x + 110, y_base - 2, 180, 24 };
                         f2 = (SDL_Rect){ dlg.x + 110, y_base + 33, 180, 24 };
-                    } else {
+                    } else if (ed->dialog_type == DIALOG_AREAS) {
+                        // Координаты должны совпадать с draw_dialog (сдвинутые поля)
+                        f1 = (SDL_Rect){ dlg.x + 180, y_base + 18, 140, 24 };
+                        f2 = (SDL_Rect){ dlg.x + 180, y_base + 53, 140, 24 };
+                    } else { // DIALOG_MUSIC_MAP
                         f1 = (SDL_Rect){ dlg.x + 120, y_base - 2, 150, 24 };
                         f2 = (SDL_Rect){ dlg.x + 140, y_base + 28, 80, 24 };
                     }
