@@ -888,24 +888,26 @@ class Profile
       lv = actor["level"]
       exp = actor["exp"] || 0
 
-      left_x = @right_panel_x + 55
-      right_x = @right_panel_x + 210
+      left_x = @right_panel_x + 55    # для «Magic»
+      right_x = @right_panel_x + 210  # для «Items»
+      stats_left_x = @right_panel_x + 25    # левый столбец статов (LV, HP, MP, EXP)
+      stats_right_x = @right_panel_x + 130  # правый столбец статов (ATT, DEF, AGI, MOV)
       y_base = @right_panel_y + 55
       line_h = 28
 
-      draw_text_custom("LV    #{lv}", left_x, y_base, 20, WHITE)
-      draw_text_custom("HP    #{hp_val}", left_x, y_base + line_h, 20, WHITE)
-      draw_text_custom("MP    #{mp_val}", left_x, y_base + line_h * 2, 20, WHITE)
-      draw_text_custom("EXP   #{exp}", left_x, y_base + line_h * 3, 20, WHITE)
+      draw_text_custom("LV    #{lv}", stats_left_x, y_base, 20, WHITE)
+      draw_text_custom("HP    #{hp_val}", stats_left_x, y_base + line_h, 20, WHITE)
+      draw_text_custom("MP    #{mp_val}", stats_left_x, y_base + line_h * 2, 20, WHITE)
+      draw_text_custom("EXP   #{exp}", stats_left_x, y_base + line_h * 3, 20, WHITE)
 
       bonuses = calculate_equip_bonuses(actor)
       eff_atk = [atk_val + bonuses[:attack], 0].max
       eff_def = [def_val + bonuses[:defense], 0].max
 
-      draw_text_custom("ATT   #{eff_atk}", right_x - 50, y_base, 20, WHITE)
-      draw_text_custom("DEF   #{eff_def}", right_x - 50, y_base + line_h, 20, WHITE)
-      draw_text_custom("AGI   #{agi_val}", right_x - 50, y_base + line_h * 2, 20, WHITE)
-      draw_text_custom("MOV   #{mov_val}", right_x - 50, y_base + line_h * 3, 20, WHITE)
+      draw_text_custom("ATT   #{eff_atk}", stats_right_x, y_base, 20, WHITE)
+      draw_text_custom("DEF   #{eff_def}", stats_right_x, y_base + line_h, 20, WHITE)
+      draw_text_custom("AGI   #{agi_val}", stats_right_x, y_base + line_h * 2, 20, WHITE)
+      draw_text_custom("MOV   #{mov_val}", stats_right_x, y_base + line_h * 3, 20, WHITE)
 
       # Магия и Предметы
       klass = @classes_data.find { |c| c["id"] == actor["class_id"] }
