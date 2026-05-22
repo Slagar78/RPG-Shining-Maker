@@ -321,12 +321,17 @@ def draw
       Raylib.DrawTexturePro(@ground_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
     end
 
+    att_x = @attacker[:enemy] ? ENEMY_X : @ally_draw_x
+    att_y = @attacker[:enemy] ? ENEMY_Y : ALLY_Y
+    def_x = @defender[:enemy] ? ENEMY_X : @ally_draw_x
+    def_y = @defender[:enemy] ? ENEMY_Y : ALLY_Y
+
     if @sub_phase == :attack
-      draw_unit(@attacker, :attack, @ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
-      draw_unit(@defender, @defender_anim, ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
+      draw_unit(@defender, @defender_anim, def_x, def_y, false, @defender_current_frame, true)
+      draw_unit(@attacker, :attack, att_x, att_y, false, @attacker_current_frame, true)
     else
-      draw_unit(@attacker, :idle,    @ally_draw_x, ALLY_Y, false, @attacker_current_frame, true)
-      draw_unit(@defender, :idle,    ENEMY_X, ENEMY_Y, false, @defender_current_frame, true)
+      draw_unit(@attacker, :idle, att_x, att_y, false, @attacker_current_frame, true)
+      draw_unit(@defender, :idle, def_x, def_y, false, @defender_current_frame, true)
     end
 
     if @attacker && @attacker[:max_hp]
