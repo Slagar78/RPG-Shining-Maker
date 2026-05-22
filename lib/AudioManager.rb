@@ -40,11 +40,13 @@ class AudioManager
     @sfx[name] = Raylib.LoadSound(path)
   end
 
-  # Проигрывает звук по его имени
+  # Проигрывает звук
   def play_sfx(name)
     sound = @sfx[name]
-    Raylib.PlaySound(sound) if sound
-  end  
+    return unless sound
+    Raylib.StopSound(sound)
+    Raylib.PlaySound(sound)
+  end
 
   # Установить громкость загруженного звука (0.0..1.0)
   def set_sfx_volume(name, volume)

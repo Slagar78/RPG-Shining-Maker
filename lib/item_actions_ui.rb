@@ -292,6 +292,7 @@ end
   # ----------------------------------------------------------
   def change_selected_actor(delta)
     return unless @party.any?
+	$audio.play_sfx(:cursor) if $audio
     new_index = @selected_actor_index + delta
     return if new_index < 0 || new_index >= @party.length
 
@@ -392,6 +393,7 @@ end
 
       if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
         @status_view_mode = 1 - @status_view_mode
+		$audio.play_sfx(:cursor) if $audio
       end
 
       if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
