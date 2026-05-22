@@ -888,10 +888,10 @@ class Profile
       lv = actor["level"]
       exp = actor["exp"] || 0
 
-      left_x = @right_panel_x + 55    # для «Magic»
-      right_x = @right_panel_x + 210  # для «Items»
-      stats_left_x = @right_panel_x + 25    # левый столбец статов (LV, HP, MP, EXP)
-      stats_right_x = @right_panel_x + 130  # правый столбец статов (ATT, DEF, AGI, MOV)
+      left_x = @right_panel_x + 55
+      right_x = @right_panel_x + 210
+      stats_left_x = @right_panel_x + 25
+      stats_right_x = @right_panel_x + 130
       y_base = @right_panel_y + 55
       line_h = 28
 
@@ -908,6 +908,22 @@ class Profile
       draw_text_custom("DEF   #{eff_def}", stats_right_x, y_base + line_h, 20, WHITE)
       draw_text_custom("AGI   #{agi_val}", stats_right_x, y_base + line_h * 2, 20, WHITE)
       draw_text_custom("MOV   #{mov_val}", stats_right_x, y_base + line_h * 3, 20, WHITE)
+
+      # ----- дополнительные характеристики (столбиком) -----
+      extra_x = stats_right_x + 110          # левая граница для заголовков и значений
+      race_str = klass ? (klass["race"] || "???") : "???"
+      status_str = klass ? (klass["status"] || "???") : "???"
+      movetype_str = klass ? (klass["move_type"] || "???") : "???"
+      small_line = 20                       # уменьшенный межстрочный интервал
+
+      draw_text_custom("RACE", extra_x, y_base, 18, WHITE)
+      draw_text_custom(race_str, extra_x, y_base + small_line, 18, WHITE)
+
+      draw_text_custom("STATUS", extra_x, y_base + small_line * 2 + 4, 18, WHITE)
+      draw_text_custom(status_str, extra_x, y_base + small_line * 3 + 4, 18, WHITE)
+
+      draw_text_custom("MOVE TYPE", extra_x, y_base + small_line * 4 + 8, 18, WHITE)
+      draw_text_custom(movetype_str, extra_x, y_base + small_line * 5 + 8, 18, WHITE)
 
       # Магия и Предметы
       klass = @classes_data.find { |c| c["id"] == actor["class_id"] }
