@@ -892,7 +892,7 @@ class Profile
       left_x = @right_panel_x + 55          # позиция для "Magic"
       right_x = @right_panel_x + 210        # позиция для "Items"
       stats_left_x = @right_panel_x + 25    # отступ левого столбца статов (LV, HP, MP, EXP)
-      stats_right_x = @right_panel_x + 120  # отступ правого столбца статов (ATT, DEF, AGI, MOV)
+      stats_right_x = @right_panel_x + 130  # отступ правого столбца статов (ATT, DEF, AGI, MOV)
       y_base = @right_panel_y + 55          # начальная Y-позиция для статов
       line_h = 28                           # межстрочный интервал
 
@@ -914,7 +914,7 @@ class Profile
       draw_text_custom("MOV   #{mov_val}", stats_right_x, y_base + line_h * 3, 20, WHITE)
 
       # ----- дополнительные характеристики (столбиком) -----
-      extra_x = stats_right_x + 110
+      extra_x = stats_right_x + 100
       race_str = klass ? (klass["race"] || "???") : "???"
       status_str = klass ? (klass["status"] || "???") : "???"
       movetype_str = klass ? (klass["move_type"] || "???") : "???"
