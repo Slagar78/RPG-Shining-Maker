@@ -292,7 +292,6 @@ end
   # ----------------------------------------------------------
   def change_selected_actor(delta)
     return unless @party.any?
-	$audio.play_sfx(:confirm) if $audio
     new_index = @selected_actor_index + delta
     return if new_index < 0 || new_index >= @party.length
 
