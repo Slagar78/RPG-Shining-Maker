@@ -52,6 +52,7 @@ static SDL_Texture *transparent_bg_tex = NULL;   // шахматный фон
 #define DIALOG_RESIZE_MAP    3
 #define DIALOG_CONFIRM_DEL   4
 #define DIALOG_MUSIC_MAP     5
+#define DIALOG_AREAS         6
 
 // ─── Структуры данных ─────────────────────────
 
@@ -124,6 +125,15 @@ typedef struct {
     int  scroll_drag_start_y;
     int  scroll_drag_mouse_offset_x;
     int  scroll_drag_mouse_offset_y;
+
+    // === Areas ===
+    int area_count;
+    int main_layer_start[2];   // [x, y]
+    int main_layer_end[2];     // [x, y]
+    bool area_input_active;
+    int  active_area_field;    // 0 = start, 1 = end
+    char start_buf[24];
+    char end_buf[24];
 } Editor;
 
 // Прототипы
@@ -131,6 +141,7 @@ Map* current_map(Editor *ed);
 void find_first_tileset_path(char *out, size_t out_len);
 void find_first_sound_path(char *out, size_t out_len);
 void get_relative_path(const char *abs_path, char *out, size_t out_len);
+void load_areas_for_current_map(Editor *ed);
 
 void safe_strcpy(char *dest, size_t dest_size, const char *src) {
     if (dest_size > 0) snprintf(dest, dest_size, "%s", src);
@@ -188,6 +199,12 @@ void editor_init(Editor *ed) {
     ed->show_layer2 = true;
     ed->zoom = 1.0f;
     ed->paste_just_performed = false;
+    ed->area_count = 0;
+    ed->main_layer_start[0] = ed->main_layer_start[1] = 0;
+    ed->main_layer_end[0] = ed->main_layer_end[1] = 0;
+    ed->area_input_active = false;
+    ed->active_area_field = 0;
+    ed->start_buf[0] = ed->end_buf[0] = '\0';
 }
 
 void free_tileset(Editor *ed) {
@@ -607,18 +624,21 @@ cJSON* find_entry_by_folder(cJSON *entries, const char *folder) {
 }
 
 void add_or_update_entry(cJSON *entries, const char *folder, const char *name,
-                         const char *music_file, float volume) {
+                         const char *music_file, float volume, const char *areas_path)
+{
     cJSON *entry = find_entry_by_folder(entries, folder);
     if (entry) {
         cJSON_ReplaceItemInObject(entry, "name", cJSON_CreateString(name));
         cJSON_ReplaceItemInObject(entry, "music", cJSON_CreateString(music_file));
         cJSON_ReplaceItemInObject(entry, "music_volume", cJSON_CreateNumber(volume));
+        cJSON_ReplaceItemInObject(entry, "areas", cJSON_CreateString(areas_path));
     } else {
         cJSON *new_entry = cJSON_CreateObject();
         cJSON_AddStringToObject(new_entry, "folder", folder);
         cJSON_AddStringToObject(new_entry, "name", name);
         cJSON_AddStringToObject(new_entry, "music", music_file);
         cJSON_AddNumberToObject(new_entry, "music_volume", volume);
+        cJSON_AddStringToObject(new_entry, "areas", areas_path);
         cJSON_AddItemToArray(entries, new_entry);
     }
 }
@@ -635,7 +655,7 @@ void remove_entry(cJSON *entries, const char *folder) {
     }
 }
 
-void map_save_to_json(const Map *map, const char *folder) {
+void map_save_to_json(Editor *ed, const Map *map, const char *folder) {
     char dir[512];
     snprintf(dir, sizeof(dir), "../data/maps/%s", folder);
     CreateDirectoryA(dir, NULL);
@@ -707,8 +727,28 @@ void map_save_to_json(const Map *map, const char *folder) {
 
     // Обновляем entries.json
     cJSON *entries = load_entries();
-    add_or_update_entry(entries, folder, map->name, map->music_file, map->music_volume);
+    char areas_rel[512];
+    snprintf(areas_rel, sizeof(areas_rel), "data/maps/%s/areas.json", folder);
+    add_or_update_entry(entries, folder, map->name, map->music_file, map->music_volume, areas_rel);
     save_entries(entries);
+
+    // Сохраняем areas.json
+    char areas_path[512];
+    snprintf(areas_path, sizeof(areas_path), "../data/maps/%s/areas.json", folder);
+    cJSON *areas_arr = cJSON_CreateArray();
+    if (ed->area_count > 0) {
+        cJSON *area_obj = cJSON_CreateObject();
+        cJSON *start = cJSON_CreateIntArray(ed->main_layer_start, 2);
+        cJSON *end   = cJSON_CreateIntArray(ed->main_layer_end, 2);
+        cJSON_AddItemToObject(area_obj, "mainLayerStart", start);
+        cJSON_AddItemToObject(area_obj, "mainLayerEnd", end);
+        cJSON_AddItemToArray(areas_arr, area_obj);
+    }
+    char *astr = cJSON_Print(areas_arr);
+    FILE *af = fopen(areas_path, "w");
+    if (af) { fputs(astr, af); fclose(af); }
+    free(astr);
+    cJSON_Delete(areas_arr);
 }
 
 void load_map_list(Editor *ed) {
@@ -747,6 +787,13 @@ void load_map_list(Editor *ed) {
             safe_strcpy(temp.folder, sizeof(temp.folder), folder);
             safe_strcpy(temp.music_file, sizeof(temp.music_file), music_file);
             temp.music_volume = volume;
+
+            cJSON *areas_json = cJSON_GetObjectItem(entry, "areas");
+            if (areas_json && cJSON_IsString(areas_json))
+            safe_strcpy(temp.areas_path, sizeof(temp.areas_path), areas_json->valuestring);
+            else
+                temp.areas_path[0] = '\0';
+
             ed->map_list.map_count++;
             ed->map_list.maps = (Map*)realloc(ed->map_list.maps, ed->map_list.map_count * sizeof(Map));
             if (!ed->map_list.maps) exit(1);
@@ -783,7 +830,32 @@ find_first_sound_path(first_sound, sizeof(first_sound));
 if (first_sound[0] != '\0')
     safe_strcpy(new_map.music_file, sizeof(new_map.music_file), first_sound);
 
-map_save_to_json(&new_map, new_map.folder);
+map_save_to_json(ed, &new_map, new_map.folder);
+
+// Сразу создаём areas.json с областью на всю карту
+ed->area_count = 1;
+ed->main_layer_start[0] = 0;
+ed->main_layer_start[1] = 0;
+ed->main_layer_end[0] = new_map.width - 1;
+ed->main_layer_end[1] = new_map.height - 1;
+snprintf(ed->start_buf, sizeof(ed->start_buf), "0,0");
+snprintf(ed->end_buf,   sizeof(ed->end_buf),   "%d,%d", new_map.width-1, new_map.height-1);
+
+// Сохраняем areas.json на диск
+char areas_path[512];
+snprintf(areas_path, sizeof(areas_path), "../data/maps/%s/areas.json", new_map.folder);
+cJSON *areas_arr = cJSON_CreateArray();
+cJSON *area_obj = cJSON_CreateObject();
+cJSON *start = cJSON_CreateIntArray(ed->main_layer_start, 2);
+cJSON *end   = cJSON_CreateIntArray(ed->main_layer_end, 2);
+cJSON_AddItemToObject(area_obj, "mainLayerStart", start);
+cJSON_AddItemToObject(area_obj, "mainLayerEnd", end);
+cJSON_AddItemToArray(areas_arr, area_obj);
+char *astr = cJSON_Print(areas_arr);
+FILE *af = fopen(areas_path, "w");
+if (af) { fputs(astr, af); fclose(af); }
+free(astr);
+cJSON_Delete(areas_arr);
 
 ed->map_list.map_count++;
 ed->map_list.maps = (Map*)realloc(ed->map_list.maps, ed->map_list.map_count * sizeof(Map));
@@ -849,11 +921,13 @@ void rename_current_map(Editor *ed, const char *new_name) {
     // Обновляем entries.json
     cJSON *entries = load_entries();
     remove_entry(entries, old_folder);
-    add_or_update_entry(entries, new_folder, new_name, map->music_file, map->music_volume);
+    char areas_rel[512];
+    snprintf(areas_rel, sizeof(areas_rel), "data/maps/%s/areas.json", new_folder);
+    add_or_update_entry(entries, new_folder, new_name, map->music_file, map->music_volume, areas_rel);
     save_entries(entries);
 
     // Сохраняем layout.json с новыми путями
-    map_save_to_json(map, new_folder);
+    map_save_to_json(ed, map, new_folder);
 }
 
 void resize_current_map(Editor *ed, int new_w, int new_h) {
@@ -1403,11 +1477,16 @@ void render_right_panel(Editor *ed) {
 
     SDL_RenderSetClipRect(ed->renderer, NULL);   // снимаем обрезку
 
-    // ── Подсказка по буферу обмена ──
-    SDL_Color help_color = {200, 200, 200, 255};
-    int help_y = buttons_y - 10;
-    draw_text_centered(ed->renderer, ed->font, "Alt+LMB: Select area", pan_x + RIGHT_PANEL_W/2, help_y - 18, help_color);
-    draw_text_centered(ed->renderer, ed->font, "LMB: Paste  |  Esc: Cancel", pan_x + RIGHT_PANEL_W/2, help_y, help_color);
+    // ── Кнопка Areas ──
+    int areas_btn_y = buttons_y - 32;          // над остальными кнопками
+    SDL_Rect areas_btn = { pan_x + 5, areas_btn_y, btn_w, 24 };
+    bool hover_areas = (mx >= areas_btn.x && mx < areas_btn.x+btn_w &&
+                        my >= areas_btn.y && my < areas_btn.y+areas_btn.h);
+    SDL_Color areas_bg = hover_areas ? (SDL_Color){110,110,110,255} : (SDL_Color){90,90,90,255};
+    SDL_SetRenderDrawColor(ed->renderer, areas_bg.r, areas_bg.g, areas_bg.b, 255);
+    SDL_RenderFillRect(ed->renderer, &areas_btn);
+    draw_text_centered(ed->renderer, ed->font, "Areas", areas_btn.x + btn_w/2,
+                       areas_btn.y + areas_btn.h/2, (SDL_Color){255,255,255,255});
 
     // ── Кнопки действий ──
     int btn_x = pan_x + 5;
@@ -1458,6 +1537,14 @@ void open_dialog(Editor *ed, int type) {
             }
             break;
         }
+
+        case DIALOG_AREAS:
+            snprintf(ed->input_text, sizeof(ed->input_text), "%d,%d",
+                     ed->main_layer_start[0], ed->main_layer_start[1]);
+            snprintf(ed->input_text2, sizeof(ed->input_text2), "%d,%d",
+                     ed->main_layer_end[0], ed->main_layer_end[1]);
+            break;
+
         default: break;
     }
 }
@@ -1530,6 +1617,15 @@ void draw_dialog(Editor *ed) {
             field2 = (SDL_Rect){ dlg.x + 140, y_text + 28, 80, 24 };
             draw_input_field(ed, field2, ed->input_text2, ed->dialog_active_field == 1, show_cursor);
             break;
+        case DIALOG_AREAS:
+            draw_text_centered(ed->renderer, ed->font, "Edit Area", dlg.x + 180, y_text, black);
+            draw_text_centered(ed->renderer, ed->font, "Start (x,y):", dlg.x + 50, y_text + 30, black);
+            field1 = (SDL_Rect){ dlg.x + 160, y_text + 18, 160, 24 };
+            draw_input_field(ed, field1, ed->input_text, ed->dialog_active_field == 0, show_cursor);
+            draw_text_centered(ed->renderer, ed->font, "End (x,y):", dlg.x + 50, y_text + 65, black);
+            field2 = (SDL_Rect){ dlg.x + 160, y_text + 53, 160, 24 };
+            draw_input_field(ed, field2, ed->input_text2, ed->dialog_active_field == 1, show_cursor);
+            break;      
     }
 
     SDL_Rect ok = { dlg.x + 30, dlg.y + 180, 110, 28 };
@@ -1594,9 +1690,27 @@ void handle_dialog_click(Editor *ed, int mx, int my) {
                if (cur) {
                safe_strcpy(cur->music_file, sizeof(cur->music_file), ed->music_fullpath);
                cur->music_volume = (float)atof(ed->input_text2);
-               map_save_to_json(cur, cur->folder);   // ← теперь через folder
+               map_save_to_json(ed, cur, cur->folder);
                }
             break;
+            }
+
+            case DIALOG_AREAS: {
+                int x1, y1, x2, y2;
+                if (sscanf(ed->input_text, "%d,%d", &x1, &y1) == 2) {
+                    ed->main_layer_start[0] = x1;
+                    ed->main_layer_start[1] = y1;
+                }
+                if (sscanf(ed->input_text2, "%d,%d", &x2, &y2) == 2) {
+                    ed->main_layer_end[0] = x2;
+                    ed->main_layer_end[1] = y2;
+                }
+                ed->area_count = 1;
+                snprintf(ed->start_buf, sizeof(ed->start_buf), "%d,%d",
+                         ed->main_layer_start[0], ed->main_layer_start[1]);
+                snprintf(ed->end_buf, sizeof(ed->end_buf), "%d,%d",
+                         ed->main_layer_end[0], ed->main_layer_end[1]);
+                break;
             }
         }
         close_dialog(ed);
@@ -1905,15 +2019,19 @@ void handle_input(Editor *ed, bool *running) {
                         ed->map_list.current_map = i;
                         Map *m = &ed->map_list.maps[i];
                         load_tileset(ed, m->tileset_path);
+                        load_areas_for_current_map(ed);
+
                         return;
                     }
                 }
                 int y = WINDOW_H - 180;
+                int areas_btn_y = y - 32;
+                SDL_Rect areas_btn = { WINDOW_W - RIGHT_PANEL_W + 5, areas_btn_y, RIGHT_PANEL_W - 10, 24 };
                 if (my >= y && my < y+24) { open_dialog(ed, DIALOG_NEW_MAP); strcpy(ed->input_text, "map00"); strcpy(ed->input_text2, "20x15"); }
                 else if (my >= y+30 && my < y+54) {
                     Map *cur = current_map(ed);
                     if (cur) {
-                        map_save_to_json(cur, cur->folder);
+                        map_save_to_json(ed, cur, cur->folder);
                         save_tile_types_for_tileset(ed, cur->tileset_path);
                         ed->save_blink_active = true;
                         ed->save_blink_time = SDL_GetTicks();
@@ -1937,6 +2055,11 @@ void handle_input(Editor *ed, bool *running) {
                     open_dialog(ed, DIALOG_RESIZE_MAP);
                 }
                 else if (my >= y+150 && my < y+174) open_dialog(ed, DIALOG_MUSIC_MAP);
+                else if (my >= areas_btn_y && my < areas_btn_y + 24 &&
+                         mx >= areas_btn.x && mx < areas_btn.x + btn_w) {
+                    open_dialog(ed, DIALOG_AREAS);
+                    return;
+                }
             }
             // --- Скроллбары карты ---
             else if (mx >= MAP_X + MAP_W && mx < MAP_X + MAP_W + SCROLLBAR_SIZE &&
@@ -2130,6 +2253,57 @@ void load_transparent_bg(SDL_Renderer *renderer) {
     }
 }
 
+void load_areas_for_current_map(Editor *ed) {
+    Map *map = current_map(ed);
+    if (!map) return;
+
+    char path[512];
+    snprintf(path, sizeof(path), "../data/maps/%s/areas.json", map->folder);
+    FILE *f = fopen(path, "r");
+    if (!f) {
+        ed->area_count = 0;
+        ed->start_buf[0] = ed->end_buf[0] = '\0';
+        return;
+    }
+
+    fseek(f, 0, SEEK_END);
+    long len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char *data = malloc(len + 1);
+    fread(data, 1, len, f);
+    data[len] = '\0';
+    fclose(f);
+
+    cJSON *areas = cJSON_Parse(data);
+    free(data);
+
+    if (areas && cJSON_IsArray(areas)) {
+        ed->area_count = cJSON_GetArraySize(areas);
+        if (ed->area_count > 0) {
+            cJSON *first = cJSON_GetArrayItem(areas, 0);
+            cJSON *start = cJSON_GetObjectItem(first, "mainLayerStart");
+            cJSON *end   = cJSON_GetObjectItem(first, "mainLayerEnd");
+            if (start && cJSON_GetArraySize(start) == 2) {
+                ed->main_layer_start[0] = cJSON_GetArrayItem(start, 0)->valueint;
+                ed->main_layer_start[1] = cJSON_GetArrayItem(start, 1)->valueint;
+                snprintf(ed->start_buf, sizeof(ed->start_buf), "%d,%d",
+                         ed->main_layer_start[0], ed->main_layer_start[1]);
+            }
+            if (end && cJSON_GetArraySize(end) == 2) {
+                ed->main_layer_end[0] = cJSON_GetArrayItem(end, 0)->valueint;
+                ed->main_layer_end[1] = cJSON_GetArrayItem(end, 1)->valueint;
+                snprintf(ed->end_buf, sizeof(ed->end_buf), "%d,%d",
+                         ed->main_layer_end[0], ed->main_layer_end[1]);
+            }
+        }
+    } else {
+        ed->area_count = 0;
+        ed->start_buf[0] = ed->end_buf[0] = '\0';
+    }
+    if (areas) cJSON_Delete(areas);
+}
+
+
 int main(int argc, char *argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
@@ -2186,6 +2360,8 @@ load_transparent_bg(ed.renderer);
         Map *cur = current_map(&ed);
         if (cur) load_tileset(&ed, cur->tileset_path);
     }
+
+    load_areas_for_current_map(&ed);
 
     Uint32 last_blink = SDL_GetTicks();
     bool running = true;

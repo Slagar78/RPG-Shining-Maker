@@ -18,6 +18,7 @@ typedef struct {
     char tileset_path[256];
     char music_file[256];
     float music_volume;
+    char areas_path[256];
 } Map;
 
 #endif// MAP_STRUCT_H
