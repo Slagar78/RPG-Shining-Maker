@@ -470,7 +470,7 @@ end
   if actor_data
     class_id   = actor_data["class_id"]
     class_name = @class_names[class_id] || "???"
-    level      = actor_data["level"]
+    level = [(actor_data["level"] || 1), 1].max
     header     = "#{actor_data["name"]}  #{class_name}  LV #{level}"
     draw_text_custom(header, @upper_x + 25, @upper_y + 12, 20, WHITE)
   else
@@ -560,15 +560,15 @@ end
     def draw_stats_comparison(member, item_bonus_atk, item_bonus_df, y, blink_visible)
     klass = @classes_data.find { |c| c["id"] == member["class_id"] }
     if klass && @db
-      lv = member["level"] || 1
-      atk = @db.stat_at_level(klass["attack_growth"], lv)
-      df  = @db.stat_at_level(klass["defense_growth"], lv)
+      lv = [(member["level"] || 1), 1].max
+      atk = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
+      df  = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
     else
       atk = 0; df = 0
     end
     bonuses = calculate_equip_bonuses(member)
-    atk += bonuses[:attack]
-    df  += bonuses[:defense]
+    atk = [atk + bonuses[:attack], 0].max
+    df  = [df  + bonuses[:defense], 0].max
     future_atk = [atk + item_bonus_atk, 0].max
     future_df  = [df  + item_bonus_df,  0].max
 
@@ -678,13 +678,13 @@ def draw_character_list(mode: 0, item_bonus_atk: 0, item_bonus_df: 0)
     when 1
       klass = @classes_data.find { |c| c["id"] == member["class_id"] }
       if klass && @db
-        lv = member["level"] || 1
-        hp_val  = @db.stat_at_level(klass["hp_growth"], lv)
-        mp_val  = @db.stat_at_level(klass["mp_growth"], lv)
-        atk_val = @db.stat_at_level(klass["attack_growth"], lv)
-        def_val = @db.stat_at_level(klass["defense_growth"], lv)
-        agi_val = @db.stat_at_level(klass["agility_growth"], lv)
-        mov_val = klass["move"] || 0
+        lv = [(member["level"] || 1), 1].max
+        hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
+        mp_val  = [@db.stat_at_level(klass["mp_growth"],  lv), 0].max
+        atk_val = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
+        def_val = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
+        agi_val = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+        mov_val = [(klass["move"] || 0), 0].max
       else
         hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
       end
@@ -1517,10 +1517,10 @@ class EquipMenu < ItemSubMenuBase
       klass = @classes_data.find { |c| c["id"] == actor_data["class_id"] }
       if klass && @db
         lv = actor_data["level"] || 1
-        base_atk = @db.stat_at_level(klass["attack_growth"], lv)
-        base_def = @db.stat_at_level(klass["defense_growth"], lv)
-        base_agi = @db.stat_at_level(klass["agility_growth"], lv)
-        base_mov = klass["move"] || 0
+        base_atk = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
+        base_def = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
+        base_agi = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+        base_mov = [(klass["move"] || 0), 0].max
       else
         base_atk = base_def = base_agi = base_mov = 0
       end
@@ -1548,7 +1548,7 @@ class EquipMenu < ItemSubMenuBase
 
       class_id   = actor_data["class_id"]
       class_name = @class_names[class_id] || "???"
-      level      = actor_data["level"]
+      level = [(actor_data["level"] || 1), 1].max
       header     = "#{actor_data["name"]}  #{class_name}  LV #{level}"
       draw_text_custom(header, @upper_x + 25, @upper_y + 12, 20, WHITE)
 
@@ -1651,10 +1651,10 @@ class EquipMenu < ItemSubMenuBase
       klass = @classes_data.find { |c| c["id"] == actor_data["class_id"] }
       if klass && @db
         lv = actor_data["level"] || 1
-        base_atk = @db.stat_at_level(klass["attack_growth"], lv)
-        base_def = @db.stat_at_level(klass["defense_growth"], lv)
-        base_agi = @db.stat_at_level(klass["agility_growth"], lv)
-        base_mov = klass["move"] || 0
+        base_atk = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
+        base_def = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
+        base_agi = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+        base_mov = [(klass["move"] || 0), 0].max
       else
         base_atk = base_def = base_agi = base_mov = 0
       end
