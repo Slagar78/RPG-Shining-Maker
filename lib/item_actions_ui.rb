@@ -673,7 +673,8 @@ def draw_character_list(mode: 0, item_bonus_atk: 0, item_bonus_df: 0)
       class_name = @class_names[member["class_id"]] || "???"
       class_display = class_name.slice(0, 10)
       draw_text_custom(class_display, @lower_x + 187, y, 18, WHITE)
-      draw_text_centered_h(member["level"].to_s, level_header_center_x, y, 18, WHITE)
+      lv_display = [(member["level"] || 1), 1].max
+      draw_text_centered_h(lv_display.to_s, level_header_center_x, y, 18, WHITE)
       draw_text_centered_h(member["exp"].to_s,    exp_header_center_x,   y, 18, WHITE)
     when 1
       klass = @classes_data.find { |c| c["id"] == member["class_id"] }
@@ -689,8 +690,8 @@ def draw_character_list(mode: 0, item_bonus_atk: 0, item_bonus_df: 0)
         hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
       end
       bonuses = calculate_equip_bonuses(member)
-      eff_atk = atk_val + bonuses[:attack]
-      eff_def = def_val + bonuses[:defense]
+      eff_atk = [atk_val + bonuses[:attack], 0].max
+      eff_def = [def_val + bonuses[:defense], 0].max
       stat_values = [hp_val, mp_val, eff_atk, eff_def, agi_val, mov_val]
       stat_centers = [@lower_x + 200, @lower_x + 250, @lower_x + 300, @lower_x + 350, @lower_x + 400, @lower_x + 445]
       stat_values.each_with_index do |val, idx|
@@ -1668,7 +1669,8 @@ class EquipMenu < ItemSubMenuBase
       ring_name = equipped_ring ? equipped_ring["item"] : "(Empty)"
 
       class_name = @class_names[actor_data["class_id"]] || "???"
-      header = "#{actor_data["name"]}  #{class_name}  LV #{actor_data["level"]}"
+      lv = [(actor_data["level"] || 1), 1].max
+      header = "#{actor_data["name"]}  #{class_name}  LV #{lv}"
       draw_text_custom(header, @upper_x + 25, @upper_y + 12, 20, WHITE)
       draw_text_custom("Ring : #{ring_name}", @upper_x + 25, @upper_y + 35, 18, YELLOW)
 
