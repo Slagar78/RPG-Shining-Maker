@@ -575,6 +575,8 @@ void get_relative_path(const char *abs_path, char *out, size_t out_len) {
         if (name) name++; else name = abs_path;
         safe_strcpy(out, out_len, name);
     }
+    // Замена обратных слешей на прямые
+    for (char *p = out; *p; ++p) if (*p == '\\') *p = '/';
 }
 
 void find_first_sound_path(char *out, size_t out_len) {
@@ -829,6 +831,9 @@ char first_sound[512];
 find_first_sound_path(first_sound, sizeof(first_sound));
 if (first_sound[0] != '\0')
     safe_strcpy(new_map.music_file, sizeof(new_map.music_file), first_sound);
+
+if (strncmp(new_map.music_file, "../", 3) == 0)
+    memmove(new_map.music_file, new_map.music_file + 3, strlen(new_map.music_file) - 2);
 
 map_save_to_json(ed, &new_map, new_map.folder);
 

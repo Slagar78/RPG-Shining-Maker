@@ -1,7 +1,7 @@
 [{
 		"folder":	"Granseal",
 		"name":	"Granseal",
-		"music":	"assets\\sounds\\SF_Feather.mp3",
+		"music":	"../assets/sounds/SF_Feather.mp3",
 		"music_volume":	0.800000011920929,
 		"areas":	"data/maps/Granseal/areas.json"
 	}, {
