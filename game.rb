@@ -369,22 +369,18 @@ class Game
   
  private
 
-  def play_ui_sounds
-    return unless current_menu_active?
+ def play_ui_sounds
+  return unless current_menu_active?
 
-    if IsKeyPressed(KEY_S)
-      @audio.play_sfx(:cancel)
-      return
-    end
-
-    if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-      # В главном меню экипировки (выбор персонажа) мы сами отвечаем за звук,
-      # поэтому здесь глобальный confirm не нужен.
-      return if @active_item_action.is_a?(EquipMenu) && @active_item_action.selecting_actor?
-
-      @audio.play_sfx(:confirm)
-    end
+  if IsKeyPressed(KEY_S)
+    @audio.play_sfx(:cancel)
+    return
   end
+
+  if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+    @audio.play_sfx(:confirm)
+  end
+end
   
 def current_menu_active?
   case @game_state
