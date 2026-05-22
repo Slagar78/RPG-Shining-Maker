@@ -914,20 +914,20 @@ class Profile
       draw_text_custom("MOV   #{mov_val}", stats_right_x, y_base + line_h * 3, 20, WHITE)
 
       # ----- дополнительные характеристики (столбиком) -----
-      extra_x = stats_right_x + 110          # левая граница для заголовков и значений
+      extra_x = stats_right_x + 110
       race_str = klass ? (klass["race"] || "???") : "???"
       status_str = klass ? (klass["status"] || "???") : "???"
       movetype_str = klass ? (klass["move_type"] || "???") : "???"
-      small_line = 20                       # уменьшенный межстрочный интервал
+      small_line = 20
 
-      draw_text_custom("RACE", extra_x, y_base, 18, WHITE)
-      draw_text_custom(race_str, extra_x, y_base + small_line, 18, WHITE)
+      draw_text_custom("RACE", extra_x, y_base, 20, GOLD)
+      draw_text_custom(race_str, extra_x, y_base + small_line, 15, WHITE)
 
-      draw_text_custom("STATUS", extra_x, y_base + small_line * 2 + 4, 18, WHITE)
-      draw_text_custom(status_str, extra_x, y_base + small_line * 3 + 4, 18, WHITE)
+      draw_text_custom("STATUS", extra_x, y_base + small_line * 2 + 4, 20, GOLD)
+      draw_text_custom(status_str, extra_x, y_base + small_line * 3 + 4, 15, WHITE)
 
-      draw_text_custom("MOVE TYPE", extra_x, y_base + small_line * 4 + 8, 18, WHITE)
-      draw_text_custom(movetype_str, extra_x, y_base + small_line * 5 + 8, 18, WHITE)
+      draw_text_custom("MOVE TYPE", extra_x, y_base + small_line * 4 + 8, 20, GOLD)
+      draw_text_custom(movetype_str, extra_x, y_base + small_line * 5 + 8, 15, WHITE)
 
       # Магия и Предметы
       klass = @classes_data.find { |c| c["id"] == actor["class_id"] }
