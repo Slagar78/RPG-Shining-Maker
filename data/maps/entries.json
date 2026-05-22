@@ -1,25 +1,19 @@
 [{
 		"folder":	"Granseal",
 		"name":	"Granseal",
-		"music":	"../assets/sounds/SF_Feather.mp3",
+		"music":	"assets/sounds/SF_Feather.mp3",
 		"music_volume":	0.800000011920929,
 		"areas":	"data/maps/Granseal/areas.json"
 	}, {
 		"folder":	"map00",
 		"name":	"map00",
-		"music":	"assets\\sounds\\Shinzo.mp3",
+		"music":	"assets/sounds/SF_Feather.mp3",
 		"music_volume":	0.800000011920929,
 		"areas":	"data/maps/map00/areas.json"
 	}, {
 		"folder":	"map07",
 		"name":	"map07",
-		"music":	"../assets/sounds/SF_Feather.mp3",
+		"music":	"assets/sounds/SF_Feather.mp3",
 		"music_volume":	0.800000011920929,
 		"areas":	"data/maps/map07/areas.json"
-	}, {
-		"folder":	"map98",
-		"name":	"map98",
-		"music":	"../assets/sounds/SF_Feather.mp3",
-		"music_volume":	0.800000011920929,
-		"areas":	"data/maps/map98/areas.json"
 	}]
