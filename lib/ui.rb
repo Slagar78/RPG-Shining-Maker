@@ -888,22 +888,26 @@ class Profile
       lv = actor["level"]
       exp = actor["exp"] || 0
 
-      left_x = @right_panel_x + 55
-      right_x = @right_panel_x + 210
-      stats_left_x = @right_panel_x + 25
-      stats_right_x = @right_panel_x + 130
-      y_base = @right_panel_y + 55
-      line_h = 28
+      # === БАЗОВЫЕ КООРДИНАТЫ ДЛЯ ТЕКСТА ===
+      left_x = @right_panel_x + 55          # позиция для "Magic"
+      right_x = @right_panel_x + 210        # позиция для "Items"
+      stats_left_x = @right_panel_x + 25    # отступ левого столбца статов (LV, HP, MP, EXP)
+      stats_right_x = @right_panel_x + 120  # отступ правого столбца статов (ATT, DEF, AGI, MOV)
+      y_base = @right_panel_y + 55          # начальная Y-позиция для статов
+      line_h = 28                           # межстрочный интервал
 
+      # === ЛЕВЫЙ СТОЛБЕЦ: LV, HP, MP, EXP ===
       draw_text_custom("LV    #{lv}", stats_left_x, y_base, 20, WHITE)
       draw_text_custom("HP    #{hp_val}", stats_left_x, y_base + line_h, 20, WHITE)
       draw_text_custom("MP    #{mp_val}", stats_left_x, y_base + line_h * 2, 20, WHITE)
       draw_text_custom("EXP   #{exp}", stats_left_x, y_base + line_h * 3, 20, WHITE)
 
+      # === БОНУСЫ ОТ ЭКИПИРОВКИ ===
       bonuses = calculate_equip_bonuses(actor)
-      eff_atk = [atk_val + bonuses[:attack], 0].max
-      eff_def = [def_val + bonuses[:defense], 0].max
+      eff_atk = [atk_val + bonuses[:attack], 0].max   # итоговая атака (не меньше 0)
+      eff_def = [def_val + bonuses[:defense], 0].max   # итоговая защита (не меньше 0)
 
+      # === ПРАВЫЙ СТОЛБЕЦ: ATT, DEF, AGI, MOV ===
       draw_text_custom("ATT   #{eff_atk}", stats_right_x, y_base, 20, WHITE)
       draw_text_custom("DEF   #{eff_def}", stats_right_x, y_base + line_h, 20, WHITE)
       draw_text_custom("AGI   #{agi_val}", stats_right_x, y_base + line_h * 2, 20, WHITE)
