@@ -43,9 +43,7 @@ class AudioManager
   # Проигрывает звук
   def play_sfx(name)
     sound = @sfx[name]
-    return unless sound
-    Raylib.StopSound(sound)
-    Raylib.PlaySound(sound)
+    Raylib.PlaySound(sound) if sound
   end
 
   # Установить громкость загруженного звука (0.0..1.0)
