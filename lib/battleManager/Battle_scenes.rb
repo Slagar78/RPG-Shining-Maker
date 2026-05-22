@@ -56,6 +56,8 @@ class BattleScene
     @attack_duration = 0.0
     @damage = 0
     @damage_applied = false
+	@shutter_progress = 0.0
+	@shutter_hold_timer = 0.0
 	
     @defender_anim = :defense
 
@@ -170,12 +172,12 @@ class BattleScene
     puts ">>> Battle scene starting: #{attacker_unit[:enemy] ? 'Enemy' : 'Ally'} vs #{defender_unit[:enemy] ? 'Enemy' : 'Ally'}"
   end
 
-  def finish
-    return if @finished
-    @finished = true
-    @phase = :black_screen
-    @black_screen_timer = 0.5   # полсекунды чёрного
-  end
+ def finish
+  return if @finished
+  @finished = true
+  @phase = :shutter_close
+  @shutter_progress = 0.0
+end
 
     def update
   return unless @active
@@ -210,6 +212,24 @@ class BattleScene
     @finished = true
     return
   end
+
+  if @phase == :shutter_close
+  @shutter_progress += dt * 2.0
+  if @shutter_progress >= 1.0
+    @shutter_progress = 1.0
+    @phase = :shutter_hold
+    @shutter_hold_timer = 0.5   # сколько держать чёрный экран (сек)
+  end
+  return
+end
+
+if @phase == :shutter_hold
+  @shutter_hold_timer -= dt
+  if @shutter_hold_timer <= 0
+    @phase = :finished
+  end
+  return
+end
 
   if @phase == :display
     @sub_phase_timer += dt
@@ -277,7 +297,7 @@ def draw
   when :delay, :end_delay
     Raylib.ClearBackground(Raylib::BLACK)
 
-  when :display
+  when :display, :shutter_close, :shutter_hold
     Raylib.ClearBackground(Raylib::BLACK)
 
     if @background_tex
@@ -339,6 +359,16 @@ def draw
       dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
       Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
     end
+
+ if @phase == :shutter_close || @phase == :shutter_hold
+  progress = @phase == :shutter_hold ? 1.0 : @shutter_progress
+  full_height = 960.0
+  bar_h = (full_height / 2.0) * progress   # половина экрана на каждую шторку
+  # Верхняя шторка от самого верха
+  Raylib.DrawRectangle(0, 0, WORK_WIDTH, bar_h, Raylib::BLACK)
+  # Нижняя шторка от самого низа
+  Raylib.DrawRectangle(0, full_height - bar_h, WORK_WIDTH, bar_h, Raylib::BLACK)
+end
 
   when :black_screen, :finished
     Raylib.ClearBackground(Raylib::BLACK)
