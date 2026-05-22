@@ -584,19 +584,20 @@ class StatusOverlay
       else
         klass = @classes_data.find { |c| c["id"] == member["class_id"] }
         if klass && @db
-        lv = member["level"] || 1
-        hp_val  = @db.stat_at_level(klass["hp_growth"], lv)
-        mp_val  = @db.stat_at_level(klass["mp_growth"], lv)
-        atk_val = @db.stat_at_level(klass["attack_growth"], lv)
-        def_val = @db.stat_at_level(klass["defense_growth"], lv)
-        agi_val = @db.stat_at_level(klass["agility_growth"], lv)
-        mov_val = klass["move"] || 0
+        lv = [(member["level"] || 1), 1].max
+        hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
+        mp_val  = [@db.stat_at_level(klass["mp_growth"],  lv), 0].max
+        atk_val = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
+        def_val = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
+        agi_val = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+        mov_val = [(klass["move"] || 0), 0].max
       else
         hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
       end
         bonuses = calculate_equip_bonuses(member)
-        eff_atk = atk_val + bonuses[:attack]
-        eff_def = def_val + bonuses[:defense]
+        eff_atk = [atk_val + bonuses[:attack], 0].max
+        eff_def = [def_val + bonuses[:defense], 0].max
+		
         stat_values = [hp_val, mp_val, eff_atk, eff_def, agi_val, mov_val]
         stat_centers = [@lower_x + 200, @lower_x + 250, @lower_x + 300, @lower_x + 350, @lower_x + 400, @lower_x + 445]
         stat_values.each_with_index do |val, idx|
@@ -874,12 +875,12 @@ class Profile
       draw_text_custom(actor_name, name_x, @right_panel_y + 12, 20, WHITE)
       if klass && @db
         lv = actor["level"] || 1
-        hp_val  = @db.stat_at_level(klass["hp_growth"], lv)
-        mp_val  = @db.stat_at_level(klass["mp_growth"], lv)
-        atk_val = @db.stat_at_level(klass["attack_growth"], lv)
-        def_val = @db.stat_at_level(klass["defense_growth"], lv)
-        agi_val = @db.stat_at_level(klass["agility_growth"], lv)
-        mov_val = klass["move"] || 0
+        hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
+        mp_val  = [@db.stat_at_level(klass["mp_growth"],  lv), 0].max
+        atk_val = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
+        def_val = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
+        agi_val = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+        mov_val = [(klass["move"] || 0), 0].max
       else
         hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
       end
@@ -898,8 +899,8 @@ class Profile
       draw_text_custom("EXP   #{exp}", left_x, y_base + line_h * 3, 20, WHITE)
 
       bonuses = calculate_equip_bonuses(actor)
-      eff_atk = atk_val + bonuses[:attack]
-      eff_def = def_val + bonuses[:defense]
+      eff_atk = [atk_val + bonuses[:attack], 0].max
+      eff_def = [def_val + bonuses[:defense], 0].max
 
       draw_text_custom("ATT   #{eff_atk}", right_x - 50, y_base, 20, WHITE)
       draw_text_custom("DEF   #{eff_def}", right_x - 50, y_base + line_h, 20, WHITE)
@@ -1588,20 +1589,21 @@ class MagicOverlay
       else
         klass = @classes_data.find { |c| c["id"] == member["class_id"] }
         if klass && @db
-          lv = member["level"] || 1
-          hp_val  = @db.stat_at_level(klass["hp_growth"], lv)
-          mp_val  = @db.stat_at_level(klass["mp_growth"], lv)
-          atk_val = @db.stat_at_level(klass["attack_growth"], lv)
-          def_val = @db.stat_at_level(klass["defense_growth"], lv)
-          agi_val = @db.stat_at_level(klass["agility_growth"], lv)
-          mov_val = klass["move"] || 0
+          lv = [(member["level"] || 1), 1].max
+          hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
+          mp_val  = [@db.stat_at_level(klass["mp_growth"],  lv), 0].max
+          atk_val = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
+          def_val = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
+          agi_val = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+          mov_val = [(klass["move"] || 0), 0].max
         else
           hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
         end
 
         bonuses = calculate_equip_bonuses(member)
-        eff_atk = atk_val + bonuses[:attack]
-        eff_def = def_val + bonuses[:defense]
+        eff_atk = [atk_val + bonuses[:attack], 0].max
+        eff_def = [def_val + bonuses[:defense], 0].max
+		
         stat_values = [hp_val, mp_val, eff_atk, eff_def, agi_val, mov_val]
         stat_centers = [@lower_x + 200, @lower_x + 250, @lower_x + 300, @lower_x + 350, @lower_x + 400, @lower_x + 445]
         stat_values.each_with_index do |val, idx|

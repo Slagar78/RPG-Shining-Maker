@@ -1,6 +1,6 @@
 // Battle Scenes Editor – финальная версия
 // Масштаб персонажей строго соответствует фону (как в игре)
-// Раздельные строки для idle/attack/defense, чекбокс Anim справа в заголовке
+// Раздельные строки для idle/attack/dodge, чекбокс Anim справа в заголовке
 // Удержание кнопок для плавного изменения X/Y/Dur
 // Добавлена поддержка ground (земли) для союзника
 
@@ -305,7 +305,7 @@ bool load_animation_from_json(AnimationSet *as, SDL_Renderer *renderer, const ch
     extract_directory(json_path, base_dir, sizeof(base_dir));
     safe_strcpy(as->json_path, sizeof(as->json_path), json_path);
 
-    const char *phase_keys[] = {"idle", "attack", "defense"};
+    const char *phase_keys[] = {"idle", "attack", "dodge"};
     for (int p = 0; p < 3; p++) {
         cJSON *phase = cJSON_GetObjectItem(root, phase_keys[p]);
         if (!phase) continue;
@@ -380,7 +380,7 @@ void save_animation_to_json(AnimationSet *as) {
     }
     if (!root) root = cJSON_CreateObject();
 
-    const char *phase_keys[] = {"idle", "attack", "defense"};
+    const char *phase_keys[] = {"idle", "attack", "dodge"};
     for (int p = 0; p < 3; p++) {
         AnimPhase *ap = &as->phases[p];
         if (ap->frame_count <= 0) continue;
@@ -438,8 +438,8 @@ void rescan_frames(AnimationSet *as, SDL_Renderer *renderer) {
     safe_strcpy(as->json_path, sizeof(as->json_path), saved_path);
     as->loaded = true;
 
-    const char *prefix[3] = {"idle", "frame_attack", "frame_def"};
-    const char *phase_keys[3] = {"idle", "attack", "defense"};
+    const char *prefix[3] = {"idle", "frame_attack", "frame_dodge"};
+    const char *phase_keys[3] = {"idle", "attack", "dodge"};
 
     for (int p = 0; p < 3; p++) {
         AnimPhase *ap = &as->phases[p];
@@ -710,7 +710,7 @@ void draw_ui(Editor *ed) {
     // Нижняя панель управления (без изменений)
     int panel_y = PREVIEW_Y + PREVIEW_H + 4;
     int row_h = 20;
-    const char *phase_names[] = {"Idle", "Attack", "Defense"};
+    const char *phase_names[] = {"Idle", "Attack", "Dodge"};
 
     for (int s = 0; s < 2; s++) {
         AnimationSet *as = (s == 0) ? &ed->ally_anim : &ed->enemy_anim;
