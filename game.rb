@@ -378,6 +378,10 @@ class Game
   end
 
   if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+    # В статусе звук confirm проигрывается позже (при открытии профиля),
+    # чтобы избежать дубля, здесь его не вызываем.
+    return if @game_state == :status
+
     @audio.play_sfx(:confirm)
   end
 end
