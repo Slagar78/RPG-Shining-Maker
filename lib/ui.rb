@@ -874,7 +874,7 @@ class Profile
       # Имя – белым
       draw_text_custom(actor_name, name_x, @right_panel_y + 12, 20, WHITE)
       if klass && @db
-        lv = actor["level"] || 1
+        lv = [(actor["level"] || 1), 1].max
         hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
         mp_val  = [@db.stat_at_level(klass["mp_growth"],  lv), 0].max
         atk_val = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
