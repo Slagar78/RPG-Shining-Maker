@@ -56,10 +56,10 @@ class BattleScene
     @attack_duration = 0.0
     @damage = 0
     @damage_applied = false
-	@shutter_progress = 0.0
-	@shutter_hold_timer = 0.0
+	  @shutter_progress = 0.0
+	  @shutter_hold_timer = 0.0
 	
-    @defender_anim = :defense
+    @defender_anim = :dodge
 
     @stick_textures = []
     # Загрузка окантовки для полосок HP/MP
@@ -253,7 +253,7 @@ end
       if @sub_phase_timer >= PRE_ATTACK_DURATION
         movetype_key = @defender[:movetype] || "regular"
         dodge_chance = DamageCalculator.physical_dodge_chance(movetype_key)
-        @defender_anim = dodge_chance > 30 ? :defense : :idle
+        @defender_anim = dodge_chance > 30 ? :dodge : :idle
         @sub_phase = :attack
         @sub_phase_timer = 0.0
         @attacker_current_frame = 0
@@ -592,7 +592,7 @@ end
       @defender_current_frame, @defender_anim_timer = advance_frame(@defender, :idle, @defender_current_frame, @defender_anim_timer, dt)
     when :attack
       @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :attack, @attacker_current_frame, @attacker_anim_timer, dt)
-      @defender_current_frame, @defender_anim_timer = advance_frame(@defender, :defense, @defender_current_frame, @defender_anim_timer, dt)
+      @defender_current_frame, @defender_anim_timer = advance_frame(@defender, :dodge, @defender_current_frame, @defender_anim_timer, dt)
     end
   end
 

@@ -29,7 +29,7 @@
 		"offset_x":	0,
 		"offset_y":	0
 	},
-	"defense":	{
+	"dodge":	{
 		"frames":	[{
 				"file":	"frame_def_1.png",
 				"duration":	0.3,

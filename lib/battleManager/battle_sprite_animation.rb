@@ -1,13 +1,12 @@
 # lib/battleManager/battle_sprite_animation.rb
 class BattleSpriteAnimation
-  attr_reader :idle, :attack, :defense
-
+  attr_reader :idle, :attack, :dodge
 
   def initialize(base_path)
     @base_path = base_path
     @idle    = load_anim("idle")
     @attack  = load_anim("attack") || @idle
-    @defense = load_anim("defense") || @idle
+    @dodge = load_anim("dodge") || @idle
   end
 
   # Возвращает суммарную длительность всех кадров анимации (в секундах)
