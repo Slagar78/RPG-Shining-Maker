@@ -29,6 +29,7 @@ class BattleMenu
 
     load_textures
     load_commands_panel
+    load_magic_panel
   end
 
   # Сеттер для шрифта
@@ -62,6 +63,21 @@ class BattleMenu
     end
   end
 
+def load_magic_panel
+  path = "assets/ui/commands_names.png"
+  if File.exist?(path)
+    img = Raylib.LoadImage(path)
+    @magic_panel_tex = Raylib.LoadTextureFromImage(img)
+    Raylib.UnloadImage(img)
+    Raylib.SetTextureFilter(@magic_panel_tex, Raylib::TEXTURE_FILTER_POINT)
+    @magic_panel_w = @magic_panel_tex.width
+    @magic_panel_h = @magic_panel_tex.height
+  else
+    puts "WARNING: #{path} not found."
+    @magic_panel_tex = nil
+  end
+end
+
   def open(can_attack = false)
     @visible = true
     @selected_index = can_attack ? 0 : 3   # 0 = Attack, 3 = Stay
@@ -90,8 +106,7 @@ class BattleMenu
     @spells[@magic_selected]
   end
 
-  def draw_magic_icons(cx, cy, offset)
-
+def draw_magic_icons(cx, cy, offset)
   positions = [
     { x: cx,       y: cy - 25 },   # верхняя
     { x: cx - 33,  y: cy },        # левая
@@ -112,7 +127,7 @@ class BattleMenu
     pos = positions[i]
 
     if spell
-      icon = load_magic_icon(spell["icon"])
+      icon = load_magic_icon(find_spell_icon(spell["spell"], spell["spell_level"]))
     else
       icon = @empty_magic_tex
     end
@@ -125,24 +140,54 @@ class BattleMenu
       Raylib.DrawRectangle(pos[:x] - 16, pos[:y] - 24, 32, 48, Raylib::GRAY)
     end
 
-    # Жёлтая рамка выбора
     if i == @magic_selected
       Raylib.DrawRectangleLines(pos[:x] - 18, pos[:y] - 26, 36, 52, Raylib::YELLOW)
+    end
+  end
+
+  # Панель с названием заклинания
+  if @magic_panel_tex && @spells.any?
+    right_pos = positions[2]   # правая иконка
+    panel_x = right_pos[:x] + 16 + 16   # отступ 16 пикселей от правого края иконки
+    panel_y = right_pos[:y] - @magic_panel_h / 2
+
+    src = Raylib::Rectangle.create(0, 0, @magic_panel_w, @magic_panel_h)
+    dst = Raylib::Rectangle.create(panel_x, panel_y, @magic_panel_w, @magic_panel_h)
+    Raylib.DrawTexturePro(@magic_panel_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+
+    # Название заклинания
+    if @font && @magic_selected < @spells.length
+      name = @spells[@magic_selected]["spell"] || ""
+      font_size = 25
+      text_size = Raylib.MeasureTextEx(@font, name, font_size, 1)
+      text_x = panel_x + (@magic_panel_w - text_size.x) / 2 - 42
+      text_y = panel_y + (@magic_panel_h - text_size.y) / 2 - 20
+      Raylib.DrawTextEx(@font, name, Raylib::Vector2.create(text_x, text_y), font_size, 1, Raylib::WHITE)
     end
   end
 end
 
   def load_magic_icon(path)
-    return nil unless path && !path.empty?
-    @magic_icon_cache[path] ||= begin
-      if File.exist?(path)
-        img = Raylib.LoadImage(path)
-        tex = Raylib.LoadTextureFromImage(img)
-        Raylib.UnloadImage(img)
-        Raylib.SetTextureFilter(tex, Raylib::TEXTURE_FILTER_POINT)
-        tex
-      end
-    end
+  return nil unless path && !path.empty?
+  return @magic_icon_cache[path] if @magic_icon_cache.key?(path)
+  if File.exist?(path)
+    puts "Loading: #{path}"   # ← однократный вывод
+    img = Raylib.LoadImage(path)
+    tex = Raylib.LoadTextureFromImage(img)
+    Raylib.UnloadImage(img)
+    Raylib.SetTextureFilter(tex, Raylib::TEXTURE_FILTER_POINT)
+    @magic_icon_cache[path] = tex
+  else
+    puts "File not found: #{path}"
+    @magic_icon_cache[path] = nil
+  end
+end
+
+  def find_spell_icon(name, level)
+    # Ищем в глобальной переменной $spells (задаётся из battle.rb)
+    spells = $spells || []
+    spell = spells.find { |s| s["name"].casecmp?(name) && s["level"] == level }
+    spell ? spell["icon"] : nil
   end
 
   def handle_input

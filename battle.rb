@@ -502,6 +502,7 @@ def current_actor_spells
   actor = @current_unit[:actor]
   klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
   return [] unless klass && klass["spell_list"]
+  # Возвращаем сырой список заклинаний (без иконок)
   klass["spell_list"].select { |s| s["level"] <= actor["level"] }
 end
 
@@ -831,6 +832,7 @@ if __FILE__ == $0
   InitAudioDevice()
 
   db = Database.new
+  $spells = db.spells if db && db.spells
   DamageCalculator.movetypes = db.movetypes
 
   # Загрузка шрифтов
