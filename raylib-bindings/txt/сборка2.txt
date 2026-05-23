@@ -1,4 +1,0 @@
-cd /d/RPG-Shinzo/RPG-Shinzo
-gcc -o map_editor.exe map_editor.c cJSON.c -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lcomdlg32 -lm
-
- -компиляция 
