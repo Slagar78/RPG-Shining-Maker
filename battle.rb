@@ -497,9 +497,17 @@ end
   start_cursor_transition(@current_unit, nxt)
 end
 
+def current_actor_spells
+  return [] unless @current_unit && @current_unit[:actor]
+  actor = @current_unit[:actor]
+  klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
+  return [] unless klass && klass["spell_list"]
+  klass["spell_list"].select { |s| s["level"] <= actor["level"] }
+end
+
  def handle_input
-  case @battle_state
-  when :cursor_moving
+   case @battle_state
+   when :cursor_moving
     # ничего не делаем — движение обрабатывается в update
 
   when :player_turn
@@ -548,6 +556,21 @@ end
           sync_cursor_to_unit
           @audio.play_sfx("error") if @audio
         end
+		
+		when 1  # Magic
+        spells = current_actor_spells
+        if spells.any?
+          @battle_menu.open_magic(spells)
+          @battle_state = :magic_select
+          @audio.play_sfx("confirm") if @audio
+        else
+          @battle_menu.close
+          @battle_state = :player_turn
+          @cursor.visible = true
+          sync_cursor_to_unit
+          @audio.play_sfx("error") if @audio
+        end
+		
       when 3  # Stay
         end_current_turn
       else
@@ -557,6 +580,7 @@ end
         sync_cursor_to_unit
         @audio.play_sfx("cancel_menu") if @audio
       end
+	  
     elsif IsKeyPressed(KEY_S)
       @battle_menu.close
       @battle_state = :player_turn
@@ -564,8 +588,24 @@ end
       sync_cursor_to_unit
       @audio.play_sfx("cancel_menu") if @audio
     end
-  end
-end
+
+  when :magic_select
+    @battle_menu.handle_input
+    if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+      @battle_menu.close_magic
+      @battle_state = :player_turn
+      @cursor.visible = true
+      sync_cursor_to_unit
+      @audio.play_sfx("confirm") if @audio
+    elsif IsKeyPressed(KEY_S)
+      @battle_menu.close_magic
+      @battle_state = :player_turn
+      @cursor.visible = true
+      sync_cursor_to_unit
+      @audio.play_sfx("cancel_menu") if @audio
+    end
+	end
+end   # ← это последний end метода handle_input (он уже есть в файле)
 
   def update
     @battle_menu.update
@@ -745,7 +785,7 @@ end
         @pending_damage = 0
         @battle_state = :battle_scene
       end
-	  
+	  	  	  
     end  # ← конец case
   end    # ← конец метода update
 
