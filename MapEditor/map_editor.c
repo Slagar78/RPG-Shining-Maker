@@ -1154,14 +1154,41 @@ void render_toolbar(Editor *ed) {
     draw_text_centered(ed->renderer, ed->font, layer_label, layer_btn.x + btn_w/2, layer_btn.y + btn_h/2, (SDL_Color){255,255,255,255});
 
     SDL_Color hint_color = {200, 200, 200, 255};
-    int hint_x = active_btn_x + btn_w + 12, hint_y = layer_btn.y + (layer_btn.h - FONT_SIZE)/2;
+    int hint_x = active_btn_x + btn_w + 12;
+    int hint_y = layer_btn.y + (layer_btn.h - FONT_SIZE) / 2;
+
+    int active_w = 0;   // ширина надписи "Active Layer"
+
     SDL_Surface* text_surf = TTF_RenderUTF8_Blended(ed->font, "Active Layer", hint_color);
     if (text_surf) {
         SDL_Texture* text_tex = SDL_CreateTextureFromSurface(ed->renderer, text_surf);
         SDL_Rect text_dst = { hint_x, hint_y, text_surf->w, text_surf->h };
         SDL_RenderCopy(ed->renderer, text_tex, NULL, &text_dst);
+        active_w = text_surf->w;
         SDL_FreeSurface(text_surf);
         SDL_DestroyTexture(text_tex);
+    }
+
+    // Если мышь над картой – показываем координаты тайла
+    if (mx >= MAP_X && mx < MAP_X + MAP_W && my >= MAP_Y && my < MAP_Y + MAP_H) {
+        float world_x = (mx - MAP_X) / ed->zoom + ed->cam_x;
+        float world_y = (my - MAP_Y) / ed->zoom + ed->cam_y;
+        int tx = (int)(world_x / TILE_SIZE);
+        int ty = (int)(world_y / TILE_SIZE);
+
+        Map *map = current_map(ed);
+        if (map && tx >= 0 && tx < map->width && ty >= 0 && ty < map->height) {
+            char coord[32];
+            snprintf(coord, sizeof(coord), "( %d, %d )", tx, ty);
+            SDL_Surface* coord_surf = TTF_RenderUTF8_Blended(ed->font, coord, hint_color);
+            if (coord_surf) {
+                SDL_Texture* coord_tex = SDL_CreateTextureFromSurface(ed->renderer, coord_surf);
+                SDL_Rect coord_dst = { hint_x + active_w + 10, hint_y, coord_surf->w, coord_surf->h };
+                SDL_RenderCopy(ed->renderer, coord_tex, NULL, &coord_dst);
+                SDL_FreeSurface(coord_surf);
+                SDL_DestroyTexture(coord_tex);
+            }
+        }
     }
 }
 
