@@ -1,366 +1,350 @@
 {
-  "classes": [
-    {
-      "id": 0,
-      "name": "SDMN",
-      "full_name": "SDMN",
-      "battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
-      "move": 6,
-      "move_type": "REGULAR",
-      "race": "Enterran",
-      "status": "normal",
-      "resistance": {
-        "wind": "none",
-        "lightning": "minor",
-        "ice": "none",
-        "fire": "major",
-        "aqua": "weakness",
-        "earth": "none",
-        "neutral": "none",
-        "affliction": "immunity"
-      },
-      "prowess": ["critical150_1in8", "double_1in16", "counter_1in16"],
-      "initial_status": "none",
-      "hp_growth": {
-        "start": 1,
-        "projected": 58,
-        "curve": "LATE"
-      },
-      "mp_growth": {
-        "start": 9,
-        "projected": 16,
-        "curve": "EARLY"
-      },
-      "attack_growth": {
-        "start": 6,
-        "projected": 40,
-        "curve": "LINEAR"
-      },
-      "defense_growth": {
-        "start": 5,
-        "projected": 36,
-        "curve": "LINEAR"
-      },
-      "agility_growth": {
-        "start": 5,
-        "projected": 32,
-        "curve": "EARLY"
-      },
-      "spell_list": [
-        {
-          "level": 1,
-          "spell": "HEAL",
-          "spell_level": 1
-        },
-        {
-          "level": 1,
-          "spell": "AURA",
-          "spell_level": 2
-        },
-        {
-          "level": 1,
-          "spell": "Heal",
-          "spell_level": 3
-        }
-      ]
-    },
-    {
-      "id": 1,
-      "name": "SRST",
-      "full_name": "Priest",
-      "move": 4,
-      "move_type": "HEALER",
-      "race": "Enterran",
-      "status": "normal",
-      "resistance": {
-        "wind": "none",
-        "lightning": "none",
-        "ice": "none",
-        "fire": "none",
-        "aqua": "none",
-        "earth": "none",
-        "neutral": "none",
-        "affliction": "none"
-      },
-      "prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-      "initial_status": "none",
-      "hp_growth": {
-        "start": 11,
-        "projected": 41,
-        "curve": "LINEAR"
-      },
-      "mp_growth": {
-        "start": 10,
-        "projected": 42,
-        "curve": "EARLY"
-      },
-      "attack_growth": {
-        "start": 6,
-        "projected": 26,
-        "curve": "LINEAR"
-      },
-      "defense_growth": {
-        "start": 5,
-        "projected": 25,
-        "curve": "LINEAR"
-      },
-      "agility_growth": {
-        "start": 5,
-        "projected": 31,
-        "curve": "LINEAR"
-      },
-      "spell_list": [
-        {
-          "level": 1,
-          "spell": "HEAL",
-          "spell_level": 1
-        },
-        {
-          "level": 4,
-          "spell": "Aura",
-          "spell_level": 1
-        },
-        {
-          "level": 7,
-          "spell": "HEAL",
-          "spell_level": 2
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "name": "WARR",
-      "full_name": "Knight",
-      "move": 7,
-      "move_type": "CENTAUR",
-      "race": "Enterran",
-      "status": "normal",
-      "resistance": {
-        "wind": "none",
-        "lightning": "none",
-        "ice": "none",
-        "fire": "none",
-        "aqua": "none",
-        "earth": "none",
-        "neutral": "none",
-        "affliction": "none"
-      },
-      "prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-      "initial_status": "none",
-      "hp_growth": {
-        "start": 11,
-        "projected": 59,
-        "curve": "LATE"
-      },
-      "mp_growth": {
-        "start": 0,
-        "projected": 0,
-        "curve": "NONE"
-      },
-      "attack_growth": {
-        "start": 5,
-        "projected": 35,
-        "curve": "LINEAR"
-      },
-      "defense_growth": {
-        "start": 5,
-        "projected": 35,
-        "curve": "EARLYANDLATE"
-      },
-      "agility_growth": {
-        "start": 7,
-        "projected": 35,
-        "curve": "LINEAR"
-      },
-      "spell_list": []
-    },
-    {
-      "id": 3,
-      "name": "MAGE",
-      "full_name": "Knight",
-      "move": 7,
-      "move_type": "CENTAUR",
-      "race": "Enterran",
-      "status": "normal",
-      "resistance": {
-        "wind": "none",
-        "lightning": "none",
-        "ice": "none",
-        "fire": "none",
-        "aqua": "none",
-        "earth": "none",
-        "neutral": "none",
-        "affliction": "none"
-      },
-      "prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-      "initial_status": "none",
-      "hp_growth": {
-        "start": 11,
-        "projected": 59,
-        "curve": "LATE"
-      },
-      "mp_growth": {
-        "start": 0,
-        "projected": 0,
-        "curve": "NONE"
-      },
-      "attack_growth": {
-        "start": 5,
-        "projected": 35,
-        "curve": "LINEAR"
-      },
-      "defense_growth": {
-        "start": 5,
-        "projected": 35,
-        "curve": "EARLYANDLATE"
-      },
-      "agility_growth": {
-        "start": 7,
-        "projected": 35,
-        "curve": "LINEAR"
-      },
-      "spell_list": []
-    },
-    {
-      "id": 4,
-      "name": "BRGT",
-      "full_name": "Knigh",
-      "move": 7,
-      "move_type": "CENTAUR",
-      "race": "Enterran",
-      "status": "normal",
-      "resistance": {
-        "wind": "none",
-        "lightning": "none",
-        "ice": "none",
-        "fire": "none",
-        "aqua": "none",
-        "earth": "none",
-        "neutral": "none",
-        "affliction": "none"
-      },
-      "prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-      "initial_status": "none",
-      "hp_growth": {
-        "start": 11,
-        "projected": 59,
-        "curve": "LATE"
-      },
-      "mp_growth": {
-        "start": 2,
-        "projected": 12,
-        "curve": "NONE"
-      },
-      "attack_growth": {
-        "start": 5,
-        "projected": 35,
-        "curve": "LINEAR"
-      },
-      "defense_growth": {
-        "start": 5,
-        "projected": 35,
-        "curve": "EARLYANDLATE"
-      },
-      "agility_growth": {
-        "start": 7,
-        "projected": 35,
-        "curve": "LINEAR"
-      },
-      "spell_list": []
-    },
-    {
-      "id": 5,
-      "name": "WIZ",
-      "full_name": "Knight",
-      "move": 7,
-      "move_type": "CENTAUR",
-      "race": "Enterran",
-      "status": "normal",
-      "resistance": {
-        "wind": "none",
-        "lightning": "none",
-        "ice": "none",
-        "fire": "none",
-        "aqua": "none",
-        "earth": "none",
-        "neutral": "none",
-        "affliction": "none"
-      },
-      "prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-      "initial_status": "none",
-      "hp_growth": {
-        "start": 11,
-        "projected": 59,
-        "curve": "LATE"
-      },
-      "mp_growth": {
-        "start": 0,
-        "projected": 0,
-        "curve": "NONE"
-      },
-      "attack_growth": {
-        "start": 5,
-        "projected": 38,
-        "curve": "LINEAR"
-      },
-      "defense_growth": {
-        "start": 5,
-        "projected": 35,
-        "curve": "EARLYANDLATE"
-      },
-      "agility_growth": {
-        "start": 7,
-        "projected": 35,
-        "curve": "LINEAR"
-      },
-      "spell_list": []
-    },
-    {
-      "id": 6,
-      "name": "YZF",
-      "full_name": "Knight",
-      "move": 7,
-      "move_type": "CENTAUR",
-      "race": "Enterran",
-      "status": "normal",
-      "resistance": {
-        "wind": "none",
-        "lightning": "none",
-        "ice": "none",
-        "fire": "none",
-        "aqua": "none",
-        "earth": "none",
-        "neutral": "none",
-        "affliction": "none"
-      },
-      "prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-      "initial_status": "none",
-      "hp_growth": {
-        "start": 11,
-        "projected": 59,
-        "curve": "LATE"
-      },
-      "mp_growth": {
-        "start": 0,
-        "projected": 0,
-        "curve": "NONE"
-      },
-      "attack_growth": {
-        "start": 5,
-        "projected": 35,
-        "curve": "LINEAR"
-      },
-      "defense_growth": {
-        "start": 5,
-        "projected": 35,
-        "curve": "EARLYANDLATE"
-      },
-      "agility_growth": {
-        "start": 7,
-        "projected": 35,
-        "curve": "LATE"
-      },
-      "spell_list": []
-    }
-  ]
+	"classes":	[{
+			"id":	0,
+			"name":	"SDMN",
+			"full_name":	"SDMN",
+			"battle_sprite_path":	"assets/battles/battlesprites/allies/Mushra",
+			"move":	6,
+			"move_type":	"regular",
+			"race":	"Enterran",
+			"status":	"normal",
+			"resistance":	{
+				"wind":	"none",
+				"lightning":	"minor",
+				"ice":	"none",
+				"fire":	"major",
+				"aqua":	"weakness",
+				"earth":	"none",
+				"neutral":	"none",
+				"affliction":	"immunity"
+			},
+			"prowess":	["critical150_1in8", "double_1in16", "counter_1in16"],
+			"initial_status":	"none",
+			"hp_growth":	{
+				"start":	3,
+				"projected":	58,
+				"curve":	"LATE"
+			},
+			"mp_growth":	{
+				"start":	9,
+				"projected":	16,
+				"curve":	"EARLY"
+			},
+			"attack_growth":	{
+				"start":	6,
+				"projected":	40,
+				"curve":	"LINEAR"
+			},
+			"defense_growth":	{
+				"start":	5,
+				"projected":	36,
+				"curve":	"LINEAR"
+			},
+			"agility_growth":	{
+				"start":	5,
+				"projected":	32,
+				"curve":	"EARLY"
+			},
+			"spell_list":	[{
+					"level":	1,
+					"spell":	"HEAL",
+					"spell_level":	1
+				}, {
+					"level":	1,
+					"spell":	"AURA",
+					"spell_level":	2
+				}, {
+					"level":	1,
+					"spell":	"Heal",
+					"spell_level":	3
+				}]
+		}, {
+			"id":	1,
+			"name":	"SRST",
+			"full_name":	"Priest",
+			"move":	4,
+			"move_type":	"HEALER",
+			"race":	"Enterran",
+			"status":	"normal",
+			"resistance":	{
+				"wind":	"none",
+				"lightning":	"none",
+				"ice":	"none",
+				"fire":	"none",
+				"aqua":	"none",
+				"earth":	"none",
+				"neutral":	"none",
+				"affliction":	"none"
+			},
+			"prowess":	["critical150_1in32", "double_1in32", "counter_1in32"],
+			"initial_status":	"none",
+			"hp_growth":	{
+				"start":	11,
+				"projected":	41,
+				"curve":	"LINEAR"
+			},
+			"mp_growth":	{
+				"start":	10,
+				"projected":	42,
+				"curve":	"EARLY"
+			},
+			"attack_growth":	{
+				"start":	6,
+				"projected":	26,
+				"curve":	"LINEAR"
+			},
+			"defense_growth":	{
+				"start":	5,
+				"projected":	25,
+				"curve":	"LINEAR"
+			},
+			"agility_growth":	{
+				"start":	5,
+				"projected":	31,
+				"curve":	"LINEAR"
+			},
+			"spell_list":	[{
+					"level":	1,
+					"spell":	"HEAL",
+					"spell_level":	1
+				}, {
+					"level":	4,
+					"spell":	"Aura",
+					"spell_level":	1
+				}, {
+					"level":	7,
+					"spell":	"HEAL",
+					"spell_level":	2
+				}]
+		}, {
+			"id":	2,
+			"name":	"WARR",
+			"full_name":	"Knight",
+			"move":	7,
+			"move_type":	"CENTAUR",
+			"race":	"Enterran",
+			"status":	"normal",
+			"resistance":	{
+				"wind":	"none",
+				"lightning":	"none",
+				"ice":	"none",
+				"fire":	"none",
+				"aqua":	"none",
+				"earth":	"none",
+				"neutral":	"none",
+				"affliction":	"none"
+			},
+			"prowess":	["critical150_1in32", "double_1in32", "counter_1in32"],
+			"initial_status":	"none",
+			"hp_growth":	{
+				"start":	11,
+				"projected":	59,
+				"curve":	"LATE"
+			},
+			"mp_growth":	{
+				"start":	0,
+				"projected":	0,
+				"curve":	"NONE"
+			},
+			"attack_growth":	{
+				"start":	5,
+				"projected":	35,
+				"curve":	"LINEAR"
+			},
+			"defense_growth":	{
+				"start":	5,
+				"projected":	35,
+				"curve":	"EARLYANDLATE"
+			},
+			"agility_growth":	{
+				"start":	7,
+				"projected":	35,
+				"curve":	"LINEAR"
+			},
+			"spell_list":	[]
+		}, {
+			"id":	3,
+			"name":	"MAGE",
+			"full_name":	"Knight",
+			"move":	7,
+			"move_type":	"CENTAUR",
+			"race":	"Enterran",
+			"status":	"normal",
+			"resistance":	{
+				"wind":	"none",
+				"lightning":	"none",
+				"ice":	"none",
+				"fire":	"none",
+				"aqua":	"none",
+				"earth":	"none",
+				"neutral":	"none",
+				"affliction":	"none"
+			},
+			"prowess":	["critical150_1in32", "double_1in32", "counter_1in32"],
+			"initial_status":	"none",
+			"hp_growth":	{
+				"start":	11,
+				"projected":	59,
+				"curve":	"LATE"
+			},
+			"mp_growth":	{
+				"start":	0,
+				"projected":	0,
+				"curve":	"NONE"
+			},
+			"attack_growth":	{
+				"start":	5,
+				"projected":	35,
+				"curve":	"LINEAR"
+			},
+			"defense_growth":	{
+				"start":	5,
+				"projected":	35,
+				"curve":	"EARLYANDLATE"
+			},
+			"agility_growth":	{
+				"start":	7,
+				"projected":	35,
+				"curve":	"LINEAR"
+			},
+			"spell_list":	[]
+		}, {
+			"id":	4,
+			"name":	"BRGT",
+			"full_name":	"Knigh",
+			"move":	7,
+			"move_type":	"CENTAUR",
+			"race":	"Enterran",
+			"status":	"normal",
+			"resistance":	{
+				"wind":	"none",
+				"lightning":	"none",
+				"ice":	"none",
+				"fire":	"none",
+				"aqua":	"none",
+				"earth":	"none",
+				"neutral":	"none",
+				"affliction":	"none"
+			},
+			"prowess":	["critical150_1in32", "double_1in32", "counter_1in32"],
+			"initial_status":	"none",
+			"hp_growth":	{
+				"start":	11,
+				"projected":	59,
+				"curve":	"LATE"
+			},
+			"mp_growth":	{
+				"start":	2,
+				"projected":	12,
+				"curve":	"NONE"
+			},
+			"attack_growth":	{
+				"start":	5,
+				"projected":	35,
+				"curve":	"LINEAR"
+			},
+			"defense_growth":	{
+				"start":	5,
+				"projected":	35,
+				"curve":	"EARLYANDLATE"
+			},
+			"agility_growth":	{
+				"start":	7,
+				"projected":	35,
+				"curve":	"LINEAR"
+			},
+			"spell_list":	[]
+		}, {
+			"id":	5,
+			"name":	"WIZ",
+			"full_name":	"Knight",
+			"move":	7,
+			"move_type":	"CENTAUR",
+			"race":	"Enterran",
+			"status":	"normal",
+			"resistance":	{
+				"wind":	"none",
+				"lightning":	"none",
+				"ice":	"none",
+				"fire":	"none",
+				"aqua":	"none",
+				"earth":	"none",
+				"neutral":	"none",
+				"affliction":	"none"
+			},
+			"prowess":	["critical150_1in32", "double_1in32", "counter_1in32"],
+			"initial_status":	"none",
+			"hp_growth":	{
+				"start":	11,
+				"projected":	59,
+				"curve":	"LATE"
+			},
+			"mp_growth":	{
+				"start":	0,
+				"projected":	0,
+				"curve":	"NONE"
+			},
+			"attack_growth":	{
+				"start":	5,
+				"projected":	38,
+				"curve":	"LINEAR"
+			},
+			"defense_growth":	{
+				"start":	5,
+				"projected":	35,
+				"curve":	"EARLYANDLATE"
+			},
+			"agility_growth":	{
+				"start":	7,
+				"projected":	35,
+				"curve":	"LINEAR"
+			},
+			"spell_list":	[]
+		}, {
+			"id":	6,
+			"name":	"YZF",
+			"full_name":	"Knight",
+			"move":	7,
+			"move_type":	"CENTAUR",
+			"race":	"Enterran",
+			"status":	"normal",
+			"resistance":	{
+				"wind":	"none",
+				"lightning":	"none",
+				"ice":	"none",
+				"fire":	"none",
+				"aqua":	"none",
+				"earth":	"none",
+				"neutral":	"none",
+				"affliction":	"none"
+			},
+			"prowess":	["critical150_1in32", "double_1in32", "counter_1in32"],
+			"initial_status":	"none",
+			"hp_growth":	{
+				"start":	11,
+				"projected":	59,
+				"curve":	"LATE"
+			},
+			"mp_growth":	{
+				"start":	0,
+				"projected":	0,
+				"curve":	"NONE"
+			},
+			"attack_growth":	{
+				"start":	5,
+				"projected":	35,
+				"curve":	"LINEAR"
+			},
+			"defense_growth":	{
+				"start":	5,
+				"projected":	35,
+				"curve":	"EARLYANDLATE"
+			},
+			"agility_growth":	{
+				"start":	7,
+				"projected":	35,
+				"curve":	"LATE"
+			},
+			"spell_list":	[]
+		}]
 }
