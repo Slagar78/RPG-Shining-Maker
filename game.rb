@@ -250,11 +250,12 @@ class Game
         @pending_status_open = true
       end
 	when :search
-      if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D) || IsKeyPressed(KEY_S)
-        @search_overlay.close
+      @search_overlay.handle_input    # отдаём управление самому окну
+      unless @search_overlay.visible  # если окно закрылось – возвращаемся в меню
         @game_state = :menu
-        @menu.open                    # снова показываем плитки
+        @menu.open
       end
+	  
     when :item_action
       @active_item_action.handle_input
       @pending_items_close = true if @active_item_action.anim_phase == 3
