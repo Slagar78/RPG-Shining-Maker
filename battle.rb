@@ -773,6 +773,9 @@ end   # ← это последний end метода handle_input (он уже
     sync_cursor_to_unit
   end
 
+    when :magic_select
+    @battle_player&.update_animation 
+
     when :battle_scene
     @battle_scene.update
 

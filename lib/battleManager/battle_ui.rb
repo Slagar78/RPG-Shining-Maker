@@ -114,6 +114,7 @@ def draw_magic_icons(cx, cy, offset)
     { x: cx,       y: cy + 24 }    # нижняя
   ]
 
+  # Загружаем текстуру пустой иконки, если ещё нет
   unless @empty_magic_tex
     path = "assets/spells/magic_empty.png"
     if File.exist?(path)
@@ -122,41 +123,71 @@ def draw_magic_icons(cx, cy, offset)
     end
   end
 
+  # ---------- 1. Рисуем все НЕвыделенные иконки ----------
   4.times do |i|
+    next if i == @magic_selected   # выделенную пропускаем, нарисуем позже
     spell = @spells[i]
     pos = positions[i]
 
-    if spell
-      icon = load_magic_icon(find_spell_icon(spell["spell"], spell["spell_level"]))
-    else
-      icon = @empty_magic_tex
-    end
+    icon = if spell
+             load_magic_icon(find_spell_icon(spell["spell"], spell["spell_level"]))
+           else
+             @empty_magic_tex
+           end
+
+    base_w = 32
+    base_h = 48
+    base_x = pos[:x] - base_w / 2
+    base_y = pos[:y] - base_h / 2
+
+    src = Raylib::Rectangle.create(0, 0, base_w, base_h)
+    dst = Raylib::Rectangle.create(base_x, base_y, base_w, base_h)
 
     if icon
-      src = Raylib::Rectangle.create(0, 0, 32, 48)
-      dst = Raylib::Rectangle.create(pos[:x] - 16, pos[:y] - 24, 32, 48)
       Raylib.DrawTexturePro(icon, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
     else
-      Raylib.DrawRectangle(pos[:x] - 16, pos[:y] - 24, 32, 48, Raylib::GRAY)
-    end
-
-    if i == @magic_selected
-      rect = Raylib::Rectangle.create(pos[:x] - 16, pos[:y] - 24, 32, 48)
-      Raylib.DrawRectangleLinesEx(rect, 2, Raylib::RED)
+      Raylib.DrawRectangle(base_x, base_y, base_w, base_h, Raylib::GRAY)
     end
   end
 
-  # Панель с названием заклинания
+  # ---------- 2. Рисуем выделенную иконку ПОВЕРХ всех ----------
+  selected_i = @magic_selected
+  selected_pos = positions[selected_i]
+  selected_spell = @spells[selected_i]
+
+  icon = if selected_spell
+           load_magic_icon(find_spell_icon(selected_spell["spell"], selected_spell["spell_level"]))
+         else
+           @empty_magic_tex
+         end
+
+  base_w = 32
+  base_h = 48
+  scale = 1.2                # увеличение выделенной иконки
+  new_w = base_w * scale
+  new_h = base_h * scale
+  new_x = selected_pos[:x] - new_w / 2
+  new_y = selected_pos[:y] - new_h / 2
+
+  src = Raylib::Rectangle.create(0, 0, base_w, base_h)
+  dst = Raylib::Rectangle.create(new_x, new_y, new_w, new_h)
+
+  if icon
+    Raylib.DrawTexturePro(icon, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+  else
+    Raylib.DrawRectangle(new_x, new_y, new_w, new_h, Raylib::GRAY)
+  end
+
+  # ---------- 3. Панель с названием заклинания ----------
   if @magic_panel_tex && @spells.any?
     right_pos = positions[2]   # правая иконка
-    panel_x = right_pos[:x] + 16 + 16   # отступ 16 пикселей от правого края иконки
+    panel_x = right_pos[:x] + 16 + 16
     panel_y = right_pos[:y] - @magic_panel_h / 2
 
     src = Raylib::Rectangle.create(0, 0, @magic_panel_w, @magic_panel_h)
     dst = Raylib::Rectangle.create(panel_x, panel_y, @magic_panel_w, @magic_panel_h)
     Raylib.DrawTexturePro(@magic_panel_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
 
-    # Название заклинания
     if @font && @magic_selected < @spells.length
       name = @spells[@magic_selected]["spell"] || ""
       font_size = 25
