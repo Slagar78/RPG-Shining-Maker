@@ -90,48 +90,47 @@ class BattleMenu
     @spells[@magic_selected]
   end
 
-  def draw_magic_icons
-    cx = 576 / 2
-    cy = 480 / 2
+  def draw_magic_icons(cx, cy, offset)
 
-    positions = [
-      { x: cx,        y: cy - 42 },
-      { x: cx - 44,   y: cy },
-      { x: cx + 44,   y: cy },
-      { x: cx,        y: cy + 42 }
-    ]
+  positions = [
+    { x: cx,       y: cy - 24 },   # верхняя
+    { x: cx - 32,  y: cy },        # левая
+    { x: cx + 32,  y: cy },        # правая
+    { x: cx,       y: cy + 24 }    # нижняя
+  ]
 
-    unless @empty_magic_tex
-      path = "assets/spells/magic_empty.png"
-      if File.exist?(path)
-        @empty_magic_tex = Raylib.LoadTexture(path)
-        Raylib.SetTextureFilter(@empty_magic_tex, Raylib::TEXTURE_FILTER_POINT)
-      end
-    end
-
-    4.times do |i|
-      spell = @spells[i]
-      pos = positions[i]
-
-      if spell
-        icon = load_magic_icon(spell["icon"])
-      else
-        icon = @empty_magic_tex
-      end
-
-      if icon
-        src = Raylib::Rectangle.create(0, 0, 32, 48)
-        dst = Raylib::Rectangle.create(pos[:x] - 16, pos[:y] - 24, 32, 48)
-        Raylib.DrawTexturePro(icon, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-      else
-        Raylib.DrawRectangle(pos[:x] - 16, pos[:y] - 24, 32, 48, Raylib::GRAY)
-      end
-
-      if i == @magic_selected
-        Raylib.DrawRectangleLines(pos[:x] - 18, pos[:y] - 26, 36, 52, Raylib::YELLOW)
-      end
+  unless @empty_magic_tex
+    path = "assets/spells/magic_empty.png"
+    if File.exist?(path)
+      @empty_magic_tex = Raylib.LoadTexture(path)
+      Raylib.SetTextureFilter(@empty_magic_tex, Raylib::TEXTURE_FILTER_POINT)
     end
   end
+
+  4.times do |i|
+    spell = @spells[i]
+    pos = positions[i]
+
+    if spell
+      icon = load_magic_icon(spell["icon"])
+    else
+      icon = @empty_magic_tex
+    end
+
+    if icon
+      src = Raylib::Rectangle.create(0, 0, 32, 48)
+      dst = Raylib::Rectangle.create(pos[:x] - 16, pos[:y] - 24, 32, 48)
+      Raylib.DrawTexturePro(icon, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+    else
+      Raylib.DrawRectangle(pos[:x] - 16, pos[:y] - 24, 32, 48, Raylib::GRAY)
+    end
+
+    # Жёлтая рамка выбора
+    if i == @magic_selected
+      Raylib.DrawRectangleLines(pos[:x] - 18, pos[:y] - 26, 36, 52, Raylib::YELLOW)
+    end
+  end
+end
 
   def load_magic_icon(path)
     return nil unless path && !path.empty?
@@ -179,16 +178,16 @@ class BattleMenu
     @anim_timer += 1
   end
 
-    def draw
+  def draw
     return unless @visible
-
-    if @magic_mode
-      draw_magic_icons
-      return
-    end
 
     center_x = 576 / 2
     center_y = 480 - 80
+
+    if @magic_mode
+      draw_magic_icons(center_x, center_y, @offset)
+      return
+    end
 
     positions = [
       { x: center_x,           y: center_y - @offset + 24 },
