@@ -1675,6 +1675,12 @@ class SearchOverlay
     @party = party
     @visible = false
     @message_panel_tex = nil
+
+    # Переменные для эффекта печати
+    @reveal_index = 0          # сколько символов уже показано
+    @reveal_speed = 2          # кадров на символ (чем меньше, тем быстрее)
+    @reveal_timer = 0
+
     load_message_texture
   end
 
@@ -1688,6 +1694,8 @@ class SearchOverlay
 
   def open
     @visible = true
+    @reveal_index = 0
+    @reveal_timer = 0
   end
 
   def close
@@ -1708,39 +1716,69 @@ class SearchOverlay
   end
 
   def update
-    # nothing to update
+    return unless @visible
+
+    # Эффект печати
+    lines = prepare_lines
+    total_length = lines.join("\n").length
+    if @reveal_index < total_length
+      @reveal_timer += 1
+      if @reveal_timer >= @reveal_speed
+        @reveal_timer = 0
+        @reveal_index += 1
+      end
+    end
   end
 
   def draw
-  return unless @visible
-  template = @game_text ? (@game_text["0005"] || "Ничего интересного не найдено.") : "Ничего интересного не найдено."
+    return unless @visible
 
-  # Подстановка имени лидера
-  if @party && @party[0]
-    leader_name = @party[0]["name"] || "???"
-    template = template.gsub("{LEADER}", leader_name)
+    template = @game_text ? (@game_text["0005"] || "Ничего интересного не найдено.") : "Ничего интересного не найдено."
+    if @party && @party[0]
+      template = template.gsub("{LEADER}", @party[0]["name"] || "???")
+    end
+
+    lines = template.split("{N}")
+    full_text = lines.join("\n")
+
+    # Обрезаем до показанного количества символов
+    display_text = full_text[0, @reveal_index]
+    return if display_text.nil? || display_text.empty?
+
+    # Разбиваем обратно на строки
+    display_lines = display_text.split("\n", -1)
+
+    panel_w = 480
+    panel_h = 128
+    panel_x = (576 - panel_w) / 2
+    panel_y = 480 - panel_h - 24
+
+    # Фон панели
+    if @message_panel_tex
+      dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
+      src = Raylib::Rectangle.create(0, 0, @message_panel_tex.width, @message_panel_tex.height)
+      Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+    else
+      Raylib.DrawRectangle(panel_x, panel_y, panel_w, panel_h, Raylib::GRAY)
+      Raylib.DrawRectangleLines(panel_x, panel_y, panel_w, panel_h, Raylib::DARKGRAY)
+    end
+
+    # Рисуем строки, которые уже полностью или частично показаны
+    y_offset = panel_y + 10
+    display_lines.each do |line|
+      Raylib.DrawTextEx(@large_font, line, Raylib::Vector2.create(panel_x + 20, y_offset), 30, 1, Raylib::WHITE)
+      y_offset += 38
+    end
   end
 
-  lines = template.split("{N}")
+  private
 
-  panel_w = 480
-  panel_h = 128
-  panel_x = (576 - panel_w) / 2
-  panel_y = 480 - panel_h - 24
-
-  if @message_panel_tex
-    dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
-    src = Raylib::Rectangle.create(0, 0, @message_panel_tex.width, @message_panel_tex.height)
-    Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
-  else
-    Raylib.DrawRectangle(panel_x, panel_y, panel_w, panel_h, Raylib::GRAY)
-    Raylib.DrawRectangleLines(panel_x, panel_y, panel_w, panel_h, Raylib::DARKGRAY)
+  # Вспомогательный метод, чтобы получить массив строк (используется в update)
+  def prepare_lines
+    template = @game_text ? (@game_text["0005"] || "Ничего интересного не найдено.") : "Ничего интересного не найдено."
+    if @party && @party[0]
+      template = template.gsub("{LEADER}", @party[0]["name"] || "???")
+    end
+    template.split("{N}")
   end
-
-  y_offset = panel_y + 10
-  lines.each do |line_text|
-    Raylib.DrawTextEx(@large_font, line_text, Raylib::Vector2.create(panel_x + 20, y_offset), 30, 1, Raylib::WHITE)
-    y_offset += 38
-  end
-end
 end
