@@ -330,4 +330,39 @@ class GameMap
     EndTextureMode()
     rt
   end
+  
+    # Находится ли клетка (x, y) внутри первой зоны из areas?
+  def inside_area?(x, y)
+    return true if @areas.nil? || @areas.empty?
+    area = @areas.first
+    start = area['mainLayerStart']
+    endp  = area['mainLayerEnd']
+    x.between?(start[0], endp[0]) && y.between?(start[1], endp[1])
+  end
+
+  # Пиксельные границы зоны для камеры
+  def area_bounds
+    return nil if @areas.nil? || @areas.empty?
+    area = @areas.first
+    start = area['mainLayerStart']
+    endp  = area['mainLayerEnd']
+    {
+      left:   start[0] * @tile_size,
+      top:    start[1] * @tile_size,
+      right:  (endp[0] + 1) * @tile_size,
+      bottom: (endp[1] + 1) * @tile_size
+    }
+  end
+    # Возвращает [x, y] координаты внутри зоны (центр первой зоны), либо центр карты
+  def default_spawn
+  if @areas && !@areas.empty?
+    area = @areas.first
+    start = area['mainLayerStart']
+    endp  = area['mainLayerEnd']
+    [(start[0] + endp[0]) / 2, (start[1] + endp[1]) / 2]
+  else
+    [@width / 2, @height / 2]
+     end
+   end
+   
 end

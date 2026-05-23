@@ -23,11 +23,20 @@ class Camera
     target_x = player.visual_x + tile_size / 2.0
     target_y = player.visual_y + tile_size / 2.0
 
-    max_x = game_map.width * tile_size - @half_w
-    max_y = game_map.height * tile_size - @half_h
+    if (bounds = game_map.area_bounds)
+      max_x = bounds[:right] - @half_w
+      max_y = bounds[:bottom] - @half_h
+      min_x = bounds[:left] + @half_w
+      min_y = bounds[:top] + @half_h
+    else
+      max_x = game_map.width * tile_size - @half_w
+      max_y = game_map.height * tile_size - @half_h
+      min_x = @half_w
+      min_y = @half_h
+    end
 
-    target_x = clamp(target_x, @half_w, max_x) if max_x > @half_w
-    target_y = clamp(target_y, @half_h, max_y) if max_y > @half_h
+    target_x = clamp(target_x, min_x, max_x) if max_x > min_x
+    target_y = clamp(target_y, min_y, max_y) if max_y > min_y
 
     @target_vec.x = target_x
     @target_vec.y = target_y

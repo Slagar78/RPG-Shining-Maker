@@ -59,10 +59,16 @@ class Game
 
     @player = Player.new(@game_map)
 	# Устанавливаем стартовые координаты из глобальных настроек
-    start_x = @db.globals["start_x"] || 5
-    start_y = @db.globals["start_y"] || 5
+    # Стартовая позиция – из глобальных настроек, но обязательно внутри зоны
+    start_x = @db.globals["start_x"] || @game_map.default_spawn[0]
+    start_y = @db.globals["start_y"] || @game_map.default_spawn[1]
+    # Если зона задана, гарантируем, что игрок попадёт в неё
+    unless @game_map.inside_area?(start_x, start_y)
+      start_x, start_y = @game_map.default_spawn
+    end
     @player.x = start_x
     @player.y = start_y
+	
 	@camera = Camera.new
     @accumulator = 0.0
     @fixed_dt = 1.0 / 60.0
