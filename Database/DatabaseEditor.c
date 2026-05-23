@@ -14,6 +14,7 @@
 #include <windows.h>
 #include <commdlg.h>
 #include "formatter.h"
+#include "system_editor.h"
 
 #ifdef _WIN32
 #define strcasecmp _stricmp
@@ -654,7 +655,8 @@ int main(int argc, char *argv[]) {
     if (enemies_json) {
     enemies_init(enemies_json, enemies_count);
     enemies_set_window_height(WINDOW_HEIGHT);
-}
+    }
+    system_init();
 
     SDL_Color white = {255,255,255}, red = {255,80,80}, blue = {80,160,255}, green_text = {0,200,0};
     SDL_Color cyan = {0,200,255}, yellow = {255,255,0,255}, bright_green = {0,255,0,255};
@@ -711,9 +713,14 @@ int main(int argc, char *argv[]) {
                 if (enemies_is_edit_active() && (evt.type == SDL_KEYDOWN || evt.type == SDL_TEXTINPUT))
                     continue;
             }
-            else if (current_tab == TAB_FORMAT) {
-                // нет полей ввода
+            else if (current_tab == TAB_SYSTEM) {
+                system_handle_input(&evt);
+                if (system_is_edit_active() && (evt.type == SDL_KEYDOWN || evt.type == SDL_TEXTINPUT))
+                    continue;
             }
+            else if (current_tab == TAB_FORMAT) {
+            }
+
             // Клик левой кнопкой мыши
             if (evt.type == SDL_MOUSEBUTTONDOWN && evt.button.button == SDL_BUTTON_LEFT) {
                 int mx = evt.button.x, my = evt.button.y;
@@ -731,6 +738,7 @@ int main(int argc, char *argv[]) {
 							actors_reset_selection();
 							classes_reset_selection();
                             enemies_reset_selection();
+                            system_reset_selection();
                             if (current_tab == TAB_SPELLS && spells_json) build_spell_groups();
                             break;
                         }
@@ -973,7 +981,7 @@ int main(int argc, char *argv[]) {
             draw_text_ext(renderer, add_btn.x+5, add_btn.y+5, "Add Spell", white);
         }
 
-        // Панель редактирования Items
+        // 
         if (current_tab == TAB_ITEMS) {
             items_draw_edit_panel(renderer, 360, tab_h + 20);
         }
@@ -983,9 +991,12 @@ int main(int argc, char *argv[]) {
 		if (current_tab == TAB_CLASSES) {
            classes_draw_edit_panel(renderer, 360, tab_h + 20);
         }
-
         if (current_tab == TAB_ENEMIES) {
             enemies_draw_edit_panel(renderer, 360, tab_h + 20);
+        }
+
+        if (current_tab == TAB_SYSTEM) {
+            system_draw_edit_panel(renderer, 360, tab_h + 20);
         }
 
         if (current_tab == TAB_FORMAT) {
@@ -1014,12 +1025,14 @@ int main(int argc, char *argv[]) {
             items_update_timer();  //
 			classes_update_timer();
             enemies_update_timer();
+            system_update_timer();
 
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
     }
 
     // Очистка
+    system_free();
     if (g_font) TTF_CloseFont(g_font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(win);
