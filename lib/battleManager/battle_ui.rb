@@ -93,10 +93,10 @@ class BattleMenu
   def draw_magic_icons(cx, cy, offset)
 
   positions = [
-    { x: cx,       y: cy - 24 },   # верхняя
-    { x: cx - 32,  y: cy },        # левая
-    { x: cx + 32,  y: cy },        # правая
-    { x: cx,       y: cy + 24 }    # нижняя
+    { x: cx,       y: cy - 25 },   # верхняя
+    { x: cx - 33,  y: cy },        # левая
+    { x: cx + 33,  y: cy },        # правая
+    { x: cx,       y: cy + 25 }    # нижняя
   ]
 
   unless @empty_magic_tex
