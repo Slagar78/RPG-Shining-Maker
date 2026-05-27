@@ -13,3 +13,5 @@ cd D:/RPG-Shinzo/RPG_Shining_Maker/BattleEditor
 cd D:/RPG-Shinzo/RPG_Shining_Maker/Constructor
 
 cd D:/RPG-Shinzo/RPG_Shining_Maker/BattleScenes
+
+cd D:/RPG-Shinzo/RPG_Shining_Maker/Tiles
