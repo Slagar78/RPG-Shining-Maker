@@ -122,6 +122,10 @@ class Game
     @profile = Profile.new(@font, @db, @start_inventory)
 	@search_overlay = SearchOverlay.new(@large_font, @game_text, @party)
 	
+	@anim_timer = 0.0          # таймер для анимации
+    @anim_delay = 0.5          # длительность одного кадра (сек)
+    @show_anim  = false        # true = показываем замену, false = оригинал
+	
     @game_state = :playing
     @pending_profile_open = false
     @pending_status_open = false
@@ -130,6 +134,7 @@ class Game
     @pending_items_close = false
     @pending_menu_request = false
     @menu_delay = 0
+	
   end
 
   def run
@@ -325,6 +330,15 @@ class Game
       @game_state = :items
       @pending_items_close = false
     end
+	
+	# --------------------
+    @anim_timer += @fixed_dt
+    if @anim_timer >= @anim_delay
+      @anim_timer -= @anim_delay
+      @show_anim = !@show_anim
+    end
+    # ---------------------
+	
   end
 
   def draw
@@ -348,6 +362,8 @@ class Game
           Vector2.create(0, 0), 0, WHITE
         )
       end
+	  
+	     @game_map.draw_animated_tiles(@show_anim) if @game_map
 
       @player.draw
 

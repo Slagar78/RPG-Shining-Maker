@@ -5,6 +5,7 @@ include Raylib
 
 class GameMap
   attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas
+  attr_reader :tileset_path
 
   def initialize(map_id = "Granseal")
     @src_rect_cache = {}
@@ -74,8 +75,7 @@ class GameMap
 
     # Тайлсет и типы тайлов
     raw_path = data['tileset'] || "assets/tilesets/tileset.png"
-    # Для safe-имени оставляем двойной слеш (он был в исходном layout3.json)
-    safe_path = raw_path.gsub('\\', '/')          # assets/tilesets//tileset009.png
+    safe_path = raw_path.gsub('\\', '/')          # assets/tilesets/tileset009.png (если был //)
     safe = safe_path.gsub(/[\\\/:]/, '_')
     type_file = "data/tile_types/#{safe}.json"
 
@@ -88,6 +88,7 @@ class GameMap
     # Для загрузки текстуры убираем двойной слеш
     tileset_path = safe_path.gsub('//', '/')
     @tileset_texture = LoadTexture(tileset_path)
+    @tileset_path = tileset_path   # сохраняем путь для анимации
     SetTextureFilter(@tileset_texture, TEXTURE_FILTER_POINT)
     @tile_size = 48
 
@@ -99,6 +100,21 @@ class GameMap
     end
 
     @center_vec = Vector2.create(@tile_size / 2.0, @tile_size / 2.0)
+
+    # ---------- Анимационный тайлсет ----------
+    @anim_texture = nil
+    @animated_indices = []
+
+    base = File.basename(@tileset_path, ".*")   # "tileset001"
+    anim_png  = "assets/tilesets/Animation_tiles/#{base}_animation.png"
+    anim_json = "assets/tilesets/Animation_tiles/#{base}_animation.json"
+
+    if File.exist?(anim_png) && File.exist?(anim_json)
+      @anim_texture = LoadTexture(anim_png)
+      SetTextureFilter(@anim_texture, TEXTURE_FILTER_POINT)
+      @animated_indices = JSON.parse(File.read(anim_json))
+      puts "Animation loaded for #{@tileset_path}: #{@animated_indices}"
+    end
 
     tex_w = @tileset_texture.width
     tex_h = @tileset_texture.height
@@ -150,31 +166,32 @@ class GameMap
     rect
   end
 
+  def animated_tile?(tile_id)
+    @animated_indices.include?(tile_id)
+  end
+
   # Проходимость: тип 1 (стена) блокирует всегда, тип 2 (лёд) на втором слое тоже блокирует
   def passable?(x, y)
     return false if x < 0 || x >= @width || y < 0 || y >= @height
 
-    # Проверка второго слоя
     tile2_id = @tiles2[x][y]
     if tile2_id && tile2_id >= 0
       type2 = @tile_types[tile2_id] || 0
       return false if type2 == 1 || type2 == 2
     end
 
-    # Проверка первого слоя
     tile_id = @tiles[x][y]
     type = @tile_types[tile_id] || 0
     type != 1
   end
 
-  # Возвращает тип тайла на клетке (0, 1, 2, 3…). За границами – тип 1.
   def tile_type_at(x, y)
     return 1 if x < 0 || x >= @width || y < 0 || y >= @height
     tile_id = @tiles[x][y]
     @tile_types[tile_id] || 0
   end
 
-  # Основной фон – все тайлы первого слоя
+  # Основной фон – все тайлы первого слоя (кроме анимированных)
   def build_static_background
     return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
 
@@ -192,6 +209,7 @@ class GameMap
         (0...@height).each do |y|
           tile_id = @tiles[x][y]
           next if tile_id.nil? || tile_id < 0
+          next if animated_tile?(tile_id)
 
           src_rect = tile_src_rect(tile_id)
           next unless src_rect
@@ -216,7 +234,7 @@ class GameMap
     rt
   end
 
-  # Второй слой (tiles2) – декоративный, на проходимость влияет через passable?
+  # Второй слой (tiles2) – декоративный, без анимированных тайлов
   def build_layer2
     return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
 
@@ -234,6 +252,7 @@ class GameMap
         (0...@height).each do |y|
           tile_id = @tiles2[x][y]
           next if tile_id.nil? || tile_id < 0
+          next if animated_tile?(tile_id)
 
           src_rect = tile_src_rect(tile_id)
           next unless src_rect
@@ -258,7 +277,7 @@ class GameMap
     rt
   end
 
-  # Верхний слой – только тип 3 (кроны деревьев, крыши), перекрывает игрока
+  # Верхний слой – только тип 3 (кроны деревьев, крыши), без анимированных
   def build_top_layer
     return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
 
@@ -277,6 +296,7 @@ class GameMap
         (0...@height).each do |y|
           tile_id = @tiles[x][y]
           next if tile_id.nil? || tile_id < 0
+          next if animated_tile?(tile_id)
           type = @tile_types[tile_id] || 0
           next unless type == 3
 
@@ -305,6 +325,7 @@ class GameMap
         (0...@height).each do |y|
           tile_id = @tiles2[x][y]
           next if tile_id.nil? || tile_id < 0
+          next if animated_tile?(tile_id)
           type = @tile_types[tile_id] || 0
           next unless type == 3
 
@@ -330,8 +351,8 @@ class GameMap
     EndTextureMode()
     rt
   end
-  
-    # Находится ли клетка (x, y) внутри первой зоны из areas?
+
+  # Находится ли клетка (x, y) внутри первой зоны из areas?
   def inside_area?(x, y)
     return true if @areas.nil? || @areas.empty?
     area = @areas.first
@@ -353,16 +374,83 @@ class GameMap
       bottom: (endp[1] + 1) * @tile_size
     }
   end
-    # Возвращает [x, y] координаты внутри зоны (центр первой зоны), либо центр карты
+
+  # Возвращает [x, y] координаты внутри зоны (центр первой зоны), либо центр карты
   def default_spawn
-  if @areas && !@areas.empty?
-    area = @areas.first
-    start = area['mainLayerStart']
-    endp  = area['mainLayerEnd']
-    [(start[0] + endp[0]) / 2, (start[1] + endp[1]) / 2]
-  else
-    [@width / 2, @height / 2]
-     end
-   end
-   
+    if @areas && !@areas.empty?
+      area = @areas.first
+      start = area['mainLayerStart']
+      endp  = area['mainLayerEnd']
+      [(start[0] + endp[0]) / 2, (start[1] + endp[1]) / 2]
+    else
+      [@width / 2, @height / 2]
+    end
+  end
+
+  # ─── Отрисовка анимированных тайлов (вызывается каждый кадр) ───
+  # use_animation = true  -> рисуем замену из _animation.png
+  # use_animation = false -> рисуем оригинал из основного тайлсета
+  def draw_animated_tiles(use_animation)
+    return if @animated_indices.empty? || @tileset_texture.nil?
+
+    half = @tile_size / 2.0
+    center = @center_vec
+    dst = Rectangle.create(0, 0, @tile_size, @tile_size)
+
+    # Первый слой
+    (0...@width).each do |x|
+      (0...@height).each do |y|
+        tile_id = @tiles[x][y]
+        next if tile_id.nil? || tile_id < 0
+        next unless animated_tile?(tile_id)
+
+        texture = use_animation ? @anim_texture : @tileset_texture
+        src_rect = tile_src_rect(tile_id)
+        next unless src_rect
+
+        rot    = @rot[x][y] || 0
+        flip_x = @mirror_x[x][y] || false
+        flip_y = @mirror_y[x][y] || false
+
+        world_cx = x * @tile_size + half
+        world_cy = y * @tile_size + half
+
+        dst.x = world_cx
+        dst.y = world_cy
+        dst.width  = flip_x ? -@tile_size : @tile_size
+        dst.height = flip_y ? -@tile_size : @tile_size
+
+        angle = rot * 90.0
+        DrawTexturePro(texture, src_rect, dst, center, angle, WHITE)
+      end
+    end
+
+    # Второй слой
+    (0...@width).each do |x|
+      (0...@height).each do |y|
+        tile_id = @tiles2[x][y]
+        next if tile_id.nil? || tile_id < 0
+        next unless animated_tile?(tile_id)
+
+        texture = use_animation ? @anim_texture : @tileset_texture
+        src_rect = tile_src_rect(tile_id)
+        next unless src_rect
+
+        rot    = @rot2[x][y] || 0
+        flip_x = @mirror_x2[x][y] || false
+        flip_y = @mirror_y2[x][y] || false
+
+        world_cx = x * @tile_size + half
+        world_cy = y * @tile_size + half
+
+        dst.x = world_cx
+        dst.y = world_cy
+        dst.width  = flip_x ? -@tile_size : @tile_size
+        dst.height = flip_y ? -@tile_size : @tile_size
+
+        angle = rot * 90.0
+        DrawTexturePro(texture, src_rect, dst, center, angle, WHITE)
+      end
+    end
+  end
 end
