@@ -30,7 +30,7 @@
 
 #define FONT_SIZE 16
 
-#define MODE_A 0   // обычный просмотр (неизменяемый тайлсет)
+#define MODE_A 0   // обычный просмотр
 #define MODE_B 1   // замена тайлов и сохранение
 
 typedef struct {
@@ -39,10 +39,10 @@ typedef struct {
     TTF_Font     *font;
 
     SDL_Texture **tiles;        // текстуры для отрисовки
-    SDL_Surface **tile_surfs;   // поверхности (для сохранения в файл)
+    SDL_Surface **tile_surfs;   // поверхности для сохранения
+    bool         *tile_modified; // флаги: был ли тайл заменён
     int           tile_count;
     int           tileset_cols, tileset_rows;
-    int           palette_cols;      // сколько столбцов в палитре (PALETTE_COLS)
     bool          tileset_loaded;
     char          tileset_fullpath[512];
 
@@ -67,7 +67,7 @@ void render_right_panel(Editor *ed);
 void handle_input(Editor *ed, bool *running);
 void get_logical_mouse(Editor *ed, int *mx, int *my);
 
-// ─── Вспомогательные ─────────────────────────
+// ─── Вспомогательные функции ─────────────────
 void safe_strcpy(char *dst, size_t sz, const char *src) {
     if (sz) snprintf(dst, sz, "%s", src);
 }
@@ -104,7 +104,6 @@ void get_logical_mouse(Editor *ed, int *mx, int *my) {
 void editor_init(Editor *ed) {
     memset(ed, 0, sizeof(Editor));
     ed->mode = MODE_A;
-    ed->palette_cols = PALETTE_COLS;
 }
 
 // ─── Загрузка тайлсета ────────────────────────
@@ -117,6 +116,7 @@ void free_tileset(Editor *ed) {
         for (int i = 0; i < ed->tile_count; i++) SDL_FreeSurface(ed->tile_surfs[i]);
         free(ed->tile_surfs); ed->tile_surfs = NULL;
     }
+    free(ed->tile_modified); ed->tile_modified = NULL;
     ed->tile_count = 0;
     ed->tileset_loaded = false;
 }
@@ -136,21 +136,24 @@ int load_tileset(Editor *ed, const char *path) {
 
     ed->tileset_cols = surf->w / TILE_SIZE;
     ed->tileset_rows = surf->h / TILE_SIZE;
-    int strips = ed->tileset_cols / ed->palette_cols;
+    int strips = ed->tileset_cols / PALETTE_COLS;
     ed->tile_count = ed->tileset_cols * ed->tileset_rows;
+
     ed->tiles = malloc(ed->tile_count * sizeof(SDL_Texture*));
     ed->tile_surfs = malloc(ed->tile_count * sizeof(SDL_Surface*));
+    ed->tile_modified = calloc(ed->tile_count, sizeof(bool));
 
     int idx = 0;
     for (int strip = 0; strip < strips; strip++) {
-        int sc = strip * ed->palette_cols, ec = sc + ed->palette_cols;
+        int sc = strip * PALETTE_COLS, ec = sc + PALETTE_COLS;
         for (int r = 0; r < ed->tileset_rows; r++) {
             for (int c = sc; c < ec; c++) {
                 SDL_Rect src = { c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE };
-                SDL_Surface *ts = SDL_CreateRGBSurface(0, TILE_SIZE, TILE_SIZE, 32, 0,0,0,0);
+                SDL_Surface *ts = SDL_CreateRGBSurfaceWithFormat(0, TILE_SIZE, TILE_SIZE, 32, SDL_PIXELFORMAT_RGBA8888);
                 SDL_BlitSurface(surf, &src, ts, NULL);
                 ed->tile_surfs[idx] = ts;
                 ed->tiles[idx] = SDL_CreateTextureFromSurface(ed->renderer, ts);
+                ed->tile_modified[idx] = false;
                 idx++;
             }
         }
@@ -197,18 +200,19 @@ void replace_tile_from_file(Editor *ed, int index) {
         return;
     }
 
-    SDL_Surface *scaled = SDL_CreateRGBSurface(0, TILE_SIZE, TILE_SIZE, 32, 0,0,0,0);
+    SDL_Surface *scaled = SDL_CreateRGBSurfaceWithFormat(0, TILE_SIZE, TILE_SIZE, 32, SDL_PIXELFORMAT_RGBA8888);
     SDL_BlitScaled(surf, NULL, scaled, NULL);
     SDL_FreeSurface(surf);
 
-    // Заменяем старые поверхность и текстуру
     if (ed->tile_surfs[index]) SDL_FreeSurface(ed->tile_surfs[index]);
     if (ed->tiles[index]) SDL_DestroyTexture(ed->tiles[index]);
+
     ed->tile_surfs[index] = scaled;
     ed->tiles[index] = SDL_CreateTextureFromSurface(ed->renderer, scaled);
+    ed->tile_modified[index] = true;   // помечаем как изменённый
 }
 
-// ─── Сохранение ПОЛНОГО тайлсета ──────────────
+// ─── Сохранение тайлсета (незаменённые = прозрачные) ──
 void save_tileset(Editor *ed) {
     if (!ed->tileset_loaded) {
         MessageBoxA(NULL, "No tileset loaded.", "Save", MB_OK);
@@ -238,22 +242,25 @@ void save_tileset(Editor *ed) {
     char out_path[768];
     snprintf(out_path, sizeof(out_path), "%s/%s_animation.png", dir, base);
 
-    // Создаём результирующую поверхность размером с оригинальный тайлсет
+    // Создаём изображение, заполненное прозрачностью
     int total_w = ed->tileset_cols * TILE_SIZE;
     int total_h = ed->tileset_rows * TILE_SIZE;
-    SDL_Surface *result = SDL_CreateRGBSurface(0, total_w, total_h, 32, 0,0,0,0);
+    SDL_Surface *result = SDL_CreateRGBSurfaceWithFormat(0, total_w, total_h, 32, SDL_PIXELFORMAT_RGBA8888);
     if (!result) return;
+    // Заливаем полностью прозрачным (пиксели уже нулевые, но на всякий случай)
+    SDL_FillRect(result, NULL, SDL_MapRGBA(result->format, 0,0,0,0));
 
-    // Восстанавливаем порядок тайлов: обходим строками, а индексы берём из нашего массива,
-    // который уже хранит тайлы в порядке полос (strips → rows → cols в полосе)
+    // Копируем только изменённые тайлы
     int idx = 0;
-    for (int strip = 0; strip < ed->tileset_cols / ed->palette_cols; strip++) {
+    for (int strip = 0; strip < ed->tileset_cols / PALETTE_COLS; strip++) {
         for (int r = 0; r < ed->tileset_rows; r++) {
-            for (int c = 0; c < ed->palette_cols; c++) {
-                int global_x = strip * ed->palette_cols + c;
-                int global_y = r;
-                SDL_Rect dest = { global_x * TILE_SIZE, global_y * TILE_SIZE, TILE_SIZE, TILE_SIZE };
-                SDL_BlitSurface(ed->tile_surfs[idx], NULL, result, &dest);
+            for (int c = 0; c < PALETTE_COLS; c++) {
+                if (ed->tile_modified[idx]) {
+                    int global_x = strip * PALETTE_COLS + c;
+                    int global_y = r;
+                    SDL_Rect dest = { global_x * TILE_SIZE, global_y * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+                    SDL_BlitSurface(ed->tile_surfs[idx], NULL, result, &dest);
+                }
                 idx++;
             }
         }
@@ -438,7 +445,6 @@ void handle_input(Editor *ed, bool *run) {
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             int mx, my; get_logical_mouse(ed, &mx, &my);
 
-            // Левая панель
             if (mx < LEFT_PANEL_W) {
                 if (my >= 35 && my < 61) {
                     char path[256];
@@ -457,7 +463,6 @@ void handle_input(Editor *ed, bool *run) {
                             int idx = row*PALETTE_COLS + col;
                             if (idx>=0 && idx<ed->tile_count) {
                                 ed->selected_tile = idx;
-                                // В режиме B клик по палитре сразу заменяет тайл
                                 if (ed->mode == MODE_B)
                                     replace_tile_from_file(ed, idx);
                             }
@@ -465,7 +470,6 @@ void handle_input(Editor *ed, bool *run) {
                     }
                 }
             }
-            // Центральная область – в режиме B также замена тайла
             else if (mx >= CENTER_X && mx < CENTER_X+CENTER_W && my >= CENTER_Y && my < CENTER_Y+CENTER_H) {
                 if (ed->mode == MODE_B && ed->tileset_loaded && ed->selected_tile >= 0) {
                     int w = TILE_SIZE*2, h = TILE_SIZE*2;
@@ -474,7 +478,6 @@ void handle_input(Editor *ed, bool *run) {
                         replace_tile_from_file(ed, ed->selected_tile);
                 }
             }
-            // Правая панель
             else if (mx >= WINDOW_W-RIGHT_PANEL_W) {
                 if (ed->mode == MODE_B) {
                     int rx = mx-(WINDOW_W-RIGHT_PANEL_W), ry = my;
