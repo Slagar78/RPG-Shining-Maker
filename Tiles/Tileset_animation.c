@@ -15,7 +15,7 @@
 #define WINDOW_H 600
 #define TOOLBAR_H 34
 
-#define LEFT_PANEL_W 250
+#define LEFT_PANEL_W 300
 #define RIGHT_PANEL_W 220
 #define CENTER_X LEFT_PANEL_W
 #define CENTER_Y TOOLBAR_H
@@ -24,7 +24,7 @@
 
 #define TILE_SIZE 32
 #define PALETTE_TILE_SIZE 32
-#define PALETTE_COLS 6
+#define PALETTE_COLS 8
 #define PALETTE_START_X 10
 #define PALETTE_START_Y 140
 
@@ -57,7 +57,7 @@ typedef struct {
     int           tile_count;
     int           tileset_cols, tileset_rows;
     bool          tileset_loaded;
-    char          tileset_name[256];
+    char          tileset_fullpath[512];  // полный путь к исходному тайлсету
 
     int palette_scroll;
     int selected_tile;          // текущий выбранный тайл
@@ -117,7 +117,7 @@ void editor_init(Editor *ed) {
     ed->palette_scroll = 0;
     ed->selected_tile = 0;
     animation_reset(&ed->anim);
-    ed->tileset_name[0] = '\0';
+    ed->tileset_fullpath[0] = '\0';
 }
 
 void animation_reset(Animation *anim) {
@@ -145,40 +145,40 @@ void free_tileset(Editor *ed) {
 
 int load_tileset(Editor *ed, const char *path) {
     free_tileset(ed);
-    SDL_Surface *surface = IMG_Load(path);
+    safe_strcpy(ed->tileset_fullpath, sizeof(ed->tileset_fullpath), path);
+
+    char full_path[512];
+    if (path[0] && path[1] == ':')
+        snprintf(full_path, sizeof(full_path), "%s", path);
+    else
+        snprintf(full_path, sizeof(full_path), "../%s", path);
+
+    SDL_Surface *surface = IMG_Load(full_path);
     if (!surface) return 0;
 
     int cols = surface->w / TILE_SIZE;
     int rows = surface->h / TILE_SIZE;
-    if (cols == 0 || rows == 0) {
-        SDL_FreeSurface(surface);
-        return 0;
-    }
+    int strips = cols / PALETTE_COLS;
 
-    ed->tileset_cols = cols;
-    ed->tileset_rows = rows;
     ed->tile_count = cols * rows;
     ed->tiles = (SDL_Texture**)malloc(ed->tile_count * sizeof(SDL_Texture*));
 
     int idx = 0;
-    for (int r = 0; r < rows; r++) {
-        for (int c = 0; c < cols; c++) {
-            SDL_Rect src = { c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE };
-            SDL_Surface *tile_surf = SDL_CreateRGBSurface(0, TILE_SIZE, TILE_SIZE, 32, 0,0,0,0);
-            SDL_BlitSurface(surface, &src, tile_surf, NULL);
-            ed->tiles[idx++] = SDL_CreateTextureFromSurface(ed->renderer, tile_surf);
-            SDL_FreeSurface(tile_surf);
+    for (int strip = 0; strip < strips; strip++) {
+        int start_col = strip * PALETTE_COLS;
+        int end_col = start_col + PALETTE_COLS;
+        for (int r = 0; r < rows; r++) {
+            for (int c = start_col; c < end_col; c++) {
+                SDL_Rect src = { c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+                SDL_Surface *tile_surf = SDL_CreateRGBSurface(0, TILE_SIZE, TILE_SIZE, 32, 0,0,0,0);
+                SDL_BlitSurface(surface, &src, tile_surf, NULL);
+                ed->tiles[idx++] = SDL_CreateTextureFromSurface(ed->renderer, tile_surf);
+                SDL_FreeSurface(tile_surf);
+            }
         }
     }
+
     SDL_FreeSurface(surface);
-
-    const char *name = strrchr(path, '/');
-    if (!name) name = strrchr(path, '\\');
-    if (name) name++; else name = path;
-    safe_strcpy(ed->tileset_name, sizeof(ed->tileset_name), name);
-    char *dot = strrchr(ed->tileset_name, '.');
-    if (dot) *dot = '\0';
-
     ed->tileset_loaded = true;
     ed->palette_scroll = 0;
     ed->selected_tile = 0;
@@ -290,13 +290,35 @@ bool replace_tile_from_file(Editor *ed, int index) {
     return true;
 }
 
-// ─── Сохранение анимации в PNG ────────────────
+// ─── Сохранение анимации в PNG (рядом с исходным тайлсетом) ──
 void save_animation_strip(Editor *ed) {
-    if (ed->anim.frame_count == 0) return;
+    if (ed->anim.frame_count == 0 || ed->tileset_fullpath[0] == '\0') return;
 
+    // Определяем каталог и базовое имя исходного тайлсета
+    char dir[512];
+    char base[256];
+    const char *last_slash = strrchr(ed->tileset_fullpath, '/');
+    if (!last_slash) last_slash = strrchr(ed->tileset_fullpath, '\\');
+    if (last_slash) {
+        size_t len = last_slash - ed->tileset_fullpath;
+        memcpy(dir, ed->tileset_fullpath, len);
+        dir[len] = '\0';
+        safe_strcpy(base, sizeof(base), last_slash + 1);
+    } else {
+        dir[0] = '.'; dir[1] = '\0';
+        safe_strcpy(base, sizeof(base), ed->tileset_fullpath);
+    }
+    // Убираем расширение .png
+    char *dot = strrchr(base, '.');
+    if (dot) *dot = '\0';
+
+    // Формируем имя файла анимации
+    char out_path[768];
+    snprintf(out_path, sizeof(out_path), "%s/%s_animation.png", dir, base);
+
+    // Создаём горизонтальную полосу
     int total_w = ed->anim.frame_count * TILE_SIZE;
     int total_h = TILE_SIZE;
-
     SDL_Surface *strip = SDL_CreateRGBSurface(0, total_w, total_h, 32, 0,0,0,0);
     if (!strip) return;
 
@@ -320,10 +342,7 @@ void save_animation_strip(Editor *ed) {
         SDL_FreeSurface(frame_surf);
     }
 
-    CreateDirectoryA("exports", NULL);
-    char filename[512];
-    snprintf(filename, sizeof(filename), "exports/%s_animation.png", ed->tileset_name[0] ? ed->tileset_name : "untitled");
-    IMG_SavePNG(strip, filename);
+    IMG_SavePNG(strip, out_path);
     SDL_FreeSurface(strip);
 }
 
@@ -407,7 +426,6 @@ void render_left_panel(Editor *ed) {
             SDL_Rect frame = { dst.x - 1, dst.y - 1, PALETTE_TILE_SIZE + 2, PALETTE_TILE_SIZE + 2 };
             SDL_RenderDrawRect(ed->renderer, &frame);
 
-            // Жёлтая рамка для выбранного тайла
             if (idx == ed->selected_tile) {
                 SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 255);
                 for (int t = 0; t < 2; t++) {
@@ -459,7 +477,6 @@ void render_center(Editor *ed) {
             SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
         }
 
-        // Подсказка: в режиме B клик по центру заменяет тайл
         if (ed->mode == MODE_B) {
             draw_text_centered(ed->renderer, ed->font, "Click on tile to replace (48x48)", CENTER_X + CENTER_W/2, dst.y + dst.h + 15, (SDL_Color){200,200,200,255});
         }
@@ -597,7 +614,6 @@ void handle_input(Editor *ed, bool *running) {
             // Центральная область: замена тайла в режиме B по клику на увеличенное изображение
             else if (mx >= CENTER_X && mx < CENTER_X + CENTER_W && my >= CENTER_Y && my < CENTER_Y + CENTER_H) {
                 if (ed->mode == MODE_B && ed->tileset_loaded && ed->selected_tile >= 0) {
-                    // Определяем, попали ли в область большого тайла (она центрирована)
                     int draw_w = TILE_SIZE * 4;
                     int draw_h = TILE_SIZE * 4;
                     int img_x = CENTER_X + (CENTER_W - draw_w)/2;
