@@ -203,8 +203,8 @@ int load_tileset(Editor *ed, const char *path) {
     if (dot) *dot = '\0';
 
     char anim_png[768], anim_json[768];
-    snprintf(anim_png, sizeof(anim_png), "assets/tilesets/Animation_tiles/%s_animation.png", base);
-    snprintf(anim_json, sizeof(anim_json), "assets/tilesets/Animation_tiles/%s_animation.json", base);
+    snprintf(anim_png, sizeof(anim_png), "../assets/tilesets/Animation_tiles/%s_animation.png", base);
+    snprintf(anim_json, sizeof(anim_json), "../assets/tilesets/Animation_tiles/%s_animation.json", base);
 
     if (file_exists(anim_png) && file_exists(anim_json)) {
         SDL_Surface *anim_surf = IMG_Load(anim_png);
