@@ -123,7 +123,7 @@ class Game
 	@search_overlay = SearchOverlay.new(@large_font, @game_text, @party)
 	
 	@anim_timer = 0.0          # таймер для анимации
-    @anim_delay = 0.5          # длительность одного кадра (сек)
+    @anim_delay = 0.33          # длительность одного кадра (сек)
     @show_anim  = false        # true = показываем замену, false = оригинал
 	
     @game_state = :playing
