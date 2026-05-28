@@ -30,17 +30,21 @@
 
 #define FONT_SIZE 16
 
-#define MODE_A 0   // обычный просмотр
-#define MODE_B 1   // замена тайлов и сохранение
+#define MODE_A 0   // просмотр без анимации
+#define MODE_B 1   // режим анимации: замена, просмотр переключения
 
 typedef struct {
     SDL_Window   *window;
     SDL_Renderer *renderer;
     TTF_Font     *font;
 
-    SDL_Texture **tiles;        // текстуры для отрисовки
-    SDL_Surface **tile_surfs;   // поверхности для сохранения
-    bool         *tile_modified; // флаги: был ли тайл заменён
+    // Оригинальный тайлсет (неизменный)
+    SDL_Texture **tiles;
+    SDL_Surface **tile_surfs;
+    // Заменённые тайлы (кастомные)
+    SDL_Texture **custom_tiles;
+    SDL_Surface **custom_surfs;
+    bool         *tile_modified;   // true если есть замена
     int           tile_count;
     int           tileset_cols, tileset_rows;
     bool          tileset_loaded;
@@ -50,12 +54,17 @@ typedef struct {
     int selected_tile;
     int mode;
 
-    // Для эффекта нажатия кнопки Save
+    // Анимация в центре
+    Uint32 anim_timer;
+    bool   show_anim;
+    float  anim_delay;   // секунд
+
+    // Эффект кнопки Save
     Uint32 save_anim_timer;
     bool   save_anim_active;
-
-    SDL_Texture *checker_bg;
 } Editor;
+
+static bool file_exists(const char *path);
 
 // Прототипы
 void editor_init(Editor *ed);
@@ -64,14 +73,12 @@ bool open_file_dialog(char *out, size_t len, const char *dir);
 int  load_tileset(Editor *ed, const char *path);
 void save_tileset(Editor *ed);
 void replace_tile_from_file(Editor *ed, int index);
-void load_checker_background(Editor *ed);
 void render_left_panel(Editor *ed);
 void render_center(Editor *ed);
 void render_right_panel(Editor *ed);
 void handle_input(Editor *ed, bool *running);
 void get_logical_mouse(Editor *ed, int *mx, int *my);
 
-// ─── Вспомогательные функции ─────────────────
 void safe_strcpy(char *dst, size_t sz, const char *src) {
     if (sz) snprintf(dst, sz, "%s", src);
 }
@@ -108,10 +115,12 @@ void get_logical_mouse(Editor *ed, int *mx, int *my) {
 void editor_init(Editor *ed) {
     memset(ed, 0, sizeof(Editor));
     ed->mode = MODE_A;
+    ed->anim_delay = 0.5f;
+    ed->show_anim = false;
     ed->save_anim_active = false;
 }
 
-// ─── Загрузка тайлсета ────────────────────────
+// ─── Загрузка тайлсета (с подгрузкой анимации) ──
 void free_tileset(Editor *ed) {
     if (ed->tiles) {
         for (int i = 0; i < ed->tile_count; i++) SDL_DestroyTexture(ed->tiles[i]);
@@ -120,6 +129,14 @@ void free_tileset(Editor *ed) {
     if (ed->tile_surfs) {
         for (int i = 0; i < ed->tile_count; i++) SDL_FreeSurface(ed->tile_surfs[i]);
         free(ed->tile_surfs); ed->tile_surfs = NULL;
+    }
+    if (ed->custom_tiles) {
+        for (int i = 0; i < ed->tile_count; i++) if (ed->custom_tiles[i]) SDL_DestroyTexture(ed->custom_tiles[i]);
+        free(ed->custom_tiles); ed->custom_tiles = NULL;
+    }
+    if (ed->custom_surfs) {
+        for (int i = 0; i < ed->tile_count; i++) if (ed->custom_surfs[i]) SDL_FreeSurface(ed->custom_surfs[i]);
+        free(ed->custom_surfs); ed->custom_surfs = NULL;
     }
     free(ed->tile_modified); ed->tile_modified = NULL;
     ed->tile_count = 0;
@@ -147,7 +164,10 @@ int load_tileset(Editor *ed, const char *path) {
     ed->tiles = malloc(ed->tile_count * sizeof(SDL_Texture*));
     ed->tile_surfs = malloc(ed->tile_count * sizeof(SDL_Surface*));
     ed->tile_modified = calloc(ed->tile_count, sizeof(bool));
+    ed->custom_tiles = calloc(ed->tile_count, sizeof(SDL_Texture*));
+    ed->custom_surfs = calloc(ed->tile_count, sizeof(SDL_Surface*));
 
+    // Нарезка оригинального тайлсета
     int idx = 0;
     for (int strip = 0; strip < strips; strip++) {
         int sc = strip * PALETTE_COLS, ec = sc + PALETTE_COLS;
@@ -158,16 +178,86 @@ int load_tileset(Editor *ed, const char *path) {
                 SDL_BlitSurface(surf, &src, ts, NULL);
                 ed->tile_surfs[idx] = ts;
                 ed->tiles[idx] = SDL_CreateTextureFromSurface(ed->renderer, ts);
-                ed->tile_modified[idx] = false;
                 idx++;
             }
         }
     }
     SDL_FreeSurface(surf);
+
+    // ─── Попытка загрузить существующую анимацию ───
+    char base[256];
+    const char *slash = strrchr(path, '/');
+    if (!slash) slash = strrchr(path, '\\');
+    if (slash) {
+        size_t len = strlen(slash + 1);
+        if (len >= sizeof(base)) len = sizeof(base) - 1;
+        memcpy(base, slash + 1, len);
+        base[len] = '\0';
+    } else {
+        size_t len = strlen(path);
+        if (len >= sizeof(base)) len = sizeof(base) - 1;
+        memcpy(base, path, len);
+        base[len] = '\0';
+    }
+    char *dot = strrchr(base, '.');
+    if (dot) *dot = '\0';
+
+    char anim_png[768], anim_json[768];
+    snprintf(anim_png, sizeof(anim_png), "assets/tilesets/Animation_tiles/%s_animation.png", base);
+    snprintf(anim_json, sizeof(anim_json), "assets/tilesets/Animation_tiles/%s_animation.json", base);
+
+    if (file_exists(anim_png) && file_exists(anim_json)) {
+        SDL_Surface *anim_surf = IMG_Load(anim_png);
+        if (anim_surf) {
+            // Читаем JSON список индексов
+            FILE *fj = fopen(anim_json, "r");
+            if (fj) {
+                fseek(fj, 0, SEEK_END);
+                long len = ftell(fj);
+                fseek(fj, 0, SEEK_SET);
+                char *jsondata = malloc(len + 1);
+                fread(jsondata, 1, len, fj);
+                jsondata[len] = '\0';
+                fclose(fj);
+
+                // Простейший парсинг JSON-массива чисел
+                // Формат: [123, 456, ...]
+                char *p = jsondata;
+                while (*p) {
+                    if (*p >= '0' && *p <= '9') {
+                        int num = atoi(p);
+                        if (num >= 0 && num < ed->tile_count) {
+                            // Вычисляем координаты тайла в anim_surf
+                            int strip_num = num / (PALETTE_COLS * ed->tileset_rows);
+                            int local = num % (PALETTE_COLS * ed->tileset_rows);
+                            int col = strip_num * PALETTE_COLS + (local % PALETTE_COLS);
+                            int row = local / PALETTE_COLS;
+                            SDL_Rect src_rect = { col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+                            SDL_Surface *custom = SDL_CreateRGBSurfaceWithFormat(0, TILE_SIZE, TILE_SIZE, 32, SDL_PIXELFORMAT_RGBA8888);
+                            SDL_BlitSurface(anim_surf, &src_rect, custom, NULL);
+                            ed->custom_surfs[num] = custom;
+                            ed->custom_tiles[num] = SDL_CreateTextureFromSurface(ed->renderer, custom);
+                            ed->tile_modified[num] = true;
+                        }
+                        while (*p >= '0' && *p <= '9') p++;
+                    } else p++;
+                }
+                free(jsondata);
+            }
+            SDL_FreeSurface(anim_surf);
+        }
+    }
+
     ed->tileset_loaded = true;
     ed->palette_scroll = 0;
     ed->selected_tile = 0;
     return 1;
+}
+
+// Существование файла (вспомогательная)
+static bool file_exists(const char *path) {
+    DWORD attr = GetFileAttributesA(path);
+    return (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY));
 }
 
 // ─── Диалог открытия файла ────────────────────
@@ -187,7 +277,7 @@ bool open_file_dialog(char *out, size_t len, const char *dir) {
     return false;
 }
 
-// ─── Замена одного тайла (режим B) ────────────
+// ─── Замена одного тайла (режим B, вызывается из центра) ──
 void replace_tile_from_file(Editor *ed, int index) {
     if (!ed->tileset_loaded || index < 0 || index >= ed->tile_count) return;
 
@@ -209,15 +299,15 @@ void replace_tile_from_file(Editor *ed, int index) {
     SDL_BlitScaled(surf, NULL, scaled, NULL);
     SDL_FreeSurface(surf);
 
-    if (ed->tile_surfs[index]) SDL_FreeSurface(ed->tile_surfs[index]);
-    if (ed->tiles[index]) SDL_DestroyTexture(ed->tiles[index]);
-
-    ed->tile_surfs[index] = scaled;
-    ed->tiles[index] = SDL_CreateTextureFromSurface(ed->renderer, scaled);
+    // Заменяем кастомный тайл
+    if (ed->custom_surfs[index]) SDL_FreeSurface(ed->custom_surfs[index]);
+    if (ed->custom_tiles[index]) SDL_DestroyTexture(ed->custom_tiles[index]);
+    ed->custom_surfs[index] = scaled;
+    ed->custom_tiles[index] = SDL_CreateTextureFromSurface(ed->renderer, scaled);
     ed->tile_modified[index] = true;
 }
 
-// ─── Сохранение тайлсета + JSON (относительные пути) ──
+// ─── Сохранение тайлсета + JSON ───────────────
 void save_tileset(Editor *ed) {
     if (!ed->tileset_loaded) {
         MessageBoxA(NULL, "No tileset loaded.", "Save", MB_OK);
@@ -228,7 +318,6 @@ void save_tileset(Editor *ed) {
         return;
     }
 
-    // 1. Базовое имя файла без пути и расширения
     char base[256];
     const char *slash = strrchr(ed->tileset_fullpath, '/');
     if (!slash) slash = strrchr(ed->tileset_fullpath, '\\');
@@ -246,17 +335,14 @@ void save_tileset(Editor *ed) {
     char *dot = strrchr(base, '.');
     if (dot) *dot = '\0';
 
-    // 2. Целевая папка (относительный путь, чтобы работало у всех)
     const char *target_dir = "../assets/tilesets/Animation_tiles";
     CreateDirectoryA(target_dir, NULL);
 
-    char png_path[768];
+    char png_path[768], json_path[768];
     snprintf(png_path, sizeof(png_path), "%s/%s_animation.png", target_dir, base);
-
-    char json_path[768];
     snprintf(json_path, sizeof(json_path), "%s/%s_animation.json", target_dir, base);
 
-    // 3. Изображение
+    // Собираем изображение (только кастомные тайлы, остальное прозрачно)
     int total_w = ed->tileset_cols * TILE_SIZE;
     int total_h = ed->tileset_rows * TILE_SIZE;
     SDL_Surface *result = SDL_CreateRGBSurfaceWithFormat(0, total_w, total_h, 32, SDL_PIXELFORMAT_RGBA8888);
@@ -267,11 +353,11 @@ void save_tileset(Editor *ed) {
     for (int strip = 0; strip < ed->tileset_cols / PALETTE_COLS; strip++) {
         for (int r = 0; r < ed->tileset_rows; r++) {
             for (int c = 0; c < PALETTE_COLS; c++) {
-                if (ed->tile_modified[idx]) {
+                if (ed->tile_modified[idx] && ed->custom_surfs[idx]) {
                     int global_x = strip * PALETTE_COLS + c;
                     int global_y = r;
                     SDL_Rect dest = { global_x * TILE_SIZE, global_y * TILE_SIZE, TILE_SIZE, TILE_SIZE };
-                    SDL_BlitSurface(ed->tile_surfs[idx], NULL, result, &dest);
+                    SDL_BlitSurface(ed->custom_surfs[idx], NULL, result, &dest);
                 }
                 idx++;
             }
@@ -285,7 +371,7 @@ void save_tileset(Editor *ed) {
     }
     SDL_FreeSurface(result);
 
-    // 4. JSON список изменённых индексов
+    // JSON
     FILE *fjson = fopen(json_path, "w");
     if (!fjson) {
         char buf[1024];
@@ -293,7 +379,6 @@ void save_tileset(Editor *ed) {
         MessageBoxA(NULL, buf, "Warning", MB_OK);
         return;
     }
-
     fprintf(fjson, "[");
     bool first = true;
     for (int i = 0; i < ed->tile_count; i++) {
@@ -306,25 +391,12 @@ void save_tileset(Editor *ed) {
     fprintf(fjson, "]\n");
     fclose(fjson);
 
-    // 5. Визуальный эффект нажатия
     ed->save_anim_active = true;
     ed->save_anim_timer = SDL_GetTicks();
 
-    // 6. Сообщение
-    char msg[1024];
+    char msg[2048];
     snprintf(msg, sizeof(msg), "Saved:\n%s\n%s", png_path, json_path);
     MessageBoxA(NULL, msg, "Save Successful", MB_OK);
-}
-
-// ─── Шахматный фон ────────────────────────────
-void load_checker_background(Editor *ed) {
-    if (ed->checker_bg) SDL_DestroyTexture(ed->checker_bg);
-    SDL_Surface *s = SDL_CreateRGBSurface(0, TILE_SIZE, TILE_SIZE, 32, 0,0,0,0);
-    SDL_Rect r1 = {0,0, TILE_SIZE/2, TILE_SIZE/2}, r2 = {TILE_SIZE/2, TILE_SIZE/2, TILE_SIZE/2, TILE_SIZE/2};
-    SDL_FillRect(s, &r1, SDL_MapRGBA(s->format, 180,180,180,255));
-    SDL_FillRect(s, &r2, SDL_MapRGBA(s->format, 180,180,180,255));
-    ed->checker_bg = SDL_CreateTextureFromSurface(ed->renderer, s);
-    SDL_FreeSurface(s);
 }
 
 // ─── Отрисовка панелей ────────────────────────
@@ -373,19 +445,11 @@ void render_left_panel(Editor *ed) {
                              PALETTE_START_Y + (row-ed->palette_scroll)*(PALETTE_TILE_SIZE+2),
                              PALETTE_TILE_SIZE, PALETTE_TILE_SIZE };
 
-            if (ed->mode == MODE_B && ed->checker_bg)
-                SDL_RenderCopy(ed->renderer, ed->checker_bg, NULL, &dst);
-
+            // Показываем оригинальный тайл (без прозрачности)
             SDL_Texture *tex = ed->tiles[idx];
-            if (ed->mode == MODE_B) {
-                SDL_SetTextureAlphaMod(tex, 128);
-                SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-            }
             SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
-            if (ed->mode == MODE_B) {
-                SDL_SetTextureAlphaMod(tex, 255);
-                SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
-            }
+
+            // Рамка выбранного тайла
             SDL_SetRenderDrawColor(ed->renderer, 70,70,70,255);
             SDL_Rect frame = { dst.x-1, dst.y-1, dst.w+2, dst.h+2 };
             SDL_RenderDrawRect(ed->renderer, &frame);
@@ -395,6 +459,12 @@ void render_left_panel(Editor *ed) {
                     SDL_Rect r = { frame.x-t, frame.y-t, frame.w+2*t, frame.h+2*t };
                     SDL_RenderDrawRect(ed->renderer, &r);
                 }
+            }
+            // Если есть замена, можно показать маленькую метку (например, звёздочку)
+            if (ed->tile_modified[idx]) {
+                SDL_SetRenderDrawColor(ed->renderer, 0, 255, 0, 255);
+                SDL_Rect dot = { dst.x + dst.w - 6, dst.y + 2, 4, 4 };
+                SDL_RenderFillRect(ed->renderer, &dot);
             }
         }
     }
@@ -417,30 +487,30 @@ void render_center(Editor *ed) {
     if (ed->selected_tile >= 0 && ed->selected_tile < ed->tile_count) {
         int w = TILE_SIZE * 2, h = TILE_SIZE * 2;
         SDL_Rect dst = { CENTER_X + (CENTER_W - w)/2, CENTER_Y + (CENTER_H - h)/2, w, h };
-        if (ed->mode == MODE_B && ed->checker_bg)
-            for (int y=0; y<h; y+=TILE_SIZE) for (int x=0; x<w; x+=TILE_SIZE) {
-                SDL_Rect d = { dst.x+x, dst.y+y, TILE_SIZE, TILE_SIZE };
-                SDL_RenderCopy(ed->renderer, ed->checker_bg, NULL, &d);
+
+        // Определяем, какую текстуру показывать (анимация в режиме B)
+        SDL_Texture *tex = NULL;
+        if (ed->mode == MODE_B && ed->tile_modified[ed->selected_tile]) {
+            // Анимация: переключаемся каждые anim_delay сек
+            Uint32 now = SDL_GetTicks();
+            if (now - ed->anim_timer >= (Uint32)(ed->anim_delay * 1000)) {
+                ed->show_anim = !ed->show_anim;
+                ed->anim_timer = now;
             }
-
-        SDL_Texture *tex = ed->tiles[ed->selected_tile];
-        if (ed->mode == MODE_B) {
-            SDL_SetTextureAlphaMod(tex, 128);
-            SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+            tex = ed->show_anim ? ed->custom_tiles[ed->selected_tile] : ed->tiles[ed->selected_tile];
+        } else {
+            tex = ed->tiles[ed->selected_tile];
         }
+
         SDL_RenderCopy(ed->renderer, tex, NULL, &dst);
-        if (ed->mode == MODE_B) {
-            SDL_SetTextureAlphaMod(tex, 255);
-            SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
-        }
 
         if (ed->mode == MODE_B) {
-            draw_text_centered(ed->renderer, ed->font, "Click to replace (48x48)", CENTER_X+CENTER_W/2, dst.y+dst.h+15, (SDL_Color){200,200,200,255});
+            draw_text_centered(ed->renderer, ed->font, "Click image to replace (48x48)", CENTER_X+CENTER_W/2, dst.y+dst.h+15, (SDL_Color){200,200,200,255});
         }
     }
 
     char mode_text[32];
-    snprintf(mode_text, sizeof(mode_text), "Mode: %s", ed->mode == MODE_A ? "A - View" : "B - Edit");
+    snprintf(mode_text, sizeof(mode_text), "Mode: %s", ed->mode == MODE_A ? "A - View" : "B - Animation");
     draw_text_centered(ed->renderer, ed->font, mode_text, CENTER_X+CENTER_W/2, CENTER_Y+CENTER_H-10, (SDL_Color){180,180,180,255});
 }
 
@@ -454,7 +524,6 @@ void render_right_panel(Editor *ed) {
     if (ed->mode == MODE_B) {
         SDL_Rect save_btn = {px+10, 35, RIGHT_PANEL_W-20, 30};
 
-        // Эффект нажатия: кратковременно меняем цвет
         Uint32 now = SDL_GetTicks();
         bool flash = ed->save_anim_active && (now - ed->save_anim_timer < 200);
         SDL_Color btn_color = flash ? (SDL_Color){180,180,80,255} : (SDL_Color){80,80,180,255};
@@ -510,8 +579,7 @@ void handle_input(Editor *ed, bool *run) {
                             int idx = row*PALETTE_COLS + col;
                             if (idx>=0 && idx<ed->tile_count) {
                                 ed->selected_tile = idx;
-                                if (ed->mode == MODE_B)
-                                    replace_tile_from_file(ed, idx);
+                                // В режиме B НЕ заменяем при клике по палитре
                             }
                         }
                     }
@@ -521,8 +589,10 @@ void handle_input(Editor *ed, bool *run) {
                 if (ed->mode == MODE_B && ed->tileset_loaded && ed->selected_tile >= 0) {
                     int w = TILE_SIZE*2, h = TILE_SIZE*2;
                     int ix = CENTER_X+(CENTER_W-w)/2, iy = CENTER_Y+(CENTER_H-h)/2;
-                    if (mx>=ix && mx<ix+w && my>=iy && my<iy+h)
+                    if (mx>=ix && mx<ix+w && my>=iy && my<iy+h) {
+                        // Замена только здесь
                         replace_tile_from_file(ed, ed->selected_tile);
+                    }
                 }
             }
             else if (mx >= WINDOW_W-RIGHT_PANEL_W) {
@@ -553,8 +623,6 @@ int main(int argc, char **argv) {
     if (!ed.font) ed.font = TTF_OpenFont("C:/Windows/Fonts/arial.ttf", FONT_SIZE);
     if (!ed.font) return 1;
 
-    load_checker_background(&ed);
-
     bool running = true;
     while (running) {
         handle_input(&ed, &running);
@@ -568,7 +636,6 @@ int main(int argc, char **argv) {
     }
 
     free_tileset(&ed);
-    if (ed.checker_bg) SDL_DestroyTexture(ed.checker_bg);
     TTF_CloseFont(ed.font);
     SDL_DestroyRenderer(ed.renderer);
     SDL_DestroyWindow(ed.window);
