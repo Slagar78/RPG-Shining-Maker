@@ -231,10 +231,13 @@ void save_tileset(Editor *ed) {
         size_t len = slash - ed->tileset_fullpath;
         memcpy(dir, ed->tileset_fullpath, len);
         dir[len] = '\0';
-        safe_strcpy(base, sizeof(base), slash + 1);
+        strncpy(base, slash + 1, sizeof(base) - 1);
+        base[sizeof(base) - 1] = '\0';
     } else {
         strcpy(dir, ".");
-        safe_strcpy(base, sizeof(base), ed->tileset_fullpath);
+        // Копируем имя файла (без пути) – оно всегда короткое, но используем strncpy для безопасности
+        strncpy(base, ed->tileset_fullpath, sizeof(base) - 1);
+        base[sizeof(base) - 1] = '\0';
     }
     char *dot = strrchr(base, '.');
     if (dot) *dot = '\0';
@@ -247,7 +250,6 @@ void save_tileset(Editor *ed) {
     int total_h = ed->tileset_rows * TILE_SIZE;
     SDL_Surface *result = SDL_CreateRGBSurfaceWithFormat(0, total_w, total_h, 32, SDL_PIXELFORMAT_RGBA8888);
     if (!result) return;
-    // Заливаем полностью прозрачным (пиксели уже нулевые, но на всякий случай)
     SDL_FillRect(result, NULL, SDL_MapRGBA(result->format, 0,0,0,0));
 
     // Копируем только изменённые тайлы
