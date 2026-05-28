@@ -50,6 +50,10 @@ typedef struct {
     int selected_tile;
     int mode;
 
+    // Для эффекта нажатия кнопки Save
+    Uint32 save_anim_timer;
+    bool   save_anim_active;
+
     SDL_Texture *checker_bg;
 } Editor;
 
@@ -104,6 +108,7 @@ void get_logical_mouse(Editor *ed, int *mx, int *my) {
 void editor_init(Editor *ed) {
     memset(ed, 0, sizeof(Editor));
     ed->mode = MODE_A;
+    ed->save_anim_active = false;
 }
 
 // ─── Загрузка тайлсета ────────────────────────
@@ -209,10 +214,10 @@ void replace_tile_from_file(Editor *ed, int index) {
 
     ed->tile_surfs[index] = scaled;
     ed->tiles[index] = SDL_CreateTextureFromSurface(ed->renderer, scaled);
-    ed->tile_modified[index] = true;   // помечаем как изменённый
+    ed->tile_modified[index] = true;
 }
 
-// ─── Сохранение тайлсета (незаменённые = прозрачные) ──
+// ─── Сохранение тайлсета + JSON (относительные пути) ──
 void save_tileset(Editor *ed) {
     if (!ed->tileset_loaded) {
         MessageBoxA(NULL, "No tileset loaded.", "Save", MB_OK);
@@ -223,36 +228,41 @@ void save_tileset(Editor *ed) {
         return;
     }
 
-    // Папка и базовое имя исходного файла
-    char dir[512], base[256];
+    // 1. Базовое имя файла без пути и расширения
+    char base[256];
     const char *slash = strrchr(ed->tileset_fullpath, '/');
     if (!slash) slash = strrchr(ed->tileset_fullpath, '\\');
     if (slash) {
-        size_t len = slash - ed->tileset_fullpath;
-        memcpy(dir, ed->tileset_fullpath, len);
-        dir[len] = '\0';
-        strncpy(base, slash + 1, sizeof(base) - 1);
-        base[sizeof(base) - 1] = '\0';
+        size_t len = strlen(slash + 1);
+        if (len >= sizeof(base)) len = sizeof(base) - 1;
+        memcpy(base, slash + 1, len);
+        base[len] = '\0';
     } else {
-        strcpy(dir, ".");
-        // Копируем имя файла (без пути) – оно всегда короткое, но используем strncpy для безопасности
-        strncpy(base, ed->tileset_fullpath, sizeof(base) - 1);
-        base[sizeof(base) - 1] = '\0';
+        size_t len = strlen(ed->tileset_fullpath);
+        if (len >= sizeof(base)) len = sizeof(base) - 1;
+        memcpy(base, ed->tileset_fullpath, len);
+        base[len] = '\0';
     }
     char *dot = strrchr(base, '.');
     if (dot) *dot = '\0';
 
-    char out_path[768];
-    snprintf(out_path, sizeof(out_path), "%s/%s_animation.png", dir, base);
+    // 2. Целевая папка (относительный путь, чтобы работало у всех)
+    const char *target_dir = "../assets/tilesets/Animation_tiles";
+    CreateDirectoryA(target_dir, NULL);
 
-    // Создаём изображение, заполненное прозрачностью
+    char png_path[768];
+    snprintf(png_path, sizeof(png_path), "%s/%s_animation.png", target_dir, base);
+
+    char json_path[768];
+    snprintf(json_path, sizeof(json_path), "%s/%s_animation.json", target_dir, base);
+
+    // 3. Изображение
     int total_w = ed->tileset_cols * TILE_SIZE;
     int total_h = ed->tileset_rows * TILE_SIZE;
     SDL_Surface *result = SDL_CreateRGBSurfaceWithFormat(0, total_w, total_h, 32, SDL_PIXELFORMAT_RGBA8888);
     if (!result) return;
     SDL_FillRect(result, NULL, SDL_MapRGBA(result->format, 0,0,0,0));
 
-    // Копируем только изменённые тайлы
     int idx = 0;
     for (int strip = 0; strip < ed->tileset_cols / PALETTE_COLS; strip++) {
         for (int r = 0; r < ed->tileset_rows; r++) {
@@ -268,14 +278,42 @@ void save_tileset(Editor *ed) {
         }
     }
 
-    if (IMG_SavePNG(result, out_path) == 0) {
-        char msg[1024];
-        snprintf(msg, sizeof(msg), "Tileset saved to:\n%s", out_path);
-        MessageBoxA(NULL, msg, "Save Successful", MB_OK);
-    } else {
+    if (IMG_SavePNG(result, png_path) != 0) {
+        SDL_FreeSurface(result);
         MessageBoxA(NULL, "Failed to save PNG.", "Error", MB_ICONERROR);
+        return;
     }
     SDL_FreeSurface(result);
+
+    // 4. JSON список изменённых индексов
+    FILE *fjson = fopen(json_path, "w");
+    if (!fjson) {
+        char buf[1024];
+        snprintf(buf, sizeof(buf), "Could not write JSON:\n%s", json_path);
+        MessageBoxA(NULL, buf, "Warning", MB_OK);
+        return;
+    }
+
+    fprintf(fjson, "[");
+    bool first = true;
+    for (int i = 0; i < ed->tile_count; i++) {
+        if (ed->tile_modified[i]) {
+            if (!first) fprintf(fjson, ", ");
+            fprintf(fjson, "%d", i);
+            first = false;
+        }
+    }
+    fprintf(fjson, "]\n");
+    fclose(fjson);
+
+    // 5. Визуальный эффект нажатия
+    ed->save_anim_active = true;
+    ed->save_anim_timer = SDL_GetTicks();
+
+    // 6. Сообщение
+    char msg[1024];
+    snprintf(msg, sizeof(msg), "Saved:\n%s\n%s", png_path, json_path);
+    MessageBoxA(NULL, msg, "Save Successful", MB_OK);
 }
 
 // ─── Шахматный фон ────────────────────────────
@@ -415,9 +453,16 @@ void render_right_panel(Editor *ed) {
 
     if (ed->mode == MODE_B) {
         SDL_Rect save_btn = {px+10, 35, RIGHT_PANEL_W-20, 30};
-        SDL_SetRenderDrawColor(ed->renderer, 80,80,180,255);
+
+        // Эффект нажатия: кратковременно меняем цвет
+        Uint32 now = SDL_GetTicks();
+        bool flash = ed->save_anim_active && (now - ed->save_anim_timer < 200);
+        SDL_Color btn_color = flash ? (SDL_Color){180,180,80,255} : (SDL_Color){80,80,180,255};
+        SDL_SetRenderDrawColor(ed->renderer, btn_color.r, btn_color.g, btn_color.b, 255);
         SDL_RenderFillRect(ed->renderer, &save_btn);
         draw_text_centered(ed->renderer, ed->font, "Save Tileset", save_btn.x+save_btn.w/2, save_btn.y+save_btn.h/2, (SDL_Color){255,255,255,255});
+
+        if (flash && now - ed->save_anim_timer >= 200) ed->save_anim_active = false;
     } else {
         draw_text_centered(ed->renderer, ed->font, "Switch to B mode\nto edit and save", px+RIGHT_PANEL_W/2, 100, (SDL_Color){200,200,200,255});
     }
