@@ -367,7 +367,19 @@ class Game
         )
       end
 
-      # 2.5 КРЫШИ (по одной текстуре на зону)
+      @game_map.draw_animated_tiles(@show_anim) if @game_map
+
+      @player.draw
+
+      # 3. ВЕРХНИЙ СЛОЙ (кроны деревьев, тип 3) – перекрывает игрока
+      DrawTexturePro(
+        @top_layer.texture,
+        Rectangle.create(0, 0, @top_layer.texture.width, -@top_layer.texture.height),
+        Rectangle.create(0, 0, @top_layer.texture.width, @top_layer.texture.height),
+        Vector2.create(0, 0), 0, WHITE
+      )
+
+      # 4. КРЫШИ – теперь поверх всего, чтобы верхняя кромка не обрезалась
       @game_map.roof_layers.each_with_index do |layer, idx|
         if layer && !@zone_hidden[idx]
           DrawTexturePro(
@@ -378,18 +390,6 @@ class Game
           )
         end
       end
-
-      @game_map.draw_animated_tiles(@show_anim) if @game_map
-
-      @player.draw
-
-      # 3. ВЕРХНИЙ СЛОЙ
-      DrawTexturePro(
-        @top_layer.texture,
-        Rectangle.create(0, 0, @top_layer.texture.width, -@top_layer.texture.height),
-        Rectangle.create(0, 0, @top_layer.texture.width, @top_layer.texture.height),
-        Vector2.create(0, 0), 0, WHITE
-      )
     EndMode2D()
 
     case @game_state
