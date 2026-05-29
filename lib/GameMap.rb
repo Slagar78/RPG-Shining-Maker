@@ -7,13 +7,12 @@ class GameMap
   attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas,
               :roof_events
   attr_reader :tileset_path
-  # Добавил, чтобы game.rb мог получить перестроенные текстуры после rebuild_layers
+  attr_reader :roof_layers
   attr_reader :layer2, :top_layer
 
   def initialize(map_id = "Granseal")
     @src_rect_cache = {}
 
-    # --- Загружаем индекс карт ---
     entries_path = "data/maps/entries.json"
     unless File.exist?(entries_path)
       puts "entries.json not found, creating empty map"
@@ -29,7 +28,6 @@ class GameMap
       return
     end
 
-    # --- Загружаем layout.json ---
     layout_path = "data/maps/#{entry['folder']}/layout.json"
     unless File.exist?(layout_path)
       puts "layout.json missing for #{entry['folder']}"
@@ -42,13 +40,11 @@ class GameMap
     @width  = data['width']
     @height = data['height']
 
-    # Первый слой
     @tiles    = data['tiles']
     @rot      = data['rot']      || Array.new(@width) { Array.new(@height, 0) }
     @mirror_x = data['mirror_x'] || Array.new(@width) { Array.new(@height, false) }
     @mirror_y = data['mirror_y'] || Array.new(@width) { Array.new(@height, false) }
 
-    # Второй слой
     if data['tiles2']
       @tiles2    = data['tiles2']
       @rot2      = data['rot2']      || Array.new(@width) { Array.new(@height, 0) }
@@ -61,14 +57,11 @@ class GameMap
       @mirror_y2 = Array.new(@width) { Array.new(@height, false) }
     end
 
-    # Сетка коллизий (0 – проходимо, 1 – стена)
     @collision = data['collision'] || Array.new(@width) { Array.new(@height, 0) }
 
-    # Музыка (теперь из entries.json)
     @music_file   = entry['music']        || ""
     @music_volume = entry['music_volume'] || 0.8
 
-    # Загружаем зоны (areas.json), если имеются
     areas_path = "data/maps/#{entry['folder']}/areas.json"
     if File.exist?(areas_path)
       @areas = JSON.parse(File.read(areas_path))
@@ -76,7 +69,6 @@ class GameMap
       @areas = []
     end
 
-    # Загружаем события крыш (roof events)
     @roof_events = []
     events_path = "data/maps/#{entry['folder']}/events.json"
     if File.exist?(events_path)
@@ -87,7 +79,6 @@ class GameMap
       end
     end
 
-    # Тайлсет и типы тайлов
     raw_path = data['tileset'] || "assets/tilesets/tileset.png"
     safe_path = raw_path.gsub('\\', '/')
     safe = safe_path.gsub(/[\\\/:]/, '_')
@@ -112,8 +103,24 @@ class GameMap
     end
 
     @center_vec = Vector2.create(@tile_size / 2.0, @tile_size / 2.0)
+	
+	tex_w = @tileset_texture.width
+    tex_h = @tileset_texture.height
+    @full_cols = tex_w / @tile_size
+    @full_rows = tex_h / @tile_size
+    total_tiles = @full_cols * @full_rows
 
-    # ---------- Анимационный тайлсет ----------
+    if @tile_types.length < total_tiles
+      @tile_types += Array.new(total_tiles - @tile_types.length, 0)
+    end
+	
+	@roof_layers = []
+    @roof_events.each_index do |idx|
+      layer = build_roof_layer_for_zone(idx)
+      SetTextureFilter(layer.texture, TEXTURE_FILTER_POINT) if layer
+      @roof_layers << layer
+    end
+
     @anim_texture = nil
     @animated_indices = []
 
@@ -126,16 +133,6 @@ class GameMap
       SetTextureFilter(@anim_texture, TEXTURE_FILTER_POINT)
       @animated_indices = JSON.parse(File.read(anim_json))
       puts "Animation loaded for #{@tileset_path}: #{@animated_indices}"
-    end
-
-    tex_w = @tileset_texture.width
-    tex_h = @tileset_texture.height
-    @full_cols = tex_w / @tile_size
-    @full_rows = tex_h / @tile_size
-    total_tiles = @full_cols * @full_rows
-
-    if @tile_types.length < total_tiles
-      @tile_types += Array.new(total_tiles - @tile_types.length, 0)
     end
   end
 
@@ -200,7 +197,6 @@ class GameMap
     @tile_types[tile_id] || 0
   end
 
-  # Принадлежит ли клетка (x,y) какой-либо зоне крыши из events.json?
   def in_roof_zone?(x, y)
     @roof_events.any? do |ev|
       x1 = [ev['start_x'], ev['end_x']].min
@@ -211,31 +207,49 @@ class GameMap
     end
   end
 
-  # Новая проверка: принадлежит ли клетка (x,y) конкретной зоне по индексу
-  def zone_active?(x, y, zone_index)
+  def build_roof_layer_for_zone(zone_index)
+    return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
     ev = @roof_events[zone_index]
-    return false unless ev
-    x1 = [ev['start_x'], ev['end_x']].min
-    x2 = [ev['start_x'], ev['end_x']].max
-    y1 = [ev['start_y'], ev['end_y']].min
-    y2 = [ev['start_y'], ev['end_y']].max
-    x.between?(x1, x2) && y.between?(y1, y2)
-  end
+    return nil unless ev
 
-  # Перестраивает @layer2 и @top_layer, исключая тайлы из зон с индексами skip_zones
-  def rebuild_layers(skip_zones = [])
-    if @layer2
-      UnloadRenderTexture(@layer2)
-      @layer2 = nil
-    end
-    if @top_layer
-      UnloadRenderTexture(@top_layer)
-      @top_layer = nil
-    end
-    @layer2 = build_layer2(skip_zones)
-    SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
-    @top_layer = build_top_layer(skip_zones)
-    SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
+    rt = LoadRenderTexture(@width * @tile_size, @height * @tile_size)
+    SetTextureFilter(rt.texture, TEXTURE_FILTER_POINT)
+
+    BeginTextureMode(rt)
+      ClearBackground(BLANK)
+      half = @tile_size / 2.0
+      center = @center_vec
+      dst = Rectangle.create(0, 0, @tile_size, @tile_size)
+
+      x1 = [ev['start_x'], ev['end_x']].min
+      x2 = [ev['start_x'], ev['end_x']].max
+      y1 = [ev['start_y'], ev['end_y']].min
+      y2 = [ev['start_y'], ev['end_y']].max
+
+      (x1..x2).each do |x|
+        (y1..y2).each do |y|
+          tile_id = @tiles2[x][y]
+          next if tile_id.nil? || tile_id < 0
+          # ⚠️ УБИРАЕМ проверку на анимированность – пусть все тайлы крыш попадают в слой
+          # next if animated_tile?(tile_id)
+
+          src_rect = tile_src_rect(tile_id)
+          next unless src_rect
+          rot    = @rot2[x][y] || 0
+          flip_x = @mirror_x2[x][y] || false
+          flip_y = @mirror_y2[x][y] || false
+          world_cx = x * @tile_size + half
+          world_cy = y * @tile_size + half
+          dst.x = world_cx
+          dst.y = world_cy
+          dst.width  = flip_x ? -@tile_size : @tile_size
+          dst.height = flip_y ? -@tile_size : @tile_size
+          angle = rot * 90.0
+          DrawTexturePro(@tileset_texture, src_rect, dst, center, angle, WHITE)
+        end
+      end
+    EndTextureMode()
+    rt
   end
 
   def build_static_background
@@ -280,7 +294,7 @@ class GameMap
     rt
   end
 
-  def build_layer2(skip_zones = [])
+  def build_layer2
     return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
 
     rt = LoadRenderTexture(@width * @tile_size, @height * @tile_size)
@@ -297,9 +311,7 @@ class GameMap
           tile_id = @tiles2[x][y]
           next if tile_id.nil? || tile_id < 0
           next if animated_tile?(tile_id)
-
-          # Пропускаем тайлы, попадающие в активные зоны (если они переданы)
-          next if skip_zones.any? { |zi| zone_active?(x, y, zi) }
+          next if in_roof_zone?(x, y)
 
           src_rect = tile_src_rect(tile_id)
           next unless src_rect
@@ -320,7 +332,7 @@ class GameMap
     rt
   end
 
-  def build_top_layer(skip_zones = [])
+  def build_top_layer
     return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
 
     rt = LoadRenderTexture(@width * @tile_size, @height * @tile_size)
@@ -333,12 +345,9 @@ class GameMap
       center = @center_vec
       dst = Rectangle.create(0, 0, @tile_size, @tile_size)
 
-      # ========================
-      # ПЕРВЫЙ СЛОЙ – тип 3
-      # ========================
       (0...@width).each do |x|
         (0...@height).each do |y|
-          tile_id = @tiles[x][y]          # ← первый слой!
+          tile_id = @tiles[x][y]
           next if tile_id.nil? || tile_id < 0
           next if animated_tile?(tile_id)
           type = @tile_types[tile_id] || 0
@@ -364,19 +373,14 @@ class GameMap
         end
       end
 
-      # ========================
-      # ВТОРОЙ СЛОЙ – тип 3
-      # ========================
       (0...@width).each do |x|
         (0...@height).each do |y|
-          tile_id = @tiles2[x][y]         # ← второй слой!
+          tile_id = @tiles2[x][y]
           next if tile_id.nil? || tile_id < 0
           next if animated_tile?(tile_id)
           type = @tile_types[tile_id] || 0
           next unless type == 3
-
-          # Пропускаем тайлы, попадающие в активные зоны
-          next if skip_zones.any? { |zi| zone_active?(x, y, zi) }
+          next if in_roof_zone?(x, y)
 
           src_rect = tile_src_rect(tile_id)
           next unless src_rect
@@ -433,7 +437,6 @@ class GameMap
     end
   end
 
-  # === Отрисовка анимированных тайлов ===
   def draw_animated_tiles(use_animation)
     return if @animated_indices.empty? || @tileset_texture.nil?
 
@@ -469,12 +472,13 @@ class GameMap
       end
     end
 
-    # Второй слой (теперь без фильтрации – всё уже учтено в перестроенных текстурах)
+    # Второй слой – теперь фильтруем анимированные тайлы крыш
     (0...@width).each do |x|
       (0...@height).each do |y|
         tile_id = @tiles2[x][y]
         next if tile_id.nil? || tile_id < 0
         next unless animated_tile?(tile_id)
+        next if in_roof_zone?(x, y)   # <-- ВАЖНАЯ СТРОКА
 
         texture = use_animation ? @anim_texture : @tileset_texture
         src_rect = tile_src_rect(tile_id)
@@ -497,6 +501,4 @@ class GameMap
       end
     end
   end
-
-  # (build_roof_layer больше не используется, но можно оставить для истории)
 end

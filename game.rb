@@ -16,7 +16,6 @@ shared_lib_path = Gem::Specification.find_by_name('raylib-bindings').full_gem_pa
 Raylib.load_lib(shared_lib_path + 'libraylib.dll')
 include Raylib
 
-# ========== ОСНОВНАЯ ИГРА ==========
 class Game
   def initialize
     SetConfigFlags(FLAG_VSYNC_HINT)
@@ -26,7 +25,6 @@ class Game
     @db = Database.new
     @game_map = GameMap.new(@db.globals["start_map"] || "Granseal")
 
-    # --- Загрузка текстов из gamescript.txt ---
     @game_text = {}
     if File.exist?("data/text/gamescript.txt")
       File.readlines("data/text/gamescript.txt").each do |line|
@@ -44,33 +42,30 @@ class Game
     SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
     @layer2 = @game_map.build_layer2
     SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
-    @active_zones = []
+
+    @zone_hidden = Array.new(@game_map.roof_events.size, false)
 
     Raylib.InitAudioDevice()
     @audio = AudioManager.new
-    # Глобальная загрузка звуков интерфейса
     @audio.load_sfx(:confirm, "assets/sounds/buttons/button_menu.ogg")
     @audio.load_sfx(:cancel,  "assets/sounds/buttons/Cancel.ogg")
     @audio.play(@game_map.music_file, @game_map.music_volume)
-	@audio.set_sfx_volume(:confirm, 1.0)   # можно 0.8, 0.9 – на ваш слух
+    @audio.set_sfx_volume(:confirm, 1.0)
     @audio.set_sfx_volume(:cancel,  1.0)
-	@audio.load_sfx(:block, "assets/sounds/buttons/block_button.ogg")
+    @audio.load_sfx(:block, "assets/sounds/buttons/block_button.ogg")
     @audio.set_sfx_volume(:block, 1.0)
-	$audio = @audio
+    $audio = @audio
 
     @player = Player.new(@game_map)
-	# Устанавливаем стартовые координаты из глобальных настроек
-    # Стартовая позиция – из глобальных настроек, но обязательно внутри зоны
     start_x = @db.globals["start_x"] || @game_map.default_spawn[0]
     start_y = @db.globals["start_y"] || @game_map.default_spawn[1]
-    # Если зона задана, гарантируем, что игрок попадёт в неё
     unless @game_map.inside_area?(start_x, start_y)
       start_x, start_y = @game_map.default_spawn
     end
     @player.x = start_x
     @player.y = start_y
-	
-	@camera = Camera.new
+
+    @camera = Camera.new
     @accumulator = 0.0
     @fixed_dt = 1.0 / 60.0
 
@@ -85,14 +80,11 @@ class Game
     codepoints = []
     (32..126).each { |cp| codepoints << cp }
     (0x0400..0x04FF).each { |cp| codepoints << cp }
-
     cp_ptr = FFI::MemoryPointer.new(:int, codepoints.size)
     cp_ptr.write_array_of_int(codepoints)
-
     @font = LoadFontEx("assets/ui/fonts/main.ttf", 20, cp_ptr, codepoints.size)
     Raylib.SetTextureFilter(@font.texture, TEXTURE_FILTER_POINT)
 
-    # Крупный шрифт для окон сообщений (30 px)
     large_codepoints = []
     (32..126).each { |cp| large_codepoints << cp }
     (0x0400..0x04FF).each { |cp| large_codepoints << cp }
@@ -101,12 +93,10 @@ class Game
     @large_font = LoadFontEx("assets/ui/fonts/main.ttf", 30, large_cp_ptr, large_codepoints.size)
     Raylib.SetTextureFilter(@large_font.texture, TEXTURE_FILTER_POINT)
 
-    # ---------- Данные из базы ----------
     @party = @db.actors
     @classes_data = @db.classes
     @class_names = {}
     @classes_data.each { |c| @class_names[c["id"]] = c["name"] }
-
     @start_inventory = []
     if File.exist?("data/actors/start_inventory.json")
       data = JSON.parse(File.read("data/actors/start_inventory.json"))
@@ -115,18 +105,18 @@ class Game
 
     @use_menu = UseMenu.new(@font, @db, @party, @classes_data, @class_names, @start_inventory)
     @give_menu = GiveMenu.new(@font, @large_font, @db, @party, @classes_data, @class_names, @start_inventory, @game_text)
-	@equip_menu = EquipMenu.new(@font, @db, @party, @classes_data, @class_names, @start_inventory)
-	@drop_menu = DropMenu.new(@font, @large_font, @db, @party, @classes_data, @class_names, @start_inventory, @game_text)
+    @equip_menu = EquipMenu.new(@font, @db, @party, @classes_data, @class_names, @start_inventory)
+    @drop_menu = DropMenu.new(@font, @large_font, @db, @party, @classes_data, @class_names, @start_inventory, @game_text)
 
     @status_overlay = StatusOverlay.new(@font, @db, @start_inventory, @party, @classes_data, @class_names)
     @magic_overlay = MagicOverlay.new(@font, @db, @start_inventory, @party, @classes_data, @class_names)
     @profile = Profile.new(@font, @db, @start_inventory)
-	@search_overlay = SearchOverlay.new(@large_font, @game_text, @party)
-	
-	@anim_timer = 0.0          # таймер для анимации
-    @anim_delay = 0.33          # длительность одного кадра (сек)
-    @show_anim  = false        # true = показываем замену, false = оригинал
-	
+    @search_overlay = SearchOverlay.new(@large_font, @game_text, @party)
+
+    @anim_timer = 0.0
+    @anim_delay = 0.33
+    @show_anim  = false
+
     @game_state = :playing
     @pending_profile_open = false
     @pending_status_open = false
@@ -135,7 +125,6 @@ class Game
     @pending_items_close = false
     @pending_menu_request = false
     @menu_delay = 0
-	
   end
 
   def run
@@ -160,8 +149,8 @@ class Game
     Raylib.UnloadFont(@font) if @font
     UnloadRenderTexture(@static_bg) if @static_bg
     UnloadRenderTexture(@top_layer) if @top_layer
-	UnloadRenderTexture(@layer2) if @layer2
-	UnloadRenderTexture(@roof_layer) if @roof_layer
+    UnloadRenderTexture(@layer2) if @layer2
+    @game_map.roof_layers.each { |l| UnloadRenderTexture(l) if l }
     CloseWindow()
   end
 
@@ -195,9 +184,9 @@ class Game
         when 2
           @game_state = :items
           @items_submenu.open
-		when 3                         # <-- Четвёртая плитка "Поиск"
+        when 3
           @game_state = :search
-          @menu.close                  # скрываем плитки
+          @menu.close
           @search_overlay.open
         else
           @game_state = :playing
@@ -238,14 +227,14 @@ class Game
             @give_menu.open
             @active_item_action = @give_menu
             @game_state = :item_action
-		  when 2
+          when 2
             @equip_menu.open
             @active_item_action = @equip_menu
             @game_state = :item_action
-		 when 3
-		    @drop_menu.open
-			@active_item_action = @drop_menu
-			@game_state = :item_action
+          when 3
+            @drop_menu.open
+            @active_item_action = @drop_menu
+            @game_state = :item_action
           end
         end
       else
@@ -256,13 +245,12 @@ class Game
         @profile.close
         @pending_status_open = true
       end
-	when :search
-      @search_overlay.handle_input    # отдаём управление самому окну
-      unless @search_overlay.visible  # если окно закрылось – возвращаемся в меню
+    when :search
+      @search_overlay.handle_input
+      unless @search_overlay.visible
         @game_state = :menu
         @menu.open
       end
-	  
     when :item_action
       @active_item_action.handle_input
       @pending_items_close = true if @active_item_action.anim_phase == 3
@@ -273,20 +261,12 @@ class Game
     @audio.update
     @player.update_animation
     @player.update_movement if @game_state == :playing
-	if @game_map
-      new_active = []
-      if @game_map && @game_map.roof_events
+
+    if @game_map && @game_map.roof_events.any?
       @game_map.roof_events.each_with_index do |ev, idx|
-      new_active << idx if @game_map.in_roof_zone?(@player.x, @player.y)
+        @zone_hidden[idx] = @game_map.in_roof_zone?(@player.x, @player.y)
+      end
     end
-  end
-unless new_active == @active_zones
-  @active_zones = new_active
-  @game_map.rebuild_layers(@active_zones)
-  @layer2   = @game_map.layer2
-  @top_layer = @game_map.top_layer
-end
-  end
 
     if @pending_menu_request
       if !@player.moving
@@ -332,7 +312,7 @@ end
       @game_state = :profile
     end
     @profile.update if @game_state == :profile
-	@search_overlay.update if @game_state == :search
+    @search_overlay.update if @game_state == :search
 
     if @pending_status_open && !@profile.instance_variable_get(:@visible)
       @status_overlay.open
@@ -346,22 +326,19 @@ end
       @game_state = :items
       @pending_items_close = false
     end
-	
-	# --------------------
+
     @anim_timer += @fixed_dt
     if @anim_timer >= @anim_delay
       @anim_timer -= @anim_delay
       @show_anim = !@show_anim
     end
-    # ---------------------
-	
   end
 
   def draw
     BeginDrawing()
     ClearBackground(RAYWHITE)
     BeginMode2D(@camera.render_camera)
-      # 1. ОСНОВНОЙ СЛОЙ (земля, стены без верхушек)
+      # 1. ОСНОВНОЙ СЛОЙ
       DrawTexturePro(
         @static_bg.texture,
         Rectangle.create(0, 0, @static_bg.texture.width, -@static_bg.texture.height),
@@ -369,7 +346,7 @@ end
         Vector2.create(0, 0), 0, WHITE
       )
 
-      # 2. ВТОРОЙ СЛОЙ (декор, tiles2) – рисуется поверх основы
+      # 2. ВТОРОЙ СЛОЙ (без крыш)
       if @layer2
         DrawTexturePro(
           @layer2.texture,
@@ -379,11 +356,23 @@ end
         )
       end
 
-        @game_map.draw_animated_tiles(@show_anim) if @game_map
+      # 2.5 КРЫШИ (по одной текстуре на зону)
+      @game_map.roof_layers.each_with_index do |layer, idx|
+        if layer && !@zone_hidden[idx]
+          DrawTexturePro(
+            layer.texture,
+            Rectangle.create(0, 0, layer.texture.width, -layer.texture.height),
+            Rectangle.create(0, 0, layer.texture.width, layer.texture.height),
+            Vector2.create(0, 0), 0, WHITE
+          )
+        end
+      end
+
+      @game_map.draw_animated_tiles(@show_anim) if @game_map
 
       @player.draw
 
-      # 3. ВЕРХНИЙ СЛОЙ (кроны деревьев, тип 3) – перекрывает игрока
+      # 3. ВЕРХНИЙ СЛОЙ
       DrawTexturePro(
         @top_layer.texture,
         Rectangle.create(0, 0, @top_layer.texture.width, -@top_layer.texture.height),
@@ -405,42 +394,37 @@ end
     DrawText("FPS: #{GetFPS()}", 576 - 100, 10, 20, DARKGRAY)
     EndDrawing()
   end
-  
- private
 
- def play_ui_sounds
-  return unless current_menu_active?
+  private
 
-  if IsKeyPressed(KEY_S)
-    @audio.play_sfx(:cancel)
-    return
+  def play_ui_sounds
+    return unless current_menu_active?
+    if IsKeyPressed(KEY_S)
+      @audio.play_sfx(:cancel)
+      return
+    end
+    if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+      return if @game_state == :status
+      @audio.play_sfx(:confirm)
+    end
   end
 
-  if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-    # В статусе звук confirm проигрывается позже (при открытии профиля),
-    # чтобы избежать дубля, здесь его не вызываем.
-    return if @game_state == :status
-
-    @audio.play_sfx(:confirm)
+  def current_menu_active?
+    case @game_state
+    when :menu, :items
+      true
+    when :status
+      @status_overlay.instance_variable_get(:@anim_phase) == 2
+    when :magic
+      @magic_overlay.instance_variable_get(:@anim_phase) == 2
+    when :profile
+      @profile.instance_variable_get(:@anim_phase) == 2
+    when :item_action
+      @active_item_action&.anim_phase == 2
+    else
+      false
+    end
   end
-end
-  
-def current_menu_active?
-  case @game_state
-  when :menu, :items
-    true # BottomMenu и ItemsSubmenu всегда активны, когда открыты
-  when :status
-    @status_overlay.instance_variable_get(:@anim_phase) == 2
-  when :magic
-    @magic_overlay.instance_variable_get(:@anim_phase) == 2
-  when :profile
-    @profile.instance_variable_get(:@anim_phase) == 2
-  when :item_action
-    @active_item_action&.anim_phase == 2
-  else
-    false
-  end
-end
 end
 
 Game.new.run if __FILE__ == $0
