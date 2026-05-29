@@ -5,13 +5,14 @@ include Raylib
 
 class GameMap
   attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas,
-              :roof_events
+              :roof_events, :tile_events
   attr_reader :tileset_path
   attr_reader :roof_layers
-  attr_reader :layer2, :top_layer
+  attr_reader :layer2, :top_layer, :static_bg
 
   def initialize(map_id = "Granseal")
     @src_rect_cache = {}
+	@animated_indices = []
 
     entries_path = "data/maps/entries.json"
     unless File.exist?(entries_path)
@@ -70,12 +71,21 @@ class GameMap
     end
 
     @roof_events = []
+    @tile_events = []
     events_path = "data/maps/#{entry['folder']}/events.json"
     if File.exist?(events_path)
       begin
-        @roof_events = JSON.parse(File.read(events_path))
+        events_data = JSON.parse(File.read(events_path))
+        events_data.each do |ev|
+          type = ev['type'] || 'roof'
+          if type == 'roof'
+            @roof_events << ev
+          elsif type == 'tile_change'
+            @tile_events << ev
+          end
+        end
       rescue
-        @roof_events = []
+        # оставляем пустыми
       end
     end
 
@@ -120,6 +130,9 @@ class GameMap
       SetTextureFilter(layer.texture, TEXTURE_FILTER_POINT) if layer
       @roof_layers << layer
     end
+
+    @static_bg = build_static_background
+    SetTextureFilter(@static_bg.texture, TEXTURE_FILTER_POINT) if @static_bg
 
     @anim_texture = nil
     @animated_indices = []
@@ -501,4 +514,20 @@ class GameMap
       end
     end
   end
+  
+  def replace_tile(x, y, new_tile_id)
+    return if @tiles.nil? || @static_bg.nil?
+    @tiles[x][y] = new_tile_id
+    src_rect = tile_src_rect(new_tile_id)
+    return unless src_rect
+    half = @tile_size / 2.0
+    world_cx = x * @tile_size + half
+    world_cy = y * @tile_size + half
+    dst = Rectangle.create(world_cx, world_cy, @tile_size, @tile_size)
+    BeginTextureMode(@static_bg)
+      DrawTexturePro(@tileset_texture, src_rect, dst, @center_vec, 0, WHITE)
+    EndTextureMode()
+  end
+  
+  
 end

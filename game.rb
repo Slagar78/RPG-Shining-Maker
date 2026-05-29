@@ -35,9 +35,6 @@ class Game
       end
     end
 
-    @static_bg = @game_map.build_static_background
-    SetTextureFilter(@static_bg.texture, TEXTURE_FILTER_POINT) if @static_bg
-
     @top_layer = @game_map.build_top_layer
     SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
     @layer2 = @game_map.build_layer2
@@ -148,7 +145,7 @@ class Game
     @audio.stop
     Raylib.CloseAudioDevice()
     Raylib.UnloadFont(@font) if @font
-    UnloadRenderTexture(@static_bg) if @static_bg
+    UnloadRenderTexture(@game_map.static_bg) if @game_map.static_bg
     UnloadRenderTexture(@top_layer) if @top_layer
     UnloadRenderTexture(@layer2) if @layer2
     @game_map.roof_layers.each { |l| UnloadRenderTexture(l) if l }
@@ -282,6 +279,17 @@ class Game
       end
     end
 
+    if @game_map && @game_map.tile_events.any?
+      @game_map.tile_events.each do |ev|
+        tx = ev['trigger_x']
+        ty = ev['trigger_y']
+        if tx && ty && @player.x == tx && @player.y == ty
+          new_id = ev['new_tile_id']
+          @game_map.replace_tile(tx, ty, new_id)
+        end
+      end
+    end
+
     if @pending_menu_request
       if !@player.moving
         @menu_delay += 1
@@ -354,9 +362,9 @@ class Game
     BeginMode2D(@camera.render_camera)
       # 1. ОСНОВНОЙ СЛОЙ
       DrawTexturePro(
-        @static_bg.texture,
-        Rectangle.create(0, 0, @static_bg.texture.width, -@static_bg.texture.height),
-        Rectangle.create(0, 0, @static_bg.texture.width, @static_bg.texture.height),
+        @game_map.static_bg.texture,
+        Rectangle.create(0, 0, @game_map.static_bg.texture.width, -@game_map.static_bg.texture.height),
+        Rectangle.create(0, 0, @game_map.static_bg.texture.width, @game_map.static_bg.texture.height),
         Vector2.create(0, 0), 0, WHITE
       )
 
