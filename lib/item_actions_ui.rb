@@ -1068,83 +1068,84 @@ class GiveMenu < ItemSubMenuBase
     end
   end
 
-    def draw_lower_content
-    if @give_state == :select_target && @status_view_mode == 2
-      give_atk = 0
-      give_def = 0
-      if @selected_give_item
-        item_data = find_item_by_name(@selected_give_item["item"])
-        if item_data
-          give_atk = (item_data["attack"] || 0).to_i
-          give_def = (item_data["defense"] || 0).to_i
-        end
+def draw_lower_content
+  if @give_state == :select_target && @status_view_mode == 2
+    give_atk = 0
+    give_def = 0
+    if @selected_give_item
+      item_data = find_item_by_name(@selected_give_item["item"])
+      if item_data
+        give_atk = (item_data["attack"] || 0).to_i
+        give_def = (item_data["defense"] || 0).to_i
       end
-
-      header_y = @lower_y + 28
-      draw_text_custom("Имя",    @lower_x + 44,  header_y, 20, WHITE)
-      draw_text_custom("ATTACK",  @lower_x + 187, header_y, 20, WHITE)
-      draw_text_custom("DEFENSE", @lower_x + 290, header_y, 20, WHITE)
-
-      blink_visible = ((@selection_blink_timer / 15) % 2 == 0)
-
-      5.times do |i|
-        list_index = @list_top_index + i
-        break if list_index >= @party.length
-        member = @party[list_index]
-        y = @lower_y + 71 + i * 34
-
-        if member["name"] == @current_actor
-          highlight = Raylib.Fade(Raylib::BLUE, 0.5)
-          Raylib.DrawRectangle(@lower_x + 38, y - 4, 138, 28, highlight)
-        end
-        if @ruby_tex
-          ruby_src = Raylib::Rectangle.create(0, 0, @ruby_tex.width, @ruby_tex.height)
-          ruby_dst = Raylib::Rectangle.create(@lower_x + 15, y - 3, 24, 24)
-          Raylib.DrawTexturePro(@ruby_tex, ruby_src, ruby_dst,
-                                Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-        end
-
-        name_display = member["name"].slice(0, 10)
-        draw_text_custom(name_display, @lower_x + 44, y, 18, WHITE)
-
-        cur_bonuses = calculate_equip_bonuses(member)
-        cur_atk_bonus = cur_bonuses[:attack]
-        cur_def_bonus = cur_bonuses[:defense]
-
-        delta_atk = give_atk - cur_atk_bonus
-        delta_def = give_def - cur_def_bonus
-
-        draw_stats_comparison(member, delta_atk, delta_def, y, blink_visible)
-      end
-
-      if @list_top_index > 0
-        alpha = (Math.sin(@selection_blink_timer * 0.2) * 0.4 + 0.6) * 255
-        color = Raylib.Fade(Raylib::WHITE, alpha / 255.0)
-        ax = @lower_x + 27
-        ay = @lower_y + 71 + 12
-        Raylib.DrawTriangle(
-          Raylib::Vector2.create(ax, ay - 6),
-          Raylib::Vector2.create(ax - 6, ay + 4),
-          Raylib::Vector2.create(ax + 6, ay + 4),
-          color
-        )
-      end
-      if @list_top_index + 5 < @party.length
-        alpha = (Math.sin(@selection_blink_timer * 0.2) * 0.4 + 0.6) * 255
-        color = Raylib.Fade(Raylib::WHITE, alpha / 255.0)
-        ax = @lower_x + 27
-        ay = @lower_y + 71 + 4*34 + 12
-        Raylib.DrawTriangle(
-          Raylib::Vector2.create(ax - 6, ay - 4),
-          Raylib::Vector2.create(ax, ay + 6),
-          Raylib::Vector2.create(ax + 6, ay - 4),
-          color
-        )
-      end
-    else
-      super
     end
+
+    header_y = @lower_y + 28
+    draw_text_custom("Имя",    @lower_x + 44,  header_y, 20, WHITE)
+    draw_text_custom("ATTACK",  @lower_x + 187, header_y, 20, WHITE)
+    draw_text_custom("DEFENSE", @lower_x + 290, header_y, 20, WHITE)
+
+    5.times do |i|
+      list_index = @list_top_index + i
+      break if list_index >= @party.length
+      member = @party[list_index]
+      y = @lower_y + 71 + i * 34
+
+      if member["name"] == @current_actor
+        highlight = Raylib.Fade(Raylib::BLUE, 0.5)
+        Raylib.DrawRectangle(@lower_x + 38, y - 4, 138, 28, highlight)
+      end
+      if @ruby_tex
+        ruby_src = Raylib::Rectangle.create(0, 0, @ruby_tex.width, @ruby_tex.height)
+        ruby_dst = Raylib::Rectangle.create(@lower_x + 15, y - 3, 24, 24)
+        Raylib.DrawTexturePro(@ruby_tex, ruby_src, ruby_dst,
+                              Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+      end
+
+      name_display = member["name"].slice(0, 10)
+      draw_text_custom(name_display, @lower_x + 44, y, 18, WHITE)
+
+      cur_bonuses = calculate_equip_bonuses(member)
+      cur_atk_bonus = cur_bonuses[:attack]
+      cur_def_bonus = cur_bonuses[:defense]
+
+      delta_atk = give_atk - cur_atk_bonus
+      delta_def = give_def - cur_def_bonus
+
+      # Мигание только для выбранного персонажа
+      blink_visible = (member["name"] == @current_actor) && ((@selection_blink_timer / 15) % 2 == 0)
+
+      draw_stats_comparison(member, delta_atk, delta_def, y, blink_visible)
+    end
+
+    if @list_top_index > 0
+      alpha = (Math.sin(@selection_blink_timer * 0.2) * 0.4 + 0.6) * 255
+      color = Raylib.Fade(Raylib::WHITE, alpha / 255.0)
+      ax = @lower_x + 27
+      ay = @lower_y + 71 + 12
+      Raylib.DrawTriangle(
+        Raylib::Vector2.create(ax, ay - 6),
+        Raylib::Vector2.create(ax - 6, ay + 4),
+        Raylib::Vector2.create(ax + 6, ay + 4),
+        color
+      )
+    end
+    if @list_top_index + 5 < @party.length
+      alpha = (Math.sin(@selection_blink_timer * 0.2) * 0.4 + 0.6) * 255
+      color = Raylib.Fade(Raylib::WHITE, alpha / 255.0)
+      ax = @lower_x + 27
+      ay = @lower_y + 71 + 4*34 + 12
+      Raylib.DrawTriangle(
+        Raylib::Vector2.create(ax - 6, ay - 4),
+        Raylib::Vector2.create(ax, ay + 6),
+        Raylib::Vector2.create(ax + 6, ay - 4),
+        color
+      )
+    end
+  else
+    super
   end
+end
   
   def confirm_action(item_entry, actor)
     return if item_entry["item"] == "NOTHING"
