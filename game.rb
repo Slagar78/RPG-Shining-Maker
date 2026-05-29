@@ -44,6 +44,9 @@ class Game
     SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
 	@layer2 = @game_map.build_layer2
     SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
+	@roof_layer = @game_map.build_roof_layer
+    SetTextureFilter(@roof_layer.texture, TEXTURE_FILTER_POINT) if @roof_layer
+    @roof_hidden = false
 
     Raylib.InitAudioDevice()
     @audio = AudioManager.new
@@ -160,6 +163,7 @@ class Game
     UnloadRenderTexture(@static_bg) if @static_bg
     UnloadRenderTexture(@top_layer) if @top_layer
 	UnloadRenderTexture(@layer2) if @layer2
+	UnloadRenderTexture(@roof_layer) if @roof_layer
     CloseWindow()
   end
 
@@ -271,6 +275,10 @@ class Game
     @audio.update
     @player.update_animation
     @player.update_movement if @game_state == :playing
+	if @game_map
+      @roof_hidden = @game_map.in_roof_zone?(@player.x, @player.y)
+	  # puts "Player (#{@player.x}, #{@player.y})  roof_hidden=#{@roof_hidden}"
+    end
 
     if @pending_menu_request
       if !@player.moving
@@ -344,7 +352,7 @@ class Game
   def draw
     BeginDrawing()
     ClearBackground(RAYWHITE)
-	BeginMode2D(@camera.render_camera)
+    BeginMode2D(@camera.render_camera)
       # 1. ОСНОВНОЙ СЛОЙ (земля, стены без верхушек)
       DrawTexturePro(
         @static_bg.texture,
@@ -362,8 +370,18 @@ class Game
           Vector2.create(0, 0), 0, WHITE
         )
       end
-	  
-	     @game_map.draw_animated_tiles(@show_anim) if @game_map
+
+      # 2.5. СЛОЙ КРЫШ – только если игрок НЕ внутри зоны
+      if @roof_layer && !@roof_hidden
+        DrawTexturePro(
+          @roof_layer.texture,
+          Rectangle.create(0, 0, @roof_layer.texture.width, -@roof_layer.texture.height),
+          Rectangle.create(0, 0, @roof_layer.texture.width, @roof_layer.texture.height),
+          Vector2.create(0, 0), 0, WHITE
+        )
+      end
+
+        @game_map.draw_animated_tiles(@show_anim, @roof_hidden) if @game_map
 
       @player.draw
 
@@ -383,7 +401,7 @@ class Game
     when :profile then @profile.draw
     when :items then @items_submenu.draw
     when :item_action then @active_item_action.draw
-	when :search then @search_overlay.draw
+    when :search then @search_overlay.draw
     end
 
     DrawText("FPS: #{GetFPS()}", 576 - 100, 10, 20, DARKGRAY)
