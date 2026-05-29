@@ -136,7 +136,7 @@ void editor_init(Editor *ed) {
     ed->selected_roof_event = -1;
     ed->edit_field = -1;
     ed->input_buf[0] = '\0';
-    ed->left_panel_collapsed = false;
+    ed->left_panel_collapsed = true;
 }
 
 // ─── Тайлсет ──────────────────────────────────
@@ -661,11 +661,17 @@ void render_left_panel(Editor *ed) {
     int y = 10;
     draw_text_centered(ed->renderer, ed->font, "ROOF EVENTS", LEFT_PANEL_W/2 - 20, y, (SDL_Color){255,255,255,255});
 
-    SDL_Rect collapse_btn = { LEFT_PANEL_W - 40, 0, 30, 24 };
+    SDL_Rect collapse_btn = { LEFT_PANEL_W - 35, 2, 26, 22 };  // чуть крупнее
+    // Небольшой фон для кнопки (тёмно-серый)
+    SDL_SetRenderDrawColor(ed->renderer, 80, 80, 80, 255);
+    SDL_RenderFillRect(ed->renderer, &collapse_btn);
+    // Текст заметнее
     if (ed->left_panel_collapsed) {
-        draw_text_centered(ed->renderer, ed->font, "+", collapse_btn.x+15, collapse_btn.y+12, (SDL_Color){255,255,255,255});
+        draw_text_centered(ed->renderer, ed->font, "+", collapse_btn.x + collapse_btn.w/2,
+                           collapse_btn.y + collapse_btn.h/2, (SDL_Color){255,255,255,255});
     } else {
-        draw_text_centered(ed->renderer, ed->font, "-", collapse_btn.x+15, collapse_btn.y+12, (SDL_Color){255,255,255,255});
+        draw_text_centered(ed->renderer, ed->font, "—", collapse_btn.x + collapse_btn.w/2,
+                           collapse_btn.y + collapse_btn.h/2, (SDL_Color){255,255,255,255});
     }
 
     if (ed->left_panel_collapsed) {
