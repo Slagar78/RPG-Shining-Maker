@@ -37,6 +37,7 @@ typedef struct {
     int trigger_x, trigger_y;   // клетка, по которой кликнули для выбора тайла
     int start_x, start_y;
     int end_x, end_y;
+    int exit_x, exit_y;   // клетка-выход (закрывает крышу)
 } RoofEvent;
 
 // ─── Список карт ──────────────────────────────
@@ -293,6 +294,10 @@ void load_events_from_json(Editor *ed, const char *folder) {
             // Если координаты триггера не указаны, ставим -1
             re->trigger_x = (tx && cJSON_IsNumber(tx)) ? tx->valueint : -1;
             re->trigger_y = (ty && cJSON_IsNumber(ty)) ? ty->valueint : -1;
+            cJSON *ex_x = cJSON_GetObjectItem(ev, "exit_x");
+            cJSON *ex_y = cJSON_GetObjectItem(ev, "exit_y");
+            re->exit_x = (ex_x && cJSON_IsNumber(ex_x)) ? ex_x->valueint : -1;
+            re->exit_y = (ex_y && cJSON_IsNumber(ex_y)) ? ex_y->valueint : -1;
         }
     }
     cJSON_Delete(arr);
@@ -317,6 +322,8 @@ void save_events_to_json(Editor *ed, const char *folder) {
         // Сохраняем координаты триггера (даже если -1, для полноты)
         cJSON_AddNumberToObject(ev, "trigger_x", re->trigger_x);
         cJSON_AddNumberToObject(ev, "trigger_y", re->trigger_y);
+        cJSON_AddNumberToObject(ev, "exit_x", re->exit_x);
+        cJSON_AddNumberToObject(ev, "exit_y", re->exit_y);
         cJSON_AddItemToArray(root, ev);
     }
     char *str = cJSON_Print(root);
@@ -419,10 +426,33 @@ void render_map(Editor *ed) {
                tile_dst.y + dy,
                tile_dst.w,
                tile_dst.h
-            };
-        SDL_RenderDrawRectF(ed->renderer, &thick_rect);
+                };
+                  SDL_RenderDrawRectF(ed->renderer, &thick_rect);
+                    }
+                }
+            }
+        }
     }
-}
+
+    // Голубая рамка вокруг клетки-выхода
+    if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
+        RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
+        if (re->exit_x >= 0 && re->exit_y >= 0) {
+            int ex_x = re->exit_x;
+            int ex_y = re->exit_y;
+            if (ex_x >= 0 && ex_x < map->width && ex_y >= 0 && ex_y < map->height) {
+                SDL_FRect ex_dst = {
+                    MAP_X + (ex_x * TILE_SIZE - ed->cam_x) * zoom,
+                    MAP_Y + (ex_y * TILE_SIZE - ed->cam_y) * zoom,
+                    scaled_tile, scaled_tile
+                };
+                SDL_SetRenderDrawColor(ed->renderer, 0, 150, 255, 255);  // голубой
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        SDL_FRect thick = { ex_dst.x + dx, ex_dst.y + dy, ex_dst.w, ex_dst.h };
+                        SDL_RenderDrawRectF(ed->renderer, &thick);
+                    }
+                }
             }
         }
     }
@@ -593,6 +623,8 @@ static void draw_roof_field(Editor *ed, const char *label, int field_idx, int li
             snprintf(buf, sizeof(buf), "%d,%d", re->start_x, re->start_y);
         else if (field_idx == 2)
             snprintf(buf, sizeof(buf), "%d,%d", re->end_x, re->end_y);
+        else if (field_idx == 3)
+            snprintf(buf, sizeof(buf), "%d,%d", re->exit_x, re->exit_y);
     }
     if (active && ed->input_buf[0])
         snprintf(buf, sizeof(buf), "%s", ed->input_buf);
@@ -612,6 +644,8 @@ static void check_roof_field_click(Editor *ed, int field_idx, int line_y, int mx
                 snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->start_x, re->start_y);
             else if (field_idx == 2)
                 snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->end_x, re->end_y);
+            else if (field_idx == 3)
+                snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->exit_x, re->exit_y);
         }
         SDL_StartTextInput();
     }
@@ -683,6 +717,9 @@ void render_left_panel(Editor *ed) {
         edit_y += 22;
         draw_roof_field(ed, "End", 2, edit_y);
         edit_y += 22;
+        // Поле Exit
+        draw_roof_field(ed, "Exit", 3, edit_y);
+        edit_y += 22;
 
         SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
         SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
@@ -697,7 +734,7 @@ void handle_input(Editor *ed, bool *running) {
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) { *running = false; return; }
 
-        // Текстовый ввод
+        // ================== Текстовый ввод ==================
         if (ed->edit_field != -1) {
             if (e.type == SDL_KEYDOWN) {
                 if (e.key.keysym.sym == SDLK_BACKSPACE) {
@@ -721,6 +758,12 @@ void handle_input(Editor *ed, bool *running) {
                                 re->end_x = x;
                                 re->end_y = y;
                             }
+                        } else if (ed->edit_field == 3) {
+                            int x, y;
+                            if (sscanf(ed->input_buf, "%d,%d", &x, &y) == 2) {
+                                re->exit_x = x;
+                                re->exit_y = y;
+                            }
                         }
                     }
                     ed->edit_field = -1;
@@ -742,7 +785,7 @@ void handle_input(Editor *ed, bool *running) {
             }
         }
 
-        // Колесо мыши
+        // ================== Колесо мыши ==================
         if (e.type == SDL_MOUSEWHEEL) {
             int mx, my;
             get_logical_mouse(ed, &mx, &my);
@@ -763,7 +806,7 @@ void handle_input(Editor *ed, bool *running) {
             }
         }
 
-        // Правая кнопка (панорама)
+        // ================== Правая кнопка (панорама) ==================
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_RIGHT) {
             if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_LCTRL]) {
                 ed->panning = 1;
@@ -774,7 +817,7 @@ void handle_input(Editor *ed, bool *running) {
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_RIGHT)
             ed->panning = 0;
 
-        // Левая кнопка: нажатие
+        // ================== Левая кнопка: нажатие ==================
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             int mx = e.button.x, my = e.button.y;
 
@@ -807,6 +850,8 @@ void handle_input(Editor *ed, bool *running) {
                         RoofEvent *re = &ed->roof_events[ed->roof_event_count++];
                         re->tile_id = 0;
                         re->trigger_x = re->trigger_y = -1;
+                        re->exit_x = -1;
+                        re->exit_y = -1;
                         re->start_x = 0; re->start_y = 0;
                         re->end_x = 1; re->end_y = 1;
                         ed->selected_roof_event = ed->roof_event_count - 1;
@@ -832,8 +877,9 @@ void handle_input(Editor *ed, bool *running) {
                     check_roof_field_click(ed, 0, edit_y, mx, my);
                     check_roof_field_click(ed, 1, edit_y + 22, mx, my);
                     check_roof_field_click(ed, 2, edit_y + 44, mx, my);
+                    check_roof_field_click(ed, 3, edit_y + 66, mx, my);   // Exit
 
-                    SDL_Rect del_btn = {10, edit_y + 66, LEFT_PANEL_W-20, 24};
+                    SDL_Rect del_btn = {10, edit_y + 88, LEFT_PANEL_W-20, 24};
                     if (mx >= del_btn.x && mx < del_btn.x+del_btn.w && my >= del_btn.y && my < del_btn.y+del_btn.h) {
                         for (int i = ed->selected_roof_event; i < ed->roof_event_count-1; i++)
                             ed->roof_events[i] = ed->roof_events[i+1];
@@ -874,7 +920,7 @@ void handle_input(Editor *ed, bool *running) {
                 }
             }
 
-            // Клик по карте (установка тайла/координат + триггера)
+            // Клик по карте (установка тайла/координат)
             if (mx >= MAP_X && mx < MAP_X + MAP_VISIBLE_W && my >= MAP_Y && my < MAP_Y + MAP_VISIBLE_H) {
                 Map *map = current_map(ed);
                 if (map && ed->selected_roof_event >= 0 && ed->roof_event_count > 0) {
@@ -903,6 +949,12 @@ void handle_input(Editor *ed, bool *running) {
                         } else if (ed->edit_field == 2) {
                             re->end_x = tx;
                             re->end_y = ty;
+                            ed->edit_field = -1;
+                            ed->input_buf[0] = '\0';
+                            SDL_StopTextInput();
+                        } else if (ed->edit_field == 3) {
+                            re->exit_x = tx;
+                            re->exit_y = ty;
                             ed->edit_field = -1;
                             ed->input_buf[0] = '\0';
                             SDL_StopTextInput();
@@ -948,14 +1000,14 @@ void handle_input(Editor *ed, bool *running) {
             }
         }
 
-        // Левая кнопка: отпускание (сброс перетаскивания)
+        // ================== Левая кнопка: отпускание ==================
         if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
             ed->scrollbar_drag_v = false;
             ed->scrollbar_drag_h = false;
         }
     }
 
-    // Непрерывные действия (перетаскивание ползунков и панорама)
+    // ================== Непрерывные действия ==================
     if (ed->scrollbar_drag_v) {
         int mx, my; get_logical_mouse(ed, &mx, &my);
         Map *map = current_map(ed);

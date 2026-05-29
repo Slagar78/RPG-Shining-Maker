@@ -267,14 +267,17 @@ class Game
       @game_map.roof_events.each_with_index do |ev, idx|
         tx = ev['trigger_x']
         ty = ev['trigger_y']
-        # Если координаты триггера заданы и игрок стоит на них
+        ex = ev['exit_x']
+        ey = ev['exit_y']
+
+        # Наступил на красную клетку – крыша открывается (исчезает)
         if tx && ty && @player.x == tx && @player.y == ty
-          unless @was_on_trigger[idx]               # первый кадр на триггере
-            @zone_hidden[idx] = !@zone_hidden[idx]   # переключаем видимость
-          end
-          @was_on_trigger[idx] = true
-        else
-          @was_on_trigger[idx] = false               # сброс, когда ушли
+          @zone_hidden[idx] = true
+        end
+
+        # Наступил на голубую клетку – крыша закрывается (появляется)
+        if ex && ey && @player.x == ex && @player.y == ey
+          @zone_hidden[idx] = false
         end
       end
     end
