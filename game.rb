@@ -41,7 +41,6 @@ class Game
     SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
 
     @zone_hidden = Array.new(@game_map.roof_events.size, false)
-	@was_on_trigger = Array.new(@game_map.roof_events.size, false)
 
     Raylib.InitAudioDevice()
     @audio = AudioManager.new

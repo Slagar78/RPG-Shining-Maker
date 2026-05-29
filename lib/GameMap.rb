@@ -135,7 +135,6 @@ class GameMap
     SetTextureFilter(@static_bg.texture, TEXTURE_FILTER_POINT) if @static_bg
 
     @anim_texture = nil
-    @animated_indices = []
 
     base = File.basename(@tileset_path, ".*")
     anim_png  = "assets/tilesets/Animation_tiles/#{base}_animation.png"
