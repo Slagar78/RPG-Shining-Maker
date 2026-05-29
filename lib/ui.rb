@@ -229,22 +229,32 @@ class StatusOverlay
   end
 
   def calculate_equip_bonuses(actor)
-    return { attack: 0, defense: 0 } unless actor
-    inv_entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
-    return { attack: 0, defense: 0 } unless inv_entry
+  return { attack: 0, defense: 0, hp: 0, mp: 0, agility: 0, mov: 0 } unless actor
+  inv_entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
+  return { attack: 0, defense: 0, hp: 0, mp: 0, agility: 0, mov: 0 } unless inv_entry
 
-    total_attack = 0
-    total_defense = 0
-    inv_entry["items"].each do |item_entry|
-      next unless item_entry["equipped"]
-      next if item_entry["item"] == "NOTHING"
-      item_data = find_item_by_name(item_entry["item"])
-      next unless item_data
-      total_attack += (item_data["attack"] || 0).to_i
-      total_defense += (item_data["defense"] || 0).to_i
-    end
-    { attack: total_attack, defense: total_defense }
+  total_attack = 0
+  total_defense = 0
+  total_hp = 0
+  total_mp = 0
+  total_agility = 0
+  total_mov = 0 
+
+  inv_entry["items"].each do |item_entry|
+    next unless item_entry["equipped"]
+    next if item_entry["item"] == "NOTHING"
+    item_data = find_item_by_name(item_entry["item"])
+    next unless item_data
+    total_attack  += (item_data["attack"]  || 0).to_i
+    total_defense += (item_data["defense"] || 0).to_i
+    total_hp      += (item_data["hp"]      || 0).to_i 
+    total_mp      += (item_data["mp"]      || 0).to_i
+    total_agility += (item_data["agility"] || 0).to_i
+    total_mov     += (item_data["mov"]     || 0).to_i
   end
+  { attack: total_attack, defense: total_defense,
+    hp: total_hp, mp: total_mp, agility: total_agility, mov: total_mov }
+end
 
   # -----------------------------------------------------------------
   # Загрузка текстур и актёров
@@ -595,10 +605,14 @@ class StatusOverlay
         hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
       end
         bonuses = calculate_equip_bonuses(member)
-        eff_atk = [atk_val + bonuses[:attack], 0].max
+        eff_hp  = [hp_val  + bonuses[:hp],      0].max
+        eff_mp  = [mp_val  + bonuses[:mp],      0].max
+        eff_atk = [atk_val + bonuses[:attack],  0].max
         eff_def = [def_val + bonuses[:defense], 0].max
+        eff_agi = [agi_val + bonuses[:agility], 0].max
+        eff_mov = [mov_val + bonuses[:mov],     0].max
 		
-        stat_values = [hp_val, mp_val, eff_atk, eff_def, agi_val, mov_val]
+        stat_values = [eff_hp, eff_mp, eff_atk, eff_def, eff_agi, eff_mov]
         stat_centers = [@lower_x + 200, @lower_x + 250, @lower_x + 300, @lower_x + 350, @lower_x + 400, @lower_x + 445]
         stat_values.each_with_index do |val, idx|
           draw_text_centered_h(val.to_s, stat_centers[idx], y, 18, WHITE)
@@ -715,20 +729,31 @@ class Profile
   end
 
   def calculate_equip_bonuses(actor)
-    return { attack: 0, defense: 0 } unless actor
+    return { attack: 0, defense: 0, hp: 0, mp: 0, agility: 0, mov: 0 } unless actor
     inv_entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
-    return { attack: 0, defense: 0 } unless inv_entry
+    return { attack: 0, defense: 0, hp: 0, mp: 0, agility: 0, mov: 0 } unless inv_entry
+
     total_attack = 0
     total_defense = 0
+    total_hp = 0
+    total_mp = 0
+    total_agility = 0
+    total_mov = 0
+
     inv_entry["items"].each do |item_entry|
       next unless item_entry["equipped"]
       next if item_entry["item"] == "NOTHING"
       item_data = find_item_by_name(item_entry["item"])
       next unless item_data
-      total_attack += (item_data["attack"] || 0).to_i
+      total_attack  += (item_data["attack"]  || 0).to_i
       total_defense += (item_data["defense"] || 0).to_i
+      total_hp      += (item_data["hp"]      || 0).to_i
+      total_mp      += (item_data["mp"]      || 0).to_i
+      total_agility += (item_data["agility"] || 0).to_i
+      total_mov     += (item_data["mov"]     || 0).to_i
     end
-    { attack: total_attack, defense: total_defense }
+    { attack: total_attack, defense: total_defense,
+      hp: total_hp, mp: total_mp, agility: total_agility, mov: total_mov }
   end
 
   # ---------- портреты и кеш ----------
@@ -862,7 +887,7 @@ class Profile
     if actor
       class_id = actor["class_id"]
       klass = @classes_data.find { |c| c["id"] == actor["class_id"] }
-	  class_full_name = klass ? (klass["full_name"] || klass["name"]) : "???"
+      class_full_name = klass ? (klass["full_name"] || klass["name"]) : "???"
       class_full_name = class_full_name.slice(0, 16)
       actor_name = actor["name"].slice(0, 10)
 
@@ -873,6 +898,8 @@ class Profile
       name_x = @right_panel_x + 25 + class_width + space_width
       # Имя – белым
       draw_text_custom(actor_name, name_x, @right_panel_y + 12, 20, WHITE)
+
+      # --- базовые статы от класса ---
       if klass && @db
         lv = [(actor["level"] || 1), 1].max
         hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
@@ -885,6 +912,16 @@ class Profile
         hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
       end
 
+      # --- бонусы от экипировки (кольца, оружие) ---
+      bonuses = calculate_equip_bonuses(actor)
+      eff_hp  = [hp_val  + bonuses[:hp],      0].max
+      eff_mp  = [mp_val  + bonuses[:mp],      0].max
+      eff_atk = [atk_val + bonuses[:attack],  0].max
+      eff_def = [def_val + bonuses[:defense], 0].max
+      eff_agi = [agi_val + bonuses[:agility], 0].max
+      eff_mov = [mov_val + bonuses[:mov],     0].max
+
+      # --- уровень и опыт (берём из актёра) ---
       lv = actor["level"]
       exp = actor["exp"] || 0
 
@@ -898,20 +935,15 @@ class Profile
 
       # === ЛЕВЫЙ СТОЛБЕЦ: LV, HP, MP, EXP ===
       draw_text_custom("LV    #{lv}", stats_left_x, y_base, 20, WHITE)
-      draw_text_custom("HP    #{hp_val}", stats_left_x, y_base + line_h, 20, WHITE)
-      draw_text_custom("MP    #{mp_val}", stats_left_x, y_base + line_h * 2, 20, WHITE)
+      draw_text_custom("HP    #{eff_hp}", stats_left_x, y_base + line_h, 20, WHITE)
+      draw_text_custom("MP    #{eff_mp}", stats_left_x, y_base + line_h * 2, 20, WHITE)
       draw_text_custom("EXP   #{exp}", stats_left_x, y_base + line_h * 3, 20, WHITE)
-
-      # === БОНУСЫ ОТ ЭКИПИРОВКИ ===
-      bonuses = calculate_equip_bonuses(actor)
-      eff_atk = [atk_val + bonuses[:attack], 0].max   # итоговая атака (не меньше 0)
-      eff_def = [def_val + bonuses[:defense], 0].max   # итоговая защита (не меньше 0)
 
       # === ПРАВЫЙ СТОЛБЕЦ: ATT, DEF, AGI, MOV ===
       draw_text_custom("ATT   #{eff_atk}", stats_right_x, y_base, 20, WHITE)
       draw_text_custom("DEF   #{eff_def}", stats_right_x, y_base + line_h, 20, WHITE)
-      draw_text_custom("AGI   #{agi_val}", stats_right_x, y_base + line_h * 2, 20, WHITE)
-      draw_text_custom("MOV   #{mov_val}", stats_right_x, y_base + line_h * 3, 20, WHITE)
+      draw_text_custom("AGI   #{eff_agi}", stats_right_x, y_base + line_h * 2, 20, WHITE)
+      draw_text_custom("MOV   #{eff_mov}", stats_right_x, y_base + line_h * 3, 20, WHITE)
 
       # ----- дополнительные характеристики (столбиком) -----
       extra_x = stats_right_x + 100
@@ -1200,22 +1232,32 @@ class MagicOverlay
   end
 
   def calculate_equip_bonuses(actor)
-    return { attack: 0, defense: 0 } unless actor
-    inv_entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
-    return { attack: 0, defense: 0 } unless inv_entry
+  return { attack: 0, defense: 0, hp: 0, mp: 0, agility: 0, mov: 0 } unless actor
+  inv_entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
+  return { attack: 0, defense: 0, hp: 0, mp: 0, agility: 0, mov: 0 } unless inv_entry
 
-    total_attack = 0
-    total_defense = 0
-    inv_entry["items"].each do |item_entry|
-      next unless item_entry["equipped"]
-      next if item_entry["item"] == "NOTHING"
-      item_data = find_item_by_name(item_entry["item"])
-      next unless item_data
-      total_attack += (item_data["attack"] || 0).to_i
-      total_defense += (item_data["defense"] || 0).to_i
-    end
-    { attack: total_attack, defense: total_defense }
+  total_attack = 0
+  total_defense = 0
+  total_hp = 0
+  total_mp = 0
+  total_agility = 0
+  total_mov = 0
+
+  inv_entry["items"].each do |item_entry|
+    next unless item_entry["equipped"]
+    next if item_entry["item"] == "NOTHING"
+    item_data = find_item_by_name(item_entry["item"])
+    next unless item_data
+    total_attack  += (item_data["attack"]  || 0).to_i
+    total_defense += (item_data["defense"] || 0).to_i
+    total_hp      += (item_data["hp"]      || 0).to_i
+    total_mp      += (item_data["mp"]      || 0).to_i
+    total_agility += (item_data["agility"] || 0).to_i
+    total_mov     += (item_data["mov"]     || 0).to_i
   end
+  { attack: total_attack, defense: total_defense,
+    hp: total_hp, mp: total_mp, agility: total_agility, mov: total_mov }
+end
 
   # -----------------------------------------------------------------
   # Загрузка текстур и актёров
@@ -1623,10 +1665,14 @@ class MagicOverlay
         end
 
         bonuses = calculate_equip_bonuses(member)
-        eff_atk = [atk_val + bonuses[:attack], 0].max
+        eff_hp  = [hp_val  + bonuses[:hp],      0].max
+        eff_mp  = [mp_val  + bonuses[:mp],      0].max
+        eff_atk = [atk_val + bonuses[:attack],  0].max
         eff_def = [def_val + bonuses[:defense], 0].max
+        eff_agi = [agi_val + bonuses[:agility], 0].max
+        eff_mov = [mov_val + bonuses[:mov],     0].max
 		
-        stat_values = [hp_val, mp_val, eff_atk, eff_def, agi_val, mov_val]
+        stat_values = [eff_hp, eff_mp, eff_atk, eff_def, eff_agi, eff_mov]
         stat_centers = [@lower_x + 200, @lower_x + 250, @lower_x + 300, @lower_x + 350, @lower_x + 400, @lower_x + 445]
         stat_values.each_with_index do |val, idx|
           draw_text_centered_h(val.to_s, stat_centers[idx], y, 18, LIME)
