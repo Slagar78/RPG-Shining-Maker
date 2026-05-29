@@ -91,28 +91,37 @@ end
 class ItemSubMenuBase
   include ItemUIHelpers
    
-    def calculate_equip_bonuses(actor)
-    return { attack: 0, defense: 0 } unless actor
+ def calculate_equip_bonuses(actor)
+  return { attack: 0, defense: 0, hp: 0, mp: 0, agility: 0, mov: 0 } unless actor
 
-    inv_entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
-    return { attack: 0, defense: 0 } unless inv_entry
+  inv_entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
+  return { attack: 0, defense: 0, hp: 0, mp: 0, agility: 0, mov: 0 } unless inv_entry
 
-    total_attack = 0
-    total_defense = 0
+  total_attack = 0
+  total_defense = 0
+  total_hp = 0
+  total_mp = 0
+  total_agility = 0
+  total_mov = 0
 
-    inv_entry["items"].each do |item_entry|
-      next unless item_entry["equipped"]
-      next if item_entry["item"] == "NOTHING"
+  inv_entry["items"].each do |item_entry|
+    next unless item_entry["equipped"]
+    next if item_entry["item"] == "NOTHING"
 
-      item_data = find_item_by_name(item_entry["item"])
-      next unless item_data
+    item_data = find_item_by_name(item_entry["item"])
+    next unless item_data
 
-      total_attack += (item_data["attack"] || 0).to_i
-      total_defense += (item_data["defense"] || 0).to_i
-    end
-
-    { attack: total_attack, defense: total_defense }
+    total_attack  += (item_data["attack"]  || 0).to_i
+    total_defense += (item_data["defense"] || 0).to_i
+    total_hp      += (item_data["hp"]      || 0).to_i
+    total_mp      += (item_data["mp"]      || 0).to_i
+    total_agility += (item_data["agility"] || 0).to_i
+    total_mov     += (item_data["mov"]     || 0).to_i
   end
+
+  { attack: total_attack, defense: total_defense,
+    hp: total_hp, mp: total_mp, agility: total_agility, mov: total_mov }
+end
 
   attr_reader :visible, :current_actor, :anim_phase
 
@@ -676,27 +685,34 @@ def draw_character_list(mode: 0, item_bonus_atk: 0, item_bonus_df: 0)
       lv_display = [(member["level"] || 1), 1].max
       draw_text_centered_h(lv_display.to_s, level_header_center_x, y, 18, WHITE)
       draw_text_centered_h(member["exp"].to_s,    exp_header_center_x,   y, 18, WHITE)
-    when 1
-      klass = @classes_data.find { |c| c["id"] == member["class_id"] }
-      if klass && @db
-        lv = [(member["level"] || 1), 1].max
-        hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
-        mp_val  = [@db.stat_at_level(klass["mp_growth"],  lv), 0].max
-        atk_val = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
-        def_val = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
-        agi_val = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
-        mov_val = [(klass["move"] || 0), 0].max
-      else
-        hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
-      end
-      bonuses = calculate_equip_bonuses(member)
-      eff_atk = [atk_val + bonuses[:attack], 0].max
-      eff_def = [def_val + bonuses[:defense], 0].max
-      stat_values = [hp_val, mp_val, eff_atk, eff_def, agi_val, mov_val]
-      stat_centers = [@lower_x + 200, @lower_x + 250, @lower_x + 300, @lower_x + 350, @lower_x + 400, @lower_x + 445]
-      stat_values.each_with_index do |val, idx|
+	  
+      when 1
+        klass = @classes_data.find { |c| c["id"] == member["class_id"] }
+        if klass && @db
+          lv = [(member["level"] || 1), 1].max
+          hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
+          mp_val  = [@db.stat_at_level(klass["mp_growth"],  lv), 0].max
+          atk_val = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
+          def_val = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
+          agi_val = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+          mov_val = [(klass["move"] || 0), 0].max
+        else
+          hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
+        end
+        bonuses = calculate_equip_bonuses(member)
+        eff_hp  = [hp_val  + bonuses[:hp],      0].max
+        eff_mp  = [mp_val  + bonuses[:mp],      0].max
+        eff_atk = [atk_val + bonuses[:attack],  0].max
+        eff_def = [def_val + bonuses[:defense], 0].max
+        eff_agi = [agi_val + bonuses[:agility], 0].max
+        eff_mov = [mov_val + bonuses[:mov],     0].max
+        stat_values = [eff_hp, eff_mp, eff_atk, eff_def, eff_agi, eff_mov]
+        stat_centers = [@lower_x + 200, @lower_x + 250, @lower_x + 300, @lower_x + 350, @lower_x + 400, @lower_x + 445]
+        stat_values.each_with_index do |val, idx|
+		
         draw_text_centered_h(val.to_s, stat_centers[idx], y, 18, WHITE)
       end
+	  
     when 2
       draw_stats_comparison(member, item_bonus_atk, item_bonus_df, y, blink_visible)
     end
