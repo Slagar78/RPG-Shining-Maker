@@ -28,10 +28,15 @@ static char  use_spell[64] = {0};
 static int   spell_level = 1;
 static char  icon_path[256] = {0};
 
-// новые поля для категории и боевых характеристик
 static char  category_buf[32] = {"consumable"};
 static int   attack_val = 0;
 static int   defense_val = 0;
+// новые статы
+static int   hp_val = 0;
+static int   mp_val = 0;
+static int   agility_val = 0;
+static int   mov_val = 0;
+
 static const char *category_list[] = {"consumable", "Weapon", "Ring"};
 static const int category_count = 3;
 
@@ -48,7 +53,7 @@ static int save_timer = 0;
 static int item_scroll = 0;
 static int g_window_height = 680;
 
-#define MAX_ITEM_FIELDS 10
+#define MAX_ITEM_FIELDS 14
 typedef struct {
     char text[256];
     int cursor;
@@ -142,17 +147,29 @@ static void commit_item_changes(void) {
     cJSON *ic = cJSON_GetObjectItem(it, "icon");
     if (ic && cJSON_IsString(ic)) cJSON_SetValuestring(ic, icon_path);
 
-    // сохраняем категорию
     cJSON *ct = cJSON_GetObjectItem(it, "category");
     if (ct && cJSON_IsString(ct)) cJSON_SetValuestring(ct, category_buf);
 
-    // сохраняем атаку и защиту
     cJSON *atk = cJSON_GetObjectItem(it, "attack");
     if (atk && cJSON_IsNumber(atk)) { atk->valueint = attack_val; atk->valuedouble = attack_val; }
     else { cJSON_AddNumberToObject(it, "attack", attack_val); }
     cJSON *def = cJSON_GetObjectItem(it, "defense");
     if (def && cJSON_IsNumber(def)) { def->valueint = defense_val; def->valuedouble = defense_val; }
     else { cJSON_AddNumberToObject(it, "defense", defense_val); }
+
+    // новые статы
+    cJSON *hp = cJSON_GetObjectItem(it, "hp");
+    if (hp && cJSON_IsNumber(hp)) { hp->valueint = hp_val; hp->valuedouble = hp_val; }
+    else { cJSON_AddNumberToObject(it, "hp", hp_val); }
+    cJSON *mp = cJSON_GetObjectItem(it, "mp");
+    if (mp && cJSON_IsNumber(mp)) { mp->valueint = mp_val; mp->valuedouble = mp_val; }
+    else { cJSON_AddNumberToObject(it, "mp", mp_val); }
+    cJSON *agility = cJSON_GetObjectItem(it, "agility");
+    if (agility && cJSON_IsNumber(agility)) { agility->valueint = agility_val; agility->valuedouble = agility_val; }
+    else { cJSON_AddNumberToObject(it, "agility", agility_val); }
+    cJSON *mov = cJSON_GetObjectItem(it, "mov");
+    if (mov && cJSON_IsNumber(mov)) { mov->valueint = mov_val; mov->valuedouble = mov_val; }
+    else { cJSON_AddNumberToObject(it, "mov", mov_val); }
 }
 
 static void load_item_fields(void) {
@@ -172,7 +189,6 @@ static void load_item_fields(void) {
     const char *ic = cJSON_GetObjectItem(it, "icon")->valuestring;
     strncpy(icon_path, ic ? ic : "", 255); icon_path[255] = '\0';
 
-    // читаем категорию, атаку, защиту
     const char *cat = cJSON_GetObjectItem(it, "category")->valuestring;
     strncpy(category_buf, cat ? cat : "consumable", 31);
     category_buf[31] = '\0';
@@ -181,6 +197,15 @@ static void load_item_fields(void) {
     cJSON *def = cJSON_GetObjectItem(it, "defense");
     defense_val = (def && cJSON_IsNumber(def)) ? def->valueint : 0;
 
+    cJSON *hp = cJSON_GetObjectItem(it, "hp");
+    hp_val = (hp && cJSON_IsNumber(hp)) ? hp->valueint : 0;
+    cJSON *mp = cJSON_GetObjectItem(it, "mp");
+    mp_val = (mp && cJSON_IsNumber(mp)) ? mp->valueint : 0;
+    cJSON *agility = cJSON_GetObjectItem(it, "agility");
+    agility_val = (agility && cJSON_IsNumber(agility)) ? agility->valueint : 0;
+    cJSON *mov = cJSON_GetObjectItem(it, "mov");
+    mov_val = (mov && cJSON_IsNumber(mov)) ? mov->valueint : 0;
+
     selected_spell_idx = -1;
     for (int i = 0; i < spell_name_count; i++)
         if (strcmp(spell_names[i], use_spell) == 0) { selected_spell_idx = i; break; }
@@ -188,11 +213,13 @@ static void load_item_fields(void) {
     open_item_fields();
 }
 
-// оригинальная open_item_fields, но с добавлением полей 7 (attack) и 8 (defense)
+// Переработанная open_item_fields: новые статы идут вертикально после категории
 static void open_item_fields(void) {
     item_field_count = 0;
     item_active_field = -1;
-    int base_x = 360, base_y = 80, off = 100;
+    // базовые координаты (соответствуют px=360, py=50)
+    int base_y = 60;   // py+10
+    int field_x = 470; // px+10+100
 
     // 0: Name
     snprintf(item_fields[0].text, sizeof(item_fields[0].text), "%s", name_buf);
@@ -201,15 +228,81 @@ static void open_item_fields(void) {
     item_fields[0].json_obj = cJSON_GetArrayItem(items, selected_item);
     item_fields[0].json_key = "name";
     item_fields[0].is_numeric = 0; item_fields[0].max_len = 20; item_fields[0].array_index = -1; item_fields[0].is_special = 0;
-    item_fields[0].rect = (SDL_Rect){base_x+off, base_y + 0*35, 190, 22};
+    item_fields[0].rect = (SDL_Rect){field_x, base_y + 0*35, 190, 22};
 
-    // 1: Price
+    // 1: Price (будет ниже, его позиция переопределится после всех строк)
+    // 2: Range Min
+    // 3: Range Max
+    // 4: Use Spell
+    // 5: Spell Level
+    // 6: Icon
+
+    // 7: Attack (на строке категории)
+    snprintf(item_fields[7].text, sizeof(item_fields[7].text), "%d", attack_val);
+    item_fields[7].cursor = strlen(item_fields[7].text);
+    item_fields[7].active = 0;
+    item_fields[7].json_obj = NULL; item_fields[7].json_key = "attack";
+    item_fields[7].is_numeric = 1; item_fields[7].max_len = 4; item_fields[7].array_index = -1; item_fields[7].is_special = 0;
+    item_fields[7].rect = (SDL_Rect){720, base_y + 1*35, 50, 22};   // AT
+
+    // 8: Defense (на строке категории)
+    snprintf(item_fields[8].text, sizeof(item_fields[8].text), "%d", defense_val);
+    item_fields[8].cursor = strlen(item_fields[8].text);
+    item_fields[8].active = 0;
+    item_fields[8].json_obj = NULL; item_fields[8].json_key = "defense";
+    item_fields[8].is_numeric = 1; item_fields[8].max_len = 4; item_fields[8].array_index = -1; item_fields[8].is_special = 0;
+    item_fields[8].rect = (SDL_Rect){820, base_y + 1*35, 50, 22};   // DF
+
+    int row = 2;  // следующая свободная строка после категории (0 - name, 1 - category)
+    // Если предмет не consumable, добавляем четыре строки: HP, MP, AGI, MOV
+    if (strcmp(category_buf, "consumable") != 0) {
+        // 9: HP
+        snprintf(item_fields[9].text, sizeof(item_fields[9].text), "%d", hp_val);
+        item_fields[9].cursor = strlen(item_fields[9].text);
+        item_fields[9].active = 0;
+        item_fields[9].json_obj = NULL; item_fields[9].json_key = "hp";
+        item_fields[9].is_numeric = 1; item_fields[9].max_len = 4; item_fields[9].array_index = -1; item_fields[9].is_special = 0;
+        item_fields[9].rect = (SDL_Rect){field_x, base_y + row*35, 150, 22};
+        row++;
+
+        // 10: MP
+        snprintf(item_fields[10].text, sizeof(item_fields[10].text), "%d", mp_val);
+        item_fields[10].cursor = strlen(item_fields[10].text);
+        item_fields[10].active = 0;
+        item_fields[10].json_obj = NULL; item_fields[10].json_key = "mp";
+        item_fields[10].is_numeric = 1; item_fields[10].max_len = 4; item_fields[10].array_index = -1; item_fields[10].is_special = 0;
+        item_fields[10].rect = (SDL_Rect){field_x, base_y + row*35, 150, 22};
+        row++;
+
+        // 11: AGI
+        snprintf(item_fields[11].text, sizeof(item_fields[11].text), "%d", agility_val);
+        item_fields[11].cursor = strlen(item_fields[11].text);
+        item_fields[11].active = 0;
+        item_fields[11].json_obj = NULL; item_fields[11].json_key = "agility";
+        item_fields[11].is_numeric = 1; item_fields[11].max_len = 4; item_fields[11].array_index = -1; item_fields[11].is_special = 0;
+        item_fields[11].rect = (SDL_Rect){field_x, base_y + row*35, 150, 22};
+        row++;
+
+        // 12: MOV
+        snprintf(item_fields[12].text, sizeof(item_fields[12].text), "%d", mov_val);
+        item_fields[12].cursor = strlen(item_fields[12].text);
+        item_fields[12].active = 0;
+        item_fields[12].json_obj = NULL; item_fields[12].json_key = "mov";
+        item_fields[12].is_numeric = 1; item_fields[12].max_len = 4; item_fields[12].array_index = -1; item_fields[12].is_special = 0;
+        item_fields[12].rect = (SDL_Rect){field_x, base_y + row*35, 150, 22};
+        row++;
+    }
+
+    // Остальные поля со сдвигом на (row-2) строк
+    int offset_rows = row - 2;  // на сколько строк мы сдвинулись относительно исходного индекса 2
+
+    // 1: Price (индекс остаётся 1, но позиция сдвигается)
     snprintf(item_fields[1].text, sizeof(item_fields[1].text), "%d", price_val);
     item_fields[1].cursor = strlen(item_fields[1].text);
     item_fields[1].active = 0;
     item_fields[1].json_obj = NULL; item_fields[1].json_key = NULL;
     item_fields[1].is_numeric = 1; item_fields[1].max_len = 5; item_fields[1].array_index = -1; item_fields[1].is_special = 0;
-    item_fields[1].rect = (SDL_Rect){base_x+off, base_y + 2*35, 150, 22};
+    item_fields[1].rect = (SDL_Rect){field_x, base_y + (2 + offset_rows)*35, 150, 22};
 
     // 2: Range Min
     snprintf(item_fields[2].text, sizeof(item_fields[2].text), "%d", range_min);
@@ -217,7 +310,7 @@ static void open_item_fields(void) {
     item_fields[2].active = 0;
     item_fields[2].json_obj = NULL; item_fields[2].json_key = NULL;
     item_fields[2].is_numeric = 1; item_fields[2].max_len = 2; item_fields[2].array_index = 0; item_fields[2].is_special = 0;
-    item_fields[2].rect = (SDL_Rect){base_x+off, base_y + 3*35, 150, 22};
+    item_fields[2].rect = (SDL_Rect){field_x, base_y + (3 + offset_rows)*35, 150, 22};
 
     // 3: Range Max
     snprintf(item_fields[3].text, sizeof(item_fields[3].text), "%d", range_max);
@@ -225,23 +318,23 @@ static void open_item_fields(void) {
     item_fields[3].active = 0;
     item_fields[3].json_obj = NULL; item_fields[3].json_key = NULL;
     item_fields[3].is_numeric = 1; item_fields[3].max_len = 2; item_fields[3].array_index = 1; item_fields[3].is_special = 0;
-    item_fields[3].rect = (SDL_Rect){base_x+off, base_y + 4*35, 150, 22};
+    item_fields[3].rect = (SDL_Rect){field_x, base_y + (4 + offset_rows)*35, 150, 22};
 
-    // 4: Use Spell (special)
+    // 4: Use Spell
     snprintf(item_fields[4].text, sizeof(item_fields[4].text), "%s", use_spell);
     item_fields[4].cursor = 0;
     item_fields[4].active = 0;
     item_fields[4].json_obj = NULL; item_fields[4].json_key = "use_spell";
     item_fields[4].is_numeric = 0; item_fields[4].max_len = 0; item_fields[4].array_index = -1; item_fields[4].is_special = 1;
-    item_fields[4].rect = (SDL_Rect){base_x+off, base_y + 5*35, 150, 22};
+    item_fields[4].rect = (SDL_Rect){field_x, base_y + (5 + offset_rows)*35, 150, 22};
 
-    // 5: Spell Level (special)
+    // 5: Spell Level
     snprintf(item_fields[5].text, sizeof(item_fields[5].text), "%d", spell_level);
     item_fields[5].cursor = 0;
     item_fields[5].active = 0;
     item_fields[5].json_obj = NULL; item_fields[5].json_key = "spell_level";
     item_fields[5].is_numeric = 1; item_fields[5].max_len = 2; item_fields[5].array_index = -1; item_fields[5].is_special = 2;
-    item_fields[5].rect = (SDL_Rect){base_x+off, base_y + 6*35, 150, 22};
+    item_fields[5].rect = (SDL_Rect){field_x, base_y + (6 + offset_rows)*35, 150, 22};
 
     // 6: Icon
     snprintf(item_fields[6].text, sizeof(item_fields[6].text), "%s", icon_path);
@@ -249,24 +342,9 @@ static void open_item_fields(void) {
     item_fields[6].active = 0;
     item_fields[6].json_obj = NULL; item_fields[6].json_key = "icon";
     item_fields[6].is_numeric = 0; item_fields[6].max_len = 0; item_fields[6].array_index = -1; item_fields[6].is_special = 0;
-    item_fields[6].rect = (SDL_Rect){base_x+off, base_y + 7*35, 150, 22};
+    item_fields[6].rect = (SDL_Rect){field_x, base_y + (7 + offset_rows)*35, 150, 22};
 
-    // новые поля: 7 - Attack, 8 - Defense (позиция справа от категории)
-    snprintf(item_fields[7].text, sizeof(item_fields[7].text), "%d", attack_val);
-    item_fields[7].cursor = strlen(item_fields[7].text);
-    item_fields[7].active = 0;
-    item_fields[7].json_obj = NULL; item_fields[7].json_key = "attack";
-    item_fields[7].is_numeric = 1; item_fields[7].max_len = 4; item_fields[7].array_index = -1; item_fields[7].is_special = 0;
-    item_fields[7].rect = (SDL_Rect){720, 95, 50, 22};   // y=95 соответствует строке категории (py+10+1*35=95)
-
-    snprintf(item_fields[8].text, sizeof(item_fields[8].text), "%d", defense_val);
-    item_fields[8].cursor = strlen(item_fields[8].text);
-    item_fields[8].active = 0;
-    item_fields[8].json_obj = NULL; item_fields[8].json_key = "defense";
-    item_fields[8].is_numeric = 1; item_fields[8].max_len = 4; item_fields[8].array_index = -1; item_fields[8].is_special = 0;
-    item_fields[8].rect = (SDL_Rect){820, 95, 50, 22};
-
-    item_field_count = 9;   // теперь 9 полей (индексы 0..8)
+    item_field_count = (strcmp(category_buf, "consumable") != 0) ? 13 : 9;  // 13 полей (0-12) или 9 (без новых)
 }
 
 static void commit_item_field(int idx) {
@@ -305,6 +383,7 @@ static void commit_item_field(int idx) {
             }
         }
     }
+    // обновление локальных переменных
     if (idx == 0) { strncpy(name_buf, f->text, 20); name_buf[20] = '\0'; }
     else if (idx == 1) price_val = atoi(f->text);
     else if (idx == 2) range_min = atoi(f->text);
@@ -312,30 +391,56 @@ static void commit_item_field(int idx) {
     else if (idx == 6) { strncpy(icon_path, f->text, 255); icon_path[255] = '\0'; }
     else if (idx == 7) {
         attack_val = atoi(f->text);
-        // немедленно сохраняем в JSON
         if (selected_item >= 0) {
             cJSON *it = cJSON_GetArrayItem(items, selected_item);
             cJSON *atk = cJSON_GetObjectItem(it, "attack");
-            if (atk && cJSON_IsNumber(atk)) {
-                atk->valueint = attack_val;
-                atk->valuedouble = attack_val;
-            } else {
-                cJSON_AddNumberToObject(it, "attack", attack_val);
-            }
+            if (atk && cJSON_IsNumber(atk)) { atk->valueint = attack_val; atk->valuedouble = attack_val; }
+            else { cJSON_AddNumberToObject(it, "attack", attack_val); }
         }
     }
     else if (idx == 8) {
         defense_val = atoi(f->text);
-        // немедленно сохраняем в JSON
         if (selected_item >= 0) {
             cJSON *it = cJSON_GetArrayItem(items, selected_item);
             cJSON *def = cJSON_GetObjectItem(it, "defense");
-            if (def && cJSON_IsNumber(def)) {
-                def->valueint = defense_val;
-                def->valuedouble = defense_val;
-            } else {
-                cJSON_AddNumberToObject(it, "defense", defense_val);
-            }
+            if (def && cJSON_IsNumber(def)) { def->valueint = defense_val; def->valuedouble = defense_val; }
+            else { cJSON_AddNumberToObject(it, "defense", defense_val); }
+        }
+    }
+    else if (idx == 9) {
+        hp_val = atoi(f->text);
+        if (selected_item >= 0) {
+            cJSON *it = cJSON_GetArrayItem(items, selected_item);
+            cJSON *hp = cJSON_GetObjectItem(it, "hp");
+            if (hp && cJSON_IsNumber(hp)) { hp->valueint = hp_val; hp->valuedouble = hp_val; }
+            else { cJSON_AddNumberToObject(it, "hp", hp_val); }
+        }
+    }
+    else if (idx == 10) {
+        mp_val = atoi(f->text);
+        if (selected_item >= 0) {
+            cJSON *it = cJSON_GetArrayItem(items, selected_item);
+            cJSON *mp = cJSON_GetObjectItem(it, "mp");
+            if (mp && cJSON_IsNumber(mp)) { mp->valueint = mp_val; mp->valuedouble = mp_val; }
+            else { cJSON_AddNumberToObject(it, "mp", mp_val); }
+        }
+    }
+    else if (idx == 11) {
+        agility_val = atoi(f->text);
+        if (selected_item >= 0) {
+            cJSON *it = cJSON_GetArrayItem(items, selected_item);
+            cJSON *agility = cJSON_GetObjectItem(it, "agility");
+            if (agility && cJSON_IsNumber(agility)) { agility->valueint = agility_val; agility->valuedouble = agility_val; }
+            else { cJSON_AddNumberToObject(it, "agility", agility_val); }
+        }
+    }
+    else if (idx == 12) {
+        mov_val = atoi(f->text);
+        if (selected_item >= 0) {
+            cJSON *it = cJSON_GetArrayItem(items, selected_item);
+            cJSON *mov = cJSON_GetObjectItem(it, "mov");
+            if (mov && cJSON_IsNumber(mov)) { mov->valueint = mov_val; mov->valuedouble = mov_val; }
+            else { cJSON_AddNumberToObject(it, "mov", mov_val); }
         }
     }
     f->active = 0;
@@ -493,6 +598,10 @@ static void add_new_item(void) {
     cJSON_AddStringToObject(it, "icon", "assets/items/empty.png");
     cJSON_AddNumberToObject(it, "attack", 0);
     cJSON_AddNumberToObject(it, "defense", 0);
+    cJSON_AddNumberToObject(it, "hp", 0);
+    cJSON_AddNumberToObject(it, "mp", 0);
+    cJSON_AddNumberToObject(it, "agility", 0);
+    cJSON_AddNumberToObject(it, "mov", 0);
     cJSON_AddItemToArray(items, it);
     item_count++;
     if (selected_item >= 0) commit_item_changes();
@@ -636,6 +745,7 @@ void items_handle_click(int mx, int my, int y_offset, int scroll) {
     }
 }
 
+// Отрисовка панели редактирования с вертикальными полями HP, MP, AGI, MOV
 void items_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     if (selected_item < 0) return;
     SDL_Color black = {0,0,0,255};
@@ -650,7 +760,7 @@ void items_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     draw_item_field(renderer, px+10, y, 190, 22, 0, "Name:", name_buf);
     y += 35;
 
-    // ---- Интерактивная категория ----
+    // Category + AT/DF
     draw_text_ext(renderer, px+10, y+3, "Category:", white);
     SDL_Rect cat_rect = {px+110, y, 150, 22};
     SDL_SetRenderDrawColor(renderer, gray.r, gray.g, gray.b, 255); SDL_RenderFillRect(renderer, &cat_rect);
@@ -667,9 +777,7 @@ void items_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, 255); SDL_RenderDrawRect(renderer, &cat_next);
     draw_text_ext(renderer, px+300, y+3, ">", white);
 
-    // Attack / Defense (только для Weapon и Ring)
     if (strcmp(category_buf, "consumable") != 0) {
-        // AT:
         draw_text_ext(renderer, px+330, y+3, "AT:", white);
         SDL_Rect atk_rect = item_fields[7].rect;
         SDL_SetRenderDrawColor(renderer, gray.r, gray.g, gray.b, 255);
@@ -689,7 +797,6 @@ void items_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
             draw_text_ext(renderer, offset, atk_rect.y+3, "|", black);
         }
 
-        // DF:
         draw_text_ext(renderer, atk_rect.x+atk_rect.w+10, y+3, "DF:", white);
         SDL_Rect def_rect = item_fields[8].rect;
         SDL_SetRenderDrawColor(renderer, gray.r, gray.g, gray.b, 255);
@@ -711,6 +818,18 @@ void items_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     }
 
     y += 35;
+
+    // Новые поля столбиком (только для Weapon и Ring)
+    if (strcmp(category_buf, "consumable") != 0) {
+        draw_item_field(renderer, px+10, y, 150, 22, 9, "HP:", item_fields[9].text);
+        y += 35;
+        draw_item_field(renderer, px+10, y, 150, 22, 10, "MP:", item_fields[10].text);
+        y += 35;
+        draw_item_field(renderer, px+10, y, 150, 22, 11, "AGI:", item_fields[11].text);
+        y += 35;
+        draw_item_field(renderer, px+10, y, 150, 22, 12, "MOV:", item_fields[12].text);
+        y += 35;
+    }
 
     // Price
     char price_str[16]; snprintf(price_str, sizeof(price_str), "%d", price_val);
@@ -799,17 +918,17 @@ void items_handle_input(SDL_Event *evt) {
     if (evt->type == SDL_MOUSEBUTTONDOWN && evt->button.button == SDL_BUTTON_LEFT) {
         int mx = evt->button.x, my = evt->button.y;
         if (selected_item < 0) return;
-        int px = 360, py = 50;
+        int px = 360;
 
-        // Browse
-        SDL_Rect browse = {px+10+100+150+5, py+10 + 7*35, 70, 22};
+        // Browse (используем фактическую позицию поля иконки)
+        int browse_y = item_fields[6].rect.y;
+        SDL_Rect browse = {px+10+100+150+5, browse_y, 70, 22};
         if (mx >= browse.x && mx < browse.x+browse.w && my >= browse.y && my < browse.y+browse.h) {
             char *path = open_file_dialog("..\\assets\\items\\");
             if (path) {
                 const char *filename = strrchr(path, '\\');
                 if (!filename) filename = path; else filename++;
                 snprintf(icon_path, sizeof(icon_path), "assets/items/%s", filename);
-                // обновить текст в поле ввода, чтобы интерфейс сразу отобразил новое имя
                 if (item_field_count > 6) {
                     strncpy(item_fields[6].text, icon_path, sizeof(item_fields[6].text)-1);
                     item_fields[6].text[sizeof(item_fields[6].text)-1] = '\0';
@@ -820,8 +939,7 @@ void items_handle_input(SDL_Event *evt) {
             return;
         }
 
-        // Buttons
-        int btn_y = py + 10 + 7*35 + 45;
+        int btn_y = browse_y + 40 + 5;
         SDL_Rect del_btn = {px+10, btn_y, 80, 30};
         SDL_Rect save_btn = {px+95, btn_y, 70, 30};
         SDL_Rect refresh_btn = {px+170, btn_y, 80, 30};
@@ -846,7 +964,7 @@ void items_handle_input(SDL_Event *evt) {
 
         // Category arrows
         {
-            int cat_y = py + 10 + 1*35;
+            int cat_y = item_fields[7].rect.y;
             SDL_Rect cat_prev = {px+270, cat_y, 20, 22};
             SDL_Rect cat_next = {px+295, cat_y, 20, 22};
             if (mx >= cat_prev.x && mx < cat_prev.x+cat_prev.w && my >= cat_prev.y && my < cat_prev.y+cat_prev.h) {
@@ -856,6 +974,7 @@ void items_handle_input(SDL_Event *evt) {
                 if (idx > 0) {
                     strncpy(category_buf, category_list[idx-1], 31);
                     commit_item_changes();
+                    open_item_fields();  // пересоздать поля (появятся/скроются новые)
                 }
                 return;
             }
@@ -866,6 +985,7 @@ void items_handle_input(SDL_Event *evt) {
                 if (idx < category_count-1) {
                     strncpy(category_buf, category_list[idx+1], 31);
                     commit_item_changes();
+                    open_item_fields();
                 }
                 return;
             }
@@ -873,7 +993,7 @@ void items_handle_input(SDL_Event *evt) {
 
         // Use Spell arrows
         {
-            int us_y = py + 10 + 5*35;
+            int us_y = item_fields[4].rect.y;
             SDL_Rect prev_s = {px+270, us_y, 20, 22};
             SDL_Rect next_s = {px+295, us_y, 20, 22};
             if (mx >= prev_s.x && mx < prev_s.x+prev_s.w && my >= prev_s.y && my < prev_s.y+prev_s.h) {
@@ -898,7 +1018,7 @@ void items_handle_input(SDL_Event *evt) {
 
         // Spell Level arrows
         {
-            int lv_y = py + 10 + 6*35;
+            int lv_y = item_fields[5].rect.y;
             SDL_Rect prev_l = {px+270, lv_y, 20, 22};
             SDL_Rect next_l = {px+295, lv_y, 20, 22};
             if (mx >= prev_l.x && mx < prev_l.x+prev_l.w && my >= prev_l.y && my < prev_l.y+prev_l.h) {
