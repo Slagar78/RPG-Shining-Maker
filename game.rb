@@ -42,11 +42,9 @@ class Game
 
     @top_layer = @game_map.build_top_layer
     SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
-	@layer2 = @game_map.build_layer2
+    @layer2 = @game_map.build_layer2
     SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
-	@roof_layer = @game_map.build_roof_layer
-    SetTextureFilter(@roof_layer.texture, TEXTURE_FILTER_POINT) if @roof_layer
-    @roof_hidden = false
+    @active_zones = []
 
     Raylib.InitAudioDevice()
     @audio = AudioManager.new
@@ -276,9 +274,19 @@ class Game
     @player.update_animation
     @player.update_movement if @game_state == :playing
 	if @game_map
-      @roof_hidden = @game_map.in_roof_zone?(@player.x, @player.y)
-	  # puts "Player (#{@player.x}, #{@player.y})  roof_hidden=#{@roof_hidden}"
+      new_active = []
+      if @game_map && @game_map.roof_events
+      @game_map.roof_events.each_with_index do |ev, idx|
+      new_active << idx if @game_map.in_roof_zone?(@player.x, @player.y)
     end
+  end
+unless new_active == @active_zones
+  @active_zones = new_active
+  @game_map.rebuild_layers(@active_zones)
+  @layer2   = @game_map.layer2
+  @top_layer = @game_map.top_layer
+end
+  end
 
     if @pending_menu_request
       if !@player.moving
@@ -371,17 +379,7 @@ class Game
         )
       end
 
-      # 2.5. СЛОЙ КРЫШ – только если игрок НЕ внутри зоны
-      if @roof_layer && !@roof_hidden
-        DrawTexturePro(
-          @roof_layer.texture,
-          Rectangle.create(0, 0, @roof_layer.texture.width, -@roof_layer.texture.height),
-          Rectangle.create(0, 0, @roof_layer.texture.width, @roof_layer.texture.height),
-          Vector2.create(0, 0), 0, WHITE
-        )
-      end
-
-        @game_map.draw_animated_tiles(@show_anim, @roof_hidden) if @game_map
+        @game_map.draw_animated_tiles(@show_anim) if @game_map
 
       @player.draw
 

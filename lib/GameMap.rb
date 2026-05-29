@@ -7,6 +7,8 @@ class GameMap
   attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas,
               :roof_events
   attr_reader :tileset_path
+  # Добавил, чтобы game.rb мог получить перестроенные текстуры после rebuild_layers
+  attr_reader :layer2, :top_layer
 
   def initialize(map_id = "Granseal")
     @src_rect_cache = {}
@@ -198,6 +200,7 @@ class GameMap
     @tile_types[tile_id] || 0
   end
 
+  # Принадлежит ли клетка (x,y) какой-либо зоне крыши из events.json?
   def in_roof_zone?(x, y)
     @roof_events.any? do |ev|
       x1 = [ev['start_x'], ev['end_x']].min
@@ -206,6 +209,33 @@ class GameMap
       y2 = [ev['start_y'], ev['end_y']].max
       x.between?(x1, x2) && y.between?(y1, y2)
     end
+  end
+
+  # Новая проверка: принадлежит ли клетка (x,y) конкретной зоне по индексу
+  def zone_active?(x, y, zone_index)
+    ev = @roof_events[zone_index]
+    return false unless ev
+    x1 = [ev['start_x'], ev['end_x']].min
+    x2 = [ev['start_x'], ev['end_x']].max
+    y1 = [ev['start_y'], ev['end_y']].min
+    y2 = [ev['start_y'], ev['end_y']].max
+    x.between?(x1, x2) && y.between?(y1, y2)
+  end
+
+  # Перестраивает @layer2 и @top_layer, исключая тайлы из зон с индексами skip_zones
+  def rebuild_layers(skip_zones = [])
+    if @layer2
+      UnloadRenderTexture(@layer2)
+      @layer2 = nil
+    end
+    if @top_layer
+      UnloadRenderTexture(@top_layer)
+      @top_layer = nil
+    end
+    @layer2 = build_layer2(skip_zones)
+    SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
+    @top_layer = build_top_layer(skip_zones)
+    SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
   end
 
   def build_static_background
@@ -250,7 +280,7 @@ class GameMap
     rt
   end
 
-  def build_layer2
+  def build_layer2(skip_zones = [])
     return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
 
     rt = LoadRenderTexture(@width * @tile_size, @height * @tile_size)
@@ -267,8 +297,9 @@ class GameMap
           tile_id = @tiles2[x][y]
           next if tile_id.nil? || tile_id < 0
           next if animated_tile?(tile_id)
-          # Пропускаем тайлы из зон событий
-          next if in_roof_zone?(x, y)
+
+          # Пропускаем тайлы, попадающие в активные зоны (если они переданы)
+          next if skip_zones.any? { |zi| zone_active?(x, y, zi) }
 
           src_rect = tile_src_rect(tile_id)
           next unless src_rect
@@ -289,46 +320,7 @@ class GameMap
     rt
   end
 
-  def build_roof_layer
-    return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
-
-    rt = LoadRenderTexture(@width * @tile_size, @height * @tile_size)
-    SetTextureFilter(rt.texture, TEXTURE_FILTER_POINT)
-
-    BeginTextureMode(rt)
-      ClearBackground(BLANK)
-      half = @tile_size / 2.0
-      center = @center_vec
-      dst = Rectangle.create(0, 0, @tile_size, @tile_size)
-
-      (0...@width).each do |x|
-        (0...@height).each do |y|
-          tile_id = @tiles2[x][y]
-          next if tile_id.nil? || tile_id < 0
-          next if animated_tile?(tile_id)
-          # Рисуем только тайлы внутри зон событий
-          next unless in_roof_zone?(x, y)
-
-          src_rect = tile_src_rect(tile_id)
-          next unless src_rect
-          rot    = @rot2[x][y] || 0
-          flip_x = @mirror_x2[x][y] || false
-          flip_y = @mirror_y2[x][y] || false
-          world_cx = x * @tile_size + half
-          world_cy = y * @tile_size + half
-          dst.x = world_cx
-          dst.y = world_cy
-          dst.width  = flip_x ? -@tile_size : @tile_size
-          dst.height = flip_y ? -@tile_size : @tile_size
-          angle = rot * 90.0
-          DrawTexturePro(@tileset_texture, src_rect, dst, center, angle, WHITE)
-        end
-      end
-    EndTextureMode()
-    rt
-  end
-
-  def build_top_layer
+  def build_top_layer(skip_zones = [])
     return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
 
     rt = LoadRenderTexture(@width * @tile_size, @height * @tile_size)
@@ -383,8 +375,8 @@ class GameMap
           type = @tile_types[tile_id] || 0
           next unless type == 3
 
-          # ⚠️ НЕ РИСУЕМ тайлы из зон событий (крыши)
-          next if in_roof_zone?(x, y)
+          # Пропускаем тайлы, попадающие в активные зоны
+          next if skip_zones.any? { |zi| zone_active?(x, y, zi) }
 
           src_rect = tile_src_rect(tile_id)
           next unless src_rect
@@ -441,8 +433,8 @@ class GameMap
     end
   end
 
-  # === ИСПРАВЛЕННЫЙ МЕТОД ОТРИСОВКИ АНИМИРОВАННЫХ ТАЙЛОВ ===
-  def draw_animated_tiles(use_animation, hide_roof = false)
+  # === Отрисовка анимированных тайлов ===
+  def draw_animated_tiles(use_animation)
     return if @animated_indices.empty? || @tileset_texture.nil?
 
     half = @tile_size / 2.0
@@ -477,15 +469,12 @@ class GameMap
       end
     end
 
-    # Второй слой – с фильтрацией зон
+    # Второй слой (теперь без фильтрации – всё уже учтено в перестроенных текстурах)
     (0...@width).each do |x|
       (0...@height).each do |y|
         tile_id = @tiles2[x][y]
         next if tile_id.nil? || tile_id < 0
         next unless animated_tile?(tile_id)
-
-        # Пропускаем тайлы крыши, если она должна быть скрыта
-        next if hide_roof && in_roof_zone?(x, y)
 
         texture = use_animation ? @anim_texture : @tileset_texture
         src_rect = tile_src_rect(tile_id)
@@ -508,4 +497,6 @@ class GameMap
       end
     end
   end
+
+  # (build_roof_layer больше не используется, но можно оставить для истории)
 end
