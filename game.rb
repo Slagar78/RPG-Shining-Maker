@@ -44,6 +44,7 @@ class Game
     SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
 
     @zone_hidden = Array.new(@game_map.roof_events.size, false)
+	@was_on_trigger = Array.new(@game_map.roof_events.size, false)
 
     Raylib.InitAudioDevice()
     @audio = AudioManager.new
@@ -264,7 +265,17 @@ class Game
 
     if @game_map && @game_map.roof_events.any?
       @game_map.roof_events.each_with_index do |ev, idx|
-        @zone_hidden[idx] = @game_map.in_roof_zone?(@player.x, @player.y)
+        tx = ev['trigger_x']
+        ty = ev['trigger_y']
+        # Если координаты триггера заданы и игрок стоит на них
+        if tx && ty && @player.x == tx && @player.y == ty
+          unless @was_on_trigger[idx]               # первый кадр на триггере
+            @zone_hidden[idx] = !@zone_hidden[idx]   # переключаем видимость
+          end
+          @was_on_trigger[idx] = true
+        else
+          @was_on_trigger[idx] = false               # сброс, когда ушли
+        end
       end
     end
 
