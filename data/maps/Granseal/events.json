@@ -1,4 +1,5 @@
 [{
+		"type":	"roof",
 		"tile_id":	136,
 		"start_x":	17,
 		"start_y":	7,
@@ -9,6 +10,7 @@
 		"exit_x":	19,
 		"exit_y":	13
 	}, {
+		"type":	"roof",
 		"tile_id":	136,
 		"start_x":	10,
 		"start_y":	6,
@@ -19,6 +21,7 @@
 		"exit_x":	12,
 		"exit_y":	13
 	}, {
+		"type":	"roof",
 		"tile_id":	136,
 		"start_x":	17,
 		"start_y":	7,
@@ -29,6 +32,7 @@
 		"exit_x":	19,
 		"exit_y":	13
 	}, {
+		"type":	"roof",
 		"tile_id":	136,
 		"start_x":	30,
 		"start_y":	9,
@@ -39,6 +43,7 @@
 		"exit_x":	32,
 		"exit_y":	16
 	}, {
+		"type":	"roof",
 		"tile_id":	136,
 		"start_x":	39,
 		"start_y":	5,
@@ -49,6 +54,7 @@
 		"exit_x":	41,
 		"exit_y":	14
 	}, {
+		"type":	"roof",
 		"tile_id":	136,
 		"start_x":	36,
 		"start_y":	19,
@@ -58,4 +64,11 @@
 		"trigger_y":	24,
 		"exit_x":	38,
 		"exit_y":	25
+	}, {
+		"type":	"tile_change",
+		"trigger_x":	4,
+		"trigger_y":	8,
+		"new_tile_id":	11,
+		"sample_x":	62,
+		"sample_y":	0
 	}]

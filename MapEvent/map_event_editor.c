@@ -31,6 +31,14 @@
 
 #define MAX_ROOF_EVENTS 128
 
+#define MAX_TILE_CHANGES 64
+
+typedef struct {
+    int trigger_x, trigger_y;   // клетка-триггер (куда наступает игрок)
+    int new_tile_id;            // ID нового тайла
+    int sample_x, sample_y;     // клетка, с которой взят образец тайла (для подсветки)
+} TileChangeEvent;
+
 // ─── Событие крыши (теперь с конкретными координатами триггера) ──
 typedef struct {
     int tile_id;
@@ -84,6 +92,14 @@ typedef struct {
     char input_buf[32];
 
     bool left_panel_collapsed;
+
+    TileChangeEvent tile_changes[MAX_TILE_CHANGES];
+    int tile_change_count;
+    int selected_tile_change;   // -1 = none
+    int tc_edit_field;          // 0=Trigger, 1=New Tile ID
+    char tc_input_buf[32];
+    bool tc_section_collapsed;
+    int tc_section_y;
 } Editor;
 
 // ─── Прототипы ────────────────────────────────
@@ -137,6 +153,12 @@ void editor_init(Editor *ed) {
     ed->edit_field = -1;
     ed->input_buf[0] = '\0';
     ed->left_panel_collapsed = true;
+    ed->tile_change_count = 0;
+    ed->selected_tile_change = -1;
+    ed->tc_edit_field = -1;
+    ed->tc_input_buf[0] = '\0';
+    ed->tc_section_collapsed = true;   // по умолчанию свёрнуто
+    ed->tc_section_y = 0;
 }
 
 // ─── Тайлсет ──────────────────────────────────
@@ -253,9 +275,13 @@ void load_map_list(Editor *ed) {
 // ─── События (events.json) ─────────────────────
 void load_events_from_json(Editor *ed, const char *folder) {
     ed->roof_event_count = 0;
+    ed->tile_change_count = 0;
     ed->selected_roof_event = -1;
+    ed->selected_tile_change = -1;
     ed->edit_field = -1;
+    ed->tc_edit_field = -1;
     ed->input_buf[0] = '\0';
+    ed->tc_input_buf[0] = '\0';
 
     char path[512];
     snprintf(path, sizeof(path), "../data/maps/%s/events.json", folder);
@@ -270,34 +296,57 @@ void load_events_from_json(Editor *ed, const char *folder) {
         if (arr) cJSON_Delete(arr);
         return;
     }
+
     int count = cJSON_GetArraySize(arr);
-    for (int i = 0; i < count && ed->roof_event_count < MAX_ROOF_EVENTS; i++) {
+    for (int i = 0; i < count; i++) {
         cJSON *ev = cJSON_GetArrayItem(arr, i);
         if (!ev) continue;
-        cJSON *tid = cJSON_GetObjectItem(ev, "tile_id");
-        cJSON *sx  = cJSON_GetObjectItem(ev, "start_x");
-        cJSON *sy  = cJSON_GetObjectItem(ev, "start_y");
-        cJSON *ex  = cJSON_GetObjectItem(ev, "end_x");
-        cJSON *ey  = cJSON_GetObjectItem(ev, "end_y");
 
-        // Новые поля (могут отсутствовать в старых файлах)
-        cJSON *tx = cJSON_GetObjectItem(ev, "trigger_x");
-        cJSON *ty = cJSON_GetObjectItem(ev, "trigger_y");
+        // Определяем тип события
+        cJSON *type_json = cJSON_GetObjectItem(ev, "type");
+        const char *type = type_json ? type_json->valuestring : "roof"; // по умолчанию крыша
 
-        if (tid && sx && sy && ex && ey) {
-            RoofEvent *re = &ed->roof_events[ed->roof_event_count++];
-            re->tile_id = tid->valueint;
-            re->start_x = sx->valueint;
-            re->start_y = sy->valueint;
-            re->end_x   = ex->valueint;
-            re->end_y   = ey->valueint;
-            // Если координаты триггера не указаны, ставим -1
-            re->trigger_x = (tx && cJSON_IsNumber(tx)) ? tx->valueint : -1;
-            re->trigger_y = (ty && cJSON_IsNumber(ty)) ? ty->valueint : -1;
-            cJSON *ex_x = cJSON_GetObjectItem(ev, "exit_x");
-            cJSON *ex_y = cJSON_GetObjectItem(ev, "exit_y");
-            re->exit_x = (ex_x && cJSON_IsNumber(ex_x)) ? ex_x->valueint : -1;
-            re->exit_y = (ex_y && cJSON_IsNumber(ex_y)) ? ex_y->valueint : -1;
+        if (strcmp(type, "roof") == 0) {
+            // Загружаем как крышу (весь старый код)
+            if (ed->roof_event_count < MAX_ROOF_EVENTS) {
+                cJSON *tid = cJSON_GetObjectItem(ev, "tile_id");
+                cJSON *sx  = cJSON_GetObjectItem(ev, "start_x");
+                cJSON *sy  = cJSON_GetObjectItem(ev, "start_y");
+                cJSON *ex  = cJSON_GetObjectItem(ev, "end_x");
+                cJSON *ey  = cJSON_GetObjectItem(ev, "end_y");
+                cJSON *tx = cJSON_GetObjectItem(ev, "trigger_x");
+                cJSON *ty = cJSON_GetObjectItem(ev, "trigger_y");
+                cJSON *ex_x = cJSON_GetObjectItem(ev, "exit_x");
+                cJSON *ex_y = cJSON_GetObjectItem(ev, "exit_y");
+
+                if (tid && sx && sy && ex && ey) {
+                    RoofEvent *re = &ed->roof_events[ed->roof_event_count++];
+                    re->tile_id = tid->valueint;
+                    re->start_x = sx->valueint; re->start_y = sy->valueint;
+                    re->end_x = ex->valueint;   re->end_y = ey->valueint;
+                    re->trigger_x = (tx && cJSON_IsNumber(tx)) ? tx->valueint : -1;
+                    re->trigger_y = (ty && cJSON_IsNumber(ty)) ? ty->valueint : -1;
+                    re->exit_x = (ex_x && cJSON_IsNumber(ex_x)) ? ex_x->valueint : -1;
+                    re->exit_y = (ex_y && cJSON_IsNumber(ex_y)) ? ex_y->valueint : -1;
+                }
+            }
+        } else if (strcmp(type, "tile_change") == 0) {
+            // Загружаем как замену тайла
+            if (ed->tile_change_count < MAX_TILE_CHANGES) {
+                cJSON *tx = cJSON_GetObjectItem(ev, "trigger_x");
+                cJSON *ty = cJSON_GetObjectItem(ev, "trigger_y");
+                cJSON *ntid = cJSON_GetObjectItem(ev, "new_tile_id");
+                if (tx && ty && ntid) {
+                    TileChangeEvent *tc = &ed->tile_changes[ed->tile_change_count++];
+                    tc->trigger_x = tx->valueint;
+                    tc->trigger_y = ty->valueint;
+                    tc->new_tile_id = ntid->valueint;
+                cJSON *sx = cJSON_GetObjectItem(ev, "sample_x");
+                cJSON *sy = cJSON_GetObjectItem(ev, "sample_y");
+                tc->sample_x = (sx && cJSON_IsNumber(sx)) ? sx->valueint : -1;
+                tc->sample_y = (sy && cJSON_IsNumber(sy)) ? sy->valueint : -1;
+                }
+            }
         }
     }
     cJSON_Delete(arr);
@@ -311,21 +360,37 @@ void save_events_to_json(Editor *ed, const char *folder) {
     snprintf(filename, sizeof(filename), "%s/events.json", dir);
 
     cJSON *root = cJSON_CreateArray();
+
+    // Сохраняем крыши
     for (int i = 0; i < ed->roof_event_count; i++) {
         RoofEvent *re = &ed->roof_events[i];
         cJSON *ev = cJSON_CreateObject();
+        cJSON_AddStringToObject(ev, "type", "roof");
         cJSON_AddNumberToObject(ev, "tile_id", re->tile_id);
         cJSON_AddNumberToObject(ev, "start_x", re->start_x);
         cJSON_AddNumberToObject(ev, "start_y", re->start_y);
-        cJSON_AddNumberToObject(ev, "end_x",   re->end_x);
-        cJSON_AddNumberToObject(ev, "end_y",   re->end_y);
-        // Сохраняем координаты триггера (даже если -1, для полноты)
+        cJSON_AddNumberToObject(ev, "end_x", re->end_x);
+        cJSON_AddNumberToObject(ev, "end_y", re->end_y);
         cJSON_AddNumberToObject(ev, "trigger_x", re->trigger_x);
         cJSON_AddNumberToObject(ev, "trigger_y", re->trigger_y);
         cJSON_AddNumberToObject(ev, "exit_x", re->exit_x);
         cJSON_AddNumberToObject(ev, "exit_y", re->exit_y);
         cJSON_AddItemToArray(root, ev);
     }
+
+    // Сохраняем замены тайлов
+    for (int i = 0; i < ed->tile_change_count; i++) {
+        TileChangeEvent *tc = &ed->tile_changes[i];
+        cJSON *ev = cJSON_CreateObject();
+        cJSON_AddStringToObject(ev, "type", "tile_change");
+        cJSON_AddNumberToObject(ev, "trigger_x", tc->trigger_x);
+        cJSON_AddNumberToObject(ev, "trigger_y", tc->trigger_y);
+        cJSON_AddNumberToObject(ev, "new_tile_id", tc->new_tile_id);
+        cJSON_AddNumberToObject(ev, "sample_x", tc->sample_x);
+        cJSON_AddNumberToObject(ev, "sample_y", tc->sample_y);
+        cJSON_AddItemToArray(root, ev);
+    }
+
     char *str = cJSON_Print(root);
     FILE *f = fopen(filename, "w");
     if (f) { fputs(str, f); fclose(f); }
@@ -405,7 +470,8 @@ void render_map(Editor *ed) {
         }
     }
 
-    // Красная рамка вокруг конкретной клетки-триггера (если задана)
+    // === Подсветка для Roof Events ===
+    // Красная рамка вокруг конкретной клетки-триггера
     if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
         RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
         if (re->trigger_x >= 0 && re->trigger_y >= 0) {
@@ -416,18 +482,12 @@ void render_map(Editor *ed) {
                     MAP_X + (tx * TILE_SIZE - ed->cam_x) * zoom,
                     MAP_Y + (ty * TILE_SIZE - ed->cam_y) * zoom,
                     scaled_tile, scaled_tile
-            };
-            SDL_SetRenderDrawColor(ed->renderer, 255, 0, 0, 255);
-            // Рисуем жирную красную рамку (несколько проходов со смещением)
-               for (int dx = -1; dx <= 1; dx++) {
-               for (int dy = -1; dy <= 1; dy++) {
-               SDL_FRect thick_rect = {
-               tile_dst.x + dx,
-               tile_dst.y + dy,
-               tile_dst.w,
-               tile_dst.h
                 };
-                  SDL_RenderDrawRectF(ed->renderer, &thick_rect);
+                SDL_SetRenderDrawColor(ed->renderer, 255, 0, 0, 255);
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        SDL_FRect thick_rect = { tile_dst.x + dx, tile_dst.y + dy, tile_dst.w, tile_dst.h };
+                        SDL_RenderDrawRectF(ed->renderer, &thick_rect);
                     }
                 }
             }
@@ -438,15 +498,14 @@ void render_map(Editor *ed) {
     if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
         RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
         if (re->exit_x >= 0 && re->exit_y >= 0) {
-            int ex_x = re->exit_x;
-            int ex_y = re->exit_y;
+            int ex_x = re->exit_x, ex_y = re->exit_y;
             if (ex_x >= 0 && ex_x < map->width && ex_y >= 0 && ex_y < map->height) {
                 SDL_FRect ex_dst = {
                     MAP_X + (ex_x * TILE_SIZE - ed->cam_x) * zoom,
                     MAP_Y + (ex_y * TILE_SIZE - ed->cam_y) * zoom,
                     scaled_tile, scaled_tile
                 };
-                SDL_SetRenderDrawColor(ed->renderer, 0, 150, 255, 255);  // голубой
+                SDL_SetRenderDrawColor(ed->renderer, 0, 150, 255, 255);
                 for (int dx = -1; dx <= 1; dx++) {
                     for (int dy = -1; dy <= 1; dy++) {
                         SDL_FRect thick = { ex_dst.x + dx, ex_dst.y + dy, ex_dst.w, ex_dst.h };
@@ -457,7 +516,7 @@ void render_map(Editor *ed) {
         }
     }
 
-    // Зелёная рамка зоны крыши (цельный прямоугольник)
+    // Зелёная рамка зоны крыши
     if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
         RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
         int x1 = re->start_x < re->end_x ? re->start_x : re->end_x;
@@ -472,19 +531,56 @@ void render_map(Editor *ed) {
             (y2 - y1 + 1) * scaled_tile
         };
         SDL_SetRenderDrawColor(ed->renderer, 0, 255, 0, 255);
-        // Жирная зелёная рамка
         for (int dx = -1; dx <= 1; dx++) {
-        for (int dy = -1; dy <= 1; dy++) {
-        SDL_FRect thick_zone = {
-            zone.x + dx,
-            zone.y + dy,
-            zone.w,
-            zone.h
-            };
-            SDL_RenderDrawRectF(ed->renderer, &thick_zone);
+            for (int dy = -1; dy <= 1; dy++) {
+                SDL_FRect thick_zone = { zone.x + dx, zone.y + dy, zone.w, zone.h };
+                SDL_RenderDrawRectF(ed->renderer, &thick_zone);
+            }
         }
     }
-}
+
+    // === Подсветка для Tile Changes ===
+    if (ed->selected_tile_change >= 0 && ed->selected_tile_change < ed->tile_change_count) {
+        TileChangeEvent *tc = &ed->tile_changes[ed->selected_tile_change];
+
+        // Жёлтая рамка вокруг клетки-триггера
+        if (tc->trigger_x >= 0 && tc->trigger_y >= 0) {
+            int ttx = tc->trigger_x, tty = tc->trigger_y;
+            if (ttx >= 0 && ttx < map->width && tty >= 0 && tty < map->height) {
+                SDL_FRect tdst = {
+                    MAP_X + (ttx * TILE_SIZE - ed->cam_x) * zoom,
+                    MAP_Y + (tty * TILE_SIZE - ed->cam_y) * zoom,
+                    scaled_tile, scaled_tile
+                };
+                SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 255); // жёлтый
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        SDL_FRect r = { tdst.x + dx, tdst.y + dy, tdst.w, tdst.h };
+                        SDL_RenderDrawRectF(ed->renderer, &r);
+                    }
+                }
+            }
+        }
+
+        // Оранжевая рамка вокруг клетки-образца (откуда взят новый тайл)
+        if (tc->new_tile_id >= 0 && tc->sample_x >= 0 && tc->sample_y >= 0) {
+            int ox = tc->sample_x, oy = tc->sample_y;
+            if (ox >= 0 && ox < map->width && oy >= 0 && oy < map->height) {
+                SDL_FRect odst = {
+                    MAP_X + (ox * TILE_SIZE - ed->cam_x) * zoom,
+                    MAP_Y + (oy * TILE_SIZE - ed->cam_y) * zoom,
+                    scaled_tile, scaled_tile
+                };
+                SDL_SetRenderDrawColor(ed->renderer, 255, 165, 0, 255); // оранжевый
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        SDL_FRect r = { odst.x + dx, odst.y + dy, odst.w, odst.h };
+                        SDL_RenderDrawRectF(ed->renderer, &r);
+                    }
+                }
+            }
+        }
+    }
 
     SDL_RenderSetClipRect(ed->renderer, NULL);
 
@@ -651,87 +747,195 @@ static void check_roof_field_click(Editor *ed, int field_idx, int line_y, int mx
     }
 }
 
+static void draw_tc_field(Editor *ed, const char *label, int field_idx, int line_y) {
+    SDL_Rect lbl_rect = {10, line_y, 65, 20};
+    draw_text_centered(ed->renderer, ed->font, label, lbl_rect.x + lbl_rect.w/2, lbl_rect.y + lbl_rect.h/2,
+                       (SDL_Color){200, 200, 200, 255});
+    SDL_Rect fld_rect = {90, line_y, 130, 20};
+    bool active = (ed->tc_edit_field == field_idx);
+    SDL_SetRenderDrawColor(ed->renderer, active ? 255 : 200, active ? 255 : 200, active ? 255 : 200, 255);
+    SDL_RenderFillRect(ed->renderer, &fld_rect);
+    SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
+    SDL_RenderDrawRect(ed->renderer, &fld_rect);
+
+    char buf[32] = "";
+    if (ed->selected_tile_change >= 0 && ed->selected_tile_change < ed->tile_change_count) {
+        TileChangeEvent *te = &ed->tile_changes[ed->selected_tile_change];
+        if (field_idx == 0)
+            snprintf(buf, sizeof(buf), "%d,%d", te->trigger_x, te->trigger_y);
+        else if (field_idx == 1)
+            snprintf(buf, sizeof(buf), "%d", te->new_tile_id);
+    }
+    if (active && ed->tc_input_buf[0])
+        snprintf(buf, sizeof(buf), "%s", ed->tc_input_buf);
+    draw_text_centered(ed->renderer, ed->font, buf, fld_rect.x + fld_rect.w/2, fld_rect.y + fld_rect.h/2,
+                       (SDL_Color){0, 0, 0, 255});
+}
+
+static void check_tc_click(Editor *ed, int field_idx, int line_y, int mx, int my) {
+    SDL_Rect fld = {90, line_y, 130, 20};
+    if (mx >= fld.x && mx < fld.x + fld.w && my >= fld.y && my < fld.y + fld.h) {
+        ed->tc_edit_field = field_idx;
+        if (ed->selected_tile_change >= 0 && ed->selected_tile_change < ed->tile_change_count) {
+            TileChangeEvent *te = &ed->tile_changes[ed->selected_tile_change];
+            if (field_idx == 0)
+                snprintf(ed->tc_input_buf, sizeof(ed->tc_input_buf), "%d,%d", te->trigger_x, te->trigger_y);
+            else if (field_idx == 1)
+                snprintf(ed->tc_input_buf, sizeof(ed->tc_input_buf), "%d", te->new_tile_id);
+        }
+        SDL_StartTextInput();
+    }
+}
+
 // ─── Левая панель (Roof Events, сворачиваемая) ──
 void render_left_panel(Editor *ed) {
     SDL_Rect bg = {0, 0, LEFT_PANEL_W, WINDOW_H};
     SDL_SetRenderDrawColor(ed->renderer, 50,50,50,255);
     SDL_RenderFillRect(ed->renderer, &bg);
 
-    // Заголовок и кнопка сворачивания
     int y = 10;
-    draw_text_centered(ed->renderer, ed->font, "ROOF EVENTS", LEFT_PANEL_W/2 - 20, y, (SDL_Color){255,255,255,255});
 
-    SDL_Rect collapse_btn = { LEFT_PANEL_W - 35, 2, 26, 22 };  // чуть крупнее
-    // Небольшой фон для кнопки (тёмно-серый)
+    // ====================== ROOF EVENTS ======================
+    // Заголовок Roof Events (всегда видим)
+    SDL_Rect roof_header = {10, y, LEFT_PANEL_W-20, 24};
+    SDL_SetRenderDrawColor(ed->renderer, 60, 60, 60, 255);
+    SDL_RenderFillRect(ed->renderer, &roof_header);
+    draw_text_centered(ed->renderer, ed->font, "ROOF EVENTS", LEFT_PANEL_W/2, y+12, (SDL_Color){255,255,255,255});
+
+    // Кнопка сворачивания Roof Events
+    SDL_Rect roof_collapse_btn = { LEFT_PANEL_W - 35, y + 1, 26, 22 };
     SDL_SetRenderDrawColor(ed->renderer, 80, 80, 80, 255);
-    SDL_RenderFillRect(ed->renderer, &collapse_btn);
-    // Текст заметнее
-    if (ed->left_panel_collapsed) {
-        draw_text_centered(ed->renderer, ed->font, "+", collapse_btn.x + collapse_btn.w/2,
-                           collapse_btn.y + collapse_btn.h/2, (SDL_Color){255,255,255,255});
-    } else {
-        draw_text_centered(ed->renderer, ed->font, "—", collapse_btn.x + collapse_btn.w/2,
-                           collapse_btn.y + collapse_btn.h/2, (SDL_Color){255,255,255,255});
-    }
+    SDL_RenderFillRect(ed->renderer, &roof_collapse_btn);
+    draw_text_centered(ed->renderer, ed->font, ed->left_panel_collapsed ? "+" : "—",
+                       roof_collapse_btn.x + roof_collapse_btn.w/2, roof_collapse_btn.y + roof_collapse_btn.h/2,
+                       (SDL_Color){255,255,255,255});
+    y += 26;
 
-    if (ed->left_panel_collapsed) {
-        return;
-    }
+    // Содержимое Roof Events (только если развёрнуто)
+    if (!ed->left_panel_collapsed) {
+        SDL_Rect add_btn = {10, y, LEFT_PANEL_W-20, 24};
+        SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+        SDL_RenderFillRect(ed->renderer, &add_btn);
+        draw_text_centered(ed->renderer, ed->font, "Add Roof Event", add_btn.x+add_btn.w/2, add_btn.y+add_btn.h/2,
+                           (SDL_Color){255,255,255,255});
+        y += 30;
 
-    y = 35;
-    SDL_Rect add_btn = {10, y, LEFT_PANEL_W-20, 24};
-    SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
-    SDL_RenderFillRect(ed->renderer, &add_btn);
-    draw_text_centered(ed->renderer, ed->font, "Add Roof Event", add_btn.x+add_btn.w/2, add_btn.y+add_btn.h/2, (SDL_Color){255,255,255,255});
-    y += 30;
+        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        y += 5;
 
-    SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
-    SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
-    y += 5;
-
-    int list_start_y = y;
-    int list_h = 200;
-    SDL_Rect list_clip = {10, list_start_y, LEFT_PANEL_W-20, list_h};
-    SDL_RenderSetClipRect(ed->renderer, &list_clip);
-
-    for (int i = 0; i < ed->roof_event_count; i++) {
-        RoofEvent *re = &ed->roof_events[i];
-        char buf[128];
-        snprintf(buf, sizeof(buf), "Tile %d  (%d,%d)-(%d,%d)",
-                 re->tile_id, re->start_x, re->start_y, re->end_x, re->end_y);
-        SDL_Color col = (i == ed->selected_roof_event) ? (SDL_Color){0,255,0,255} : (SDL_Color){255,255,255,255};
-        SDL_Rect item_rect = {10, list_start_y + i*18, LEFT_PANEL_W-20, 18};
-        if (i == ed->selected_roof_event) {
-            SDL_SetRenderDrawColor(ed->renderer, 80,80,120,255);
-            SDL_RenderFillRect(ed->renderer, &item_rect);
+        int list_start_y = y;
+        int list_h = 200;
+        SDL_Rect list_clip = {10, list_start_y, LEFT_PANEL_W-20, list_h};
+        SDL_RenderSetClipRect(ed->renderer, &list_clip);
+        for (int i = 0; i < ed->roof_event_count; i++) {
+            RoofEvent *re = &ed->roof_events[i];
+            char buf[128];
+            snprintf(buf, sizeof(buf), "Tile %d  (%d,%d)-(%d,%d)",
+                     re->tile_id, re->start_x, re->start_y, re->end_x, re->end_y);
+            SDL_Color col = (i == ed->selected_roof_event) ? (SDL_Color){0,255,0,255} : (SDL_Color){255,255,255,255};
+            SDL_Rect item_rect = {10, list_start_y + i*18, LEFT_PANEL_W-20, 18};
+            if (i == ed->selected_roof_event) {
+                SDL_SetRenderDrawColor(ed->renderer, 80,80,120,255);
+                SDL_RenderFillRect(ed->renderer, &item_rect);
+            }
+            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y+9, col);
         }
-        draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y+9, col);
+        SDL_RenderSetClipRect(ed->renderer, NULL);
+        y = list_start_y + list_h + 5;
+
+        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        y += 5;
+
+        if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
+            int edit_y = y;
+            draw_roof_field(ed, "Tile ID", 0, edit_y);
+            edit_y += 22;
+            draw_roof_field(ed, "Start", 1, edit_y);
+            edit_y += 22;
+            draw_roof_field(ed, "End", 2, edit_y);
+            edit_y += 22;
+            draw_roof_field(ed, "Exit", 3, edit_y);
+            edit_y += 22;
+
+            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
+            SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
+            SDL_RenderFillRect(ed->renderer, &del_btn);
+            draw_text_centered(ed->renderer, ed->font, "Delete Event", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
+                               (SDL_Color){255,255,255,255});
+            y = edit_y + 24;
+        }
     }
+
+    // ====================== TILE CHANGES ======================
+    y += 10;  // небольшой отступ между секциями
+    ed->tc_section_y = y;   // запоминаем для обработки кликов
+
+    SDL_Rect tc_header = {10, y, LEFT_PANEL_W-20, 24};
+    SDL_SetRenderDrawColor(ed->renderer, 60, 60, 60, 255);
+    SDL_RenderFillRect(ed->renderer, &tc_header);
+    draw_text_centered(ed->renderer, ed->font, "TILE CHANGES", LEFT_PANEL_W/2, y+12, (SDL_Color){255,255,255,255});
+
+    SDL_Rect tc_collapse_btn = { LEFT_PANEL_W - 35, y + 1, 26, 22 };
+    SDL_SetRenderDrawColor(ed->renderer, 80, 80, 80, 255);
+    SDL_RenderFillRect(ed->renderer, &tc_collapse_btn);
+    draw_text_centered(ed->renderer, ed->font, ed->tc_section_collapsed ? "+" : "—",
+                       tc_collapse_btn.x + tc_collapse_btn.w/2, tc_collapse_btn.y + tc_collapse_btn.h/2,
+                       (SDL_Color){255,255,255,255});
+    y += 26;
+
+    if (!ed->tc_section_collapsed) {
+        SDL_Rect tc_add_btn = {10, y, LEFT_PANEL_W-20, 24};
+        SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+        SDL_RenderFillRect(ed->renderer, &tc_add_btn);
+        draw_text_centered(ed->renderer, ed->font, "Add Tile Change", tc_add_btn.x+tc_add_btn.w/2, tc_add_btn.y+tc_add_btn.h/2,
+                           (SDL_Color){255,255,255,255});
+        y += 30;
+
+        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        y += 5;
+
+        int tc_list_start_y = y;
+        int tc_list_h = 100;
+        SDL_Rect tc_list_clip = {10, tc_list_start_y, LEFT_PANEL_W-20, tc_list_h};
+        SDL_RenderSetClipRect(ed->renderer, &tc_list_clip);
+        for (int i = 0; i < ed->tile_change_count; i++) {
+            TileChangeEvent *te = &ed->tile_changes[i];
+            char buf[64];
+            snprintf(buf, sizeof(buf), "(%d,%d) -> Tile %d", te->trigger_x, te->trigger_y, te->new_tile_id);
+            SDL_Color col = (i == ed->selected_tile_change) ? (SDL_Color){0,255,0,255} : (SDL_Color){255,255,255,255};
+            SDL_Rect item_rect = {10, tc_list_start_y + i*18, LEFT_PANEL_W-20, 18};
+            if (i == ed->selected_tile_change) {
+                SDL_SetRenderDrawColor(ed->renderer, 80,80,120,255);
+                SDL_RenderFillRect(ed->renderer, &item_rect);
+            }
+            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y+9, col);
+        }
+        SDL_RenderSetClipRect(ed->renderer, NULL);
+        y = tc_list_start_y + tc_list_h + 5;
+
+        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        y += 5;
+
+        if (ed->selected_tile_change >= 0 && ed->selected_tile_change < ed->tile_change_count) {
+            int edit_y = y;
+            draw_tc_field(ed, "Trigger", 0, edit_y);
+            edit_y += 22;
+            draw_tc_field(ed, "New Tile", 1, edit_y);
+            edit_y += 22;
+
+            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
+            SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
+            SDL_RenderFillRect(ed->renderer, &del_btn);
+            draw_text_centered(ed->renderer, ed->font, "Delete", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
+                               (SDL_Color){255,255,255,255});
+        }
+    }
+
     SDL_RenderSetClipRect(ed->renderer, NULL);
-    y = list_start_y + list_h + 5;
-
-    SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
-    SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
-    y += 5;
-
-    if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
-        int edit_y = y;
-
-        draw_roof_field(ed, "Tile ID", 0, edit_y);
-        edit_y += 22;
-        draw_roof_field(ed, "Start", 1, edit_y);
-        edit_y += 22;
-        draw_roof_field(ed, "End", 2, edit_y);
-        edit_y += 22;
-        // Поле Exit
-        draw_roof_field(ed, "Exit", 3, edit_y);
-        edit_y += 22;
-
-        SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
-        SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
-        SDL_RenderFillRect(ed->renderer, &del_btn);
-        draw_text_centered(ed->renderer, ed->font, "Delete Event", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2, (SDL_Color){255,255,255,255});
-    }
 }
 
 // ─── Обработка ввода (исправленная) ──────────
@@ -740,7 +944,7 @@ void handle_input(Editor *ed, bool *running) {
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) { *running = false; return; }
 
-        // ================== Текстовый ввод ==================
+        // ================== Текстовый ввод (Roof Events) ==================
         if (ed->edit_field != -1) {
             if (e.type == SDL_KEYDOWN) {
                 if (e.key.keysym.sym == SDLK_BACKSPACE) {
@@ -791,6 +995,45 @@ void handle_input(Editor *ed, bool *running) {
             }
         }
 
+        // ================== Текстовый ввод (Tile Changes) ==================
+        if (ed->tc_edit_field != -1) {
+            if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_BACKSPACE) {
+                    int len = strlen(ed->tc_input_buf);
+                    if (len > 0) ed->tc_input_buf[len-1] = '\0';
+                }
+                else if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER) {
+                    if (ed->selected_tile_change >= 0 && ed->selected_tile_change < ed->tile_change_count) {
+                        TileChangeEvent *tc = &ed->tile_changes[ed->selected_tile_change];
+                        if (ed->tc_edit_field == 0) {
+                            int x, y;
+                            if (sscanf(ed->tc_input_buf, "%d,%d", &x, &y) == 2) {
+                                tc->trigger_x = x;
+                                tc->trigger_y = y;
+                            }
+                        } else if (ed->tc_edit_field == 1) {
+                            tc->new_tile_id = atoi(ed->tc_input_buf);
+                        }
+                    }
+                    ed->tc_edit_field = -1;
+                    ed->tc_input_buf[0] = '\0';
+                    SDL_StopTextInput();
+                }
+                else if (e.key.keysym.sym == SDLK_ESCAPE) {
+                    ed->tc_edit_field = -1;
+                    ed->tc_input_buf[0] = '\0';
+                    SDL_StopTextInput();
+                }
+            }
+            else if (e.type == SDL_TEXTINPUT) {
+                if (strspn(e.text.text, "0123456789,-") == strlen(e.text.text)) {
+                    if (strlen(ed->tc_input_buf) < 30) {
+                        strcat(ed->tc_input_buf, e.text.text);
+                    }
+                }
+            }
+        }
+
         // ================== Колесо мыши ==================
         if (e.type == SDL_MOUSEWHEEL) {
             int mx, my;
@@ -827,7 +1070,7 @@ void handle_input(Editor *ed, bool *running) {
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             int mx = e.button.x, my = e.button.y;
 
-            // Сброс поля ввода при клике вне полей и карты
+            // Сброс Roof поля при клике вне
             if (ed->edit_field != -1) {
                 if (mx >= MAP_X && mx < MAP_X + MAP_VISIBLE_W && my >= MAP_Y && my < MAP_Y + MAP_VISIBLE_H) {
                     // клик по карте – обработаем ниже
@@ -838,68 +1081,136 @@ void handle_input(Editor *ed, bool *running) {
                 }
             }
 
-            // Левая панель
+            // Сброс Tile Change поля при клике вне
+            if (ed->tc_edit_field != -1) {
+                if (mx >= MAP_X && mx < MAP_X + MAP_VISIBLE_W && my >= MAP_Y && my < MAP_Y + MAP_VISIBLE_H) {
+                    // клик по карте – обработаем ниже
+                } else if (!(mx >= 0 && mx < LEFT_PANEL_W)) {
+                    ed->tc_edit_field = -1;
+                    ed->tc_input_buf[0] = '\0';
+                    SDL_StopTextInput();
+                }
+            }
+
+            // --------------------- Левая панель ---------------------
             if (mx >= 0 && mx < LEFT_PANEL_W) {
-                SDL_Rect collapse_btn = { LEFT_PANEL_W - 40, 0, 30, 24 };
-                if (mx >= collapse_btn.x && mx < collapse_btn.x+collapse_btn.w &&
-                    my >= collapse_btn.y && my < collapse_btn.y+collapse_btn.h) {
-                    ed->left_panel_collapsed = !ed->left_panel_collapsed;
-                    return;
-                }
-
-                if (ed->left_panel_collapsed) return;
-
-                int y_off = 35;
-                SDL_Rect add_btn = {10, y_off, LEFT_PANEL_W-20, 24};
-                if (my >= add_btn.y && my < add_btn.y+add_btn.h) {
-                    if (ed->roof_event_count < MAX_ROOF_EVENTS) {
-                        RoofEvent *re = &ed->roof_events[ed->roof_event_count++];
-                        re->tile_id = 0;
-                        re->trigger_x = re->trigger_y = -1;
-                        re->exit_x = -1;
-                        re->exit_y = -1;
-                        re->start_x = 0; re->start_y = 0;
-                        re->end_x = 1; re->end_y = 1;
-                        ed->selected_roof_event = ed->roof_event_count - 1;
-                        ed->edit_field = -1;
-                        ed->input_buf[0] = '\0';
-                    }
-                    return;
-                }
-                y_off += 30 + 5;
-                int list_start_y = y_off;
-                int list_h = 200;
-                if (my >= list_start_y && my < list_start_y + list_h) {
-                    int idx = (my - list_start_y) / 18;
-                    if (idx >= 0 && idx < ed->roof_event_count) {
-                        ed->selected_roof_event = idx;
-                        ed->edit_field = -1;
-                        ed->input_buf[0] = '\0';
+                // --- Кнопка сворачивания Roof Events (всегда активна) ---
+                if (my >= 10 && my < 34) {
+                    if (mx >= LEFT_PANEL_W - 35 && mx < LEFT_PANEL_W - 9) {
+                        ed->left_panel_collapsed = !ed->left_panel_collapsed;
                         return;
                     }
+                    // Клик по заголовку Roof Events (не кнопка) – ничего не делаем
+                    if (my < 34) return;
                 }
-                if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
-                    int edit_y = list_start_y + list_h + 5 + 5;
-                    check_roof_field_click(ed, 0, edit_y, mx, my);
-                    check_roof_field_click(ed, 1, edit_y + 22, mx, my);
-                    check_roof_field_click(ed, 2, edit_y + 44, mx, my);
-                    check_roof_field_click(ed, 3, edit_y + 66, mx, my);   // Exit
 
-                    SDL_Rect del_btn = {10, edit_y + 88, LEFT_PANEL_W-20, 24};
-                    if (mx >= del_btn.x && mx < del_btn.x+del_btn.w && my >= del_btn.y && my < del_btn.y+del_btn.h) {
-                        for (int i = ed->selected_roof_event; i < ed->roof_event_count-1; i++)
-                            ed->roof_events[i] = ed->roof_events[i+1];
-                        ed->roof_event_count--;
-                        ed->selected_roof_event = -1;
-                        ed->edit_field = -1;
-                        SDL_StopTextInput();
+                // --- Содержимое Roof Events (если развёрнуто) ---
+                if (!ed->left_panel_collapsed) {
+                    int y_off = 36; // 10 + 26
+                    SDL_Rect add_btn = {10, y_off, LEFT_PANEL_W-20, 24};
+                    if (my >= add_btn.y && my < add_btn.y+add_btn.h) {
+                        if (ed->roof_event_count < MAX_ROOF_EVENTS) {
+                            RoofEvent *re = &ed->roof_events[ed->roof_event_count++];
+                            re->tile_id = 0;
+                            re->trigger_x = re->trigger_y = -1;
+                            re->exit_x = -1;
+                            re->exit_y = -1;
+                            re->start_x = 0; re->start_y = 0;
+                            re->end_x = 1; re->end_y = 1;
+                            ed->selected_roof_event = ed->roof_event_count - 1;
+                            ed->edit_field = -1;
+                            ed->input_buf[0] = '\0';
+                        }
                         return;
+                    }
+                    y_off += 30 + 5; // 71
+                    int list_start_y = y_off;
+                    int list_h = 200;
+                    if (my >= list_start_y && my < list_start_y + list_h) {
+                        int idx = (my - list_start_y) / 18;
+                        if (idx >= 0 && idx < ed->roof_event_count) {
+                            ed->selected_roof_event = idx;
+                            ed->edit_field = -1;
+                            ed->input_buf[0] = '\0';
+                            return;
+                        }
+                    }
+                    int edit_y = list_start_y + list_h + 5 + 5; // после списка
+                    if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
+                        check_roof_field_click(ed, 0, edit_y, mx, my);
+                        check_roof_field_click(ed, 1, edit_y + 22, mx, my);
+                        check_roof_field_click(ed, 2, edit_y + 44, mx, my);
+                        check_roof_field_click(ed, 3, edit_y + 66, mx, my);
+                        SDL_Rect del_btn = {10, edit_y + 88, LEFT_PANEL_W-20, 24};
+                        if (mx >= del_btn.x && mx < del_btn.x+del_btn.w && my >= del_btn.y && my < del_btn.y+del_btn.h) {
+                            for (int i = ed->selected_roof_event; i < ed->roof_event_count-1; i++)
+                                ed->roof_events[i] = ed->roof_events[i+1];
+                            ed->roof_event_count--;
+                            ed->selected_roof_event = -1;
+                            ed->edit_field = -1;
+                            SDL_StopTextInput();
+                            return;
+                        }
+                    }
+                }
+
+                // --- Кнопка сворачивания Tile Changes (всегда активна) ---
+                if (my >= ed->tc_section_y && my < ed->tc_section_y + 24) {
+                    if (mx >= LEFT_PANEL_W - 35 && mx < LEFT_PANEL_W - 9) {
+                        ed->tc_section_collapsed = !ed->tc_section_collapsed;
+                        return;
+                    }
+                    return; // клик по заголовку – ничего
+                }
+
+                // --- Содержимое Tile Changes (если развёрнуто) ---
+                if (!ed->tc_section_collapsed) {
+                    int tc_y = ed->tc_section_y + 26;
+                    SDL_Rect tc_add_btn = {10, tc_y, LEFT_PANEL_W-20, 24};
+                    if (my >= tc_add_btn.y && my < tc_add_btn.y+tc_add_btn.h) {
+                        if (ed->tile_change_count < MAX_TILE_CHANGES) {
+                            TileChangeEvent *tc = &ed->tile_changes[ed->tile_change_count++];
+                            tc->trigger_x = tc->trigger_y = -1;
+                            tc->new_tile_id = 0;
+                            tc->sample_x = tc->sample_y = -1;
+                            ed->selected_tile_change = ed->tile_change_count - 1;
+                            ed->tc_edit_field = -1;
+                            ed->tc_input_buf[0] = '\0';
+                        }
+                        return;
+                    }
+                    tc_y += 30 + 5;
+                    int tc_list_start_y = tc_y;
+                    int tc_list_h = 100;
+                    if (my >= tc_list_start_y && my < tc_list_start_y + tc_list_h) {
+                        int idx = (my - tc_list_start_y) / 18;
+                        if (idx >= 0 && idx < ed->tile_change_count) {
+                            ed->selected_tile_change = idx;
+                            ed->tc_edit_field = -1;
+                            ed->tc_input_buf[0] = '\0';
+                            return;
+                        }
+                    }
+                    tc_y = tc_list_start_y + tc_list_h + 5 + 5;
+                    if (ed->selected_tile_change >= 0 && ed->selected_tile_change < ed->tile_change_count) {
+                        check_tc_click(ed, 0, tc_y, mx, my);
+                        check_tc_click(ed, 1, tc_y + 22, mx, my);
+                        SDL_Rect del_btn = {10, tc_y + 44, LEFT_PANEL_W-20, 24};
+                        if (mx >= del_btn.x && mx < del_btn.x+del_btn.w && my >= del_btn.y && my < del_btn.y+del_btn.h) {
+                            for (int i = ed->selected_tile_change; i < ed->tile_change_count-1; i++)
+                                ed->tile_changes[i] = ed->tile_changes[i+1];
+                            ed->tile_change_count--;
+                            ed->selected_tile_change = -1;
+                            ed->tc_edit_field = -1;
+                            SDL_StopTextInput();
+                            return;
+                        }
                     }
                 }
                 return;
             }
 
-            // Правая панель
+            // --------------------- Правая панель ---------------------
             if (mx >= WINDOW_W - RIGHT_PANEL_W) {
                 SDL_Rect save_btn = { WINDOW_W - RIGHT_PANEL_W + 10, WINDOW_H - 60, RIGHT_PANEL_W - 20, 28 };
                 if (mx >= save_btn.x && mx < save_btn.x+save_btn.w && my >= save_btn.y && my < save_btn.y+save_btn.h) {
@@ -926,50 +1237,59 @@ void handle_input(Editor *ed, bool *running) {
                 }
             }
 
-            // Клик по карте (установка тайла/координат)
+            // --------------------- Клик по карте ---------------------
             if (mx >= MAP_X && mx < MAP_X + MAP_VISIBLE_W && my >= MAP_Y && my < MAP_Y + MAP_VISIBLE_H) {
                 Map *map = current_map(ed);
-                if (map && ed->selected_roof_event >= 0 && ed->roof_event_count > 0) {
+                if (map) {
                     float world_x = (mx - MAP_X) / ed->zoom + ed->cam_x;
                     float world_y = (my - MAP_Y) / ed->zoom + ed->cam_y;
                     int tx = (int)(world_x / TILE_SIZE);
                     int ty = (int)(world_y / TILE_SIZE);
                     if (tx >= 0 && tx < map->width && ty >= 0 && ty < map->height) {
-                        RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
-                        if (ed->edit_field == -1 || ed->edit_field == 0) {
-                            // Сохраняем tile_id И координаты триггера
-                            re->tile_id = map->tiles[tx * map->height + ty];
-                            re->trigger_x = tx;
-                            re->trigger_y = ty;
-                            if (ed->edit_field == 0) {
-                                ed->edit_field = -1;
-                                ed->input_buf[0] = '\0';
-                                SDL_StopTextInput();
+                        // --- Roof Events ---
+                        if (ed->selected_roof_event >= 0 && ed->roof_event_count > 0) {
+                            RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
+                            if (ed->edit_field == -1 || ed->edit_field == 0) {
+                                re->tile_id = map->tiles[tx * map->height + ty];
+                                re->trigger_x = tx;
+                                re->trigger_y = ty;
+                                if (ed->edit_field == 0) {
+                                    ed->edit_field = -1;
+                                    ed->input_buf[0] = '\0';
+                                    SDL_StopTextInput();
+                                }
+                            } else if (ed->edit_field == 1) {
+                                re->start_x = tx; re->start_y = ty;
+                                ed->edit_field = -1; ed->input_buf[0] = '\0'; SDL_StopTextInput();
+                            } else if (ed->edit_field == 2) {
+                                re->end_x = tx; re->end_y = ty;
+                                ed->edit_field = -1; ed->input_buf[0] = '\0'; SDL_StopTextInput();
+                            } else if (ed->edit_field == 3) {
+                                re->exit_x = tx; re->exit_y = ty;
+                                ed->edit_field = -1; ed->input_buf[0] = '\0'; SDL_StopTextInput();
                             }
-                        } else if (ed->edit_field == 1) {
-                            re->start_x = tx;
-                            re->start_y = ty;
-                            ed->edit_field = -1;
-                            ed->input_buf[0] = '\0';
-                            SDL_StopTextInput();
-                        } else if (ed->edit_field == 2) {
-                            re->end_x = tx;
-                            re->end_y = ty;
-                            ed->edit_field = -1;
-                            ed->input_buf[0] = '\0';
-                            SDL_StopTextInput();
-                        } else if (ed->edit_field == 3) {
-                            re->exit_x = tx;
-                            re->exit_y = ty;
-                            ed->edit_field = -1;
-                            ed->input_buf[0] = '\0';
-                            SDL_StopTextInput();
+                        }
+
+                        // --- Tile Changes ---
+                        if (ed->tc_edit_field != -1 && ed->selected_tile_change >= 0) {
+                            TileChangeEvent *tc = &ed->tile_changes[ed->selected_tile_change];
+                            if (ed->tc_edit_field == 0) {
+                                tc->trigger_x = tx;
+                                tc->trigger_y = ty;
+                                ed->tc_edit_field = -1; ed->tc_input_buf[0] = '\0'; SDL_StopTextInput();
+                            } else if (ed->tc_edit_field == 1) {
+                                int tid = map->tiles[tx * map->height + ty];
+                                tc->new_tile_id = tid;
+                                tc->sample_x = tx;   // запоминаем координаты образца
+                                tc->sample_y = ty;
+                                ed->tc_edit_field = -1; ed->tc_input_buf[0] = '\0'; SDL_StopTextInput();
+                            }
                         }
                     }
                 }
             }
 
-            // Захват ползунков скроллбаров
+            // --------------------- Скроллбары ---------------------
             if (mx >= MAP_X + MAP_VISIBLE_W && mx < MAP_X + MAP_VISIBLE_W + SCROLLBAR_SIZE &&
                 my >= MAP_Y && my < MAP_Y + MAP_VISIBLE_H) {
                 Map *map = current_map(ed);
