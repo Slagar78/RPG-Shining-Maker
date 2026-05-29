@@ -19,18 +19,32 @@ class BattleCamera
     @smooth_factor = 0.1
   end
 
-  # Установить цель на юнита (обычно центр экрана)
-  def follow_unit(unit)
-    # Центрируем юнита на экране
-    @target_x = unit[:x] * 48 + 24 - @screen_width / 2.0
-    @target_y = unit[:y] * 48 + 24 - @screen_height / 2.0
+  # Мгновенно установить камеру в центр указанной клетки (используется при инициализации)
+  def snap_to(x, y)
+    @target_x = x * 48 + 24 - @screen_width / 2.0
+    @target_y = y * 48 + 24 - @screen_height / 2.0
+    @x = @target_x
+    @y = @target_y
     clamp_target!
   end
 
-  # Установить цель на точку (например, позицию курсора)
+  # Плавное следование за юнитом
+  def follow_unit(unit)
+    desired_x = unit[:x] * 48 + 24 - @screen_width / 2.0
+    desired_y = unit[:y] * 48 + 24 - @screen_height / 2.0
+    speed = 0.1   # чем меньше, тем плавнее
+    @target_x += (desired_x - @target_x) * speed
+    @target_y += (desired_y - @target_y) * speed
+    clamp_target!
+  end
+
+  # Плавное следование за произвольной точкой (например, курсор)
   def follow_point(px, py)
-    @target_x = px - @screen_width / 2.0
-    @target_y = py - @screen_height / 2.0
+    desired_x = px - @screen_width / 2.0
+    desired_y = py - @screen_height / 2.0
+    speed = 0.1
+    @target_x += (desired_x - @target_x) * speed
+    @target_y += (desired_y - @target_y) * speed
     clamp_target!
   end
 
@@ -59,7 +73,7 @@ class BattleCamera
   def clamp_target!
     max_x = @map_width * 48 - @screen_width
     max_y = @map_height * 48 - @screen_height
-    @target_x = @target_x.clamp(0, max_x)
-    @target_y = @target_y.clamp(0, max_y)
+    @target_x = @target_x.clamp(0, max_x > 0 ? max_x : 0)
+    @target_y = @target_y.clamp(0, max_y > 0 ? max_y : 0)
   end
 end
