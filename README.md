@@ -5,6 +5,9 @@
 
 ---
 
+![Боевая сцена](assets/screenshots/battle_scr.png)
+
+
 ## 🧩 Компоненты
 
 ### 1. Игровой движок (Ruby + Raylib)
