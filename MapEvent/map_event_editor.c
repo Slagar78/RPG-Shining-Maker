@@ -409,9 +409,20 @@ void render_map(Editor *ed) {
                     MAP_X + (tx * TILE_SIZE - ed->cam_x) * zoom,
                     MAP_Y + (ty * TILE_SIZE - ed->cam_y) * zoom,
                     scaled_tile, scaled_tile
-                };
-                SDL_SetRenderDrawColor(ed->renderer, 255, 0, 0, 255);
-                SDL_RenderDrawRectF(ed->renderer, &tile_dst);
+            };
+            SDL_SetRenderDrawColor(ed->renderer, 255, 0, 0, 255);
+            // Рисуем жирную красную рамку (несколько проходов со смещением)
+               for (int dx = -1; dx <= 1; dx++) {
+               for (int dy = -1; dy <= 1; dy++) {
+               SDL_FRect thick_rect = {
+               tile_dst.x + dx,
+               tile_dst.y + dy,
+               tile_dst.w,
+               tile_dst.h
+            };
+        SDL_RenderDrawRectF(ed->renderer, &thick_rect);
+    }
+}
             }
         }
     }
@@ -431,8 +442,19 @@ void render_map(Editor *ed) {
             (y2 - y1 + 1) * scaled_tile
         };
         SDL_SetRenderDrawColor(ed->renderer, 0, 255, 0, 255);
-        SDL_RenderDrawRectF(ed->renderer, &zone);
+        // Жирная зелёная рамка
+        for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+        SDL_FRect thick_zone = {
+            zone.x + dx,
+            zone.y + dy,
+            zone.w,
+            zone.h
+            };
+            SDL_RenderDrawRectF(ed->renderer, &thick_zone);
+        }
     }
+}
 
     SDL_RenderSetClipRect(ed->renderer, NULL);
 
