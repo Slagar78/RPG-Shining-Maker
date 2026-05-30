@@ -42,6 +42,12 @@ class Player
 
     @sliding       = false
     @slide_dir     = DIR_DOWN
+	
+	@stairs_event  = nil
+    @stairs_dx     = 0
+    @stairs_dy     = 0
+    @target_x      = 0
+    @target_y      = 0
 
     init_render_objects
     load_textures
@@ -73,6 +79,7 @@ class Player
     return unless @can_move
     return if @sliding
     return if @moving
+	return if @stairs_event
 
     @just_turned = false
 
@@ -131,46 +138,95 @@ class Player
     end
 end
 
-  def update_movement
-    return unless @moving
-
+def update_movement
+  # === Движение по лестнице ===
+  if @stairs_event
     @pixel_offset += PIXEL_SPEED
     if @pixel_offset >= TILE_SIZE
+      @pixel_offset = 0
+      @x += @stairs_dx
+      @y += @stairs_dy
+      if @x == @target_x && @y == @target_y
+        @moving = false
+        @stairs_event = nil
+      end
+    end
+    return
+  end
+
+  return unless @moving
+
+  @pixel_offset += PIXEL_SPEED
+  if @pixel_offset >= TILE_SIZE
+    case @move_dir
+    when DIR_RIGHT then @x += 1
+    when DIR_LEFT  then @x -= 1
+    when DIR_DOWN  then @y += 1
+    when DIR_UP    then @y -= 1
+    end
+
+    # Проверка на вход в лестницу после каждого шага
+    maybe_start_stairs
+
+    # Обработка льда
+    if @map && @map.tile_type_at(@x, @y) == 2
+      next_x = @x
+      next_y = @y
       case @move_dir
-      when DIR_RIGHT then @x += 1
-      when DIR_LEFT  then @x -= 1
-      when DIR_DOWN  then @y += 1
-      when DIR_UP    then @y -= 1
+      when DIR_RIGHT then next_x += 1
+      when DIR_LEFT  then next_x -= 1
+      when DIR_DOWN  then next_y += 1
+      when DIR_UP    then next_y -= 1
       end
 
-      if @map && @map.tile_type_at(@x, @y) == 2   # лёд
-        next_x = @x
-        next_y = @y
-        case @move_dir
-        when DIR_RIGHT then next_x += 1
-        when DIR_LEFT  then next_x -= 1
-        when DIR_DOWN  then next_y += 1
-        when DIR_UP    then next_y -= 1
-        end
-
-        if next_x >= 0 && next_x < @map.width &&
-           next_y >= 0 && next_y < @map.height &&
-           @map.passable?(next_x, next_y)
-          @sliding = true
-          @moving  = true
-          @pixel_offset = 0
-        else
-          @sliding = false
-          @moving  = false
-          @pixel_offset = 0
-        end
+      if next_x >= 0 && next_x < @map.width &&
+         next_y >= 0 && next_y < @map.height &&
+         @map.passable?(next_x, next_y)
+        @sliding = true
+        @moving  = true
+        @pixel_offset = 0
       else
         @sliding = false
         @moving  = false
         @pixel_offset = 0
       end
+    else
+      @sliding = false
+      @moving  = false
+      @pixel_offset = 0
     end
   end
+end
+
+def maybe_start_stairs
+  return unless @map
+  ev = @map.stairs_at(@x, @y)
+  return unless ev
+
+  x1 = ev['start_x']; y1 = ev['start_y']
+  x2 = ev['end_x'];   y2 = ev['end_y']
+
+  # не запускаем, если уже стоим на конечной клетке
+  return if @x == x2 && @y == y2
+
+  dx = (x2 - x1) <=> 0
+  dy = (y2 - y1) <=> 0
+
+  @stairs_event = ev
+  @stairs_dx = dx
+  @stairs_dy = dy
+  @target_x = x2
+  @target_y = y2
+
+  if dx == 1
+    @direction = DIR_RIGHT
+  elsif dx == -1
+    @direction = DIR_LEFT
+  end
+
+  @moving = true
+  @pixel_offset = 0
+end
 
   def update
     update_animation
@@ -180,7 +236,7 @@ end
   # ====================== DRAW ======================
   def draw
     px = visual_x
-    py = (@y * TILE_SIZE - 16) + (@moving ? pixel_offset_y : 0)
+    py = visual_y - 16
 
     texture = (@direction == DIR_RIGHT) ? @tex_right : @tex_left
 
@@ -201,39 +257,43 @@ end
   end
 
   # ====================== VISUAL POSITION ======================
-  def visual_x
-    base = @x * TILE_SIZE
-    if @moving
-      case @move_dir
-      when DIR_RIGHT then base + @pixel_offset
-      when DIR_LEFT  then base - @pixel_offset
-      else base
-      end
-    else
-      base
+def visual_x
+  base = @x * TILE_SIZE
+  if @stairs_event
+    case @stairs_dx
+    when 1  then base + @pixel_offset
+    when -1 then base - @pixel_offset
+    else base
     end
-  end
-
-  def visual_y
-    base = @y * TILE_SIZE
-    if @moving
-      case @move_dir
-      when DIR_DOWN then base + @pixel_offset
-      when DIR_UP   then base - @pixel_offset
-      else base
-      end
-    else
-      base
-    end
-  end
-
-  private
-
-  def pixel_offset_y
+  elsif @moving
     case @move_dir
-    when DIR_DOWN then @pixel_offset
-    when DIR_UP   then -@pixel_offset
-    else 0
+    when DIR_RIGHT then base + @pixel_offset
+    when DIR_LEFT  then base - @pixel_offset
+    else base
     end
+  else
+    base
   end
+end
+
+def visual_y
+  base = @y * TILE_SIZE
+  if @stairs_event
+    case @stairs_dy
+    when 1  then base + @pixel_offset
+    when -1 then base - @pixel_offset
+    else base
+    end
+  elsif @moving
+    case @move_dir
+    when DIR_DOWN then base + @pixel_offset
+    when DIR_UP   then base - @pixel_offset
+    else base
+    end
+  else
+    base
+  end
+end
+
+
 end

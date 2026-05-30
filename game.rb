@@ -391,15 +391,16 @@ class Game
 
       # 4. КРЫШИ – теперь поверх всего, чтобы верхняя кромка не обрезалась
       @game_map.roof_layers.each_with_index do |layer, idx|
-        if layer && !@zone_hidden[idx]
-          DrawTexturePro(
-            layer.texture,
-            Rectangle.create(0, 0, layer.texture.width, -layer.texture.height),
-            Rectangle.create(0, 0, layer.texture.width, layer.texture.height),
-            Vector2.create(0, 0), 0, WHITE
-          )
-        end
-      end
+      if layer && !@zone_hidden[idx]
+        off = @game_map.roof_offsets[idx]
+        DrawTexturePro(
+        layer.texture,
+        Rectangle.create(0, 0, layer.texture.width, -layer.texture.height),
+        Rectangle.create(off[:x], off[:y], layer.texture.width, layer.texture.height),
+        Vector2.create(0, 0), 0, WHITE
+       )
+     end
+  end
     EndMode2D()
 
     case @game_state

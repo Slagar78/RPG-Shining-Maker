@@ -5,7 +5,7 @@ include Raylib
 
 class GameMap
   attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas,
-              :roof_events, :tile_events
+              :roof_events, :tile_events, :stair_events, :roof_offsets
   attr_reader :tileset_path
   attr_reader :roof_layers
   attr_reader :layer2, :top_layer, :static_bg
@@ -71,7 +71,9 @@ class GameMap
     end
 
     @roof_events = []
+	@roof_offsets = []
     @tile_events = []
+	@stair_events = []
     events_path = "data/maps/#{entry['folder']}/events.json"
     if File.exist?(events_path)
       begin
@@ -82,6 +84,8 @@ class GameMap
             @roof_events << ev
           elsif type == 'tile_change'
             @tile_events << ev
+			elsif type == 'stairs'
+            @stair_events << ev
           end
         end
       rescue
@@ -165,6 +169,8 @@ class GameMap
     @music_file   = ""
     @music_volume = 0.8
     @areas = []
+	@stair_events = []
+	@roof_offsets = []
   end
 
   def tile_src_rect(tile_id)
@@ -219,50 +225,62 @@ class GameMap
     end
   end
 
-  def build_roof_layer_for_zone(zone_index)
-    return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
-    ev = @roof_events[zone_index]
-    return nil unless ev
+def build_roof_layer_for_zone(zone_index)
+  return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
+  ev = @roof_events[zone_index]
+  return nil unless ev
 
-    rt = LoadRenderTexture(@width * @tile_size, @height * @tile_size)
-    SetTextureFilter(rt.texture, TEXTURE_FILTER_POINT)
+  x1 = [ev['start_x'], ev['end_x']].min
+  x2 = [ev['start_x'], ev['end_x']].max
+  y1 = [ev['start_y'], ev['end_y']].min
+  y2 = [ev['start_y'], ev['end_y']].max
 
-    BeginTextureMode(rt)
-      ClearBackground(BLANK)
-      half = @tile_size / 2.0
-      center = @center_vec
-      dst = Rectangle.create(0, 0, @tile_size, @tile_size)
+  zone_w = (x2 - x1 + 1) * @tile_size
+  zone_h = (y2 - y1 + 1) * @tile_size
+  return nil if zone_w <= 0 || zone_h <= 0
 
-      x1 = [ev['start_x'], ev['end_x']].min
-      x2 = [ev['start_x'], ev['end_x']].max
-      y1 = [ev['start_y'], ev['end_y']].min
-      y2 = [ev['start_y'], ev['end_y']].max
+  rt = LoadRenderTexture(zone_w, zone_h)
+  SetTextureFilter(rt.texture, TEXTURE_FILTER_POINT)
 
-      (x1..x2).each do |x|
-        (y1..y2).each do |y|
-          tile_id = @tiles2[x][y]
-          next if tile_id.nil? || tile_id < 0
-          # ⚠️ УБИРАЕМ проверку на анимированность – пусть все тайлы крыш попадают в слой
-          # next if animated_tile?(tile_id)
+  # Сохраним смещение в сам объект RenderTexture (через instance_variable)
+  # или вернём хеш/структуру, но проще хранить отдельно.
+  # Запомним offset для этого слоя
+  @roof_offsets ||= []
+  @roof_offsets[zone_index] = { x: x1 * @tile_size, y: y1 * @tile_size }
 
-          src_rect = tile_src_rect(tile_id)
-          next unless src_rect
-          rot    = @rot2[x][y] || 0
-          flip_x = @mirror_x2[x][y] || false
-          flip_y = @mirror_y2[x][y] || false
-          world_cx = x * @tile_size + half
-          world_cy = y * @tile_size + half
-          dst.x = world_cx
-          dst.y = world_cy
-          dst.width  = flip_x ? -@tile_size : @tile_size
-          dst.height = flip_y ? -@tile_size : @tile_size
-          angle = rot * 90.0
-          DrawTexturePro(@tileset_texture, src_rect, dst, center, angle, WHITE)
-        end
+  BeginTextureMode(rt)
+    ClearBackground(BLANK)
+    half = @tile_size / 2.0
+    center = Vector2.create(half, half)
+    dst = Rectangle.create(0, 0, @tile_size, @tile_size)
+
+    (x1..x2).each do |x|
+      (y1..y2).each do |y|
+        tile_id = @tiles2[x][y]
+        next if tile_id.nil? || tile_id < 0
+        src_rect = tile_src_rect(tile_id)
+        next unless src_rect
+
+        rot    = @rot2[x][y] || 0
+        flip_x = @mirror_x2[x][y] || false
+        flip_y = @mirror_y2[x][y] || false
+
+        # координаты внутри текстуры крыши (смещённые на x1,y1)
+        local_cx = (x - x1) * @tile_size + half
+        local_cy = (y - y1) * @tile_size + half
+
+        dst.x = local_cx
+        dst.y = local_cy
+        dst.width  = flip_x ? -@tile_size : @tile_size
+        dst.height = flip_y ? -@tile_size : @tile_size
+
+        angle = rot * 90.0
+        DrawTexturePro(@tileset_texture, src_rect, dst, center, angle, WHITE)
       end
-    EndTextureMode()
-    rt
-  end
+    end
+  EndTextureMode()
+  rt
+end
 
   def build_static_background
     return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
@@ -528,5 +546,27 @@ class GameMap
     EndTextureMode()
   end
   
+def stairs_at(x, y)
+  @stair_events.each do |ev|
+    x1 = ev['start_x']; y1 = ev['start_y']
+    x2 = ev['end_x'];   y2 = ev['end_y']
+    dir = ev['direction']
+
+    if dir == 0   # диагональ '/'
+      if (x - y) == (x1 - y1) &&
+         x.between?(*[x1, x2].sort) &&
+         y.between?(*[y1, y2].sort)
+        return ev
+      end
+    else          # диагональ '\'
+      if (x + y) == (x1 + y1) &&
+         x.between?(*[x1, x2].sort) &&
+         y.between?(*[y1, y2].sort)
+        return ev
+      end
+    end
+  end
+  nil
+end
   
 end

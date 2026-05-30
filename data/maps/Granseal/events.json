@@ -23,17 +23,6 @@
 	}, {
 		"type":	"roof",
 		"tile_id":	136,
-		"start_x":	17,
-		"start_y":	7,
-		"end_x":	22,
-		"end_y":	11,
-		"trigger_x":	19,
-		"trigger_y":	12,
-		"exit_x":	19,
-		"exit_y":	13
-	}, {
-		"type":	"roof",
-		"tile_id":	136,
 		"start_x":	30,
 		"start_y":	9,
 		"end_x":	34,
@@ -110,7 +99,7 @@
 		"type":	"stairs",
 		"start_x":	3,
 		"start_y":	3,
-		"end_x":	3,
-		"end_y":	3,
+		"end_x":	4,
+		"end_y":	4,
 		"direction":	1
 	}]
