@@ -100,6 +100,11 @@ typedef struct {
     char tc_input_buf[32];
     bool tc_section_collapsed;
     int tc_section_y;
+
+    int roof_event_scroll;
+    int tile_change_scroll;
+    SDL_Rect roof_list_rect;
+    SDL_Rect tc_list_rect;
 } Editor;
 
 // ─── Прототипы ────────────────────────────────
@@ -159,6 +164,10 @@ void editor_init(Editor *ed) {
     ed->tc_input_buf[0] = '\0';
     ed->tc_section_collapsed = true;   // по умолчанию свёрнуто
     ed->tc_section_y = 0;
+    ed->roof_event_scroll = 0;
+    ed->tile_change_scroll = 0;
+    memset(&ed->roof_list_rect, 0, sizeof(ed->roof_list_rect));
+    memset(&ed->tc_list_rect, 0, sizeof(ed->tc_list_rect));
 }
 
 // ─── Тайлсет ──────────────────────────────────
@@ -826,22 +835,47 @@ void render_left_panel(Editor *ed) {
 
         int list_start_y = y;
         int list_h = 200;
+        int item_h = 18;
+        int max_visible = 10;                     // ровно 10 элементов
+        ed->roof_list_rect = (SDL_Rect){10, list_start_y, LEFT_PANEL_W-20, list_h};
+
+        int max_scroll = (ed->roof_event_count > max_visible) ? ed->roof_event_count - max_visible : 0;
+        if (ed->roof_event_scroll < 0) ed->roof_event_scroll = 0;
+        if (ed->roof_event_scroll > max_scroll) ed->roof_event_scroll = max_scroll;
+
         SDL_Rect list_clip = {10, list_start_y, LEFT_PANEL_W-20, list_h};
         SDL_RenderSetClipRect(ed->renderer, &list_clip);
-        for (int i = 0; i < ed->roof_event_count; i++) {
+        int start_idx = ed->roof_event_scroll;
+        int end_idx = (start_idx + max_visible < ed->roof_event_count) ? start_idx + max_visible : ed->roof_event_count;
+        for (int i = start_idx; i < end_idx; i++) {
             RoofEvent *re = &ed->roof_events[i];
             char buf[128];
             snprintf(buf, sizeof(buf), "Tile %d  (%d,%d)-(%d,%d)",
                      re->tile_id, re->start_x, re->start_y, re->end_x, re->end_y);
             SDL_Color col = (i == ed->selected_roof_event) ? (SDL_Color){0,255,0,255} : (SDL_Color){255,255,255,255};
-            SDL_Rect item_rect = {10, list_start_y + i*18, LEFT_PANEL_W-20, 18};
+            SDL_Rect item_rect = {10, list_start_y + (i - start_idx) * item_h, LEFT_PANEL_W-20, item_h};
             if (i == ed->selected_roof_event) {
                 SDL_SetRenderDrawColor(ed->renderer, 80,80,120,255);
                 SDL_RenderFillRect(ed->renderer, &item_rect);
             }
-            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y+9, col);
+            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y + item_h/2, col);
         }
         SDL_RenderSetClipRect(ed->renderer, NULL);
+
+        // Скроллбар
+        if (ed->roof_event_count > max_visible) {
+            int bar_x = LEFT_PANEL_W - 12, bar_w = 6;
+            SDL_Rect track = { bar_x, list_start_y, bar_w, list_h };
+            SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+            SDL_RenderFillRect(ed->renderer, &track);
+            float thumb_h = (float)max_visible / ed->roof_event_count * list_h;
+            if (thumb_h < 12) thumb_h = 12;
+            int thumb_y = list_start_y + (int)((list_h - thumb_h) * ((float)ed->roof_event_scroll / max_scroll));
+            SDL_Rect thumb = { bar_x, thumb_y, bar_w, (int)thumb_h };
+            SDL_SetRenderDrawColor(ed->renderer, 180,180,180,255);
+            SDL_RenderFillRect(ed->renderer, &thumb);
+        }
+
         y = list_start_y + list_h + 5;
 
         SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
@@ -899,21 +933,46 @@ void render_left_panel(Editor *ed) {
 
         int tc_list_start_y = y;
         int tc_list_h = 100;
+        int tc_item_h = 18;
+        int tc_max_visible = 5;                  // ровно 5 элементов
+        ed->tc_list_rect = (SDL_Rect){10, tc_list_start_y, LEFT_PANEL_W-20, tc_list_h};
+
+        int tc_max_scroll = (ed->tile_change_count > tc_max_visible) ? ed->tile_change_count - tc_max_visible : 0;
+        if (ed->tile_change_scroll < 0) ed->tile_change_scroll = 0;
+        if (ed->tile_change_scroll > tc_max_scroll) ed->tile_change_scroll = tc_max_scroll;
+
         SDL_Rect tc_list_clip = {10, tc_list_start_y, LEFT_PANEL_W-20, tc_list_h};
         SDL_RenderSetClipRect(ed->renderer, &tc_list_clip);
-        for (int i = 0; i < ed->tile_change_count; i++) {
+        int tc_start = ed->tile_change_scroll;
+        int tc_end = (tc_start + tc_max_visible < ed->tile_change_count) ? tc_start + tc_max_visible : ed->tile_change_count;
+        for (int i = tc_start; i < tc_end; i++) {
             TileChangeEvent *te = &ed->tile_changes[i];
             char buf[64];
             snprintf(buf, sizeof(buf), "(%d,%d) -> Tile %d", te->trigger_x, te->trigger_y, te->new_tile_id);
             SDL_Color col = (i == ed->selected_tile_change) ? (SDL_Color){0,255,0,255} : (SDL_Color){255,255,255,255};
-            SDL_Rect item_rect = {10, tc_list_start_y + i*18, LEFT_PANEL_W-20, 18};
+            SDL_Rect item_rect = {10, tc_list_start_y + (i - tc_start) * tc_item_h, LEFT_PANEL_W-20, tc_item_h};
             if (i == ed->selected_tile_change) {
                 SDL_SetRenderDrawColor(ed->renderer, 80,80,120,255);
                 SDL_RenderFillRect(ed->renderer, &item_rect);
             }
-            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y+9, col);
+            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y + tc_item_h/2, col);
         }
         SDL_RenderSetClipRect(ed->renderer, NULL);
+
+        // Скроллбар
+        if (ed->tile_change_count > tc_max_visible) {
+            int bar_x = LEFT_PANEL_W - 12, bar_w = 6;
+            SDL_Rect track = { bar_x, tc_list_start_y, bar_w, tc_list_h };
+            SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+            SDL_RenderFillRect(ed->renderer, &track);
+            float thumb_h = (float)tc_max_visible / ed->tile_change_count * tc_list_h;
+            if (thumb_h < 12) thumb_h = 12;
+            int thumb_y = tc_list_start_y + (int)((tc_list_h - thumb_h) * ((float)ed->tile_change_scroll / tc_max_scroll));
+            SDL_Rect thumb = { bar_x, thumb_y, bar_w, (int)thumb_h };
+            SDL_SetRenderDrawColor(ed->renderer, 180,180,180,255);
+            SDL_RenderFillRect(ed->renderer, &thumb);
+        }
+
         y = tc_list_start_y + tc_list_h + 5;
 
         SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
@@ -1038,6 +1097,7 @@ void handle_input(Editor *ed, bool *running) {
         if (e.type == SDL_MOUSEWHEEL) {
             int mx, my;
             get_logical_mouse(ed, &mx, &my);
+            // Зум карты по Ctrl+колесо
             if (mx >= MAP_X && mx < MAP_X + MAP_VISIBLE_W && my >= MAP_Y && my < MAP_Y + MAP_VISIBLE_H) {
                 if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_LCTRL]) {
                     ed->zoom += e.wheel.y * 0.1f;
@@ -1045,6 +1105,7 @@ void handle_input(Editor *ed, bool *running) {
                     if (ed->zoom > 2.0f) ed->zoom = 2.0f;
                 }
             }
+            // Скроллинг списка карт в правой панели
             if (mx >= WINDOW_W - RIGHT_PANEL_W) {
                 int max_visible = (WINDOW_H - 60 - 35 - 10) / 20;
                 int total = ed->map_list.map_count;
@@ -1052,6 +1113,26 @@ void handle_input(Editor *ed, bool *running) {
                 ed->map_list.map_list_scroll -= e.wheel.y;
                 if (ed->map_list.map_list_scroll < 0) ed->map_list.map_list_scroll = 0;
                 if (ed->map_list.map_list_scroll > max_scroll) ed->map_list.map_list_scroll = max_scroll;
+            }
+            // Скроллинг списков левой панели (Roof Events и Tile Changes)
+            if (mx >= 0 && mx < LEFT_PANEL_W) {
+                SDL_Point mouse_pt = {mx, my};
+                // Roof Events (если развёрнуты и мышь над областью списка)
+                if (!ed->left_panel_collapsed && SDL_PointInRect(&mouse_pt, &ed->roof_list_rect)) {
+                    int max_visible = 10;
+                    int max_scroll = (ed->roof_event_count > max_visible) ? ed->roof_event_count - max_visible : 0;
+                    ed->roof_event_scroll -= e.wheel.y;
+                    if (ed->roof_event_scroll < 0) ed->roof_event_scroll = 0;
+                    if (ed->roof_event_scroll > max_scroll) ed->roof_event_scroll = max_scroll;
+                }
+                // Tile Changes (если развёрнуты и мышь над областью списка)
+                else if (!ed->tc_section_collapsed && SDL_PointInRect(&mouse_pt, &ed->tc_list_rect)) {
+                    int max_visible = 5;
+                    int max_scroll = (ed->tile_change_count > max_visible) ? ed->tile_change_count - max_visible : 0;
+                    ed->tile_change_scroll -= e.wheel.y;
+                    if (ed->tile_change_scroll < 0) ed->tile_change_scroll = 0;
+                    if (ed->tile_change_scroll > max_scroll) ed->tile_change_scroll = max_scroll;
+                }
             }
         }
 
@@ -1127,9 +1208,10 @@ void handle_input(Editor *ed, bool *running) {
                     int list_start_y = y_off;
                     int list_h = 200;
                     if (my >= list_start_y && my < list_start_y + list_h) {
-                        int idx = (my - list_start_y) / 18;
+                        int idx = ed->roof_event_scroll + (my - list_start_y) / 18;
                         if (idx >= 0 && idx < ed->roof_event_count) {
                             ed->selected_roof_event = idx;
+
                             ed->edit_field = -1;
                             ed->input_buf[0] = '\0';
                             return;
@@ -1182,10 +1264,12 @@ void handle_input(Editor *ed, bool *running) {
                     tc_y += 30 + 5;
                     int tc_list_start_y = tc_y;
                     int tc_list_h = 100;
+
                     if (my >= tc_list_start_y && my < tc_list_start_y + tc_list_h) {
-                        int idx = (my - tc_list_start_y) / 18;
+                        int idx = ed->tile_change_scroll + (my - tc_list_start_y) / 18;
                         if (idx >= 0 && idx < ed->tile_change_count) {
                             ed->selected_tile_change = idx;
+
                             ed->tc_edit_field = -1;
                             ed->tc_input_buf[0] = '\0';
                             return;
