@@ -711,6 +711,9 @@ static void draw_stair_field(Editor *ed, const char *label, int field_idx, int l
 static void check_stair_click(Editor *ed, int field_idx, int line_y, int mx, int my) {
     SDL_Rect fld = {90, line_y, 130, 20};
     if (mx >= fld.x && mx < fld.x + fld.w && my >= fld.y && my < fld.y + fld.h) {
+        ed->edit_field = -1;
+        ed->tc_edit_field = -1;
+        ed->warp_edit_field = -1;
         ed->stair_edit_field = field_idx;
         if (ed->selected_stair >= 0 && ed->selected_stair < ed->stair_event_count) {
             StairEvent *se = &ed->stair_events[ed->selected_stair];
@@ -1101,6 +1104,7 @@ void render_left_panel(Editor *ed) {
             SDL_RenderFillRect(ed->renderer, &del_btn);
             draw_text_centered(ed->renderer, ed->font, "Delete", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
                                (SDL_Color){255,255,255,255});
+            y = edit_y + 24;
         }
     }
 
@@ -1210,6 +1214,7 @@ void render_left_panel(Editor *ed) {
             SDL_RenderFillRect(ed->renderer, &del_btn);
             draw_text_centered(ed->renderer, ed->font, "Delete", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
                                (SDL_Color){255,255,255,255});
+            y = edit_y + 24;
         }
     }
 
@@ -1840,8 +1845,9 @@ void handle_input(Editor *ed, bool *running) {
                             ed->stair_edit_field = -1;
                             SDL_StopTextInput();
                             return;
+                            }
                         }
-                    }
+                    return;
                 }
 
                 // --- Кнопка сворачивания Warp Events (всегда активна) ---
