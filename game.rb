@@ -281,7 +281,7 @@ class Game
       end
 
       if @fade_state == :out
-        @fade_alpha += 4
+        @fade_alpha += 8
         if @fade_alpha >= 255
           @fade_alpha = 255
           @fade_state = :hold
@@ -305,7 +305,7 @@ class Game
         @audio.play(@game_map.music_file, @game_map.music_volume)
         @fade_state = :in
       elsif @fade_state == :in
-        @fade_alpha -= 4
+        @fade_alpha -= 8
         if @fade_alpha <= 0
           @fade_alpha = 0
           @fade_state = nil
