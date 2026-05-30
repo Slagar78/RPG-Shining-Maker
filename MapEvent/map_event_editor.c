@@ -30,8 +30,15 @@
 #define FONT_SIZE 16
 
 #define MAX_ROOF_EVENTS 128
-
 #define MAX_TILE_CHANGES 64
+#define MAX_STAIRS 64
+
+
+typedef struct {
+    int start_x, start_y;
+    int end_x, end_y;
+    int direction;  // 0 = '/', 1 = '\'
+} StairEvent;
 
 typedef struct {
     int trigger_x, trigger_y;   // клетка-триггер (куда наступает игрок)
@@ -105,6 +112,16 @@ typedef struct {
     int tile_change_scroll;
     SDL_Rect roof_list_rect;
     SDL_Rect tc_list_rect;
+
+    StairEvent stair_events[MAX_STAIRS];
+    int stair_event_count;
+    int selected_stair;         // -1 = none
+    int stair_edit_field;       // 0=Start, 1=End
+    char stair_input_buf[32];
+    bool stair_section_collapsed;
+    int stair_section_y;
+    int stair_event_scroll;
+    SDL_Rect stair_list_rect;
 } Editor;
 
 // ─── Прототипы ────────────────────────────────
@@ -168,6 +185,15 @@ void editor_init(Editor *ed) {
     ed->tile_change_scroll = 0;
     memset(&ed->roof_list_rect, 0, sizeof(ed->roof_list_rect));
     memset(&ed->tc_list_rect, 0, sizeof(ed->tc_list_rect));
+
+    ed->stair_event_count = 0;
+    ed->selected_stair = -1;
+    ed->stair_edit_field = -1;
+    ed->stair_input_buf[0] = '\0';
+    ed->stair_section_collapsed = true;
+    ed->stair_section_y = 0;
+    ed->stair_event_scroll = 0;
+    memset(&ed->stair_list_rect, 0, sizeof(ed->stair_list_rect));
 }
 
 // ─── Тайлсет ──────────────────────────────────
@@ -283,14 +309,19 @@ void load_map_list(Editor *ed) {
 
 // ─── События (events.json) ─────────────────────
 void load_events_from_json(Editor *ed, const char *folder) {
+    // Сбрасываем все события
     ed->roof_event_count = 0;
     ed->tile_change_count = 0;
+    ed->stair_event_count = 0;
     ed->selected_roof_event = -1;
     ed->selected_tile_change = -1;
+    ed->selected_stair = -1;
     ed->edit_field = -1;
     ed->tc_edit_field = -1;
+    ed->stair_edit_field = -1;
     ed->input_buf[0] = '\0';
     ed->tc_input_buf[0] = '\0';
+    ed->stair_input_buf[0] = '\0';
 
     char path[512];
     snprintf(path, sizeof(path), "../data/maps/%s/events.json", folder);
@@ -311,12 +342,10 @@ void load_events_from_json(Editor *ed, const char *folder) {
         cJSON *ev = cJSON_GetArrayItem(arr, i);
         if (!ev) continue;
 
-        // Определяем тип события
         cJSON *type_json = cJSON_GetObjectItem(ev, "type");
         const char *type = type_json ? type_json->valuestring : "roof"; // по умолчанию крыша
 
         if (strcmp(type, "roof") == 0) {
-            // Загружаем как крышу (весь старый код)
             if (ed->roof_event_count < MAX_ROOF_EVENTS) {
                 cJSON *tid = cJSON_GetObjectItem(ev, "tile_id");
                 cJSON *sx  = cJSON_GetObjectItem(ev, "start_x");
@@ -340,7 +369,6 @@ void load_events_from_json(Editor *ed, const char *folder) {
                 }
             }
         } else if (strcmp(type, "tile_change") == 0) {
-            // Загружаем как замену тайла
             if (ed->tile_change_count < MAX_TILE_CHANGES) {
                 cJSON *tx = cJSON_GetObjectItem(ev, "trigger_x");
                 cJSON *ty = cJSON_GetObjectItem(ev, "trigger_y");
@@ -350,10 +378,26 @@ void load_events_from_json(Editor *ed, const char *folder) {
                     tc->trigger_x = tx->valueint;
                     tc->trigger_y = ty->valueint;
                     tc->new_tile_id = ntid->valueint;
-                cJSON *sx = cJSON_GetObjectItem(ev, "sample_x");
-                cJSON *sy = cJSON_GetObjectItem(ev, "sample_y");
-                tc->sample_x = (sx && cJSON_IsNumber(sx)) ? sx->valueint : -1;
-                tc->sample_y = (sy && cJSON_IsNumber(sy)) ? sy->valueint : -1;
+                    cJSON *sx = cJSON_GetObjectItem(ev, "sample_x");
+                    cJSON *sy = cJSON_GetObjectItem(ev, "sample_y");
+                    tc->sample_x = (sx && cJSON_IsNumber(sx)) ? sx->valueint : -1;
+                    tc->sample_y = (sy && cJSON_IsNumber(sy)) ? sy->valueint : -1;
+                }
+            }
+        } else if (strcmp(type, "stairs") == 0) {
+            if (ed->stair_event_count < MAX_STAIRS) {
+                cJSON *sx = cJSON_GetObjectItem(ev, "start_x");
+                cJSON *sy = cJSON_GetObjectItem(ev, "start_y");
+                cJSON *ex = cJSON_GetObjectItem(ev, "end_x");
+                cJSON *ey = cJSON_GetObjectItem(ev, "end_y");
+                if (sx && sy && ex && ey) {
+                    StairEvent *se = &ed->stair_events[ed->stair_event_count++];
+                    se->start_x = sx->valueint;
+                    se->start_y = sy->valueint;
+                    se->end_x = ex->valueint;
+                    se->end_y = ey->valueint;
+                    cJSON *dir = cJSON_GetObjectItem(ev, "direction");
+                    se->direction = (dir && cJSON_IsNumber(dir)) ? dir->valueint : 0;
                 }
             }
         }
@@ -397,6 +441,19 @@ void save_events_to_json(Editor *ed, const char *folder) {
         cJSON_AddNumberToObject(ev, "new_tile_id", tc->new_tile_id);
         cJSON_AddNumberToObject(ev, "sample_x", tc->sample_x);
         cJSON_AddNumberToObject(ev, "sample_y", tc->sample_y);
+        cJSON_AddItemToArray(root, ev);
+    }
+
+    // Сохраняем лестницы
+    for (int i = 0; i < ed->stair_event_count; i++) {
+        StairEvent *se = &ed->stair_events[i];
+        cJSON *ev = cJSON_CreateObject();
+        cJSON_AddStringToObject(ev, "type", "stairs");
+        cJSON_AddNumberToObject(ev, "start_x", se->start_x);
+        cJSON_AddNumberToObject(ev, "start_y", se->start_y);
+        cJSON_AddNumberToObject(ev, "end_x", se->end_x);
+        cJSON_AddNumberToObject(ev, "end_y", se->end_y);
+        cJSON_AddNumberToObject(ev, "direction", se->direction);
         cJSON_AddItemToArray(root, ev);
     }
 
@@ -586,6 +643,48 @@ void render_map(Editor *ed) {
                         SDL_FRect r = { odst.x + dx, odst.y + dy, odst.w, odst.h };
                         SDL_RenderDrawRectF(ed->renderer, &r);
                     }
+                }
+            }
+        }
+    }
+
+    // === Подсветка для Stairs (диагональные линии) ===
+    if (ed->selected_stair >= 0 && ed->selected_stair < ed->stair_event_count) {
+        StairEvent *se = &ed->stair_events[ed->selected_stair];
+        int x1 = se->start_x, y1 = se->start_y;
+        int x2 = se->end_x,   y2 = se->end_y;
+
+        // Определяем направление
+        int dx = (x2 > x1) ? 1 : ((x2 < x1) ? -1 : 0);
+        int dy = (y2 > y1) ? 1 : ((y2 < y1) ? -1 : 0);
+        int steps = (abs(dx) > abs(dy)) ? abs(dx) : abs(dy);
+        if (steps == 0) steps = 1; // одна клетка
+
+        // Для каждой клетки вдоль диагонали рисуем жирную линию
+        SDL_SetRenderDrawColor(ed->renderer, 0, 120, 255, 255); // синий
+        for (int i = 0; i <= steps; i++) {
+            int cx = x1 + i * dx;
+            int cy = y1 + i * dy;
+            if (cx < 0 || cx >= map->width || cy < 0 || cy >= map->height) continue;
+
+            // Экранные координаты центра клетки
+            float center_x = MAP_X + (cx * TILE_SIZE - ed->cam_x + TILE_SIZE/2.0f) * zoom;
+            float center_y = MAP_Y + (cy * TILE_SIZE - ed->cam_y + TILE_SIZE/2.0f) * zoom;
+            float half = (TILE_SIZE / 2.0f) * zoom;
+
+            // Определяем, какой символ рисовать: '/' или '\'
+            bool forward_slash = (se->direction == 0); // 0 = '/', 1 = '\'
+
+            // Рисуем жирную линию (толщина 3 пикселя)
+            for (int t = -1; t <= 1; t++) {
+                if (forward_slash) {
+                    SDL_RenderDrawLineF(ed->renderer,
+                        center_x - half, center_y + half + t,
+                        center_x + half, center_y - half + t);
+                } else {
+                    SDL_RenderDrawLineF(ed->renderer,
+                        center_x - half, center_y - half + t,
+                        center_x + half, center_y + half + t);
                 }
             }
         }
@@ -796,7 +895,47 @@ static void check_tc_click(Editor *ed, int field_idx, int line_y, int mx, int my
     }
 }
 
-// ─── Левая панель (Roof Events, сворачиваемая) ──
+static void draw_stair_field(Editor *ed, const char *label, int field_idx, int line_y) {
+    SDL_Rect lbl_rect = {10, line_y, 65, 20};
+    draw_text_centered(ed->renderer, ed->font, label, lbl_rect.x + lbl_rect.w/2, lbl_rect.y + lbl_rect.h/2,
+                       (SDL_Color){200, 200, 200, 255});
+    SDL_Rect fld_rect = {90, line_y, 130, 20};
+    bool active = (ed->stair_edit_field == field_idx);
+    SDL_SetRenderDrawColor(ed->renderer, active ? 255 : 200, active ? 255 : 200, active ? 255 : 200, 255);
+    SDL_RenderFillRect(ed->renderer, &fld_rect);
+    SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
+    SDL_RenderDrawRect(ed->renderer, &fld_rect);
+
+    char buf[32] = "";
+    if (ed->selected_stair >= 0 && ed->selected_stair < ed->stair_event_count) {
+        StairEvent *se = &ed->stair_events[ed->selected_stair];
+        if (field_idx == 0)
+            snprintf(buf, sizeof(buf), "%d,%d", se->start_x, se->start_y);
+        else if (field_idx == 1)
+            snprintf(buf, sizeof(buf), "%d,%d", se->end_x, se->end_y);
+    }
+    if (active && ed->stair_input_buf[0])
+        snprintf(buf, sizeof(buf), "%s", ed->stair_input_buf);
+    draw_text_centered(ed->renderer, ed->font, buf, fld_rect.x + fld_rect.w/2, fld_rect.y + fld_rect.h/2,
+                       (SDL_Color){0, 0, 0, 255});
+}
+
+static void check_stair_click(Editor *ed, int field_idx, int line_y, int mx, int my) {
+    SDL_Rect fld = {90, line_y, 130, 20};
+    if (mx >= fld.x && mx < fld.x + fld.w && my >= fld.y && my < fld.y + fld.h) {
+        ed->stair_edit_field = field_idx;
+        if (ed->selected_stair >= 0 && ed->selected_stair < ed->stair_event_count) {
+            StairEvent *se = &ed->stair_events[ed->selected_stair];
+            if (field_idx == 0)
+                snprintf(ed->stair_input_buf, sizeof(ed->stair_input_buf), "%d,%d", se->start_x, se->start_y);
+            else if (field_idx == 1)
+                snprintf(ed->stair_input_buf, sizeof(ed->stair_input_buf), "%d,%d", se->end_x, se->end_y);
+        }
+        SDL_StartTextInput();
+    }
+}
+
+// ─── Левая панель ──
 void render_left_panel(Editor *ed) {
     SDL_Rect bg = {0, 0, LEFT_PANEL_W, WINDOW_H};
     SDL_SetRenderDrawColor(ed->renderer, 50,50,50,255);
@@ -994,10 +1133,120 @@ void render_left_panel(Editor *ed) {
         }
     }
 
+    // ====================== STAIRS ======================
+    y += 10;
+    ed->stair_section_y = y;
+
+    SDL_Rect stair_header = {10, y, LEFT_PANEL_W-20, 24};
+    SDL_SetRenderDrawColor(ed->renderer, 60, 60, 60, 255);
+    SDL_RenderFillRect(ed->renderer, &stair_header);
+    draw_text_centered(ed->renderer, ed->font, "STAIRS", LEFT_PANEL_W/2, y+12, (SDL_Color){255,255,255,255});
+
+    SDL_Rect stair_collapse_btn = { LEFT_PANEL_W - 35, y + 1, 26, 22 };
+    SDL_SetRenderDrawColor(ed->renderer, 80, 80, 80, 255);
+    SDL_RenderFillRect(ed->renderer, &stair_collapse_btn);
+    draw_text_centered(ed->renderer, ed->font, ed->stair_section_collapsed ? "+" : "—",
+                       stair_collapse_btn.x + stair_collapse_btn.w/2, stair_collapse_btn.y + stair_collapse_btn.h/2,
+                       (SDL_Color){255,255,255,255});
+    y += 26;
+
+    if (!ed->stair_section_collapsed) {
+        SDL_Rect stair_add_btn = {10, y, LEFT_PANEL_W-20, 24};
+        SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+        SDL_RenderFillRect(ed->renderer, &stair_add_btn);
+        draw_text_centered(ed->renderer, ed->font, "Add Stairs", stair_add_btn.x+stair_add_btn.w/2, stair_add_btn.y+stair_add_btn.h/2,
+                           (SDL_Color){255,255,255,255});
+        y += 30;
+
+        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        y += 5;
+
+        int stair_list_start_y = y;
+        int stair_list_h = 100;
+        int stair_item_h = 18;
+        int stair_max_visible = 5;                  // 5 элементов
+        ed->stair_list_rect = (SDL_Rect){10, stair_list_start_y, LEFT_PANEL_W-20, stair_list_h};
+
+        int stair_max_scroll = (ed->stair_event_count > stair_max_visible) ? ed->stair_event_count - stair_max_visible : 0;
+        if (ed->stair_event_scroll < 0) ed->stair_event_scroll = 0;
+        if (ed->stair_event_scroll > stair_max_scroll) ed->stair_event_scroll = stair_max_scroll;
+
+        SDL_Rect stair_list_clip = {10, stair_list_start_y, LEFT_PANEL_W-20, stair_list_h};
+        SDL_RenderSetClipRect(ed->renderer, &stair_list_clip);
+        int stair_start = ed->stair_event_scroll;
+        int stair_end = (stair_start + stair_max_visible < ed->stair_event_count) ? stair_start + stair_max_visible : ed->stair_event_count;
+        for (int i = stair_start; i < stair_end; i++) {
+            StairEvent *se = &ed->stair_events[i];
+            char buf[64];
+            snprintf(buf, sizeof(buf), "(%d,%d)->(%d,%d)", se->start_x, se->start_y, se->end_x, se->end_y);
+            SDL_Color col = (i == ed->selected_stair) ? (SDL_Color){0,255,0,255} : (SDL_Color){255,255,255,255};
+            SDL_Rect item_rect = {10, stair_list_start_y + (i - stair_start) * stair_item_h, LEFT_PANEL_W-20, stair_item_h};
+            if (i == ed->selected_stair) {
+                SDL_SetRenderDrawColor(ed->renderer, 80,80,120,255);
+                SDL_RenderFillRect(ed->renderer, &item_rect);
+            }
+            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y + stair_item_h/2, col);
+        }
+        SDL_RenderSetClipRect(ed->renderer, NULL);
+
+        if (ed->stair_event_count > stair_max_visible) {
+            int bar_x = LEFT_PANEL_W - 12, bar_w = 6;
+            SDL_Rect track = { bar_x, stair_list_start_y, bar_w, stair_list_h };
+            SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+            SDL_RenderFillRect(ed->renderer, &track);
+            float thumb_h = (float)stair_max_visible / ed->stair_event_count * stair_list_h;
+            if (thumb_h < 12) thumb_h = 12;
+            int thumb_y = stair_list_start_y + (int)((stair_list_h - thumb_h) * ((float)ed->stair_event_scroll / stair_max_scroll));
+            SDL_Rect thumb = { bar_x, thumb_y, bar_w, (int)thumb_h };
+            SDL_SetRenderDrawColor(ed->renderer, 180,180,180,255);
+            SDL_RenderFillRect(ed->renderer, &thumb);
+        }
+
+        y = stair_list_start_y + stair_list_h + 5;
+
+        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        y += 5;
+
+        if (ed->selected_stair >= 0 && ed->selected_stair < ed->stair_event_count) {
+            int edit_y = y;
+            draw_stair_field(ed, "Start", 0, edit_y);
+            edit_y += 22;
+            draw_stair_field(ed, "End", 1, edit_y);
+            edit_y += 22;
+
+            // Кнопки выбора направления лестницы
+            StairEvent *se = &ed->stair_events[ed->selected_stair];
+            int dir_btn_y = edit_y;
+            SDL_Rect slash_btn = {10, dir_btn_y, 50, 20};
+            SDL_Rect bslash_btn = {70, dir_btn_y, 50, 20};
+
+            SDL_SetRenderDrawColor(ed->renderer, se->direction == 0 ? 100 : 70, 200, 100, 255);
+            SDL_RenderFillRect(ed->renderer, &slash_btn);
+            draw_text_centered(ed->renderer, ed->font, "/", slash_btn.x+slash_btn.w/2, slash_btn.y+slash_btn.h/2,
+                               (SDL_Color){255,255,255,255});
+
+            SDL_SetRenderDrawColor(ed->renderer, se->direction == 1 ? 100 : 70, 200, 100, 255);
+            SDL_RenderFillRect(ed->renderer, &bslash_btn);
+            draw_text_centered(ed->renderer, ed->font, "\\", bslash_btn.x+bslash_btn.w/2, bslash_btn.y+bslash_btn.h/2,
+                               (SDL_Color){255,255,255,255});
+
+            edit_y += 22;  // сдвиг для кнопки Delete
+
+            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
+            SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
+            SDL_RenderFillRect(ed->renderer, &del_btn);
+            draw_text_centered(ed->renderer, ed->font, "Delete", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
+                               (SDL_Color){255,255,255,255});
+        }
+    }
+
     SDL_RenderSetClipRect(ed->renderer, NULL);
 }
 
-// ─── Обработка ввода (исправленная) ──────────
+
+// ─── Обработка ввода ──────────────────────────
 void handle_input(Editor *ed, bool *running) {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
@@ -1093,6 +1342,47 @@ void handle_input(Editor *ed, bool *running) {
             }
         }
 
+        // ================== Текстовый ввод (Stairs) ==================
+        if (ed->stair_edit_field != -1) {
+            if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_BACKSPACE) {
+                    int len = strlen(ed->stair_input_buf);
+                    if (len > 0) ed->stair_input_buf[len-1] = '\0';
+                }
+                else if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER) {
+                    if (ed->selected_stair >= 0 && ed->selected_stair < ed->stair_event_count) {
+                        StairEvent *se = &ed->stair_events[ed->selected_stair];
+                        if (ed->stair_edit_field == 0) {
+                            int x, y;
+                            if (sscanf(ed->stair_input_buf, "%d,%d", &x, &y) == 2) {
+                                se->start_x = x; se->start_y = y;
+                            }
+                        } else if (ed->stair_edit_field == 1) {
+                            int x, y;
+                            if (sscanf(ed->stair_input_buf, "%d,%d", &x, &y) == 2) {
+                                se->end_x = x; se->end_y = y;
+                            }
+                        }
+                    }
+                    ed->stair_edit_field = -1;
+                    ed->stair_input_buf[0] = '\0';
+                    SDL_StopTextInput();
+                }
+                else if (e.key.keysym.sym == SDLK_ESCAPE) {
+                    ed->stair_edit_field = -1;
+                    ed->stair_input_buf[0] = '\0';
+                    SDL_StopTextInput();
+                }
+            }
+            else if (e.type == SDL_TEXTINPUT) {
+                if (strspn(e.text.text, "0123456789,-") == strlen(e.text.text)) {
+                    if (strlen(ed->stair_input_buf) < 30) {
+                        strcat(ed->stair_input_buf, e.text.text);
+                    }
+                }
+            }
+        }
+
         // ================== Колесо мыши ==================
         if (e.type == SDL_MOUSEWHEEL) {
             int mx, my;
@@ -1114,7 +1404,7 @@ void handle_input(Editor *ed, bool *running) {
                 if (ed->map_list.map_list_scroll < 0) ed->map_list.map_list_scroll = 0;
                 if (ed->map_list.map_list_scroll > max_scroll) ed->map_list.map_list_scroll = max_scroll;
             }
-            // Скроллинг списков левой панели (Roof Events и Tile Changes)
+            // Скроллинг списков левой панели (Roof Events, Tile Changes, Stairs)
             if (mx >= 0 && mx < LEFT_PANEL_W) {
                 SDL_Point mouse_pt = {mx, my};
                 // Roof Events (если развёрнуты и мышь над областью списка)
@@ -1132,6 +1422,14 @@ void handle_input(Editor *ed, bool *running) {
                     ed->tile_change_scroll -= e.wheel.y;
                     if (ed->tile_change_scroll < 0) ed->tile_change_scroll = 0;
                     if (ed->tile_change_scroll > max_scroll) ed->tile_change_scroll = max_scroll;
+                }
+                // Stairs (если развёрнуты и мышь над областью списка)
+                else if (!ed->stair_section_collapsed && SDL_PointInRect(&mouse_pt, &ed->stair_list_rect)) {
+                    int max_visible = 5;
+                    int max_scroll = (ed->stair_event_count > max_visible) ? ed->stair_event_count - max_visible : 0;
+                    ed->stair_event_scroll -= e.wheel.y;
+                    if (ed->stair_event_scroll < 0) ed->stair_event_scroll = 0;
+                    if (ed->stair_event_scroll > max_scroll) ed->stair_event_scroll = max_scroll;
                 }
             }
         }
@@ -1169,6 +1467,17 @@ void handle_input(Editor *ed, bool *running) {
                 } else if (!(mx >= 0 && mx < LEFT_PANEL_W)) {
                     ed->tc_edit_field = -1;
                     ed->tc_input_buf[0] = '\0';
+                    SDL_StopTextInput();
+                }
+            }
+
+            // Сброс Stair поля при клике вне
+            if (ed->stair_edit_field != -1) {
+                if (mx >= MAP_X && mx < MAP_X + MAP_VISIBLE_W && my >= MAP_Y && my < MAP_Y + MAP_VISIBLE_H) {
+                    // клик по карте – обработаем ниже
+                } else if (!(mx >= 0 && mx < LEFT_PANEL_W)) {
+                    ed->stair_edit_field = -1;
+                    ed->stair_input_buf[0] = '\0';
                     SDL_StopTextInput();
                 }
             }
@@ -1211,7 +1520,6 @@ void handle_input(Editor *ed, bool *running) {
                         int idx = ed->roof_event_scroll + (my - list_start_y) / 18;
                         if (idx >= 0 && idx < ed->roof_event_count) {
                             ed->selected_roof_event = idx;
-
                             ed->edit_field = -1;
                             ed->input_buf[0] = '\0';
                             return;
@@ -1269,7 +1577,6 @@ void handle_input(Editor *ed, bool *running) {
                         int idx = ed->tile_change_scroll + (my - tc_list_start_y) / 18;
                         if (idx >= 0 && idx < ed->tile_change_count) {
                             ed->selected_tile_change = idx;
-
                             ed->tc_edit_field = -1;
                             ed->tc_input_buf[0] = '\0';
                             return;
@@ -1286,6 +1593,76 @@ void handle_input(Editor *ed, bool *running) {
                             ed->tile_change_count--;
                             ed->selected_tile_change = -1;
                             ed->tc_edit_field = -1;
+                            SDL_StopTextInput();
+                            return;
+                        }
+                    }
+                }
+
+                // --- Кнопка сворачивания Stairs (всегда активна) ---
+                if (my >= ed->stair_section_y && my < ed->stair_section_y + 24) {
+                    if (mx >= LEFT_PANEL_W - 35 && mx < LEFT_PANEL_W - 9) {
+                        ed->stair_section_collapsed = !ed->stair_section_collapsed;
+                        return;
+                    }
+                    return; // клик по заголовку – ничего
+                }
+
+                // --- Содержимое Stairs (если развёрнуто) ---
+                if (!ed->stair_section_collapsed) {
+                    int stair_y = ed->stair_section_y + 26;
+                    SDL_Rect stair_add_btn = {10, stair_y, LEFT_PANEL_W-20, 24};
+                    if (my >= stair_add_btn.y && my < stair_add_btn.y+stair_add_btn.h) {
+                        if (ed->stair_event_count < MAX_STAIRS) {
+                            StairEvent *se = &ed->stair_events[ed->stair_event_count++];
+                            se->start_x = se->start_y = 0;
+                            se->end_x = 1; se->end_y = 1;
+                            ed->selected_stair = ed->stair_event_count - 1;
+                            ed->stair_edit_field = -1;
+                            ed->stair_input_buf[0] = '\0';
+                        }
+                        return;
+                    }
+                    stair_y += 30 + 5;
+                    int stair_list_start_y = stair_y;
+                    int stair_list_h = 100;
+                    if (my >= stair_list_start_y && my < stair_list_start_y + stair_list_h) {
+                        int idx = ed->stair_event_scroll + (my - stair_list_start_y) / 18;
+                        if (idx >= 0 && idx < ed->stair_event_count) {
+                            ed->selected_stair = idx;
+                            ed->stair_edit_field = -1;
+                            ed->stair_input_buf[0] = '\0';
+                            return;
+                        }
+                    }
+                                        stair_y = stair_list_start_y + stair_list_h + 5 + 5;
+                    if (ed->selected_stair >= 0 && ed->selected_stair < ed->stair_event_count) {
+                        check_stair_click(ed, 0, stair_y, mx, my);
+                        check_stair_click(ed, 1, stair_y + 22, mx, my);
+
+                        // Переключатели направления лестницы (/ или \)
+                        int dir_btn_y = stair_y + 44;
+                        SDL_Rect slash_btn = {10, dir_btn_y, 50, 20};
+                        SDL_Rect bslash_btn = {70, dir_btn_y, 50, 20};
+                        StairEvent *se = &ed->stair_events[ed->selected_stair];
+                        if (mx >= slash_btn.x && mx < slash_btn.x+slash_btn.w && my >= slash_btn.y && my < slash_btn.y+slash_btn.h) {
+                            se->direction = 0;
+                            return;
+                        }
+                        if (mx >= bslash_btn.x && mx < bslash_btn.x+bslash_btn.w && my >= bslash_btn.y && my < bslash_btn.y+bslash_btn.h) {
+                            se->direction = 1;
+                            return;
+                        }
+
+                        // Кнопка удаления (сдвинута на 22 пикселя вниз относительно старого положения)
+                        int del_y = stair_y + 66;
+                        SDL_Rect del_btn = {10, del_y, LEFT_PANEL_W-20, 24};
+                        if (mx >= del_btn.x && mx < del_btn.x+del_btn.w && my >= del_btn.y && my < del_btn.y+del_btn.h) {
+                            for (int i = ed->selected_stair; i < ed->stair_event_count-1; i++)
+                                ed->stair_events[i] = ed->stair_events[i+1];
+                            ed->stair_event_count--;
+                            ed->selected_stair = -1;
+                            ed->stair_edit_field = -1;
                             SDL_StopTextInput();
                             return;
                         }
@@ -1367,6 +1744,18 @@ void handle_input(Editor *ed, bool *running) {
                                 tc->sample_x = tx;   // запоминаем координаты образца
                                 tc->sample_y = ty;
                                 ed->tc_edit_field = -1; ed->tc_input_buf[0] = '\0'; SDL_StopTextInput();
+                            }
+                        }
+
+                        // --- Stairs ---
+                        if (ed->stair_edit_field != -1 && ed->selected_stair >= 0) {
+                            StairEvent *se = &ed->stair_events[ed->selected_stair];
+                            if (ed->stair_edit_field == 0) {
+                                se->start_x = tx; se->start_y = ty;
+                                ed->stair_edit_field = -1; ed->stair_input_buf[0] = '\0'; SDL_StopTextInput();
+                            } else if (ed->stair_edit_field == 1) {
+                                se->end_x = tx; se->end_y = ty;
+                                ed->stair_edit_field = -1; ed->stair_input_buf[0] = '\0'; SDL_StopTextInput();
                             }
                         }
                     }
