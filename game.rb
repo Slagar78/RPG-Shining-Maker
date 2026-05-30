@@ -115,6 +115,13 @@ class Game
     @show_anim  = false
 
     @game_state = :playing
+	
+	@warp_pending = nil      # данные варпа, ожидающие перехода
+    @fade_alpha = 0          # 0..255, 0 = прозрачный, 255 = чёрный
+    @fade_state = nil        # :out, :in, nil
+    @fade_timer = 0          # для задержки на чёрном экране
+	@warp_delay = 0          # задержка перед началом fade (кадры)
+	
     @pending_profile_open = false
     @pending_status_open = false
     @pending_menu_open = false
@@ -154,6 +161,11 @@ class Game
   def handle_input
     play_ui_sounds
     case @game_state
+	
+	when :warping
+      # во время варпа управление отключено
+      return
+	
     when :playing
       if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
         if @player.moving
@@ -258,6 +270,50 @@ class Game
     @audio.update
     @player.update_animation
     @player.update_movement if @game_state == :playing
+	
+	# Fade-логика для варпа (стиль Sega RPG)
+    if @game_state == :warping
+      if @warp_delay > 0
+        @warp_delay -= 1
+      elsif @fade_state.nil?
+        @fade_state = :out
+        @fade_alpha = 0
+      end
+
+      if @fade_state == :out
+        @fade_alpha += 4
+        if @fade_alpha >= 255
+          @fade_alpha = 255
+          @fade_state = :hold
+        end
+      elsif @fade_state == :hold
+        # Загружаем новую карту (экран уже чёрный)
+        pending = @warp_pending
+        @audio.stop
+        @game_map = GameMap.new(pending[:map_id])
+        @top_layer = @game_map.build_top_layer
+        SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
+        @layer2 = @game_map.build_layer2
+        SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
+        @player.map = @game_map
+        @player.x = pending[:target_x]
+        @player.y = pending[:target_y]
+        @player.direction = pending[:facing] if pending[:facing]
+        @player.moving = false
+        @player.pattern = 0
+        @zone_hidden = Array.new(@game_map.roof_events.size, false)
+        @audio.play(@game_map.music_file, @game_map.music_volume)
+        @fade_state = :in
+      elsif @fade_state == :in
+        @fade_alpha -= 4
+        if @fade_alpha <= 0
+          @fade_alpha = 0
+          @fade_state = nil
+          @warp_pending = nil
+          @game_state = :playing
+        end
+      end
+    end
 
     if @game_map && @game_map.roof_events.any?
       @game_map.roof_events.each_with_index do |ev, idx|
@@ -285,6 +341,20 @@ class Game
         if tx && ty && @player.x == tx && @player.y == ty
           new_id = ev['new_tile_id']
           @game_map.replace_tile(tx, ty, new_id)
+        end
+      end
+    end
+
+    # Проверка варпов (телепортов)
+    if @game_state == :playing && @game_map && @game_map.warp_events.any? && !@player.moving
+      @game_map.warp_events.each do |warp|
+        if @player.x == warp['trigger_x'] && @player.y == warp['trigger_y']
+          target_map = warp['target_map']
+          target_x = warp['target_x']
+          target_y = warp['target_y']
+          facing = warp['facing']
+          change_map(target_map, target_x, target_y, facing)
+          break
         end
       end
     end
@@ -413,9 +483,24 @@ class Game
     when :search then @search_overlay.draw
     end
 
+    if @game_state == :warping
+      DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, @fade_alpha))
+    end
+
     DrawText("FPS: #{GetFPS()}", 576 - 100, 10, 20, DARKGRAY)
     EndDrawing()
   end
+
+def change_map(map_id, target_x, target_y, facing = nil)
+  @warp_pending = {
+    map_id: map_id,
+    target_x: target_x,
+    target_y: target_y,
+    facing: facing
+  }
+  @game_state = :warping
+  @warp_delay = 10        # ждём 10 кадров (≈ 0.16 сек при 60 FPS)
+end
 
   private
 

@@ -5,7 +5,7 @@ include Raylib
 
 class GameMap
   attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas,
-              :roof_events, :tile_events, :stair_events, :roof_offsets
+              :roof_events, :tile_events, :stair_events, :roof_offsets, :warp_events
   attr_reader :tileset_path
   attr_reader :roof_layers
   attr_reader :layer2, :top_layer, :static_bg
@@ -74,6 +74,7 @@ class GameMap
 	@roof_offsets = []
     @tile_events = []
 	@stair_events = []
+	@warp_events = []
     events_path = "data/maps/#{entry['folder']}/events.json"
     if File.exist?(events_path)
       begin
@@ -86,6 +87,8 @@ class GameMap
             @tile_events << ev
 			elsif type == 'stairs'
             @stair_events << ev
+			elsif type == 'warp'
+            @warp_events << ev
           end
         end
       rescue
@@ -170,6 +173,7 @@ class GameMap
     @music_volume = 0.8
     @areas = []
 	@stair_events = []
+	@warp_events = []
 	@roof_offsets = []
   end
 
