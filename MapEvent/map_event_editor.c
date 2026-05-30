@@ -71,6 +71,13 @@ void editor_init(Editor *ed) {
     ed->warp_section_collapsed = true;
     ed->warp_section_y = 0;
     ed->warp_event_scroll = 0;
+
+    ed->warp_trigger_x_buf[0] = '\0';
+    ed->warp_trigger_y_buf[0] = '\0';
+    ed->warp_target_x_buf[0]  = '\0';
+    ed->warp_target_y_buf[0]  = '\0';
+    ed->warp_facing_buf[0]     = '\0';
+
     memset(&ed->warp_list_rect, 0, sizeof(ed->warp_list_rect));
 }
 
@@ -718,21 +725,88 @@ static void check_stair_click(Editor *ed, int field_idx, int line_y, int mx, int
 
 static void draw_warp_field(Editor *ed, const char *label, int field_idx, int line_y) {
     SDL_Rect lbl_rect = {10, line_y, 65, 20};
-    draw_text_centered(ed->renderer, ed->font, label, lbl_rect.x + lbl_rect.w/2, lbl_rect.y + lbl_rect.h/2,
+    draw_text_centered(ed->renderer, ed->font, label,
+                       lbl_rect.x + lbl_rect.w/2, lbl_rect.y + lbl_rect.h/2,
                        (SDL_Color){200, 200, 200, 255});
 
-    SDL_Rect fld_rect = {90, line_y, 130, 20};
-    bool active = (ed->warp_edit_field == field_idx);
+    // --- Trigger X/Y ---
+    if (field_idx == 0) {
+        SDL_Rect x_rect = {90, line_y, 65, 22};
+        SDL_Rect comma_rect = {x_rect.x + x_rect.w + 8, line_y, 16, 22};
+        SDL_Rect y_rect = {comma_rect.x + comma_rect.w + 8, line_y, 65, 22};
 
-    if (field_idx == 1) {
-        // ========== Target Map – выбор стрелками ==========
-        // Фон поля
+        bool active_x = (ed->warp_edit_field == 0);
+        bool active_y = (ed->warp_edit_field == 1);
+
+        SDL_SetRenderDrawColor(ed->renderer, active_x ? 255 : 200, 200, 200, 255);
+        SDL_RenderFillRect(ed->renderer, &x_rect);
+        SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
+        SDL_RenderDrawRect(ed->renderer, &x_rect);
+
+        draw_text_centered(ed->renderer, ed->font, ",",
+                           comma_rect.x + comma_rect.w/2, comma_rect.y + comma_rect.h/2,
+                           (SDL_Color){200,200,200,255});
+
+        SDL_SetRenderDrawColor(ed->renderer, active_y ? 255 : 200, 200, 200, 255);
+        SDL_RenderFillRect(ed->renderer, &y_rect);
+        SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
+        SDL_RenderDrawRect(ed->renderer, &y_rect);
+
+        draw_text_centered(ed->renderer, ed->font, ed->warp_trigger_x_buf,
+                           x_rect.x + x_rect.w/2, x_rect.y + x_rect.h/2, (SDL_Color){0,0,0,255});
+        draw_text_centered(ed->renderer, ed->font, ed->warp_trigger_y_buf,
+                           y_rect.x + y_rect.w/2, y_rect.y + y_rect.h/2, (SDL_Color){0,0,0,255});
+    }
+    // --- Target X/Y ---
+    else if (field_idx == 3) {
+        SDL_Rect x_rect = {90, line_y, 65, 22};
+        SDL_Rect comma_rect = {x_rect.x + x_rect.w + 8, line_y, 16, 22};
+        SDL_Rect y_rect = {comma_rect.x + comma_rect.w + 8, line_y, 65, 22};
+
+        bool active_x = (ed->warp_edit_field == 3);
+        bool active_y = (ed->warp_edit_field == 4);
+
+        SDL_SetRenderDrawColor(ed->renderer, active_x ? 255 : 200, 200, 200, 255);
+        SDL_RenderFillRect(ed->renderer, &x_rect);
+        SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
+        SDL_RenderDrawRect(ed->renderer, &x_rect);
+
+        draw_text_centered(ed->renderer, ed->font, ",",
+                           comma_rect.x + comma_rect.w/2, comma_rect.y + comma_rect.h/2,
+                           (SDL_Color){200,200,200,255});
+
+        SDL_SetRenderDrawColor(ed->renderer, active_y ? 255 : 200, 200, 200, 255);
+        SDL_RenderFillRect(ed->renderer, &y_rect);
+        SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
+        SDL_RenderDrawRect(ed->renderer, &y_rect);
+
+        draw_text_centered(ed->renderer, ed->font, ed->warp_target_x_buf,
+                           x_rect.x + x_rect.w/2, x_rect.y + x_rect.h/2, (SDL_Color){0,0,0,255});
+        draw_text_centered(ed->renderer, ed->font, ed->warp_target_y_buf,
+                           y_rect.x + y_rect.w/2, y_rect.y + y_rect.h/2, (SDL_Color){0,0,0,255});
+    }
+    // --- Facing ---
+    else if (field_idx == 5) {
+        SDL_Rect fld_rect = {90, line_y, 40, 22};
+        bool active = (ed->warp_edit_field == 5);
+        SDL_SetRenderDrawColor(ed->renderer, active ? 255 : 200, 200, 200, 255);
+        SDL_RenderFillRect(ed->renderer, &fld_rect);
+        SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
+        SDL_RenderDrawRect(ed->renderer, &fld_rect);
+        draw_text_centered(ed->renderer, ed->font, ed->warp_facing_buf,
+                           fld_rect.x + fld_rect.w/2, fld_rect.y + fld_rect.h/2,
+                           (SDL_Color){0,0,0,255});
+    }
+    // --- Target Map (выбор стрелками) ---
+    else {
+        SDL_Rect fld_rect = {90, line_y, 130, 20};
+        bool active = (ed->warp_edit_field == 2);
+
         SDL_SetRenderDrawColor(ed->renderer, active ? 220 : 200, 200, 200, 255);
         SDL_RenderFillRect(ed->renderer, &fld_rect);
         SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
         SDL_RenderDrawRect(ed->renderer, &fld_rect);
 
-        // Кнопки-стрелки
         SDL_Rect left_arrow  = { fld_rect.x, fld_rect.y, 18, fld_rect.h };
         SDL_Rect right_arrow = { fld_rect.x + fld_rect.w - 18, fld_rect.y, 18, fld_rect.h };
         SDL_Rect name_rect   = { left_arrow.x + left_arrow.w, fld_rect.y,
@@ -741,12 +815,13 @@ static void draw_warp_field(Editor *ed, const char *label, int field_idx, int li
         SDL_SetRenderDrawColor(ed->renderer, 80, 80, 80, 255);
         SDL_RenderFillRect(ed->renderer, &left_arrow);
         SDL_RenderFillRect(ed->renderer, &right_arrow);
-        draw_text_centered(ed->renderer, ed->font, "<", left_arrow.x + left_arrow.w/2, left_arrow.y + left_arrow.h/2,
+        draw_text_centered(ed->renderer, ed->font, "<",
+                           left_arrow.x + left_arrow.w/2, left_arrow.y + left_arrow.h/2,
                            (SDL_Color){255,255,255,255});
-        draw_text_centered(ed->renderer, ed->font, ">", right_arrow.x + right_arrow.w/2, right_arrow.y + right_arrow.h/2,
+        draw_text_centered(ed->renderer, ed->font, ">",
+                           right_arrow.x + right_arrow.w/2, right_arrow.y + right_arrow.h/2,
                            (SDL_Color){255,255,255,255});
 
-        // Имя карты из entries.json
         char display_name[64] = "???";
         if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
             WarpEvent *we = &ed->warp_events[ed->selected_warp];
@@ -759,39 +834,50 @@ static void draw_warp_field(Editor *ed, const char *label, int field_idx, int li
             if (display_name[0] == '?' && we->target_map[0] != '\0')
                 snprintf(display_name, sizeof(display_name), "%s", we->target_map);
         }
-        draw_text_centered(ed->renderer, ed->font, display_name, name_rect.x + name_rect.w/2, name_rect.y + name_rect.h/2,
+        draw_text_centered(ed->renderer, ed->font, display_name,
+                           name_rect.x + name_rect.w/2, name_rect.y + name_rect.h/2,
                            (SDL_Color){0,0,0,255});
-    } else {
-        // ========== Остальные поля – текстовый ввод ==========
-        SDL_SetRenderDrawColor(ed->renderer, active ? 255 : 200, active ? 255 : 200, active ? 255 : 200, 255);
-        SDL_RenderFillRect(ed->renderer, &fld_rect);
-        SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
-        SDL_RenderDrawRect(ed->renderer, &fld_rect);
-
-        char buf[64] = "";
-        if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
-            WarpEvent *we = &ed->warp_events[ed->selected_warp];
-            if (field_idx == 0)
-                snprintf(buf, sizeof(buf), "%d,%d", we->trigger_x, we->trigger_y);
-            else if (field_idx == 2)
-                snprintf(buf, sizeof(buf), "%d,%d", we->target_x, we->target_y);
-            else if (field_idx == 3)
-                snprintf(buf, sizeof(buf), "%d", we->facing);
-        }
-        if (active && ed->warp_input_buf[0])
-            snprintf(buf, sizeof(buf), "%s", ed->warp_input_buf);
-        draw_text_centered(ed->renderer, ed->font, buf, fld_rect.x + fld_rect.w/2, fld_rect.y + fld_rect.h/2,
-                           (SDL_Color){0, 0, 0, 255});
     }
 }
 
+
 static void check_warp_click(Editor *ed, int field_idx, int line_y, int mx, int my) {
-    SDL_Rect fld = {90, line_y, 130, 20};
-    if (mx >= fld.x && mx < fld.x + fld.w && my >= fld.y && my < fld.y + fld.h) {
-        if (field_idx == 1) {
-            // Активируем поле (для клавиш влево/вправо)
+    if (field_idx == 0) {
+        // Размеры должны совпадать с draw_warp_field
+        SDL_Rect x_rect = {90, line_y, 65, 22};
+        // y_rect начинается после x_rect (65) + отступ 8 + comma (16) + отступ 8 = 97
+        SDL_Rect y_rect = {90 + 65 + 8 + 16 + 8, line_y, 65, 22};
+        if (mx >= x_rect.x && mx < x_rect.x + x_rect.w && my >= x_rect.y && my < x_rect.y + x_rect.h) {
+            ed->warp_edit_field = 0;
+            SDL_StartTextInput();
+        } else if (mx >= y_rect.x && mx < y_rect.x + y_rect.w && my >= y_rect.y && my < y_rect.y + y_rect.h) {
             ed->warp_edit_field = 1;
-            SDL_StopTextInput(); // текстовый ввод не нужен
+            SDL_StartTextInput();
+        }
+    }
+    else if (field_idx == 3) {
+        SDL_Rect x_rect = {90, line_y, 65, 22};
+        SDL_Rect y_rect = {90 + 65 + 8 + 16 + 8, line_y, 65, 22};
+        if (mx >= x_rect.x && mx < x_rect.x + x_rect.w && my >= x_rect.y && my < x_rect.y + x_rect.h) {
+            ed->warp_edit_field = 3;
+            SDL_StartTextInput();
+        } else if (mx >= y_rect.x && mx < y_rect.x + y_rect.w && my >= y_rect.y && my < y_rect.y + y_rect.h) {
+            ed->warp_edit_field = 4;
+            SDL_StartTextInput();
+        }
+    }
+    else if (field_idx == 5) {
+        SDL_Rect fld = {90, line_y, 40, 22};
+        if (mx >= fld.x && mx < fld.x + fld.w && my >= fld.y && my < fld.y + fld.h) {
+            ed->warp_edit_field = 5;
+            SDL_StartTextInput();
+        }
+    }
+    else {  // field_idx == 1 (Target Map)
+        SDL_Rect fld = {90, line_y, 130, 20};
+        if (mx >= fld.x && mx < fld.x + fld.w && my >= fld.y && my < fld.y + fld.h) {
+            ed->warp_edit_field = 2;
+            SDL_StopTextInput();
 
             SDL_Rect left_arrow  = { fld.x, fld.y, 18, fld.h };
             SDL_Rect right_arrow = { fld.x + fld.w - 18, fld.y, 18, fld.h };
@@ -817,24 +903,9 @@ static void check_warp_click(Editor *ed, int field_idx, int line_y, int mx, int 
                     }
                 }
             }
-            return; // выходим, не переходя к текстовому вводу
         }
-
-        // Остальные поля – стандартный текстовый ввод
-        ed->warp_edit_field = field_idx;
-        if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
-            WarpEvent *we = &ed->warp_events[ed->selected_warp];
-            if (field_idx == 0)
-                snprintf(ed->warp_input_buf, sizeof(ed->warp_input_buf), "%d,%d", we->trigger_x, we->trigger_y);
-            else if (field_idx == 2)
-                snprintf(ed->warp_input_buf, sizeof(ed->warp_input_buf), "%d,%d", we->target_x, we->target_y);
-            else if (field_idx == 3)
-                snprintf(ed->warp_input_buf, sizeof(ed->warp_input_buf), "%d", we->facing);
-        }
-        SDL_StartTextInput();
     }
 }
-
 
 // ─── Левая панель ──
 void render_left_panel(Editor *ed) {
@@ -1222,8 +1293,8 @@ void render_left_panel(Editor *ed) {
             int edit_y = y;
             draw_warp_field(ed, "Trigger", 0, edit_y); edit_y += 22;
             draw_warp_field(ed, "Targ.Map", 1, edit_y); edit_y += 22;
-            draw_warp_field(ed, "Targ.Pos", 2, edit_y); edit_y += 22;
-            draw_warp_field(ed, "Facing", 3, edit_y); edit_y += 22;
+            draw_warp_field(ed, "Targ.Pos", 3, edit_y); edit_y += 22;
+            draw_warp_field(ed, "Facing",  5, edit_y); edit_y += 22;
 
             SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
             SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
@@ -1387,31 +1458,43 @@ void handle_input(Editor *ed, bool *running) {
         if (ed->warp_edit_field != -1) {
             if (e.type == SDL_KEYDOWN) {
                 if (e.key.keysym.sym == SDLK_BACKSPACE) {
-                    int len = strlen(ed->warp_input_buf);
-                    if (len > 0) ed->warp_input_buf[len-1] = '\0';
+                    char *buf = NULL;
+                    switch (ed->warp_edit_field) {
+                        case 0: buf = ed->warp_trigger_x_buf; break;
+                        case 1: buf = ed->warp_trigger_y_buf; break;
+                        case 3: buf = ed->warp_target_x_buf; break;
+                        case 4: buf = ed->warp_target_y_buf; break;
+                        case 5: buf = ed->warp_facing_buf; break;
+                        case 2: buf = ed->warp_input_buf; break;
+                    }
+                    if (buf && strlen(buf) > 0) buf[strlen(buf)-1] = '\0';
                 }
                 else if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER) {
                     if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
                         WarpEvent *we = &ed->warp_events[ed->selected_warp];
-                        if (ed->warp_edit_field == 0) {
-                            int x, y; sscanf(ed->warp_input_buf, "%d,%d", &x, &y);
-                            we->trigger_x = x; we->trigger_y = y;
-                        } else if (ed->warp_edit_field == 1) {
+                        if (strlen(ed->warp_trigger_x_buf) > 0 && strlen(ed->warp_trigger_y_buf) > 0) {
+                            we->trigger_x = atoi(ed->warp_trigger_x_buf);
+                            we->trigger_y = atoi(ed->warp_trigger_y_buf);
+                        }
+                        if (strlen(ed->warp_target_x_buf) > 0 && strlen(ed->warp_target_y_buf) > 0) {
+                            we->target_x = atoi(ed->warp_target_x_buf);
+                            we->target_y = atoi(ed->warp_target_y_buf);
+                        }
+                        if (strlen(ed->warp_facing_buf) > 0)
+                            we->facing = atoi(ed->warp_facing_buf);
+                        if (ed->warp_edit_field == 2 && strlen(ed->warp_input_buf) > 0) {
                             snprintf(we->target_map, sizeof(we->target_map), "%s", ed->warp_input_buf);
                             we->target_map[63] = '\0';
-                        } else if (ed->warp_edit_field == 2) {
-                            int x, y; sscanf(ed->warp_input_buf, "%d,%d", &x, &y);
-                            we->target_x = x; we->target_y = y;
-                        } else if (ed->warp_edit_field == 3) {
-                            we->facing = atoi(ed->warp_input_buf);
                         }
                     }
                     ed->warp_edit_field = -1;
-                    ed->warp_input_buf[0] = '\0';
                     SDL_StopTextInput();
                 }
-                
-                else if (ed->warp_edit_field == 1 &&
+                else if (e.key.keysym.sym == SDLK_ESCAPE) {
+                    ed->warp_edit_field = -1;
+                    SDL_StopTextInput();
+                }
+                else if (ed->warp_edit_field == 2 &&
                          (e.key.keysym.sym == SDLK_LEFT || e.key.keysym.sym == SDLK_RIGHT)) {
                     if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
                         WarpEvent *we = &ed->warp_events[ed->selected_warp];
@@ -1429,22 +1512,30 @@ void handle_input(Editor *ed, bool *running) {
                         }
                     }
                 }
-                
-                else if (e.key.keysym.sym == SDLK_ESCAPE) {
-                    ed->warp_edit_field = -1;
-                    ed->warp_input_buf[0] = '\0';
-                    SDL_StopTextInput();
-                }
             }
             else if (e.type == SDL_TEXTINPUT) {
-                if (strlen(ed->warp_input_buf) < 63) {
-                    // Для target_map разрешаем буквы, цифры и '_'
-                    if (ed->warp_edit_field == 1) {
-                        if (isalnum(e.text.text[0]) || e.text.text[0] == '_')
-                            strcat(ed->warp_input_buf, e.text.text);
-                    } else {
-                        if (strspn(e.text.text, "0123456789,-") == strlen(e.text.text))
-                            strcat(ed->warp_input_buf, e.text.text);
+                char *buf = NULL;
+                int maxlen = 0;
+                const char *allowed = "0123456789";
+                switch (ed->warp_edit_field) {
+                    case 0: buf = ed->warp_trigger_x_buf; maxlen = 4; break;
+                    case 1: buf = ed->warp_trigger_y_buf; maxlen = 4; break;
+                    case 3: buf = ed->warp_target_x_buf;  maxlen = 4; break;
+                    case 4: buf = ed->warp_target_y_buf;  maxlen = 4; break;
+                    case 5: buf = ed->warp_facing_buf;    maxlen = 1; allowed = "23468"; break;
+                    case 2: buf = ed->warp_input_buf;     maxlen = 63; allowed = NULL; break;
+                }
+                if (buf) {
+                    int len = strlen(buf);
+                    if (len < maxlen) {
+                        if (allowed) {
+                            if (strchr(allowed, e.text.text[0]))
+                                buf[len] = e.text.text[0];
+                        } else {
+                            if (isalnum(e.text.text[0]) || e.text.text[0] == '_')
+                                buf[len] = e.text.text[0];
+                        }
+                        buf[len+1] = '\0';
                     }
                 }
             }
@@ -1782,21 +1873,30 @@ void handle_input(Editor *ed, bool *running) {
                     warp_y += 30 + 5;
                     int warp_list_start_y = warp_y;
                     int warp_list_h = 100;
+
                     if (my >= warp_list_start_y && my < warp_list_start_y + warp_list_h) {
-                        int idx = ed->warp_event_scroll + (my - warp_list_start_y) / 18;
-                        if (idx >= 0 && idx < ed->warp_event_count) {
-                            ed->selected_warp = idx;
-                            ed->warp_edit_field = -1;
-                            ed->warp_input_buf[0] = '\0';
-                            return;
-                        }
+                    int idx = ed->warp_event_scroll + (my - warp_list_start_y) / 18;
+                    if (idx >= 0 && idx < ed->warp_event_count) {
+                    ed->selected_warp = idx;
+                    ed->warp_edit_field = -1;
+                    ed->warp_input_buf[0] = '\0';
+
+                    // Заполняем буферы координат и facing
+                    WarpEvent *we = &ed->warp_events[idx];
+                    snprintf(ed->warp_trigger_x_buf, sizeof(ed->warp_trigger_x_buf), "%d", we->trigger_x);
+                    snprintf(ed->warp_trigger_y_buf, sizeof(ed->warp_trigger_y_buf), "%d", we->trigger_y);
+                    snprintf(ed->warp_target_x_buf,  sizeof(ed->warp_target_x_buf),  "%d", we->target_x);
+                    snprintf(ed->warp_target_y_buf,  sizeof(ed->warp_target_y_buf),  "%d", we->target_y);
+                    snprintf(ed->warp_facing_buf,    sizeof(ed->warp_facing_buf),    "%d", we->facing);
+                    return;
                     }
+                }
                     warp_y = warp_list_start_y + warp_list_h + 5 + 5;
                     if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
-                        check_warp_click(ed, 0, warp_y, mx, my);
-                        check_warp_click(ed, 1, warp_y + 22, mx, my);
-                        check_warp_click(ed, 2, warp_y + 44, mx, my);
-                        check_warp_click(ed, 3, warp_y + 66, mx, my);
+                        check_warp_click(ed, 0, warp_y, mx, my);           // Trigger (X/Y)
+                        check_warp_click(ed, 1, warp_y + 22, mx, my);      // Targ.Map
+                        check_warp_click(ed, 3, warp_y + 44, mx, my);      // Targ.Pos (X/Y)
+                        check_warp_click(ed, 5, warp_y + 66, mx, my);      // Facing
                         SDL_Rect del_btn = {10, warp_y + 88, LEFT_PANEL_W-20, 24};
                         if (mx >= del_btn.x && mx < del_btn.x+del_btn.w && my >= del_btn.y && my < del_btn.y+del_btn.h) {
                             for (int i = ed->selected_warp; i < ed->warp_event_count-1; i++)
@@ -1897,17 +1997,31 @@ void handle_input(Editor *ed, bool *running) {
                                 ed->stair_edit_field = -1; ed->stair_input_buf[0] = '\0'; SDL_StopTextInput();
                             }
                         }
-                                                // --- Warps ---
+
+                        // --- Warps ---
                         if (ed->warp_edit_field != -1 && ed->selected_warp >= 0) {
                             WarpEvent *we = &ed->warp_events[ed->selected_warp];
-                            if (ed->warp_edit_field == 0) {
-                                we->trigger_x = tx; we->trigger_y = ty;
-                                ed->warp_edit_field = -1; ed->warp_input_buf[0] = '\0'; SDL_StopTextInput();
-                            } else if (ed->warp_edit_field == 2) {
-                                we->target_x = tx; we->target_y = ty;
-                                ed->warp_edit_field = -1; ed->warp_input_buf[0] = '\0'; SDL_StopTextInput();
+                            if (ed->warp_edit_field == 0) {           // Trigger X
+                                snprintf(ed->warp_trigger_x_buf, sizeof(ed->warp_trigger_x_buf), "%d", tx);
+                                ed->warp_edit_field = 1;              // переключаемся на Y
+                            } else if (ed->warp_edit_field == 1) {    // Trigger Y
+                                snprintf(ed->warp_trigger_y_buf, sizeof(ed->warp_trigger_y_buf), "%d", ty);
+                                we->trigger_x = atoi(ed->warp_trigger_x_buf);
+                                we->trigger_y = atoi(ed->warp_trigger_y_buf);
+                                ed->warp_edit_field = -1;
+                                SDL_StopTextInput();
+                            } else if (ed->warp_edit_field == 3) {    // Target X
+                                snprintf(ed->warp_target_x_buf, sizeof(ed->warp_target_x_buf), "%d", tx);
+                                ed->warp_edit_field = 4;
+                            } else if (ed->warp_edit_field == 4) {    // Target Y
+                                snprintf(ed->warp_target_y_buf, sizeof(ed->warp_target_y_buf), "%d", ty);
+                                we->target_x = atoi(ed->warp_target_x_buf);
+                                we->target_y = atoi(ed->warp_target_y_buf);
+                                ed->warp_edit_field = -1;
+                                SDL_StopTextInput();
                             }
                         }
+
                     }
                 }
             }

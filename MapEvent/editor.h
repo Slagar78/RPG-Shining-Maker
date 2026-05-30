@@ -2,8 +2,8 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-#include "events.h"        // содержит типы событий, константы MAX_*
-#include "map.h"           // Map
+#include "events.h"
+#include "map.h"
 
 #define WINDOW_W 1280
 #define WINDOW_H 720
@@ -87,13 +87,19 @@ typedef struct Editor {
     WarpEvent warp_events[MAX_WARPS];
     int warp_event_count;
     int selected_warp;
-    int warp_edit_field;
-    char warp_input_buf[64];
+    int warp_edit_field;            // 0=TriggerX, 1=TriggerY, 2=TargetMap, 3=TargetX, 4=TargetY, 5=Facing
+    char warp_input_buf[64];        // для Target Map и совместимости
     bool warp_section_collapsed;
     int warp_section_y;
     int warp_event_scroll;
     SDL_Rect warp_list_rect;
+
+    // Новые буферы для раздельного ввода координат и facing
+    char warp_trigger_x_buf[12];     // макс 4 цифры
+    char warp_trigger_y_buf[12];
+    char warp_target_x_buf[12];
+    char warp_target_y_buf[12];
+    char warp_facing_buf[2];        // 1 цифра
 } Editor;
 
-// Общие вспомогательные функции
 void editor_init(Editor *ed);
