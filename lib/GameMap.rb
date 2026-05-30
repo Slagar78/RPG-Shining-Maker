@@ -199,20 +199,24 @@ class GameMap
 def passable?(x, y, from_x = nil, from_y = nil)
   return false if x < 0 || x >= @width || y < 0 || y >= @height
 
-  # Сначала проверяем лестницы – их тип не важен
+  # Если клетка принадлежит лестнице
   if from_x && from_y && stairs_at(x, y)
-    # Можно зайти только сбоку (влево/вправо)
-    return (x - from_x).abs == 1 && y == from_y
+    tile_id = @tiles[x][y]
+    type = @tile_types[tile_id] || 0
+    # Если это стена (тип 1) – пропускаем только сбоку
+    if type == 1
+      return (x - from_x).abs == 1 && y == from_y
+    end
+    # Иначе (тип 0, пол) – разрешаем проход свободно, без ограничений
   end
 
-  # Второй слой
+  # Стандартные проверки слоёв
   tile2_id = @tiles2[x][y]
   if tile2_id && tile2_id >= 0
     type2 = @tile_types[tile2_id] || 0
     return false if type2 == 1 || type2 == 2
   end
 
-  # Первый слой
   tile_id = @tiles[x][y]
   type = @tile_types[tile_id] || 0
   return false if type == 1

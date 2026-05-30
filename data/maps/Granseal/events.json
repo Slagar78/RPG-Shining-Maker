@@ -102,4 +102,11 @@
 		"end_x":	4,
 		"end_y":	4,
 		"direction":	0
+	}, {
+		"type":	"stairs",
+		"start_x":	7,
+		"start_y":	3,
+		"end_x":	6,
+		"end_y":	4,
+		"direction":	1
 	}]

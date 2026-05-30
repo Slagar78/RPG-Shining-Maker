@@ -673,7 +673,7 @@ void render_map(Editor *ed) {
             float half = (TILE_SIZE / 2.0f) * zoom;
 
             // Определяем, какой символ рисовать: '/' или '\'
-            bool forward_slash = (se->direction == 0); // 0 = '/', 1 = '\'
+            bool forward_slash = (se->direction == 1); // теперь 1 = '/', 0 = '\'
 
             // Рисуем жирную линию (толщина 3 пикселя)
             for (int t = -1; t <= 1; t++) {
@@ -1222,12 +1222,12 @@ void render_left_panel(Editor *ed) {
             SDL_Rect slash_btn = {10, dir_btn_y, 50, 20};
             SDL_Rect bslash_btn = {70, dir_btn_y, 50, 20};
 
-            SDL_SetRenderDrawColor(ed->renderer, se->direction == 0 ? 100 : 70, 200, 100, 255);
+            SDL_SetRenderDrawColor(ed->renderer, se->direction == 1 ? 100 : 70, 200, 100, 255);
             SDL_RenderFillRect(ed->renderer, &slash_btn);
             draw_text_centered(ed->renderer, ed->font, "/", slash_btn.x+slash_btn.w/2, slash_btn.y+slash_btn.h/2,
                                (SDL_Color){255,255,255,255});
 
-            SDL_SetRenderDrawColor(ed->renderer, se->direction == 1 ? 100 : 70, 200, 100, 255);
+            SDL_SetRenderDrawColor(ed->renderer, se->direction == 0 ? 100 : 70, 200, 100, 255);
             SDL_RenderFillRect(ed->renderer, &bslash_btn);
             draw_text_centered(ed->renderer, ed->font, "\\", bslash_btn.x+bslash_btn.w/2, bslash_btn.y+bslash_btn.h/2,
                                (SDL_Color){255,255,255,255});
@@ -1646,12 +1646,12 @@ void handle_input(Editor *ed, bool *running) {
                         SDL_Rect bslash_btn = {70, dir_btn_y, 50, 20};
                         StairEvent *se = &ed->stair_events[ed->selected_stair];
                         if (mx >= slash_btn.x && mx < slash_btn.x+slash_btn.w && my >= slash_btn.y && my < slash_btn.y+slash_btn.h) {
-                            se->direction = 0;
-                            return;
+                        se->direction = 1;
+                        return;
                         }
                         if (mx >= bslash_btn.x && mx < bslash_btn.x+bslash_btn.w && my >= bslash_btn.y && my < bslash_btn.y+bslash_btn.h) {
-                            se->direction = 1;
-                            return;
+                        se->direction = 0;
+                        return;
                         }
 
                         // Кнопка удаления (сдвинута на 22 пикселя вниз относительно старого положения)
