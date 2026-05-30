@@ -75,24 +75,54 @@ class Player
   end
 
   # ====================== INPUT ======================
-  def handle_input
-    return unless @can_move
-    return if @sliding
-    return if @moving
-	return if @stairs_event
+def handle_input
+  return unless @can_move
+  return if @sliding
+  return if @moving
+  return if @stairs_event
 
-    @just_turned = false
+  # === Ручной старт движения по лестнице с любой клетки ===
+  if @map
+    ev = @map.stairs_at(@x, @y)
+    if ev
+      input_dir = nil
+      if    IsKeyDown(KEY_LEFT)  then input_dir = [-1, 0]
+      elsif IsKeyDown(KEY_RIGHT) then input_dir = [1, 0]
+      elsif IsKeyDown(KEY_UP)    then input_dir = [0, -1]
+      elsif IsKeyDown(KEY_DOWN)  then input_dir = [0, 1]
+      end
 
-    if IsKeyDown(KEY_RIGHT)
-      try_move_or_turn(DIR_RIGHT)
-    elsif IsKeyDown(KEY_LEFT)
-      try_move_or_turn(DIR_LEFT)
-    elsif IsKeyDown(KEY_DOWN)
-      try_move_or_turn(DIR_DOWN)
-    elsif IsKeyDown(KEY_UP)
-      try_move_or_turn(DIR_UP)
+      if input_dir
+        info = @map.stairs_direction(@x, @y, *input_dir)
+        if info
+          @stairs_event = ev
+          @stairs_dx, @stairs_dy, @target_x, @target_y = info
+          @moving = true
+          @pixel_offset = 0
+          if @stairs_dx == 1
+            @direction = DIR_RIGHT
+          elsif @stairs_dx == -1
+            @direction = DIR_LEFT
+          end
+          return
+        end
+      end
     end
   end
+  # === Конец блока лестниц ===
+
+  @just_turned = false
+
+  if IsKeyDown(KEY_RIGHT)
+    try_move_or_turn(DIR_RIGHT)
+  elsif IsKeyDown(KEY_LEFT)
+    try_move_or_turn(DIR_LEFT)
+  elsif IsKeyDown(KEY_DOWN)
+    try_move_or_turn(DIR_DOWN)
+  elsif IsKeyDown(KEY_UP)
+    try_move_or_turn(DIR_UP)
+  end
+end
 
   def try_move_or_turn(dir)
     if @direction != dir
@@ -116,7 +146,7 @@ class Player
     if @map
       return if new_x < 0 || new_x >= @map.width
       return if new_y < 0 || new_y >= @map.height
-      return unless @map.passable?(new_x, new_y) && @map.inside_area?(new_x, new_y)
+      return unless @map.passable?(new_x, new_y, @x, @y) && @map.inside_area?(new_x, new_y)
     else
       return if new_x < 0 || new_x >= DEFAULT_GRID_W
       return if new_y < 0 || new_y >= DEFAULT_GRID_H
@@ -181,7 +211,7 @@ def update_movement
 
       if next_x >= 0 && next_x < @map.width &&
          next_y >= 0 && next_y < @map.height &&
-         @map.passable?(next_x, next_y)
+         @map.passable?(next_x, next_y, @x, @y)
         @sliding = true
         @moving  = true
         @pixel_offset = 0

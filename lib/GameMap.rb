@@ -195,19 +195,30 @@ class GameMap
     @animated_indices.include?(tile_id)
   end
 
-  def passable?(x, y)
-    return false if x < 0 || x >= @width || y < 0 || y >= @height
 
-    tile2_id = @tiles2[x][y]
-    if tile2_id && tile2_id >= 0
-      type2 = @tile_types[tile2_id] || 0
-      return false if type2 == 1 || type2 == 2
-    end
+def passable?(x, y, from_x = nil, from_y = nil)
+  return false if x < 0 || x >= @width || y < 0 || y >= @height
 
-    tile_id = @tiles[x][y]
-    type = @tile_types[tile_id] || 0
-    type != 1
+  # Сначала проверяем лестницы – их тип не важен
+  if from_x && from_y && stairs_at(x, y)
+    # Можно зайти только сбоку (влево/вправо)
+    return (x - from_x).abs == 1 && y == from_y
   end
+
+  # Второй слой
+  tile2_id = @tiles2[x][y]
+  if tile2_id && tile2_id >= 0
+    type2 = @tile_types[tile2_id] || 0
+    return false if type2 == 1 || type2 == 2
+  end
+
+  # Первый слой
+  tile_id = @tiles[x][y]
+  type = @tile_types[tile_id] || 0
+  return false if type == 1
+
+  true
+end
 
   def tile_type_at(x, y)
     return 1 if x < 0 || x >= @width || y < 0 || y >= @height
@@ -565,6 +576,33 @@ def stairs_at(x, y)
         return ev
       end
     end
+  end
+  nil
+end
+
+def stairs_direction(x, y, input_dx, input_dy)
+  ev = stairs_at(x, y)
+  return nil unless ev
+
+  x1 = ev['start_x']; y1 = ev['start_y']
+  x2 = ev['end_x'];   y2 = ev['end_y']
+
+  # Определяем цель в зависимости от текущего положения
+  if x == x1 && y == y1
+    target_x, target_y = x2, y2
+  elsif x == x2 && y == y2
+    target_x, target_y = x1, y1
+  else
+    # Промежуточная клетка – по умолчанию к конечной
+    target_x, target_y = x2, y2
+  end
+
+  dx = (target_x - x) <=> 0
+  dy = (target_y - y) <=> 0
+
+  # Движение начнётся, если нажатое направление совпадает по горизонтали или вертикали
+  if (dx != 0 && input_dx == dx) || (dy != 0 && input_dy == dy)
+    return [dx, dy, target_x, target_y]
   end
   nil
 end
