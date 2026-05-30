@@ -111,10 +111,18 @@
 		"direction":	1
 	}, {
 		"type":	"warp",
-		"trigger_x":	7,
-		"trigger_y":	11,
+		"trigger_x":	0,
+		"trigger_y":	27,
 		"target_map":	"map00",
 		"target_x":	4,
 		"target_y":	8,
 		"facing":	2
+	}, {
+		"type":	"warp",
+		"trigger_x":	0,
+		"trigger_y":	26,
+		"target_map":	"map00",
+		"target_x":	4,
+		"target_y":	8,
+		"facing":	4
 	}]
