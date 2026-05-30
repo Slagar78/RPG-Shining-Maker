@@ -61,6 +61,11 @@ typedef struct Editor {
 
     bool left_panel_collapsed;
 
+    bool show_all_roofs;
+    bool show_all_tile_changes;
+    bool show_all_stairs;
+    bool show_all_warps;
+
     TileChangeEvent tile_changes[MAX_TILE_CHANGES];
     int tile_change_count;
     int selected_tile_change;

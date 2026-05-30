@@ -44,6 +44,12 @@ void editor_init(Editor *ed) {
     ed->edit_field = -1;
     ed->input_buf[0] = '\0';
     ed->left_panel_collapsed = true;
+
+    ed->show_all_roofs = false;
+    ed->show_all_tile_changes = false;
+    ed->show_all_stairs = false;
+    ed->show_all_warps = false;
+
     ed->tile_change_count = 0;
     ed->selected_tile_change = -1;
     ed->tc_edit_field = -1;
@@ -265,198 +271,211 @@ void render_map(Editor *ed) {
         }
     }
 
-    // === Подсветка для Roof Events ===
-    if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
-    RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
+    // === Подсветка выбранных объектов ===
 
-    // Красные рамки для всех триггеров
-    int trigs[4][2] = {
-        {re->trigger_x, re->trigger_y},
-        {re->trigger2_x, re->trigger2_y}
-    };
-    for (int i = 0; i < 2; i++) {
-        int tx = trigs[i][0];
-        int ty = trigs[i][1];
-        if (tx >= 0 && ty >= 0 && tx < map->width && ty < map->height) {
-            SDL_FRect r = { MAP_X + (tx * TILE_SIZE - ed->cam_x) * zoom,
-                            MAP_Y + (ty * TILE_SIZE - ed->cam_y) * zoom,
-                            scaled_tile, scaled_tile };
-            SDL_SetRenderDrawColor(ed->renderer, 255, 0, 0, 255);
-            for (int dx = -1; dx <= 1; dx++)
-                for (int dy = -1; dy <= 1; dy++)
-                    SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){r.x+dx, r.y+dy, r.w, r.h});
-        }
-    }
-
-    // Голубые рамки для всех выходов
-    int exits[4][2] = {
-        {re->exit_x, re->exit_y},
-        {re->exit2_x, re->exit2_y}
-    };
-    for (int i = 0; i < 2; i++) {
-        int ex = exits[i][0];
-        int ey = exits[i][1];
-        if (ex >= 0 && ey >= 0 && ex < map->width && ey < map->height) {
-            SDL_FRect r = { MAP_X + (ex * TILE_SIZE - ed->cam_x) * zoom,
-                            MAP_Y + (ey * TILE_SIZE - ed->cam_y) * zoom,
-                            scaled_tile, scaled_tile };
-            SDL_SetRenderDrawColor(ed->renderer, 0, 150, 255, 255);
-            for (int dx = -1; dx <= 1; dx++)
-                for (int dy = -1; dy <= 1; dy++)
-                    SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){r.x+dx, r.y+dy, r.w, r.h});
-        }
-    }
-}
-
-    // Зелёная рамка зоны крыши
+    // Выбранная крыша
     if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
         RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
-        int x1 = re->start_x < re->end_x ? re->start_x : re->end_x;
-        int y1 = re->start_y < re->end_y ? re->start_y : re->end_y;
-        int x2 = re->start_x > re->end_x ? re->start_x : re->end_x;
-        int y2 = re->start_y > re->end_y ? re->start_y : re->end_y;
 
-        SDL_FRect zone = {
-            MAP_X + (x1 * TILE_SIZE - ed->cam_x) * zoom,
-            MAP_Y + (y1 * TILE_SIZE - ed->cam_y) * zoom,
-            (x2 - x1 + 1) * scaled_tile,
-            (y2 - y1 + 1) * scaled_tile
-        };
-        SDL_SetRenderDrawColor(ed->renderer, 0, 255, 0, 255);
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                SDL_FRect thick_zone = { zone.x + dx, zone.y + dy, zone.w, zone.h };
-                SDL_RenderDrawRectF(ed->renderer, &thick_zone);
+        // Красные рамки для триггеров
+        int trigs[4][2] = { {re->trigger_x, re->trigger_y}, {re->trigger2_x, re->trigger2_y} };
+        for (int i = 0; i < 2; i++) {
+            int tx = trigs[i][0], ty = trigs[i][1];
+            if (tx >= 0 && ty >= 0 && tx < map->width && ty < map->height) {
+                SDL_FRect r = { MAP_X + (tx * TILE_SIZE - ed->cam_x) * zoom,
+                                MAP_Y + (ty * TILE_SIZE - ed->cam_y) * zoom,
+                                scaled_tile, scaled_tile };
+                SDL_SetRenderDrawColor(ed->renderer, 255, 0, 0, 255);
+                for (int dx = -1; dx <= 1; dx++)
+                    for (int dy = -1; dy <= 1; dy++)
+                        SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){r.x+dx, r.y+dy, r.w, r.h});
             }
+        }
+        // Голубые рамки для выходов
+        int exits[4][2] = { {re->exit_x, re->exit_y}, {re->exit2_x, re->exit2_y} };
+        for (int i = 0; i < 2; i++) {
+            int ex = exits[i][0], ey = exits[i][1];
+            if (ex >= 0 && ey >= 0 && ex < map->width && ey < map->height) {
+                SDL_FRect r = { MAP_X + (ex * TILE_SIZE - ed->cam_x) * zoom,
+                                MAP_Y + (ey * TILE_SIZE - ed->cam_y) * zoom,
+                                scaled_tile, scaled_tile };
+                SDL_SetRenderDrawColor(ed->renderer, 0, 150, 255, 255);
+                for (int dx = -1; dx <= 1; dx++)
+                    for (int dy = -1; dy <= 1; dy++)
+                        SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){r.x+dx, r.y+dy, r.w, r.h});
+            }
+        }
+        // Зелёная рамка зоны
+        {
+            int x1 = re->start_x < re->end_x ? re->start_x : re->end_x;
+            int y1 = re->start_y < re->end_y ? re->start_y : re->end_y;
+            int x2 = re->start_x > re->end_x ? re->start_x : re->end_x;
+            int y2 = re->start_y > re->end_y ? re->start_y : re->end_y;
+            SDL_FRect zone = { MAP_X + (x1 * TILE_SIZE - ed->cam_x) * zoom,
+                               MAP_Y + (y1 * TILE_SIZE - ed->cam_y) * zoom,
+                               (x2 - x1 + 1) * scaled_tile, (y2 - y1 + 1) * scaled_tile };
+            SDL_SetRenderDrawColor(ed->renderer, 0, 255, 0, 255);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
+                    SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){zone.x+dx, zone.y+dy, zone.w, zone.h});
         }
     }
 
-    // === Подсветка для Tile Changes ===
+    // Выбранный Tile Change
     if (ed->selected_tile_change >= 0 && ed->selected_tile_change < ed->tile_change_count) {
         TileChangeEvent *tc = &ed->tile_changes[ed->selected_tile_change];
-
-        // Жёлтая рамка вокруг клетки-триггера
         if (tc->trigger_x >= 0 && tc->trigger_y >= 0) {
-            int ttx = tc->trigger_x, tty = tc->trigger_y;
-            if (ttx >= 0 && ttx < map->width && tty >= 0 && tty < map->height) {
-                SDL_FRect tdst = {
-                    MAP_X + (ttx * TILE_SIZE - ed->cam_x) * zoom,
-                    MAP_Y + (tty * TILE_SIZE - ed->cam_y) * zoom,
-                    scaled_tile, scaled_tile
-                };
-                SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 255); // жёлтый
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
-                        SDL_FRect r = { tdst.x + dx, tdst.y + dy, tdst.w, tdst.h };
-                        SDL_RenderDrawRectF(ed->renderer, &r);
-                    }
-                }
-            }
+            SDL_FRect tdst = { MAP_X + (tc->trigger_x * TILE_SIZE - ed->cam_x) * zoom,
+                               MAP_Y + (tc->trigger_y * TILE_SIZE - ed->cam_y) * zoom,
+                               scaled_tile, scaled_tile };
+            SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 255);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
+                    SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){tdst.x+dx, tdst.y+dy, tdst.w, tdst.h});
         }
-
-        // Оранжевая рамка вокруг клетки-образца (откуда взят новый тайл)
         if (tc->new_tile_id >= 0 && tc->sample_x >= 0 && tc->sample_y >= 0) {
-            int ox = tc->sample_x, oy = tc->sample_y;
-            if (ox >= 0 && ox < map->width && oy >= 0 && oy < map->height) {
-                SDL_FRect odst = {
-                    MAP_X + (ox * TILE_SIZE - ed->cam_x) * zoom,
-                    MAP_Y + (oy * TILE_SIZE - ed->cam_y) * zoom,
-                    scaled_tile, scaled_tile
-                };
-                SDL_SetRenderDrawColor(ed->renderer, 255, 165, 0, 255); // оранжевый
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
-                        SDL_FRect r = { odst.x + dx, odst.y + dy, odst.w, odst.h };
-                        SDL_RenderDrawRectF(ed->renderer, &r);
-                    }
-                }
-            }
+            SDL_FRect odst = { MAP_X + (tc->sample_x * TILE_SIZE - ed->cam_x) * zoom,
+                               MAP_Y + (tc->sample_y * TILE_SIZE - ed->cam_y) * zoom,
+                               scaled_tile, scaled_tile };
+            SDL_SetRenderDrawColor(ed->renderer, 255, 165, 0, 255);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
+                    SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){odst.x+dx, odst.y+dy, odst.w, odst.h});
         }
     }
 
-    // === Подсветка для Stairs (диагональные линии) ===
+    // Выбранная лестница
     if (ed->selected_stair >= 0 && ed->selected_stair < ed->stair_event_count) {
         StairEvent *se = &ed->stair_events[ed->selected_stair];
-        int x1 = se->start_x, y1 = se->start_y;
-        int x2 = se->end_x,   y2 = se->end_y;
-
-        // Определяем направление
+        int x1 = se->start_x, y1 = se->start_y, x2 = se->end_x, y2 = se->end_y;
         int dx = (x2 > x1) ? 1 : ((x2 < x1) ? -1 : 0);
         int dy = (y2 > y1) ? 1 : ((y2 < y1) ? -1 : 0);
         int steps = (abs(dx) > abs(dy)) ? abs(dx) : abs(dy);
-        if (steps == 0) steps = 1; // одна клетка
-
-        // Для каждой клетки вдоль диагонали рисуем жирную линию
-        SDL_SetRenderDrawColor(ed->renderer, 0, 120, 255, 255); // синий
+        if (steps == 0) steps = 1;
+        SDL_SetRenderDrawColor(ed->renderer, 0, 120, 255, 255);
         for (int i = 0; i <= steps; i++) {
-            int cx = x1 + i * dx;
-            int cy = y1 + i * dy;
+            int cx = x1 + i * dx, cy = y1 + i * dy;
             if (cx < 0 || cx >= map->width || cy < 0 || cy >= map->height) continue;
-
-            // Экранные координаты центра клетки
             float center_x = MAP_X + (cx * TILE_SIZE - ed->cam_x + TILE_SIZE/2.0f) * zoom;
             float center_y = MAP_Y + (cy * TILE_SIZE - ed->cam_y + TILE_SIZE/2.0f) * zoom;
             float half = (TILE_SIZE / 2.0f) * zoom;
-
-            // Определяем, какой символ рисовать: '/' или '\'
-            bool forward_slash = (se->direction == 1); // теперь 1 = '/', 0 = '\'
-
-            // Рисуем жирную линию (толщина 3 пикселя)
             for (int t = -1; t <= 1; t++) {
-                if (forward_slash) {
-                    SDL_RenderDrawLineF(ed->renderer,
-                        center_x - half, center_y + half + t,
-                        center_x + half, center_y - half + t);
-                } else {
-                    SDL_RenderDrawLineF(ed->renderer,
-                        center_x - half, center_y - half + t,
-                        center_x + half, center_y + half + t);
+                if (se->direction == 1)
+                    SDL_RenderDrawLineF(ed->renderer, center_x - half, center_y + half + t, center_x + half, center_y - half + t);
+                else
+                    SDL_RenderDrawLineF(ed->renderer, center_x - half, center_y - half + t, center_x + half, center_y + half + t);
+            }
+        }
+    }
+
+    // Выбранный варп
+    if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
+        WarpEvent *we = &ed->warp_events[ed->selected_warp];
+        if (we->trigger_x >= 0 && we->trigger_y >= 0 && we->trigger_x < map->width && we->trigger_y < map->height) {
+            SDL_FRect tile_dst = { MAP_X + (we->trigger_x * TILE_SIZE - ed->cam_x) * zoom,
+                                   MAP_Y + (we->trigger_y * TILE_SIZE - ed->cam_y) * zoom,
+                                   scaled_tile, scaled_tile };
+            SDL_SetRenderDrawBlendMode(ed->renderer, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(ed->renderer, 200, 0, 200, 80);
+            SDL_RenderFillRectF(ed->renderer, &tile_dst);
+            SDL_SetRenderDrawColor(ed->renderer, 255, 0, 255, 255);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
+                    SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){tile_dst.x+dx, tile_dst.y+dy, tile_dst.w, tile_dst.h});
+            SDL_SetRenderDrawBlendMode(ed->renderer, SDL_BLENDMODE_NONE);
+            float cx = tile_dst.x + scaled_tile/2.0f, cy = tile_dst.y + scaled_tile/2.0f, sz = scaled_tile * 0.3f;
+            SDL_FPoint arrow[3];
+            switch (we->facing) {
+                case 2: arrow[0] = (SDL_FPoint){cx, cy + sz}; arrow[1] = (SDL_FPoint){cx - sz, cy - sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy - sz/2}; break;
+                case 4: arrow[0] = (SDL_FPoint){cx - sz, cy}; arrow[1] = (SDL_FPoint){cx + sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx + sz/2, cy + sz}; break;
+                case 6: arrow[0] = (SDL_FPoint){cx + sz, cy}; arrow[1] = (SDL_FPoint){cx - sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx - sz/2, cy + sz}; break;
+                case 8: arrow[0] = (SDL_FPoint){cx, cy - sz}; arrow[1] = (SDL_FPoint){cx - sz, cy + sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy + sz/2}; break;
+            }
+            if (we->facing >= 2 && we->facing <= 8) {
+                SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 255);
+                SDL_RenderDrawLinesF(ed->renderer, arrow, 3);
+                SDL_RenderDrawLineF(ed->renderer, arrow[2].x, arrow[2].y, arrow[0].x, arrow[0].y);
+            }
+        }
+    }
+
+    // === Показ ВСЕХ объектов при включённых чекбоксах ===
+    if (ed->show_all_roofs) {
+        for (int i = 0; i < ed->roof_event_count; i++) {
+            if (i == ed->selected_roof_event) continue;
+            RoofEvent *re = &ed->roof_events[i];
+            int x1 = re->start_x < re->end_x ? re->start_x : re->end_x;
+            int y1 = re->start_y < re->end_y ? re->start_y : re->end_y;
+            int x2 = re->start_x > re->end_x ? re->start_x : re->end_x;
+            int y2 = re->start_y > re->end_y ? re->start_y : re->end_y;
+            SDL_FRect zone = { MAP_X + (x1 * TILE_SIZE - ed->cam_x) * zoom,
+                               MAP_Y + (y1 * TILE_SIZE - ed->cam_y) * zoom,
+                               (x2 - x1 + 1) * scaled_tile, (y2 - y1 + 1) * scaled_tile };
+            SDL_SetRenderDrawColor(ed->renderer, 0, 200, 0, 80);
+            SDL_RenderDrawRectF(ed->renderer, &zone);
+        }
+    }
+
+    if (ed->show_all_tile_changes) {
+        for (int i = 0; i < ed->tile_change_count; i++) {
+            if (i == ed->selected_tile_change) continue;
+            TileChangeEvent *tc = &ed->tile_changes[i];
+            if (tc->trigger_x >= 0 && tc->trigger_y >= 0) {
+                SDL_FRect t = { MAP_X + (tc->trigger_x * TILE_SIZE - ed->cam_x) * zoom,
+                                MAP_Y + (tc->trigger_y * TILE_SIZE - ed->cam_y) * zoom,
+                                scaled_tile, scaled_tile };
+                SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 80);
+                SDL_RenderDrawRectF(ed->renderer, &t);
+            }
+        }
+    }
+
+    if (ed->show_all_stairs) {
+        for (int i = 0; i < ed->stair_event_count; i++) {
+            if (i == ed->selected_stair) continue;
+            StairEvent *se = &ed->stair_events[i];
+            int x1 = se->start_x, y1 = se->start_y, x2 = se->end_x, y2 = se->end_y;
+            int dx = (x2 > x1) ? 1 : ((x2 < x1) ? -1 : 0);
+            int dy = (y2 > y1) ? 1 : ((y2 < y1) ? -1 : 0);
+            int steps = (abs(dx) > abs(dy)) ? abs(dx) : abs(dy);
+            if (steps == 0) steps = 1;
+            for (int s = 0; s <= steps; s++) {
+                int cx = x1 + s * dx, cy = y1 + s * dy;
+                if (cx < 0 || cx >= map->width || cy < 0 || cy >= map->height) continue;
+                float center_x = MAP_X + (cx * TILE_SIZE - ed->cam_x + TILE_SIZE/2.0f) * zoom;
+                float center_y = MAP_Y + (cy * TILE_SIZE - ed->cam_y + TILE_SIZE/2.0f) * zoom;
+                float half = (TILE_SIZE / 2.0f) * zoom;
+                SDL_SetRenderDrawColor(ed->renderer, 0, 120, 255, 80);
+                for (int t = -1; t <= 1; t++) {
+                    if (se->direction == 1)
+                        SDL_RenderDrawLineF(ed->renderer, center_x - half, center_y + half + t, center_x + half, center_y - half + t);
+                    else
+                        SDL_RenderDrawLineF(ed->renderer, center_x - half, center_y - half + t, center_x + half, center_y + half + t);
                 }
             }
         }
     }
 
-    // === Подсветка для Warp Events ===
-    if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
-        WarpEvent *we = &ed->warp_events[ed->selected_warp];
-        if (we->trigger_x >= 0 && we->trigger_y >= 0) {
-            int wx = we->trigger_x, wy = we->trigger_y;
-            if (wx >= 0 && wx < map->width && wy >= 0 && wy < map->height) {
-                SDL_FRect tile_dst = {
-                    MAP_X + (wx * TILE_SIZE - ed->cam_x) * zoom,
-                    MAP_Y + (wy * TILE_SIZE - ed->cam_y) * zoom,
-                    scaled_tile, scaled_tile
-                };
-
-                // Полупрозрачная фиолетовая заливка
-                SDL_SetRenderDrawBlendMode(ed->renderer, SDL_BLENDMODE_BLEND);
+    if (ed->show_all_warps) {
+        for (int i = 0; i < ed->warp_event_count; i++) {
+            if (i == ed->selected_warp) continue;
+            WarpEvent *we = &ed->warp_events[i];
+            if (we->trigger_x >= 0 && we->trigger_y >= 0) {
+                SDL_FRect t = { MAP_X + (we->trigger_x * TILE_SIZE - ed->cam_x) * zoom,
+                                MAP_Y + (we->trigger_y * TILE_SIZE - ed->cam_y) * zoom,
+                                scaled_tile, scaled_tile };
                 SDL_SetRenderDrawColor(ed->renderer, 200, 0, 200, 80);
-                SDL_RenderFillRectF(ed->renderer, &tile_dst);
-
-                // Жирная фиолетовая рамка
-                SDL_SetRenderDrawColor(ed->renderer, 255, 0, 255, 255);
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
-                        SDL_FRect r = { tile_dst.x + dx, tile_dst.y + dy, tile_dst.w, tile_dst.h };
-                        SDL_RenderDrawRectF(ed->renderer, &r);
-                    }
-                }
-                SDL_SetRenderDrawBlendMode(ed->renderer, SDL_BLENDMODE_NONE);
-
-                // Жёлтая стрелка направления
-                float cx = tile_dst.x + scaled_tile/2.0f;
-                float cy = tile_dst.y + scaled_tile/2.0f;
-                float sz = scaled_tile * 0.3f;
+                SDL_RenderFillRectF(ed->renderer, &t);
+                float cx = t.x + t.w/2.0f, cy = t.y + t.h/2.0f, sz = t.w * 0.3f;
                 SDL_FPoint arrow[3];
                 switch (we->facing) {
                     case 2: arrow[0] = (SDL_FPoint){cx, cy + sz}; arrow[1] = (SDL_FPoint){cx - sz, cy - sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy - sz/2}; break;
                     case 4: arrow[0] = (SDL_FPoint){cx - sz, cy}; arrow[1] = (SDL_FPoint){cx + sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx + sz/2, cy + sz}; break;
                     case 6: arrow[0] = (SDL_FPoint){cx + sz, cy}; arrow[1] = (SDL_FPoint){cx - sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx - sz/2, cy + sz}; break;
                     case 8: arrow[0] = (SDL_FPoint){cx, cy - sz}; arrow[1] = (SDL_FPoint){cx - sz, cy + sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy + sz/2}; break;
-                    default: arrow[0]=arrow[1]=arrow[2] = (SDL_FPoint){0,0}; break;
                 }
                 if (we->facing >= 2 && we->facing <= 8) {
-                    SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 255);
+                    SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 100);
                     SDL_RenderDrawLinesF(ed->renderer, arrow, 3);
                     SDL_RenderDrawLineF(ed->renderer, arrow[2].x, arrow[2].y, arrow[0].x, arrow[0].y);
                 }
@@ -466,7 +485,6 @@ void render_map(Editor *ed) {
 
     SDL_RenderSetClipRect(ed->renderer, NULL);
 
-    // Подсказка под курсором
     int mx, my;
     get_logical_mouse(ed->window, &mx, &my);
     if (mx >= MAP_X && mx < MAP_X + MAP_VISIBLE_W && my >= MAP_Y && my < MAP_Y + MAP_VISIBLE_H) {
@@ -483,7 +501,6 @@ void render_map(Editor *ed) {
         }
     }
 
-    // Скроллбары
     float map_pixel_w = map->width * TILE_SIZE;
     float map_pixel_h = map->height * TILE_SIZE;
     float view_w = MAP_VISIBLE_W / zoom;
@@ -913,183 +930,227 @@ static void check_warp_click(Editor *ed, int field_idx, int line_y, int mx, int 
 // ─── Левая панель ──
 void render_left_panel(Editor *ed) {
     SDL_Rect bg = {0, 0, LEFT_PANEL_W, WINDOW_H};
-    SDL_SetRenderDrawColor(ed->renderer, 50,50,50,255);
+    SDL_SetRenderDrawColor(ed->renderer, 50, 50, 50, 255);
     SDL_RenderFillRect(ed->renderer, &bg);
 
     int y = 10;
 
     // ====================== ROOF EVENTS ======================
-    // Заголовок Roof Events (всегда видим)
-    SDL_Rect roof_header = {10, y, LEFT_PANEL_W-20, 24};
+    SDL_Rect roof_header = {10, y, LEFT_PANEL_W - 20, 24};
     SDL_SetRenderDrawColor(ed->renderer, 60, 60, 60, 255);
     SDL_RenderFillRect(ed->renderer, &roof_header);
-    draw_text_centered(ed->renderer, ed->font, "ROOF EVENTS", LEFT_PANEL_W/2, y+12, (SDL_Color){255,255,255,255});
+    draw_text_centered(ed->renderer, ed->font, "ROOF EVENTS", LEFT_PANEL_W / 2, y + 12,
+                       (SDL_Color){255, 255, 255, 255});
 
-    // Кнопка сворачивания Roof Events
+    // Чекбокс "показать все" для крыш
+    {
+        SDL_Rect cb = { LEFT_PANEL_W - 55, y + 2, 16, 16 };
+        SDL_SetRenderDrawColor(ed->renderer, 200, 200, 200, 255);
+        SDL_RenderDrawRect(ed->renderer, &cb);
+        if (ed->show_all_roofs) {
+            SDL_SetRenderDrawColor(ed->renderer, 0, 255, 0, 255);
+            SDL_RenderDrawLine(ed->renderer, cb.x + 2, cb.y + 8, cb.x + 6, cb.y + 12);
+            SDL_RenderDrawLine(ed->renderer, cb.x + 6, cb.y + 12, cb.x + 13, cb.y + 3);
+        }
+    }
+
+    // Кнопка сворачивания
     SDL_Rect roof_collapse_btn = { LEFT_PANEL_W - 35, y + 1, 26, 22 };
     SDL_SetRenderDrawColor(ed->renderer, 80, 80, 80, 255);
     SDL_RenderFillRect(ed->renderer, &roof_collapse_btn);
     draw_text_centered(ed->renderer, ed->font, ed->left_panel_collapsed ? "+" : "—",
-                       roof_collapse_btn.x + roof_collapse_btn.w/2, roof_collapse_btn.y + roof_collapse_btn.h/2,
-                       (SDL_Color){255,255,255,255});
+                       roof_collapse_btn.x + roof_collapse_btn.w / 2,
+                       roof_collapse_btn.y + roof_collapse_btn.h / 2,
+                       (SDL_Color){255, 255, 255, 255});
     y += 26;
 
-    // Содержимое Roof Events (только если развёрнуто)
     if (!ed->left_panel_collapsed) {
-        SDL_Rect add_btn = {10, y, LEFT_PANEL_W-20, 24};
-        SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+        SDL_Rect add_btn = {10, y, LEFT_PANEL_W - 20, 24};
+        SDL_SetRenderDrawColor(ed->renderer, 90, 90, 90, 255);
         SDL_RenderFillRect(ed->renderer, &add_btn);
-        draw_text_centered(ed->renderer, ed->font, "Add Roof Event", add_btn.x+add_btn.w/2, add_btn.y+add_btn.h/2,
-                           (SDL_Color){255,255,255,255});
+        draw_text_centered(ed->renderer, ed->font, "Add Roof Event",
+                           add_btn.x + add_btn.w / 2, add_btn.y + add_btn.h / 2,
+                           (SDL_Color){255, 255, 255, 255});
         y += 30;
 
-        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
-        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        SDL_SetRenderDrawColor(ed->renderer, 100, 100, 100, 255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W - 10, y);
         y += 5;
 
         int list_start_y = y;
         int list_h = 200;
         int item_h = 18;
-        int max_visible = 10;                     // ровно 10 элементов
-        ed->roof_list_rect = (SDL_Rect){10, list_start_y, LEFT_PANEL_W-20, list_h};
+        int max_visible = 10;
+        ed->roof_list_rect = (SDL_Rect){10, list_start_y, LEFT_PANEL_W - 20, list_h};
 
         int max_scroll = (ed->roof_event_count > max_visible) ? ed->roof_event_count - max_visible : 0;
         if (ed->roof_event_scroll < 0) ed->roof_event_scroll = 0;
         if (ed->roof_event_scroll > max_scroll) ed->roof_event_scroll = max_scroll;
 
-        SDL_Rect list_clip = {10, list_start_y, LEFT_PANEL_W-20, list_h};
+        SDL_Rect list_clip = {10, list_start_y, LEFT_PANEL_W - 20, list_h};
         SDL_RenderSetClipRect(ed->renderer, &list_clip);
         int start_idx = ed->roof_event_scroll;
-        int end_idx = (start_idx + max_visible < ed->roof_event_count) ? start_idx + max_visible : ed->roof_event_count;
+        int end_idx = (start_idx + max_visible < ed->roof_event_count)
+                          ? start_idx + max_visible
+                          : ed->roof_event_count;
         for (int i = start_idx; i < end_idx; i++) {
             RoofEvent *re = &ed->roof_events[i];
             char buf[128];
             snprintf(buf, sizeof(buf), "Tile %d  (%d,%d)-(%d,%d)",
                      re->tile_id, re->start_x, re->start_y, re->end_x, re->end_y);
-            SDL_Color col = (i == ed->selected_roof_event) ? (SDL_Color){0,255,0,255} : (SDL_Color){255,255,255,255};
-            SDL_Rect item_rect = {10, list_start_y + (i - start_idx) * item_h, LEFT_PANEL_W-20, item_h};
+            SDL_Color col = (i == ed->selected_roof_event)
+                                ? (SDL_Color){0, 255, 0, 255}
+                                : (SDL_Color){255, 255, 255, 255};
+            SDL_Rect item_rect = {10, list_start_y + (i - start_idx) * item_h,
+                                  LEFT_PANEL_W - 20, item_h};
             if (i == ed->selected_roof_event) {
-                SDL_SetRenderDrawColor(ed->renderer, 80,80,120,255);
+                SDL_SetRenderDrawColor(ed->renderer, 80, 80, 120, 255);
                 SDL_RenderFillRect(ed->renderer, &item_rect);
             }
-            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y + item_h/2, col);
+            draw_text_centered(ed->renderer, ed->font, buf,
+                               LEFT_PANEL_W / 2, item_rect.y + item_h / 2, col);
         }
         SDL_RenderSetClipRect(ed->renderer, NULL);
 
-        // Скроллбар
         if (ed->roof_event_count > max_visible) {
             int bar_x = LEFT_PANEL_W - 12, bar_w = 6;
             SDL_Rect track = { bar_x, list_start_y, bar_w, list_h };
-            SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+            SDL_SetRenderDrawColor(ed->renderer, 90, 90, 90, 255);
             SDL_RenderFillRect(ed->renderer, &track);
             float thumb_h = (float)max_visible / ed->roof_event_count * list_h;
             if (thumb_h < 12) thumb_h = 12;
-            int thumb_y = list_start_y + (int)((list_h - thumb_h) * ((float)ed->roof_event_scroll / max_scroll));
+            int thumb_y = list_start_y +
+                          (int)((list_h - thumb_h) * ((float)ed->roof_event_scroll / max_scroll));
             SDL_Rect thumb = { bar_x, thumb_y, bar_w, (int)thumb_h };
-            SDL_SetRenderDrawColor(ed->renderer, 180,180,180,255);
+            SDL_SetRenderDrawColor(ed->renderer, 180, 180, 180, 255);
             SDL_RenderFillRect(ed->renderer, &thumb);
         }
 
         y = list_start_y + list_h + 5;
 
-        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
-        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        SDL_SetRenderDrawColor(ed->renderer, 100, 100, 100, 255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W - 10, y);
         y += 5;
 
         if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
-        int edit_y = y;
-        draw_roof_field(ed, "Tile ID", 0, edit_y); edit_y += 22;
-        draw_roof_field(ed, "Start",   1, edit_y); edit_y += 22;
-        draw_roof_field(ed, "End",     2, edit_y); edit_y += 22;
-        draw_roof_field(ed, "Trig.1",  3, edit_y); edit_y += 22;
-        draw_roof_field(ed, "Trig.2",  4, edit_y); edit_y += 22;
-        draw_roof_field(ed, "Exit1",   5, edit_y); edit_y += 22;
-        draw_roof_field(ed, "Exit2",   6, edit_y); edit_y += 22;
+            int edit_y = y;
+            draw_roof_field(ed, "Tile ID", 0, edit_y); edit_y += 22;
+            draw_roof_field(ed, "Start",   1, edit_y); edit_y += 22;
+            draw_roof_field(ed, "End",     2, edit_y); edit_y += 22;
+            draw_roof_field(ed, "Trig.1",  3, edit_y); edit_y += 22;
+            draw_roof_field(ed, "Trig.2",  4, edit_y); edit_y += 22;
+            draw_roof_field(ed, "Exit1",   5, edit_y); edit_y += 22;
+            draw_roof_field(ed, "Exit2",   6, edit_y); edit_y += 22;
 
-        SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
-        SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
-        SDL_RenderFillRect(ed->renderer, &del_btn);
-        draw_text_centered(ed->renderer, ed->font, "Delete Event", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
-                       (SDL_Color){255,255,255,255});
-        y = edit_y + 24;
+            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W - 20, 24};
+            SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
+            SDL_RenderFillRect(ed->renderer, &del_btn);
+            draw_text_centered(ed->renderer, ed->font, "Delete Event",
+                               del_btn.x + del_btn.w / 2, del_btn.y + del_btn.h / 2,
+                               (SDL_Color){255, 255, 255, 255});
+            y = edit_y + 24;   // важно для следующей секции
+        }
     }
-}
 
     // ====================== TILE CHANGES ======================
-    y += 10;  // небольшой отступ между секциями
-    ed->tc_section_y = y;   // запоминаем для обработки кликов
+    y += 10;
+    ed->tc_section_y = y;
 
-    SDL_Rect tc_header = {10, y, LEFT_PANEL_W-20, 24};
+    SDL_Rect tc_header = {10, y, LEFT_PANEL_W - 20, 24};
     SDL_SetRenderDrawColor(ed->renderer, 60, 60, 60, 255);
     SDL_RenderFillRect(ed->renderer, &tc_header);
-    draw_text_centered(ed->renderer, ed->font, "TILE CHANGES", LEFT_PANEL_W/2, y+12, (SDL_Color){255,255,255,255});
+    draw_text_centered(ed->renderer, ed->font, "TILE CHANGES", LEFT_PANEL_W / 2, y + 12,
+                       (SDL_Color){255, 255, 255, 255});
+
+    // Чекбокс "показать все" для замен тайлов
+    {
+        SDL_Rect cb = { LEFT_PANEL_W - 55, y + 2, 16, 16 };
+        SDL_SetRenderDrawColor(ed->renderer, 200, 200, 200, 255);
+        SDL_RenderDrawRect(ed->renderer, &cb);
+        if (ed->show_all_tile_changes) {
+            SDL_SetRenderDrawColor(ed->renderer, 0, 255, 0, 255);
+            SDL_RenderDrawLine(ed->renderer, cb.x + 2, cb.y + 8, cb.x + 6, cb.y + 12);
+            SDL_RenderDrawLine(ed->renderer, cb.x + 6, cb.y + 12, cb.x + 13, cb.y + 3);
+        }
+    }
 
     SDL_Rect tc_collapse_btn = { LEFT_PANEL_W - 35, y + 1, 26, 22 };
     SDL_SetRenderDrawColor(ed->renderer, 80, 80, 80, 255);
     SDL_RenderFillRect(ed->renderer, &tc_collapse_btn);
     draw_text_centered(ed->renderer, ed->font, ed->tc_section_collapsed ? "+" : "—",
-                       tc_collapse_btn.x + tc_collapse_btn.w/2, tc_collapse_btn.y + tc_collapse_btn.h/2,
-                       (SDL_Color){255,255,255,255});
+                       tc_collapse_btn.x + tc_collapse_btn.w / 2,
+                       tc_collapse_btn.y + tc_collapse_btn.h / 2,
+                       (SDL_Color){255, 255, 255, 255});
     y += 26;
 
     if (!ed->tc_section_collapsed) {
-        SDL_Rect tc_add_btn = {10, y, LEFT_PANEL_W-20, 24};
-        SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+        SDL_Rect tc_add_btn = {10, y, LEFT_PANEL_W - 20, 24};
+        SDL_SetRenderDrawColor(ed->renderer, 90, 90, 90, 255);
         SDL_RenderFillRect(ed->renderer, &tc_add_btn);
-        draw_text_centered(ed->renderer, ed->font, "Add Tile Change", tc_add_btn.x+tc_add_btn.w/2, tc_add_btn.y+tc_add_btn.h/2,
-                           (SDL_Color){255,255,255,255});
+        draw_text_centered(ed->renderer, ed->font, "Add Tile Change",
+                           tc_add_btn.x + tc_add_btn.w / 2, tc_add_btn.y + tc_add_btn.h / 2,
+                           (SDL_Color){255, 255, 255, 255});
         y += 30;
 
-        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
-        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        SDL_SetRenderDrawColor(ed->renderer, 100, 100, 100, 255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W - 10, y);
         y += 5;
 
         int tc_list_start_y = y;
         int tc_list_h = 100;
         int tc_item_h = 18;
-        int tc_max_visible = 5;                  // ровно 5 элементов
-        ed->tc_list_rect = (SDL_Rect){10, tc_list_start_y, LEFT_PANEL_W-20, tc_list_h};
+        int tc_max_visible = 5;
+        ed->tc_list_rect = (SDL_Rect){10, tc_list_start_y, LEFT_PANEL_W - 20, tc_list_h};
 
-        int tc_max_scroll = (ed->tile_change_count > tc_max_visible) ? ed->tile_change_count - tc_max_visible : 0;
+        int tc_max_scroll = (ed->tile_change_count > tc_max_visible)
+                                ? ed->tile_change_count - tc_max_visible
+                                : 0;
         if (ed->tile_change_scroll < 0) ed->tile_change_scroll = 0;
         if (ed->tile_change_scroll > tc_max_scroll) ed->tile_change_scroll = tc_max_scroll;
 
-        SDL_Rect tc_list_clip = {10, tc_list_start_y, LEFT_PANEL_W-20, tc_list_h};
+        SDL_Rect tc_list_clip = {10, tc_list_start_y, LEFT_PANEL_W - 20, tc_list_h};
         SDL_RenderSetClipRect(ed->renderer, &tc_list_clip);
         int tc_start = ed->tile_change_scroll;
-        int tc_end = (tc_start + tc_max_visible < ed->tile_change_count) ? tc_start + tc_max_visible : ed->tile_change_count;
+        int tc_end = (tc_start + tc_max_visible < ed->tile_change_count)
+                         ? tc_start + tc_max_visible
+                         : ed->tile_change_count;
         for (int i = tc_start; i < tc_end; i++) {
             TileChangeEvent *te = &ed->tile_changes[i];
             char buf[64];
-            snprintf(buf, sizeof(buf), "(%d,%d) -> Tile %d", te->trigger_x, te->trigger_y, te->new_tile_id);
-            SDL_Color col = (i == ed->selected_tile_change) ? (SDL_Color){0,255,0,255} : (SDL_Color){255,255,255,255};
-            SDL_Rect item_rect = {10, tc_list_start_y + (i - tc_start) * tc_item_h, LEFT_PANEL_W-20, tc_item_h};
+            snprintf(buf, sizeof(buf), "(%d,%d) -> Tile %d",
+                     te->trigger_x, te->trigger_y, te->new_tile_id);
+            SDL_Color col = (i == ed->selected_tile_change)
+                                ? (SDL_Color){0, 255, 0, 255}
+                                : (SDL_Color){255, 255, 255, 255};
+            SDL_Rect item_rect = {10, tc_list_start_y + (i - tc_start) * tc_item_h,
+                                  LEFT_PANEL_W - 20, tc_item_h};
             if (i == ed->selected_tile_change) {
-                SDL_SetRenderDrawColor(ed->renderer, 80,80,120,255);
+                SDL_SetRenderDrawColor(ed->renderer, 80, 80, 120, 255);
                 SDL_RenderFillRect(ed->renderer, &item_rect);
             }
-            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y + tc_item_h/2, col);
+            draw_text_centered(ed->renderer, ed->font, buf,
+                               LEFT_PANEL_W / 2, item_rect.y + tc_item_h / 2, col);
         }
         SDL_RenderSetClipRect(ed->renderer, NULL);
 
-        // Скроллбар
         if (ed->tile_change_count > tc_max_visible) {
             int bar_x = LEFT_PANEL_W - 12, bar_w = 6;
             SDL_Rect track = { bar_x, tc_list_start_y, bar_w, tc_list_h };
-            SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+            SDL_SetRenderDrawColor(ed->renderer, 90, 90, 90, 255);
             SDL_RenderFillRect(ed->renderer, &track);
             float thumb_h = (float)tc_max_visible / ed->tile_change_count * tc_list_h;
             if (thumb_h < 12) thumb_h = 12;
-            int thumb_y = tc_list_start_y + (int)((tc_list_h - thumb_h) * ((float)ed->tile_change_scroll / tc_max_scroll));
+            int thumb_y = tc_list_start_y +
+                          (int)((tc_list_h - thumb_h) * ((float)ed->tile_change_scroll / tc_max_scroll));
             SDL_Rect thumb = { bar_x, thumb_y, bar_w, (int)thumb_h };
-            SDL_SetRenderDrawColor(ed->renderer, 180,180,180,255);
+            SDL_SetRenderDrawColor(ed->renderer, 180, 180, 180, 255);
             SDL_RenderFillRect(ed->renderer, &thumb);
         }
 
         y = tc_list_start_y + tc_list_h + 5;
 
-        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
-        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        SDL_SetRenderDrawColor(ed->renderer, 100, 100, 100, 255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W - 10, y);
         y += 5;
 
         if (ed->selected_tile_change >= 0 && ed->selected_tile_change < ed->tile_change_count) {
@@ -1099,12 +1160,13 @@ void render_left_panel(Editor *ed) {
             draw_tc_field(ed, "New Tile", 1, edit_y);
             edit_y += 22;
 
-            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
+            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W - 20, 24};
             SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
             SDL_RenderFillRect(ed->renderer, &del_btn);
-            draw_text_centered(ed->renderer, ed->font, "Delete", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
-                               (SDL_Color){255,255,255,255});
-            y = edit_y + 24;
+            draw_text_centered(ed->renderer, ed->font, "Delete",
+                               del_btn.x + del_btn.w / 2, del_btn.y + del_btn.h / 2,
+                               (SDL_Color){255, 255, 255, 255});
+            y = edit_y + 24;   // важно для следующей секции
         }
     }
 
@@ -1112,76 +1174,104 @@ void render_left_panel(Editor *ed) {
     y += 10;
     ed->stair_section_y = y;
 
-    SDL_Rect stair_header = {10, y, LEFT_PANEL_W-20, 24};
+    SDL_Rect stair_header = {10, y, LEFT_PANEL_W - 20, 24};
     SDL_SetRenderDrawColor(ed->renderer, 60, 60, 60, 255);
     SDL_RenderFillRect(ed->renderer, &stair_header);
-    draw_text_centered(ed->renderer, ed->font, "STAIRS", LEFT_PANEL_W/2, y+12, (SDL_Color){255,255,255,255});
+    draw_text_centered(ed->renderer, ed->font, "STAIRS", LEFT_PANEL_W / 2, y + 12,
+                       (SDL_Color){255, 255, 255, 255});
+
+    // Чекбокс "показать все" для лестниц
+    {
+        SDL_Rect cb = { LEFT_PANEL_W - 55, y + 2, 16, 16 };
+        SDL_SetRenderDrawColor(ed->renderer, 200, 200, 200, 255);
+        SDL_RenderDrawRect(ed->renderer, &cb);
+        if (ed->show_all_stairs) {
+            SDL_SetRenderDrawColor(ed->renderer, 0, 255, 0, 255);
+            SDL_RenderDrawLine(ed->renderer, cb.x + 2, cb.y + 8, cb.x + 6, cb.y + 12);
+            SDL_RenderDrawLine(ed->renderer, cb.x + 6, cb.y + 12, cb.x + 13, cb.y + 3);
+        }
+    }
 
     SDL_Rect stair_collapse_btn = { LEFT_PANEL_W - 35, y + 1, 26, 22 };
     SDL_SetRenderDrawColor(ed->renderer, 80, 80, 80, 255);
     SDL_RenderFillRect(ed->renderer, &stair_collapse_btn);
     draw_text_centered(ed->renderer, ed->font, ed->stair_section_collapsed ? "+" : "—",
-                       stair_collapse_btn.x + stair_collapse_btn.w/2, stair_collapse_btn.y + stair_collapse_btn.h/2,
-                       (SDL_Color){255,255,255,255});
+                       stair_collapse_btn.x + stair_collapse_btn.w / 2,
+                       stair_collapse_btn.y + stair_collapse_btn.h / 2,
+                       (SDL_Color){255, 255, 255, 255});
     y += 26;
 
     if (!ed->stair_section_collapsed) {
-        SDL_Rect stair_add_btn = {10, y, LEFT_PANEL_W-20, 24};
-        SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+        SDL_Rect stair_add_btn = {10, y, LEFT_PANEL_W - 20, 24};
+        SDL_SetRenderDrawColor(ed->renderer, 90, 90, 90, 255);
         SDL_RenderFillRect(ed->renderer, &stair_add_btn);
-        draw_text_centered(ed->renderer, ed->font, "Add Stairs", stair_add_btn.x+stair_add_btn.w/2, stair_add_btn.y+stair_add_btn.h/2,
-                           (SDL_Color){255,255,255,255});
+        draw_text_centered(ed->renderer, ed->font, "Add Stairs",
+                           stair_add_btn.x + stair_add_btn.w / 2,
+                           stair_add_btn.y + stair_add_btn.h / 2,
+                           (SDL_Color){255, 255, 255, 255});
         y += 30;
 
-        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
-        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        SDL_SetRenderDrawColor(ed->renderer, 100, 100, 100, 255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W - 10, y);
         y += 5;
 
         int stair_list_start_y = y;
         int stair_list_h = 100;
         int stair_item_h = 18;
-        int stair_max_visible = 5;                  // 5 элементов
-        ed->stair_list_rect = (SDL_Rect){10, stair_list_start_y, LEFT_PANEL_W-20, stair_list_h};
+        int stair_max_visible = 5;
+        ed->stair_list_rect = (SDL_Rect){10, stair_list_start_y, LEFT_PANEL_W - 20, stair_list_h};
 
-        int stair_max_scroll = (ed->stair_event_count > stair_max_visible) ? ed->stair_event_count - stair_max_visible : 0;
+        int stair_max_scroll = (ed->stair_event_count > stair_max_visible)
+                                   ? ed->stair_event_count - stair_max_visible
+                                   : 0;
         if (ed->stair_event_scroll < 0) ed->stair_event_scroll = 0;
-        if (ed->stair_event_scroll > stair_max_scroll) ed->stair_event_scroll = stair_max_scroll;
+        if (ed->stair_event_scroll > stair_max_scroll)
+            ed->stair_event_scroll = stair_max_scroll;
 
-        SDL_Rect stair_list_clip = {10, stair_list_start_y, LEFT_PANEL_W-20, stair_list_h};
+        SDL_Rect stair_list_clip = {10, stair_list_start_y, LEFT_PANEL_W - 20, stair_list_h};
         SDL_RenderSetClipRect(ed->renderer, &stair_list_clip);
         int stair_start = ed->stair_event_scroll;
-        int stair_end = (stair_start + stair_max_visible < ed->stair_event_count) ? stair_start + stair_max_visible : ed->stair_event_count;
+        int stair_end = (stair_start + stair_max_visible < ed->stair_event_count)
+                            ? stair_start + stair_max_visible
+                            : ed->stair_event_count;
         for (int i = stair_start; i < stair_end; i++) {
             StairEvent *se = &ed->stair_events[i];
             char buf[64];
-            snprintf(buf, sizeof(buf), "(%d,%d)->(%d,%d)", se->start_x, se->start_y, se->end_x, se->end_y);
-            SDL_Color col = (i == ed->selected_stair) ? (SDL_Color){0,255,0,255} : (SDL_Color){255,255,255,255};
-            SDL_Rect item_rect = {10, stair_list_start_y + (i - stair_start) * stair_item_h, LEFT_PANEL_W-20, stair_item_h};
+            snprintf(buf, sizeof(buf), "(%d,%d)->(%d,%d)",
+                     se->start_x, se->start_y, se->end_x, se->end_y);
+            SDL_Color col = (i == ed->selected_stair)
+                                ? (SDL_Color){0, 255, 0, 255}
+                                : (SDL_Color){255, 255, 255, 255};
+            SDL_Rect item_rect = {10, stair_list_start_y + (i - stair_start) * stair_item_h,
+                                  LEFT_PANEL_W - 20, stair_item_h};
             if (i == ed->selected_stair) {
-                SDL_SetRenderDrawColor(ed->renderer, 80,80,120,255);
+                SDL_SetRenderDrawColor(ed->renderer, 80, 80, 120, 255);
                 SDL_RenderFillRect(ed->renderer, &item_rect);
             }
-            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y + stair_item_h/2, col);
+            draw_text_centered(ed->renderer, ed->font, buf,
+                               LEFT_PANEL_W / 2, item_rect.y + stair_item_h / 2, col);
         }
         SDL_RenderSetClipRect(ed->renderer, NULL);
 
         if (ed->stair_event_count > stair_max_visible) {
             int bar_x = LEFT_PANEL_W - 12, bar_w = 6;
             SDL_Rect track = { bar_x, stair_list_start_y, bar_w, stair_list_h };
-            SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+            SDL_SetRenderDrawColor(ed->renderer, 90, 90, 90, 255);
             SDL_RenderFillRect(ed->renderer, &track);
             float thumb_h = (float)stair_max_visible / ed->stair_event_count * stair_list_h;
             if (thumb_h < 12) thumb_h = 12;
-            int thumb_y = stair_list_start_y + (int)((stair_list_h - thumb_h) * ((float)ed->stair_event_scroll / stair_max_scroll));
+            int thumb_y = stair_list_start_y +
+                          (int)((stair_list_h - thumb_h) *
+                                ((float)ed->stair_event_scroll / stair_max_scroll));
             SDL_Rect thumb = { bar_x, thumb_y, bar_w, (int)thumb_h };
-            SDL_SetRenderDrawColor(ed->renderer, 180,180,180,255);
+            SDL_SetRenderDrawColor(ed->renderer, 180, 180, 180, 255);
             SDL_RenderFillRect(ed->renderer, &thumb);
         }
 
         y = stair_list_start_y + stair_list_h + 5;
 
-        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
-        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        SDL_SetRenderDrawColor(ed->renderer, 100, 100, 100, 255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W - 10, y);
         y += 5;
 
         if (ed->selected_stair >= 0 && ed->selected_stair < ed->stair_event_count) {
@@ -1191,30 +1281,36 @@ void render_left_panel(Editor *ed) {
             draw_stair_field(ed, "End", 1, edit_y);
             edit_y += 22;
 
-            // Кнопки выбора направления лестницы
             StairEvent *se = &ed->stair_events[ed->selected_stair];
             int dir_btn_y = edit_y;
             SDL_Rect slash_btn = {10, dir_btn_y, 50, 20};
             SDL_Rect bslash_btn = {70, dir_btn_y, 50, 20};
 
-            SDL_SetRenderDrawColor(ed->renderer, se->direction == 1 ? 100 : 70, 200, 100, 255);
+            SDL_SetRenderDrawColor(ed->renderer,
+                                   se->direction == 1 ? 100 : 70, 200, 100, 255);
             SDL_RenderFillRect(ed->renderer, &slash_btn);
-            draw_text_centered(ed->renderer, ed->font, "/", slash_btn.x+slash_btn.w/2, slash_btn.y+slash_btn.h/2,
-                               (SDL_Color){255,255,255,255});
+            draw_text_centered(ed->renderer, ed->font, "/",
+                               slash_btn.x + slash_btn.w / 2,
+                               slash_btn.y + slash_btn.h / 2,
+                               (SDL_Color){255, 255, 255, 255});
 
-            SDL_SetRenderDrawColor(ed->renderer, se->direction == 0 ? 100 : 70, 200, 100, 255);
+            SDL_SetRenderDrawColor(ed->renderer,
+                                   se->direction == 0 ? 100 : 70, 200, 100, 255);
             SDL_RenderFillRect(ed->renderer, &bslash_btn);
-            draw_text_centered(ed->renderer, ed->font, "\\", bslash_btn.x+bslash_btn.w/2, bslash_btn.y+bslash_btn.h/2,
-                               (SDL_Color){255,255,255,255});
+            draw_text_centered(ed->renderer, ed->font, "\\",
+                               bslash_btn.x + bslash_btn.w / 2,
+                               bslash_btn.y + bslash_btn.h / 2,
+                               (SDL_Color){255, 255, 255, 255});
 
-            edit_y += 22;  // сдвиг для кнопки Delete
+            edit_y += 22;
 
-            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
+            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W - 20, 24};
             SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
             SDL_RenderFillRect(ed->renderer, &del_btn);
-            draw_text_centered(ed->renderer, ed->font, "Delete", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
-                               (SDL_Color){255,255,255,255});
-            y = edit_y + 24;
+            draw_text_centered(ed->renderer, ed->font, "Delete",
+                               del_btn.x + del_btn.w / 2, del_btn.y + del_btn.h / 2,
+                               (SDL_Color){255, 255, 255, 255});
+            y = edit_y + 24;   // важно для следующей секции
         }
     }
 
@@ -1222,76 +1318,105 @@ void render_left_panel(Editor *ed) {
     y += 10;
     ed->warp_section_y = y;
 
-    SDL_Rect warp_header = {10, y, LEFT_PANEL_W-20, 24};
+    SDL_Rect warp_header = {10, y, LEFT_PANEL_W - 20, 24};
     SDL_SetRenderDrawColor(ed->renderer, 60, 60, 60, 255);
     SDL_RenderFillRect(ed->renderer, &warp_header);
-    draw_text_centered(ed->renderer, ed->font, "WARP EVENTS", LEFT_PANEL_W/2, y+12, (SDL_Color){255,255,255,255});
+    draw_text_centered(ed->renderer, ed->font, "WARP EVENTS", LEFT_PANEL_W / 2, y + 12,
+                       (SDL_Color){255, 255, 255, 255});
+
+    // Чекбокс "показать все" для варпов
+    {
+        SDL_Rect cb = { LEFT_PANEL_W - 55, y + 2, 16, 16 };
+        SDL_SetRenderDrawColor(ed->renderer, 200, 200, 200, 255);
+        SDL_RenderDrawRect(ed->renderer, &cb);
+        if (ed->show_all_warps) {
+            SDL_SetRenderDrawColor(ed->renderer, 0, 255, 0, 255);
+            SDL_RenderDrawLine(ed->renderer, cb.x + 2, cb.y + 8, cb.x + 6, cb.y + 12);
+            SDL_RenderDrawLine(ed->renderer, cb.x + 6, cb.y + 12, cb.x + 13, cb.y + 3);
+        }
+    }
 
     SDL_Rect warp_collapse_btn = { LEFT_PANEL_W - 35, y + 1, 26, 22 };
     SDL_SetRenderDrawColor(ed->renderer, 80, 80, 80, 255);
     SDL_RenderFillRect(ed->renderer, &warp_collapse_btn);
     draw_text_centered(ed->renderer, ed->font, ed->warp_section_collapsed ? "+" : "—",
-                       warp_collapse_btn.x + warp_collapse_btn.w/2, warp_collapse_btn.y + warp_collapse_btn.h/2,
-                       (SDL_Color){255,255,255,255});
+                       warp_collapse_btn.x + warp_collapse_btn.w / 2,
+                       warp_collapse_btn.y + warp_collapse_btn.h / 2,
+                       (SDL_Color){255, 255, 255, 255});
     y += 26;
 
     if (!ed->warp_section_collapsed) {
-        SDL_Rect warp_add_btn = {10, y, LEFT_PANEL_W-20, 24};
-        SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+        SDL_Rect warp_add_btn = {10, y, LEFT_PANEL_W - 20, 24};
+        SDL_SetRenderDrawColor(ed->renderer, 90, 90, 90, 255);
         SDL_RenderFillRect(ed->renderer, &warp_add_btn);
-        draw_text_centered(ed->renderer, ed->font, "Add Warp", warp_add_btn.x+warp_add_btn.w/2, warp_add_btn.y+warp_add_btn.h/2,
-                           (SDL_Color){255,255,255,255});
+        draw_text_centered(ed->renderer, ed->font, "Add Warp",
+                           warp_add_btn.x + warp_add_btn.w / 2,
+                           warp_add_btn.y + warp_add_btn.h / 2,
+                           (SDL_Color){255, 255, 255, 255});
         y += 30;
 
-        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
-        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        SDL_SetRenderDrawColor(ed->renderer, 100, 100, 100, 255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W - 10, y);
         y += 5;
 
         int warp_list_start_y = y;
         int warp_list_h = 100;
         int warp_item_h = 18;
         int warp_max_visible = 5;
-        ed->warp_list_rect = (SDL_Rect){10, warp_list_start_y, LEFT_PANEL_W-20, warp_list_h};
+        ed->warp_list_rect = (SDL_Rect){10, warp_list_start_y, LEFT_PANEL_W - 20, warp_list_h};
 
-        int warp_max_scroll = (ed->warp_event_count > warp_max_visible) ? ed->warp_event_count - warp_max_visible : 0;
+        int warp_max_scroll = (ed->warp_event_count > warp_max_visible)
+                                  ? ed->warp_event_count - warp_max_visible
+                                  : 0;
         if (ed->warp_event_scroll < 0) ed->warp_event_scroll = 0;
-        if (ed->warp_event_scroll > warp_max_scroll) ed->warp_event_scroll = warp_max_scroll;
+        if (ed->warp_event_scroll > warp_max_scroll)
+            ed->warp_event_scroll = warp_max_scroll;
 
-        SDL_Rect warp_list_clip = {10, warp_list_start_y, LEFT_PANEL_W-20, warp_list_h};
+        SDL_Rect warp_list_clip = {10, warp_list_start_y, LEFT_PANEL_W - 20, warp_list_h};
         SDL_RenderSetClipRect(ed->renderer, &warp_list_clip);
         int warp_start = ed->warp_event_scroll;
-        int warp_end = (warp_start + warp_max_visible < ed->warp_event_count) ? warp_start + warp_max_visible : ed->warp_event_count;
+        int warp_end = (warp_start + warp_max_visible < ed->warp_event_count)
+                           ? warp_start + warp_max_visible
+                           : ed->warp_event_count;
         for (int i = warp_start; i < warp_end; i++) {
             WarpEvent *we = &ed->warp_events[i];
             char buf[128];
-            snprintf(buf, sizeof(buf), "(%d,%d) -> %s (%d,%d)", we->trigger_x, we->trigger_y, we->target_map, we->target_x, we->target_y);
-            SDL_Color col = (i == ed->selected_warp) ? (SDL_Color){0,255,0,255} : (SDL_Color){255,255,255,255};
-            SDL_Rect item_rect = {10, warp_list_start_y + (i - warp_start) * warp_item_h, LEFT_PANEL_W-20, warp_item_h};
+            snprintf(buf, sizeof(buf), "(%d,%d) -> %s (%d,%d)",
+                     we->trigger_x, we->trigger_y, we->target_map,
+                     we->target_x, we->target_y);
+            SDL_Color col = (i == ed->selected_warp)
+                                ? (SDL_Color){0, 255, 0, 255}
+                                : (SDL_Color){255, 255, 255, 255};
+            SDL_Rect item_rect = {10, warp_list_start_y + (i - warp_start) * warp_item_h,
+                                  LEFT_PANEL_W - 20, warp_item_h};
             if (i == ed->selected_warp) {
-                SDL_SetRenderDrawColor(ed->renderer, 80,80,120,255);
+                SDL_SetRenderDrawColor(ed->renderer, 80, 80, 120, 255);
                 SDL_RenderFillRect(ed->renderer, &item_rect);
             }
-            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y + warp_item_h/2, col);
+            draw_text_centered(ed->renderer, ed->font, buf,
+                               LEFT_PANEL_W / 2, item_rect.y + warp_item_h / 2, col);
         }
         SDL_RenderSetClipRect(ed->renderer, NULL);
 
         if (ed->warp_event_count > warp_max_visible) {
             int bar_x = LEFT_PANEL_W - 12, bar_w = 6;
             SDL_Rect track = { bar_x, warp_list_start_y, bar_w, warp_list_h };
-            SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+            SDL_SetRenderDrawColor(ed->renderer, 90, 90, 90, 255);
             SDL_RenderFillRect(ed->renderer, &track);
             float thumb_h = (float)warp_max_visible / ed->warp_event_count * warp_list_h;
             if (thumb_h < 12) thumb_h = 12;
-            int thumb_y = warp_list_start_y + (int)((warp_list_h - thumb_h) * ((float)ed->warp_event_scroll / warp_max_scroll));
+            int thumb_y = warp_list_start_y +
+                          (int)((warp_list_h - thumb_h) *
+                                ((float)ed->warp_event_scroll / warp_max_scroll));
             SDL_Rect thumb = { bar_x, thumb_y, bar_w, (int)thumb_h };
-            SDL_SetRenderDrawColor(ed->renderer, 180,180,180,255);
+            SDL_SetRenderDrawColor(ed->renderer, 180, 180, 180, 255);
             SDL_RenderFillRect(ed->renderer, &thumb);
         }
 
         y = warp_list_start_y + warp_list_h + 5;
 
-        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
-        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        SDL_SetRenderDrawColor(ed->renderer, 100, 100, 100, 255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W - 10, y);
         y += 5;
 
         if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
@@ -1301,11 +1426,13 @@ void render_left_panel(Editor *ed) {
             draw_warp_field(ed, "Targ.Pos", 3, edit_y); edit_y += 22;
             draw_warp_field(ed, "Facing",  5, edit_y); edit_y += 22;
 
-            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
+            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W - 20, 24};
             SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
             SDL_RenderFillRect(ed->renderer, &del_btn);
-            draw_text_centered(ed->renderer, ed->font, "Delete", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
-                               (SDL_Color){255,255,255,255});
+            draw_text_centered(ed->renderer, ed->font, "Delete",
+                               del_btn.x + del_btn.w / 2, del_btn.y + del_btn.h / 2,
+                               (SDL_Color){255, 255, 255, 255});
+             y = edit_y + 24;
         }
     }
 
@@ -1659,8 +1786,18 @@ void handle_input(Editor *ed, bool *running) {
 
             // --------------------- Левая панель ---------------------
             if (mx >= 0 && mx < LEFT_PANEL_W) {
+
+                // Чекбокс "показать все" крыши
+                {
+                    SDL_Rect cb = { LEFT_PANEL_W - 55, 12, 16, 16 };
+                    if (mx >= cb.x && mx < cb.x + cb.w && my >= cb.y && my < cb.y + cb.h) {
+                        ed->show_all_roofs = !ed->show_all_roofs;
+                        return;
+                    }
+                }
                 // --- Кнопка сворачивания Roof Events (всегда активна) ---
                 if (my >= 10 && my < 34) {
+
                     if (mx >= LEFT_PANEL_W - 35 && mx < LEFT_PANEL_W - 9) {
                         ed->left_panel_collapsed = !ed->left_panel_collapsed;
                         return;
@@ -1724,8 +1861,17 @@ void handle_input(Editor *ed, bool *running) {
                     }
                 }
 
+                // Чекбокс "показать все" замены тайлов
+                {
+                    SDL_Rect cb = { LEFT_PANEL_W - 55, ed->tc_section_y + 2, 16, 16 };
+                    if (mx >= cb.x && mx < cb.x + cb.w && my >= cb.y && my < cb.y + cb.h) {
+                        ed->show_all_tile_changes = !ed->show_all_tile_changes;
+                        return;
+                    }
+                }
                 // --- Кнопка сворачивания Tile Changes (всегда активна) ---
                 if (my >= ed->tc_section_y && my < ed->tc_section_y + 24) {
+
                     if (mx >= LEFT_PANEL_W - 35 && mx < LEFT_PANEL_W - 9) {
                         ed->tc_section_collapsed = !ed->tc_section_collapsed;
                         return;
@@ -1779,8 +1925,17 @@ void handle_input(Editor *ed, bool *running) {
                     }
                 }
 
+                // Чекбокс "показать все" лестницы
+                {
+                    SDL_Rect cb = { LEFT_PANEL_W - 55, ed->stair_section_y + 2, 16, 16 };
+                    if (mx >= cb.x && mx < cb.x + cb.w && my >= cb.y && my < cb.y + cb.h) {
+                        ed->show_all_stairs = !ed->show_all_stairs;
+                        return;
+                    }
+                }
                 // --- Кнопка сворачивания Stairs (всегда активна) ---
                 if (my >= ed->stair_section_y && my < ed->stair_section_y + 24) {
+
                     if (mx >= LEFT_PANEL_W - 35 && mx < LEFT_PANEL_W - 9) {
                         ed->stair_section_collapsed = !ed->stair_section_collapsed;
                         return;
@@ -1850,8 +2005,17 @@ void handle_input(Editor *ed, bool *running) {
                     return;
                 }
 
+                // Чекбокс "показать все" варпы
+                {
+                    SDL_Rect cb = { LEFT_PANEL_W - 55, ed->warp_section_y + 2, 16, 16 };
+                    if (mx >= cb.x && mx < cb.x + cb.w && my >= cb.y && my < cb.y + cb.h) {
+                        ed->show_all_warps = !ed->show_all_warps;
+                        return;
+                    }
+                }
                 // --- Кнопка сворачивания Warp Events (всегда активна) ---
                 if (my >= ed->warp_section_y && my < ed->warp_section_y + 24) {
+
                     if (mx >= LEFT_PANEL_W - 35 && mx < LEFT_PANEL_W - 9) {
                         ed->warp_section_collapsed = !ed->warp_section_collapsed;
                         return;
