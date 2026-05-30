@@ -6,6 +6,7 @@
 ---
 
 ![Боевая сцена](assets/screenshots/battle_scr.png)
+![карта](assets/screenshots/battle_scr02.png)
 
 
 ## 🧩 Компоненты
