@@ -53,6 +53,15 @@
 		"triggers":	[[24, 26], [25, 26]],
 		"exits":	[[24, 27], [25, 27]]
 	}, {
+		"type":	"roof",
+		"tile_id":	313,
+		"start_x":	5,
+		"start_y":	16,
+		"end_x":	10,
+		"end_y":	21,
+		"triggers":	[[7, 22], [8, 22]],
+		"exits":	[[7, 23], [8, 23]]
+	}, {
 		"type":	"tile_change",
 		"trigger_x":	4,
 		"trigger_y":	8,
