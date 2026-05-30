@@ -5,10 +5,8 @@
 		"start_y":	7,
 		"end_x":	22,
 		"end_y":	11,
-		"trigger_x":	19,
-		"trigger_y":	12,
-		"exit_x":	19,
-		"exit_y":	13
+		"triggers":	[[19, 12]],
+		"exits":	[[19, 13]]
 	}, {
 		"type":	"roof",
 		"tile_id":	136,
@@ -16,10 +14,8 @@
 		"start_y":	6,
 		"end_x":	15,
 		"end_y":	11,
-		"trigger_x":	12,
-		"trigger_y":	12,
-		"exit_x":	12,
-		"exit_y":	13
+		"triggers":	[[12, 12]],
+		"exits":	[[12, 13]]
 	}, {
 		"type":	"roof",
 		"tile_id":	136,
@@ -27,10 +23,8 @@
 		"start_y":	9,
 		"end_x":	34,
 		"end_y":	14,
-		"trigger_x":	32,
-		"trigger_y":	15,
-		"exit_x":	32,
-		"exit_y":	16
+		"triggers":	[[32, 15]],
+		"exits":	[[32, 16]]
 	}, {
 		"type":	"roof",
 		"tile_id":	136,
@@ -38,10 +32,8 @@
 		"start_y":	5,
 		"end_x":	47,
 		"end_y":	12,
-		"trigger_x":	41,
-		"trigger_y":	13,
-		"exit_x":	41,
-		"exit_y":	14
+		"triggers":	[[41, 13]],
+		"exits":	[[41, 14]]
 	}, {
 		"type":	"roof",
 		"tile_id":	136,
@@ -49,18 +41,18 @@
 		"start_y":	19,
 		"end_x":	40,
 		"end_y":	23,
-		"trigger_x":	38,
-		"trigger_y":	24,
-		"exit_x":	38,
-		"exit_y":	25
+		"triggers":	[[38, 24]],
+		"exits":	[[38, 25]]
 	}, {
-        "type": "roof",
-        "tile_id": 358,
-        "start_x": 22, "start_y": 19,
-        "end_x": 30, "end_y": 25,
-        "triggers": [ [24, 26], [25, 26] ],
-        "exits": [ [24, 27], [25, 27] ]
-    }, {
+		"type":	"roof",
+		"tile_id":	358,
+		"start_x":	22,
+		"start_y":	19,
+		"end_x":	30,
+		"end_y":	25,
+		"triggers":	[[24, 26], [25, 26]],
+		"exits":	[[24, 27], [25, 27]]
+	}, {
 		"type":	"tile_change",
 		"trigger_x":	4,
 		"trigger_y":	8,

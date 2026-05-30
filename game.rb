@@ -316,8 +316,8 @@ class Game
     end
 
  if @game_map && @game_map.roof_events.any?
-    @game_map.roof_events.each_with_index do |ev, idx|
-    # Проверка триггеров (скрыть крышу)
+  @game_map.roof_events.each_with_index do |ev, idx|
+    # Проверка триггеров (скрыть крышу) – уже работало, но для единообразия тоже обновим
     triggered = false
     if ev['triggers']
       triggered = ev['triggers'].any? { |t| @player.x == t[0] && @player.y == t[1] }
@@ -329,7 +329,7 @@ class Game
       @zone_hidden[idx] = true
     end
 
-    # Проверка выходов (показать крышу)
+    # Проверка выходов (показать крышу) – раньше было только ev['exit_x'], теперь массив exits
     exited = false
     if ev['exits']
       exited = ev['exits'].any? { |e| @player.x == e[0] && @player.y == e[1] }

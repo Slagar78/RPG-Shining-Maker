@@ -57,10 +57,12 @@ typedef struct {
 // ─── Событие крыши (теперь с конкретными координатами триггера) ──
 typedef struct {
     int tile_id;
-    int trigger_x, trigger_y;   // клетка, по которой кликнули для выбора тайла
+    int trigger_x, trigger_y;       // первый триггер
+    int trigger2_x, trigger2_y;     // второй триггер (-1 если нет)
     int start_x, start_y;
     int end_x, end_y;
-    int exit_x, exit_y;   // клетка-выход (закрывает крышу)
+    int exit_x, exit_y;             // первый выход
+    int exit2_x, exit2_y;           // второй выход (-1 если нет)
 } RoofEvent;
 
 // ─── Список карт ──────────────────────────────
@@ -373,27 +375,83 @@ void load_events_from_json(Editor *ed, const char *folder) {
         cJSON *type_json = cJSON_GetObjectItem(ev, "type");
         const char *type = type_json ? type_json->valuestring : "roof"; // по умолчанию крыша
 
-        if (strcmp(type, "roof") == 0) {
+                if (strcmp(type, "roof") == 0) {
             if (ed->roof_event_count < MAX_ROOF_EVENTS) {
                 cJSON *tid = cJSON_GetObjectItem(ev, "tile_id");
                 cJSON *sx  = cJSON_GetObjectItem(ev, "start_x");
                 cJSON *sy  = cJSON_GetObjectItem(ev, "start_y");
                 cJSON *ex  = cJSON_GetObjectItem(ev, "end_x");
                 cJSON *ey  = cJSON_GetObjectItem(ev, "end_y");
-                cJSON *tx = cJSON_GetObjectItem(ev, "trigger_x");
-                cJSON *ty = cJSON_GetObjectItem(ev, "trigger_y");
-                cJSON *ex_x = cJSON_GetObjectItem(ev, "exit_x");
-                cJSON *ex_y = cJSON_GetObjectItem(ev, "exit_y");
 
                 if (tid && sx && sy && ex && ey) {
                     RoofEvent *re = &ed->roof_events[ed->roof_event_count++];
                     re->tile_id = tid->valueint;
                     re->start_x = sx->valueint; re->start_y = sy->valueint;
                     re->end_x = ex->valueint;   re->end_y = ey->valueint;
-                    re->trigger_x = (tx && cJSON_IsNumber(tx)) ? tx->valueint : -1;
-                    re->trigger_y = (ty && cJSON_IsNumber(ty)) ? ty->valueint : -1;
-                    re->exit_x = (ex_x && cJSON_IsNumber(ex_x)) ? ex_x->valueint : -1;
-                    re->exit_y = (ex_y && cJSON_IsNumber(ex_y)) ? ex_y->valueint : -1;
+
+                    // Читаем triggers (новый массив или старые одиночные поля)
+                    cJSON *triggers_arr = cJSON_GetObjectItem(ev, "triggers");
+                    if (triggers_arr && cJSON_IsArray(triggers_arr)) {
+                        int n = cJSON_GetArraySize(triggers_arr);
+                        if (n > 0) {
+                            cJSON *t0 = cJSON_GetArrayItem(triggers_arr, 0);
+                            if (t0 && cJSON_IsArray(t0) && cJSON_GetArraySize(t0) == 2) {
+                                re->trigger_x = cJSON_GetArrayItem(t0, 0)->valueint;
+                                re->trigger_y = cJSON_GetArrayItem(t0, 1)->valueint;
+                            } else { re->trigger_x = re->trigger_y = -1; }
+                            if (n > 1) {
+                                cJSON *t1 = cJSON_GetArrayItem(triggers_arr, 1);
+                                if (t1 && cJSON_IsArray(t1) && cJSON_GetArraySize(t1) == 2) {
+                                    re->trigger2_x = cJSON_GetArrayItem(t1, 0)->valueint;
+                                    re->trigger2_y = cJSON_GetArrayItem(t1, 1)->valueint;
+                                } else { re->trigger2_x = re->trigger2_y = -1; }
+                            } else { re->trigger2_x = re->trigger2_y = -1; }
+                        } else {
+                            re->trigger_x = re->trigger_y = re->trigger2_x = re->trigger2_y = -1;
+                        }
+                    } else {
+                        // Обратная совместимость со старым форматом
+                        cJSON *tx = cJSON_GetObjectItem(ev, "trigger_x");
+                        cJSON *ty = cJSON_GetObjectItem(ev, "trigger_y");
+                        re->trigger_x = (tx && cJSON_IsNumber(tx)) ? tx->valueint : -1;
+                        re->trigger_y = (ty && cJSON_IsNumber(ty)) ? ty->valueint : -1;
+                        cJSON *t2x = cJSON_GetObjectItem(ev, "trigger2_x");
+                        cJSON *t2y = cJSON_GetObjectItem(ev, "trigger2_y");
+                        re->trigger2_x = (t2x && cJSON_IsNumber(t2x)) ? t2x->valueint : -1;
+                        re->trigger2_y = (t2y && cJSON_IsNumber(t2y)) ? t2y->valueint : -1;
+                    }
+
+                    // Читаем exits (новый массив или старые одиночные поля)
+                    cJSON *exits_arr = cJSON_GetObjectItem(ev, "exits");
+                    if (exits_arr && cJSON_IsArray(exits_arr)) {
+                        int n = cJSON_GetArraySize(exits_arr);
+                        if (n > 0) {
+                            cJSON *e0 = cJSON_GetArrayItem(exits_arr, 0);
+                            if (e0 && cJSON_IsArray(e0) && cJSON_GetArraySize(e0) == 2) {
+                                re->exit_x = cJSON_GetArrayItem(e0, 0)->valueint;
+                                re->exit_y = cJSON_GetArrayItem(e0, 1)->valueint;
+                            } else { re->exit_x = re->exit_y = -1; }
+                            if (n > 1) {
+                                cJSON *e1 = cJSON_GetArrayItem(exits_arr, 1);
+                                if (e1 && cJSON_IsArray(e1) && cJSON_GetArraySize(e1) == 2) {
+                                    re->exit2_x = cJSON_GetArrayItem(e1, 0)->valueint;
+                                    re->exit2_y = cJSON_GetArrayItem(e1, 1)->valueint;
+                                } else { re->exit2_x = re->exit2_y = -1; }
+                            } else { re->exit2_x = re->exit2_y = -1; }
+                        } else {
+                            re->exit_x = re->exit_y = re->exit2_x = re->exit2_y = -1;
+                        }
+                    } else {
+                        // Обратная совместимость со старым форматом
+                        cJSON *ex_x = cJSON_GetObjectItem(ev, "exit_x");
+                        cJSON *ex_y = cJSON_GetObjectItem(ev, "exit_y");
+                        re->exit_x = (ex_x && cJSON_IsNumber(ex_x)) ? ex_x->valueint : -1;
+                        re->exit_y = (ex_y && cJSON_IsNumber(ex_y)) ? ex_y->valueint : -1;
+                        cJSON *ex2x = cJSON_GetObjectItem(ev, "exit2_x");
+                        cJSON *ex2y = cJSON_GetObjectItem(ev, "exit2_y");
+                        re->exit2_x = (ex2x && cJSON_IsNumber(ex2x)) ? ex2x->valueint : -1;
+                        re->exit2_y = (ex2y && cJSON_IsNumber(ex2y)) ? ex2y->valueint : -1;
+                    }
                 }
             }
         } else if (strcmp(type, "tile_change") == 0) {
@@ -461,23 +519,51 @@ void save_events_to_json(Editor *ed, const char *folder) {
 
     cJSON *root = cJSON_CreateArray();
 
-    // Сохраняем крыши
-    for (int i = 0; i < ed->roof_event_count; i++) {
-        RoofEvent *re = &ed->roof_events[i];
-        cJSON *ev = cJSON_CreateObject();
-        cJSON_AddStringToObject(ev, "type", "roof");
-        cJSON_AddNumberToObject(ev, "tile_id", re->tile_id);
-        cJSON_AddNumberToObject(ev, "start_x", re->start_x);
-        cJSON_AddNumberToObject(ev, "start_y", re->start_y);
-        cJSON_AddNumberToObject(ev, "end_x", re->end_x);
-        cJSON_AddNumberToObject(ev, "end_y", re->end_y);
-        cJSON_AddNumberToObject(ev, "trigger_x", re->trigger_x);
-        cJSON_AddNumberToObject(ev, "trigger_y", re->trigger_y);
-        cJSON_AddNumberToObject(ev, "exit_x", re->exit_x);
-        cJSON_AddNumberToObject(ev, "exit_y", re->exit_y);
-        cJSON_AddItemToArray(root, ev);
-    }
+// Сохраняем крыши
+for (int i = 0; i < ed->roof_event_count; i++) {
+RoofEvent *re = &ed->roof_events[i];
+cJSON *ev = cJSON_CreateObject();
+cJSON_AddStringToObject(ev, "type", "roof");
+cJSON_AddNumberToObject(ev, "tile_id", re->tile_id);
+cJSON_AddNumberToObject(ev, "start_x", re->start_x);
+cJSON_AddNumberToObject(ev, "start_y", re->start_y);
+cJSON_AddNumberToObject(ev, "end_x", re->end_x);
+cJSON_AddNumberToObject(ev, "end_y", re->end_y);
 
+// Формируем массив triggers
+cJSON *triggers = cJSON_CreateArray();
+if (re->trigger_x != -1 || re->trigger_y != -1) {
+    cJSON *t1 = cJSON_CreateArray();
+    cJSON_AddItemToArray(t1, cJSON_CreateNumber(re->trigger_x));
+    cJSON_AddItemToArray(t1, cJSON_CreateNumber(re->trigger_y));
+    cJSON_AddItemToArray(triggers, t1);
+}
+if (re->trigger2_x != -1 || re->trigger2_y != -1) {
+    cJSON *t2 = cJSON_CreateArray();
+    cJSON_AddItemToArray(t2, cJSON_CreateNumber(re->trigger2_x));
+    cJSON_AddItemToArray(t2, cJSON_CreateNumber(re->trigger2_y));
+    cJSON_AddItemToArray(triggers, t2);
+}
+cJSON_AddItemToObject(ev, "triggers", triggers);
+
+// Формируем массив exits
+cJSON *exits = cJSON_CreateArray();
+if (re->exit_x != -1 || re->exit_y != -1) {
+    cJSON *e1 = cJSON_CreateArray();
+    cJSON_AddItemToArray(e1, cJSON_CreateNumber(re->exit_x));
+    cJSON_AddItemToArray(e1, cJSON_CreateNumber(re->exit_y));
+    cJSON_AddItemToArray(exits, e1);
+}
+if (re->exit2_x != -1 || re->exit2_y != -1) {
+    cJSON *e2 = cJSON_CreateArray();
+    cJSON_AddItemToArray(e2, cJSON_CreateNumber(re->exit2_x));
+    cJSON_AddItemToArray(e2, cJSON_CreateNumber(re->exit2_y));
+    cJSON_AddItemToArray(exits, e2);
+}
+cJSON_AddItemToObject(ev, "exits", exits);
+
+cJSON_AddItemToArray(root, ev);
+}
     // Сохраняем замены тайлов
     for (int i = 0; i < ed->tile_change_count; i++) {
         TileChangeEvent *tc = &ed->tile_changes[i];
@@ -598,50 +684,47 @@ void render_map(Editor *ed) {
     }
 
     // === Подсветка для Roof Events ===
-    // Красная рамка вокруг конкретной клетки-триггера
     if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
-        RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
-        if (re->trigger_x >= 0 && re->trigger_y >= 0) {
-            int tx = re->trigger_x;
-            int ty = re->trigger_y;
-            if (tx >= 0 && tx < map->width && ty >= 0 && ty < map->height) {
-                SDL_FRect tile_dst = {
-                    MAP_X + (tx * TILE_SIZE - ed->cam_x) * zoom,
-                    MAP_Y + (ty * TILE_SIZE - ed->cam_y) * zoom,
-                    scaled_tile, scaled_tile
-                };
-                SDL_SetRenderDrawColor(ed->renderer, 255, 0, 0, 255);
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
-                        SDL_FRect thick_rect = { tile_dst.x + dx, tile_dst.y + dy, tile_dst.w, tile_dst.h };
-                        SDL_RenderDrawRectF(ed->renderer, &thick_rect);
-                    }
-                }
-            }
+    RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
+
+    // Красные рамки для всех триггеров
+    int trigs[4][2] = {
+        {re->trigger_x, re->trigger_y},
+        {re->trigger2_x, re->trigger2_y}
+    };
+    for (int i = 0; i < 2; i++) {
+        int tx = trigs[i][0];
+        int ty = trigs[i][1];
+        if (tx >= 0 && ty >= 0 && tx < map->width && ty < map->height) {
+            SDL_FRect r = { MAP_X + (tx * TILE_SIZE - ed->cam_x) * zoom,
+                            MAP_Y + (ty * TILE_SIZE - ed->cam_y) * zoom,
+                            scaled_tile, scaled_tile };
+            SDL_SetRenderDrawColor(ed->renderer, 255, 0, 0, 255);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
+                    SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){r.x+dx, r.y+dy, r.w, r.h});
         }
     }
 
-    // Голубая рамка вокруг клетки-выхода
-    if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
-        RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
-        if (re->exit_x >= 0 && re->exit_y >= 0) {
-            int ex_x = re->exit_x, ex_y = re->exit_y;
-            if (ex_x >= 0 && ex_x < map->width && ex_y >= 0 && ex_y < map->height) {
-                SDL_FRect ex_dst = {
-                    MAP_X + (ex_x * TILE_SIZE - ed->cam_x) * zoom,
-                    MAP_Y + (ex_y * TILE_SIZE - ed->cam_y) * zoom,
-                    scaled_tile, scaled_tile
-                };
-                SDL_SetRenderDrawColor(ed->renderer, 0, 150, 255, 255);
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
-                        SDL_FRect thick = { ex_dst.x + dx, ex_dst.y + dy, ex_dst.w, ex_dst.h };
-                        SDL_RenderDrawRectF(ed->renderer, &thick);
-                    }
-                }
-            }
+    // Голубые рамки для всех выходов
+    int exits[4][2] = {
+        {re->exit_x, re->exit_y},
+        {re->exit2_x, re->exit2_y}
+    };
+    for (int i = 0; i < 2; i++) {
+        int ex = exits[i][0];
+        int ey = exits[i][1];
+        if (ex >= 0 && ey >= 0 && ex < map->width && ey < map->height) {
+            SDL_FRect r = { MAP_X + (ex * TILE_SIZE - ed->cam_x) * zoom,
+                            MAP_Y + (ey * TILE_SIZE - ed->cam_y) * zoom,
+                            scaled_tile, scaled_tile };
+            SDL_SetRenderDrawColor(ed->renderer, 0, 150, 255, 255);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
+                    SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){r.x+dx, r.y+dy, r.w, r.h});
         }
     }
+}
 
     // Зелёная рамка зоны крыши
     if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
@@ -927,17 +1010,24 @@ static void draw_roof_field(Editor *ed, const char *label, int field_idx, int li
     SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
     SDL_RenderDrawRect(ed->renderer, &fld_rect);
 
-    char buf[32];
+    char buf[32] = "";
     if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
         RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
-        if (field_idx == 0)
-            snprintf(buf, sizeof(buf), "%d", re->tile_id);
-        else if (field_idx == 1)
-            snprintf(buf, sizeof(buf), "%d,%d", re->start_x, re->start_y);
-        else if (field_idx == 2)
-            snprintf(buf, sizeof(buf), "%d,%d", re->end_x, re->end_y);
-        else if (field_idx == 3)
-            snprintf(buf, sizeof(buf), "%d,%d", re->exit_x, re->exit_y);
+        switch (field_idx) {
+            case 0: snprintf(buf, sizeof(buf), "%d", re->tile_id); break;
+            case 1: snprintf(buf, sizeof(buf), "%d,%d", re->start_x, re->start_y); break;
+            case 2: snprintf(buf, sizeof(buf), "%d,%d", re->end_x, re->end_y); break;
+            case 3: snprintf(buf, sizeof(buf), "%d,%d", re->trigger_x, re->trigger_y); break;
+            case 4:
+                if (re->trigger2_x == -1 && re->trigger2_y == -1) snprintf(buf, sizeof(buf), "-");
+                else snprintf(buf, sizeof(buf), "%d,%d", re->trigger2_x, re->trigger2_y);
+                break;
+            case 5: snprintf(buf, sizeof(buf), "%d,%d", re->exit_x, re->exit_y); break;
+            case 6:
+                if (re->exit2_x == -1 && re->exit2_y == -1) snprintf(buf, sizeof(buf), "-");
+                else snprintf(buf, sizeof(buf), "%d,%d", re->exit2_x, re->exit2_y);
+                break;
+        }
     }
     if (active && ed->input_buf[0])
         snprintf(buf, sizeof(buf), "%s", ed->input_buf);
@@ -951,14 +1041,21 @@ static void check_roof_field_click(Editor *ed, int field_idx, int line_y, int mx
         ed->edit_field = field_idx;
         if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
             RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
-            if (field_idx == 0)
-                snprintf(ed->input_buf, sizeof(ed->input_buf), "%d", re->tile_id);
-            else if (field_idx == 1)
-                snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->start_x, re->start_y);
-            else if (field_idx == 2)
-                snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->end_x, re->end_y);
-            else if (field_idx == 3)
-                snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->exit_x, re->exit_y);
+            switch (field_idx) {
+                case 0: snprintf(ed->input_buf, sizeof(ed->input_buf), "%d", re->tile_id); break;
+                case 1: snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->start_x, re->start_y); break;
+                case 2: snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->end_x, re->end_y); break;
+                case 3: snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->trigger_x, re->trigger_y); break;
+                case 4:
+                    if (re->trigger2_x == -1) ed->input_buf[0] = '\0';
+                    else snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->trigger2_x, re->trigger2_y);
+                    break;
+                case 5: snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->exit_x, re->exit_y); break;
+                case 6:
+                    if (re->exit2_x == -1) ed->input_buf[0] = '\0';
+                    else snprintf(ed->input_buf, sizeof(ed->input_buf), "%d,%d", re->exit2_x, re->exit2_y);
+                    break;
+            }
         }
         SDL_StartTextInput();
     }
@@ -1251,24 +1348,23 @@ void render_left_panel(Editor *ed) {
         y += 5;
 
         if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
-            int edit_y = y;
-            draw_roof_field(ed, "Tile ID", 0, edit_y);
-            edit_y += 22;
-            draw_roof_field(ed, "Start", 1, edit_y);
-            edit_y += 22;
-            draw_roof_field(ed, "End", 2, edit_y);
-            edit_y += 22;
-            draw_roof_field(ed, "Exit", 3, edit_y);
-            edit_y += 22;
+        int edit_y = y;
+        draw_roof_field(ed, "Tile ID", 0, edit_y); edit_y += 22;
+        draw_roof_field(ed, "Start",   1, edit_y); edit_y += 22;
+        draw_roof_field(ed, "End",     2, edit_y); edit_y += 22;
+        draw_roof_field(ed, "Trig.1",  3, edit_y); edit_y += 22;
+        draw_roof_field(ed, "Trig.2",  4, edit_y); edit_y += 22;
+        draw_roof_field(ed, "Exit1",   5, edit_y); edit_y += 22;
+        draw_roof_field(ed, "Exit2",   6, edit_y); edit_y += 22;
 
-            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
-            SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
-            SDL_RenderFillRect(ed->renderer, &del_btn);
-            draw_text_centered(ed->renderer, ed->font, "Delete Event", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
-                               (SDL_Color){255,255,255,255});
-            y = edit_y + 24;
-        }
+        SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
+        SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
+        SDL_RenderFillRect(ed->renderer, &del_btn);
+        draw_text_centered(ed->renderer, ed->font, "Delete Event", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
+                       (SDL_Color){255,255,255,255});
+        y = edit_y + 24;
     }
+}
 
     // ====================== TILE CHANGES ======================
     y += 10;  // небольшой отступ между секциями
@@ -1581,29 +1677,38 @@ void handle_input(Editor *ed, bool *running) {
                 }
                 else if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER) {
                     if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
-                        RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
-                        if (ed->edit_field == 0) {
-                            re->tile_id = atoi(ed->input_buf);
-                        } else if (ed->edit_field == 1) {
-                            int x, y;
-                            if (sscanf(ed->input_buf, "%d,%d", &x, &y) == 2) {
-                                re->start_x = x;
-                                re->start_y = y;
-                            }
-                        } else if (ed->edit_field == 2) {
-                            int x, y;
-                            if (sscanf(ed->input_buf, "%d,%d", &x, &y) == 2) {
-                                re->end_x = x;
-                                re->end_y = y;
-                            }
-                        } else if (ed->edit_field == 3) {
-                            int x, y;
-                            if (sscanf(ed->input_buf, "%d,%d", &x, &y) == 2) {
-                                re->exit_x = x;
-                                re->exit_y = y;
-                            }
-                        }
-                    }
+                    RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
+                    int x, y;
+                    switch (ed->edit_field) {
+                    case 0: re->tile_id = atoi(ed->input_buf); break;
+                    case 1:
+            if (sscanf(ed->input_buf, "%d,%d", &x, &y) == 2) { re->start_x = x; re->start_y = y; }
+            break;
+        case 2:
+            if (sscanf(ed->input_buf, "%d,%d", &x, &y) == 2) { re->end_x = x; re->end_y = y; }
+            break;
+        case 3:
+            if (sscanf(ed->input_buf, "%d,%d", &x, &y) == 2) { re->trigger_x = x; re->trigger_y = y; }
+            break;
+        case 4:
+            if (ed->input_buf[0] == '-' || ed->input_buf[0] == '\0') {
+                re->trigger2_x = -1; re->trigger2_y = -1;
+            } else if (sscanf(ed->input_buf, "%d,%d", &x, &y) == 2) {
+                re->trigger2_x = x; re->trigger2_y = y;
+            }
+            break;
+        case 5:
+            if (sscanf(ed->input_buf, "%d,%d", &x, &y) == 2) { re->exit_x = x; re->exit_y = y; }
+            break;
+        case 6:
+            if (ed->input_buf[0] == '-' || ed->input_buf[0] == '\0') {
+                re->exit2_x = -1; re->exit2_y = -1;
+            } else if (sscanf(ed->input_buf, "%d,%d", &x, &y) == 2) {
+                re->exit2_x = x; re->exit2_y = y;
+            }
+            break;
+    }
+}
                     ed->edit_field = -1;
                     ed->input_buf[0] = '\0';
                     SDL_StopTextInput();
@@ -1902,16 +2007,18 @@ void handle_input(Editor *ed, bool *running) {
                             RoofEvent *re = &ed->roof_events[ed->roof_event_count++];
                             re->tile_id = 0;
                             re->trigger_x = re->trigger_y = -1;
+                            re->trigger2_x = re->trigger2_y = -1;
                             re->exit_x = -1;
                             re->exit_y = -1;
+                            re->exit2_x = re->exit2_y = -1;
                             re->start_x = 0; re->start_y = 0;
                             re->end_x = 1; re->end_y = 1;
                             ed->selected_roof_event = ed->roof_event_count - 1;
                             ed->edit_field = -1;
                             ed->input_buf[0] = '\0';
                         }
-                        return;
-                    }
+                    return;
+                }
                     y_off += 30 + 5; // 71
                     int list_start_y = y_off;
                     int list_h = 200;
@@ -1930,7 +2037,10 @@ void handle_input(Editor *ed, bool *running) {
                         check_roof_field_click(ed, 1, edit_y + 22, mx, my);
                         check_roof_field_click(ed, 2, edit_y + 44, mx, my);
                         check_roof_field_click(ed, 3, edit_y + 66, mx, my);
-                        SDL_Rect del_btn = {10, edit_y + 88, LEFT_PANEL_W-20, 24};
+                        check_roof_field_click(ed, 4, edit_y + 88, mx, my);
+                        check_roof_field_click(ed, 5, edit_y + 110, mx, my);
+                        check_roof_field_click(ed, 6, edit_y + 132, mx, my);
+                        SDL_Rect del_btn = {10, edit_y + 154, LEFT_PANEL_W-20, 24};
                         if (mx >= del_btn.x && mx < del_btn.x+del_btn.w && my >= del_btn.y && my < del_btn.y+del_btn.h) {
                             for (int i = ed->selected_roof_event; i < ed->roof_event_count-1; i++)
                                 ed->roof_events[i] = ed->roof_events[i+1];
@@ -2165,27 +2275,25 @@ void handle_input(Editor *ed, bool *running) {
                     if (tx >= 0 && tx < map->width && ty >= 0 && ty < map->height) {
                         // --- Roof Events ---
                         if (ed->selected_roof_event >= 0 && ed->roof_event_count > 0) {
-                            RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
-                            if (ed->edit_field == -1 || ed->edit_field == 0) {
-                                re->tile_id = map->tiles[tx * map->height + ty];
-                                re->trigger_x = tx;
-                                re->trigger_y = ty;
-                                if (ed->edit_field == 0) {
-                                    ed->edit_field = -1;
-                                    ed->input_buf[0] = '\0';
-                                    SDL_StopTextInput();
-                                }
-                            } else if (ed->edit_field == 1) {
-                                re->start_x = tx; re->start_y = ty;
-                                ed->edit_field = -1; ed->input_buf[0] = '\0'; SDL_StopTextInput();
-                            } else if (ed->edit_field == 2) {
-                                re->end_x = tx; re->end_y = ty;
-                                ed->edit_field = -1; ed->input_buf[0] = '\0'; SDL_StopTextInput();
-                            } else if (ed->edit_field == 3) {
-                                re->exit_x = tx; re->exit_y = ty;
-                                ed->edit_field = -1; ed->input_buf[0] = '\0'; SDL_StopTextInput();
-                            }
-                        }
+                        RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
+                        if (ed->edit_field == -1 || ed->edit_field == 0) {
+                        re->tile_id = map->tiles[tx * map->height + ty];
+                        re->trigger_x = tx; re->trigger_y = ty;   // попутно ставим триггер1
+                        if (ed->edit_field == 0) {
+                        ed->edit_field = -1; ed->input_buf[0] = '\0'; SDL_StopTextInput();
+                    }
+                } else {
+                switch (ed->edit_field) {
+                case 1: re->start_x = tx; re->start_y = ty; break;
+                case 2: re->end_x = tx; re->end_y = ty; break;
+                case 3: re->trigger_x = tx; re->trigger_y = ty; break;
+                case 4: re->trigger2_x = tx; re->trigger2_y = ty; break;
+                case 5: re->exit_x = tx; re->exit_y = ty; break;
+                case 6: re->exit2_x = tx; re->exit2_y = ty; break;
+            }
+        ed->edit_field = -1; ed->input_buf[0] = '\0'; SDL_StopTextInput();
+    }
+}
 
                         // --- Tile Changes ---
                         if (ed->tc_edit_field != -1 && ed->selected_tile_change >= 0) {
