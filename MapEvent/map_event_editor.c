@@ -32,13 +32,21 @@
 #define MAX_ROOF_EVENTS 128
 #define MAX_TILE_CHANGES 64
 #define MAX_STAIRS 64
+#define MAX_WARPS 64
 
 
 typedef struct {
     int start_x, start_y;
     int end_x, end_y;
-    int direction;  // 0 = '/', 1 = '\'
+    int direction;
 } StairEvent;
+
+typedef struct {
+    int trigger_x, trigger_y;   // клетка-активатор
+    char target_map[64];        // папка карты назначения
+    int target_x, target_y;     // точка появления
+    int facing;                 // направление после телепорта (2=вниз, 4=влево, 6=вправо, 8=вверх)
+} WarpEvent;
 
 typedef struct {
     int trigger_x, trigger_y;   // клетка-триггер (куда наступает игрок)
@@ -122,6 +130,17 @@ typedef struct {
     int stair_section_y;
     int stair_event_scroll;
     SDL_Rect stair_list_rect;
+
+    // Warp events
+    WarpEvent warp_events[MAX_WARPS];
+    int warp_event_count;
+    int selected_warp;          // -1 = ничего не выбрано
+    int warp_edit_field;        // 0=Trigger, 1=Target Map, 2=Target Pos, 3=Facing
+    char warp_input_buf[64];
+    bool warp_section_collapsed;
+    int warp_section_y;
+    int warp_event_scroll;
+    SDL_Rect warp_list_rect;
 } Editor;
 
 // ─── Прототипы ────────────────────────────────
@@ -194,6 +213,15 @@ void editor_init(Editor *ed) {
     ed->stair_section_y = 0;
     ed->stair_event_scroll = 0;
     memset(&ed->stair_list_rect, 0, sizeof(ed->stair_list_rect));
+
+    ed->warp_event_count = 0;
+    ed->selected_warp = -1;
+    ed->warp_edit_field = -1;
+    ed->warp_input_buf[0] = '\0';
+    ed->warp_section_collapsed = true;
+    ed->warp_section_y = 0;
+    ed->warp_event_scroll = 0;
+    memset(&ed->warp_list_rect, 0, sizeof(ed->warp_list_rect));
 }
 
 // ─── Тайлсет ──────────────────────────────────
@@ -400,6 +428,25 @@ void load_events_from_json(Editor *ed, const char *folder) {
                     se->direction = (dir && cJSON_IsNumber(dir)) ? dir->valueint : 0;
                 }
             }
+        } else if (strcmp(type, "warp") == 0) {
+            if (ed->warp_event_count < MAX_WARPS) {
+                cJSON *tx = cJSON_GetObjectItem(ev, "trigger_x");
+                cJSON *ty = cJSON_GetObjectItem(ev, "trigger_y");
+                cJSON *tmap = cJSON_GetObjectItem(ev, "target_map");
+                cJSON *tox = cJSON_GetObjectItem(ev, "target_x");
+                cJSON *toy = cJSON_GetObjectItem(ev, "target_y");
+                cJSON *facing = cJSON_GetObjectItem(ev, "facing");
+                if (tx && ty && tmap && tox && toy && facing) {
+                    WarpEvent *we = &ed->warp_events[ed->warp_event_count++];
+                    we->trigger_x = tx->valueint;
+                    we->trigger_y = ty->valueint;
+                    snprintf(we->target_map, sizeof(we->target_map), "%s", tmap->valuestring);
+                    we->target_map[63] = '\0';
+                    we->target_x = tox->valueint;
+                    we->target_y = toy->valueint;
+                    we->facing = facing->valueint;
+                }
+            }
         }
     }
     cJSON_Delete(arr);
@@ -454,6 +501,20 @@ void save_events_to_json(Editor *ed, const char *folder) {
         cJSON_AddNumberToObject(ev, "end_x", se->end_x);
         cJSON_AddNumberToObject(ev, "end_y", se->end_y);
         cJSON_AddNumberToObject(ev, "direction", se->direction);
+        cJSON_AddItemToArray(root, ev);
+    }
+
+    // Сохраняем варпы
+    for (int i = 0; i < ed->warp_event_count; i++) {
+        WarpEvent *we = &ed->warp_events[i];
+        cJSON *ev = cJSON_CreateObject();
+        cJSON_AddStringToObject(ev, "type", "warp");
+        cJSON_AddNumberToObject(ev, "trigger_x", we->trigger_x);
+        cJSON_AddNumberToObject(ev, "trigger_y", we->trigger_y);
+        cJSON_AddStringToObject(ev, "target_map", we->target_map);
+        cJSON_AddNumberToObject(ev, "target_x", we->target_x);
+        cJSON_AddNumberToObject(ev, "target_y", we->target_y);
+        cJSON_AddNumberToObject(ev, "facing", we->facing);
         cJSON_AddItemToArray(root, ev);
     }
 
@@ -685,6 +746,54 @@ void render_map(Editor *ed) {
                     SDL_RenderDrawLineF(ed->renderer,
                         center_x - half, center_y - half + t,
                         center_x + half, center_y + half + t);
+                }
+            }
+        }
+    }
+
+    // === Подсветка для Warp Events ===
+    if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
+        WarpEvent *we = &ed->warp_events[ed->selected_warp];
+        if (we->trigger_x >= 0 && we->trigger_y >= 0) {
+            int wx = we->trigger_x, wy = we->trigger_y;
+            if (wx >= 0 && wx < map->width && wy >= 0 && wy < map->height) {
+                SDL_FRect tile_dst = {
+                    MAP_X + (wx * TILE_SIZE - ed->cam_x) * zoom,
+                    MAP_Y + (wy * TILE_SIZE - ed->cam_y) * zoom,
+                    scaled_tile, scaled_tile
+                };
+
+                // Полупрозрачная фиолетовая заливка
+                SDL_SetRenderDrawBlendMode(ed->renderer, SDL_BLENDMODE_BLEND);
+                SDL_SetRenderDrawColor(ed->renderer, 200, 0, 200, 80);
+                SDL_RenderFillRectF(ed->renderer, &tile_dst);
+
+                // Жирная фиолетовая рамка
+                SDL_SetRenderDrawColor(ed->renderer, 255, 0, 255, 255);
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        SDL_FRect r = { tile_dst.x + dx, tile_dst.y + dy, tile_dst.w, tile_dst.h };
+                        SDL_RenderDrawRectF(ed->renderer, &r);
+                    }
+                }
+                SDL_SetRenderDrawBlendMode(ed->renderer, SDL_BLENDMODE_NONE);
+
+                // Жёлтая стрелка направления
+                float cx = tile_dst.x + scaled_tile/2.0f;
+                float cy = tile_dst.y + scaled_tile/2.0f;
+                float sz = scaled_tile * 0.3f;
+                SDL_FPoint arrow[3];
+                switch (we->facing) {
+                    case 2: arrow[0] = (SDL_FPoint){cx, cy + sz}; arrow[1] = (SDL_FPoint){cx - sz, cy - sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy - sz/2}; break;
+                    case 4: arrow[0] = (SDL_FPoint){cx - sz, cy}; arrow[1] = (SDL_FPoint){cx + sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx + sz/2, cy + sz}; break;
+                    case 6: arrow[0] = (SDL_FPoint){cx + sz, cy}; arrow[1] = (SDL_FPoint){cx - sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx - sz/2, cy + sz}; break;
+                    case 8: arrow[0] = (SDL_FPoint){cx, cy - sz}; arrow[1] = (SDL_FPoint){cx - sz, cy + sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy + sz/2}; break;
+                    default: arrow[0]=arrow[1]=arrow[2] = (SDL_FPoint){0,0}; break;
+                }
+                if (we->facing >= 2 && we->facing <= 8) {
+                    SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 255);
+                    SDL_RenderDrawLinesF(ed->renderer, arrow, 3);
+                    SDL_RenderDrawLineF(ed->renderer, arrow[2].x, arrow[2].y, arrow[0].x, arrow[0].y);
                 }
             }
         }
@@ -934,6 +1043,55 @@ static void check_stair_click(Editor *ed, int field_idx, int line_y, int mx, int
         SDL_StartTextInput();
     }
 }
+
+static void draw_warp_field(Editor *ed, const char *label, int field_idx, int line_y) {
+    SDL_Rect lbl_rect = {10, line_y, 65, 20};
+    draw_text_centered(ed->renderer, ed->font, label, lbl_rect.x + lbl_rect.w/2, lbl_rect.y + lbl_rect.h/2,
+                       (SDL_Color){200, 200, 200, 255});
+    SDL_Rect fld_rect = {90, line_y, 130, 20};
+    bool active = (ed->warp_edit_field == field_idx);
+    SDL_SetRenderDrawColor(ed->renderer, active ? 255 : 200, active ? 255 : 200, active ? 255 : 200, 255);
+    SDL_RenderFillRect(ed->renderer, &fld_rect);
+    SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
+    SDL_RenderDrawRect(ed->renderer, &fld_rect);
+
+    char buf[64] = "";
+    if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
+        WarpEvent *we = &ed->warp_events[ed->selected_warp];
+        if (field_idx == 0)
+            snprintf(buf, sizeof(buf), "%d,%d", we->trigger_x, we->trigger_y);
+        else if (field_idx == 1)
+            snprintf(buf, sizeof(buf), "%s", we->target_map);
+        else if (field_idx == 2)
+            snprintf(buf, sizeof(buf), "%d,%d", we->target_x, we->target_y);
+        else if (field_idx == 3)
+            snprintf(buf, sizeof(buf), "%d", we->facing);
+    }
+    if (active && ed->warp_input_buf[0])
+        snprintf(buf, sizeof(buf), "%s", ed->warp_input_buf);
+    draw_text_centered(ed->renderer, ed->font, buf, fld_rect.x + fld_rect.w/2, fld_rect.y + fld_rect.h/2,
+                       (SDL_Color){0, 0, 0, 255});
+}
+
+static void check_warp_click(Editor *ed, int field_idx, int line_y, int mx, int my) {
+    SDL_Rect fld = {90, line_y, 130, 20};
+    if (mx >= fld.x && mx < fld.x + fld.w && my >= fld.y && my < fld.y + fld.h) {
+        ed->warp_edit_field = field_idx;
+        if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
+            WarpEvent *we = &ed->warp_events[ed->selected_warp];
+            if (field_idx == 0)
+                snprintf(ed->warp_input_buf, sizeof(ed->warp_input_buf), "%d,%d", we->trigger_x, we->trigger_y);
+            else if (field_idx == 1)
+                snprintf(ed->warp_input_buf, sizeof(ed->warp_input_buf), "%s", we->target_map);
+            else if (field_idx == 2)
+                snprintf(ed->warp_input_buf, sizeof(ed->warp_input_buf), "%d,%d", we->target_x, we->target_y);
+            else if (field_idx == 3)
+                snprintf(ed->warp_input_buf, sizeof(ed->warp_input_buf), "%d", we->facing);
+        }
+        SDL_StartTextInput();
+    }
+}
+
 
 // ─── Левая панель ──
 void render_left_panel(Editor *ed) {
@@ -1242,6 +1400,97 @@ void render_left_panel(Editor *ed) {
         }
     }
 
+    // ====================== WARP EVENTS ======================
+    y += 10;
+    ed->warp_section_y = y;
+
+    SDL_Rect warp_header = {10, y, LEFT_PANEL_W-20, 24};
+    SDL_SetRenderDrawColor(ed->renderer, 60, 60, 60, 255);
+    SDL_RenderFillRect(ed->renderer, &warp_header);
+    draw_text_centered(ed->renderer, ed->font, "WARP EVENTS", LEFT_PANEL_W/2, y+12, (SDL_Color){255,255,255,255});
+
+    SDL_Rect warp_collapse_btn = { LEFT_PANEL_W - 35, y + 1, 26, 22 };
+    SDL_SetRenderDrawColor(ed->renderer, 80, 80, 80, 255);
+    SDL_RenderFillRect(ed->renderer, &warp_collapse_btn);
+    draw_text_centered(ed->renderer, ed->font, ed->warp_section_collapsed ? "+" : "—",
+                       warp_collapse_btn.x + warp_collapse_btn.w/2, warp_collapse_btn.y + warp_collapse_btn.h/2,
+                       (SDL_Color){255,255,255,255});
+    y += 26;
+
+    if (!ed->warp_section_collapsed) {
+        SDL_Rect warp_add_btn = {10, y, LEFT_PANEL_W-20, 24};
+        SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+        SDL_RenderFillRect(ed->renderer, &warp_add_btn);
+        draw_text_centered(ed->renderer, ed->font, "Add Warp", warp_add_btn.x+warp_add_btn.w/2, warp_add_btn.y+warp_add_btn.h/2,
+                           (SDL_Color){255,255,255,255});
+        y += 30;
+
+        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        y += 5;
+
+        int warp_list_start_y = y;
+        int warp_list_h = 100;
+        int warp_item_h = 18;
+        int warp_max_visible = 5;
+        ed->warp_list_rect = (SDL_Rect){10, warp_list_start_y, LEFT_PANEL_W-20, warp_list_h};
+
+        int warp_max_scroll = (ed->warp_event_count > warp_max_visible) ? ed->warp_event_count - warp_max_visible : 0;
+        if (ed->warp_event_scroll < 0) ed->warp_event_scroll = 0;
+        if (ed->warp_event_scroll > warp_max_scroll) ed->warp_event_scroll = warp_max_scroll;
+
+        SDL_Rect warp_list_clip = {10, warp_list_start_y, LEFT_PANEL_W-20, warp_list_h};
+        SDL_RenderSetClipRect(ed->renderer, &warp_list_clip);
+        int warp_start = ed->warp_event_scroll;
+        int warp_end = (warp_start + warp_max_visible < ed->warp_event_count) ? warp_start + warp_max_visible : ed->warp_event_count;
+        for (int i = warp_start; i < warp_end; i++) {
+            WarpEvent *we = &ed->warp_events[i];
+            char buf[128];
+            snprintf(buf, sizeof(buf), "(%d,%d) -> %s (%d,%d)", we->trigger_x, we->trigger_y, we->target_map, we->target_x, we->target_y);
+            SDL_Color col = (i == ed->selected_warp) ? (SDL_Color){0,255,0,255} : (SDL_Color){255,255,255,255};
+            SDL_Rect item_rect = {10, warp_list_start_y + (i - warp_start) * warp_item_h, LEFT_PANEL_W-20, warp_item_h};
+            if (i == ed->selected_warp) {
+                SDL_SetRenderDrawColor(ed->renderer, 80,80,120,255);
+                SDL_RenderFillRect(ed->renderer, &item_rect);
+            }
+            draw_text_centered(ed->renderer, ed->font, buf, LEFT_PANEL_W/2, item_rect.y + warp_item_h/2, col);
+        }
+        SDL_RenderSetClipRect(ed->renderer, NULL);
+
+        if (ed->warp_event_count > warp_max_visible) {
+            int bar_x = LEFT_PANEL_W - 12, bar_w = 6;
+            SDL_Rect track = { bar_x, warp_list_start_y, bar_w, warp_list_h };
+            SDL_SetRenderDrawColor(ed->renderer, 90,90,90,255);
+            SDL_RenderFillRect(ed->renderer, &track);
+            float thumb_h = (float)warp_max_visible / ed->warp_event_count * warp_list_h;
+            if (thumb_h < 12) thumb_h = 12;
+            int thumb_y = warp_list_start_y + (int)((warp_list_h - thumb_h) * ((float)ed->warp_event_scroll / warp_max_scroll));
+            SDL_Rect thumb = { bar_x, thumb_y, bar_w, (int)thumb_h };
+            SDL_SetRenderDrawColor(ed->renderer, 180,180,180,255);
+            SDL_RenderFillRect(ed->renderer, &thumb);
+        }
+
+        y = warp_list_start_y + warp_list_h + 5;
+
+        SDL_SetRenderDrawColor(ed->renderer, 100,100,100,255);
+        SDL_RenderDrawLine(ed->renderer, 10, y, LEFT_PANEL_W-10, y);
+        y += 5;
+
+        if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
+            int edit_y = y;
+            draw_warp_field(ed, "Trigger", 0, edit_y); edit_y += 22;
+            draw_warp_field(ed, "Targ.Map", 1, edit_y); edit_y += 22;
+            draw_warp_field(ed, "Targ.Pos", 2, edit_y); edit_y += 22;
+            draw_warp_field(ed, "Facing", 3, edit_y); edit_y += 22;
+
+            SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W-20, 24};
+            SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
+            SDL_RenderFillRect(ed->renderer, &del_btn);
+            draw_text_centered(ed->renderer, ed->font, "Delete", del_btn.x+del_btn.w/2, del_btn.y+del_btn.h/2,
+                               (SDL_Color){255,255,255,255});
+        }
+    }
+
     SDL_RenderSetClipRect(ed->renderer, NULL);
 }
 
@@ -1383,6 +1632,54 @@ void handle_input(Editor *ed, bool *running) {
             }
         }
 
+        // ================== Текстовый ввод (Warps) ==================
+        if (ed->warp_edit_field != -1) {
+            if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_BACKSPACE) {
+                    int len = strlen(ed->warp_input_buf);
+                    if (len > 0) ed->warp_input_buf[len-1] = '\0';
+                }
+                else if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER) {
+                    if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
+                        WarpEvent *we = &ed->warp_events[ed->selected_warp];
+                        if (ed->warp_edit_field == 0) {
+                            int x, y; sscanf(ed->warp_input_buf, "%d,%d", &x, &y);
+                            we->trigger_x = x; we->trigger_y = y;
+                        } else if (ed->warp_edit_field == 1) {
+                            snprintf(we->target_map, sizeof(we->target_map), "%s", ed->warp_input_buf);
+                            we->target_map[63] = '\0';
+                        } else if (ed->warp_edit_field == 2) {
+                            int x, y; sscanf(ed->warp_input_buf, "%d,%d", &x, &y);
+                            we->target_x = x; we->target_y = y;
+                        } else if (ed->warp_edit_field == 3) {
+                            we->facing = atoi(ed->warp_input_buf);
+                        }
+                    }
+                    ed->warp_edit_field = -1;
+                    ed->warp_input_buf[0] = '\0';
+                    SDL_StopTextInput();
+                }
+                else if (e.key.keysym.sym == SDLK_ESCAPE) {
+                    ed->warp_edit_field = -1;
+                    ed->warp_input_buf[0] = '\0';
+                    SDL_StopTextInput();
+                }
+            }
+            else if (e.type == SDL_TEXTINPUT) {
+                if (strlen(ed->warp_input_buf) < 63) {
+                    // Для target_map разрешаем буквы, цифры и '_'
+                    if (ed->warp_edit_field == 1) {
+                        if (isalnum(e.text.text[0]) || e.text.text[0] == '_')
+                            strcat(ed->warp_input_buf, e.text.text);
+                    } else {
+                        if (strspn(e.text.text, "0123456789,-") == strlen(e.text.text))
+                            strcat(ed->warp_input_buf, e.text.text);
+                    }
+                }
+            }
+        }
+
+
         // ================== Колесо мыши ==================
         if (e.type == SDL_MOUSEWHEEL) {
             int mx, my;
@@ -1478,6 +1775,17 @@ void handle_input(Editor *ed, bool *running) {
                 } else if (!(mx >= 0 && mx < LEFT_PANEL_W)) {
                     ed->stair_edit_field = -1;
                     ed->stair_input_buf[0] = '\0';
+                    SDL_StopTextInput();
+                }
+            }
+
+            // Сброс Warp поля при клике вне
+            if (ed->warp_edit_field != -1) {
+                if (mx >= MAP_X && mx < MAP_X + MAP_VISIBLE_W && my >= MAP_Y && my < MAP_Y + MAP_VISIBLE_H) {
+                    // клик по карте – обработаем ниже
+                } else if (!(mx >= 0 && mx < LEFT_PANEL_W)) {
+                    ed->warp_edit_field = -1;
+                    ed->warp_input_buf[0] = '\0';
                     SDL_StopTextInput();
                 }
             }
@@ -1668,6 +1976,63 @@ void handle_input(Editor *ed, bool *running) {
                         }
                     }
                 }
+
+                // --- Кнопка сворачивания Warp Events (всегда активна) ---
+                if (my >= ed->warp_section_y && my < ed->warp_section_y + 24) {
+                    if (mx >= LEFT_PANEL_W - 35 && mx < LEFT_PANEL_W - 9) {
+                        ed->warp_section_collapsed = !ed->warp_section_collapsed;
+                        return;
+                    }
+                    return; // клик по заголовку – ничего
+                }
+
+                // --- Содержимое Warp Events (если развёрнуто) ---
+                if (!ed->warp_section_collapsed) {
+                    int warp_y = ed->warp_section_y + 26;
+                    SDL_Rect warp_add_btn = {10, warp_y, LEFT_PANEL_W-20, 24};
+                    if (my >= warp_add_btn.y && my < warp_add_btn.y+warp_add_btn.h) {
+                        if (ed->warp_event_count < MAX_WARPS) {
+                            WarpEvent *we = &ed->warp_events[ed->warp_event_count++];
+                            we->trigger_x = we->trigger_y = -1;
+                            we->target_map[0] = '\0';
+                            we->target_x = we->target_y = 0;
+                            we->facing = 2; // по умолчанию вниз
+                            ed->selected_warp = ed->warp_event_count - 1;
+                            ed->warp_edit_field = -1;
+                            ed->warp_input_buf[0] = '\0';
+                        }
+                        return;
+                    }
+                    warp_y += 30 + 5;
+                    int warp_list_start_y = warp_y;
+                    int warp_list_h = 100;
+                    if (my >= warp_list_start_y && my < warp_list_start_y + warp_list_h) {
+                        int idx = ed->warp_event_scroll + (my - warp_list_start_y) / 18;
+                        if (idx >= 0 && idx < ed->warp_event_count) {
+                            ed->selected_warp = idx;
+                            ed->warp_edit_field = -1;
+                            ed->warp_input_buf[0] = '\0';
+                            return;
+                        }
+                    }
+                    warp_y = warp_list_start_y + warp_list_h + 5 + 5;
+                    if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
+                        check_warp_click(ed, 0, warp_y, mx, my);
+                        check_warp_click(ed, 1, warp_y + 22, mx, my);
+                        check_warp_click(ed, 2, warp_y + 44, mx, my);
+                        check_warp_click(ed, 3, warp_y + 66, mx, my);
+                        SDL_Rect del_btn = {10, warp_y + 88, LEFT_PANEL_W-20, 24};
+                        if (mx >= del_btn.x && mx < del_btn.x+del_btn.w && my >= del_btn.y && my < del_btn.y+del_btn.h) {
+                            for (int i = ed->selected_warp; i < ed->warp_event_count-1; i++)
+                                ed->warp_events[i] = ed->warp_events[i+1];
+                            ed->warp_event_count--;
+                            ed->selected_warp = -1;
+                            ed->warp_edit_field = -1;
+                            SDL_StopTextInput();
+                            return;
+                        }
+                    }
+                }
                 return;
             }
 
@@ -1756,6 +2121,17 @@ void handle_input(Editor *ed, bool *running) {
                             } else if (ed->stair_edit_field == 1) {
                                 se->end_x = tx; se->end_y = ty;
                                 ed->stair_edit_field = -1; ed->stair_input_buf[0] = '\0'; SDL_StopTextInput();
+                            }
+                        }
+                                                // --- Warps ---
+                        if (ed->warp_edit_field != -1 && ed->selected_warp >= 0) {
+                            WarpEvent *we = &ed->warp_events[ed->selected_warp];
+                            if (ed->warp_edit_field == 0) {
+                                we->trigger_x = tx; we->trigger_y = ty;
+                                ed->warp_edit_field = -1; ed->warp_input_buf[0] = '\0'; SDL_StopTextInput();
+                            } else if (ed->warp_edit_field == 2) {
+                                we->target_x = tx; we->target_y = ty;
+                                ed->warp_edit_field = -1; ed->warp_input_buf[0] = '\0'; SDL_StopTextInput();
                             }
                         }
                     }

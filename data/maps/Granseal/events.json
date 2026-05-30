@@ -109,4 +109,12 @@
 		"end_x":	6,
 		"end_y":	4,
 		"direction":	1
+	}, {
+		"type":	"warp",
+		"trigger_x":	7,
+		"trigger_y":	11,
+		"target_map":	"map00",
+		"target_x":	4,
+		"target_y":	8,
+		"facing":	2
 	}]
