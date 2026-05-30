@@ -54,6 +54,13 @@
 		"exit_x":	38,
 		"exit_y":	25
 	}, {
+        "type": "roof",
+        "tile_id": 358,
+        "start_x": 22, "start_y": 19,
+        "end_x": 30, "end_y": 25,
+        "triggers": [ [24, 26], [25, 26] ],
+        "exits": [ [24, 27], [25, 27] ]
+    }, {
 		"type":	"tile_change",
 		"trigger_x":	4,
 		"trigger_y":	8,
@@ -102,13 +109,6 @@
 		"end_x":	4,
 		"end_y":	4,
 		"direction":	0
-	}, {
-		"type":	"stairs",
-		"start_x":	7,
-		"start_y":	3,
-		"end_x":	6,
-		"end_y":	4,
-		"direction":	1
 	}, {
 		"type":	"warp",
 		"trigger_x":	0,

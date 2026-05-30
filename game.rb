@@ -315,24 +315,33 @@ class Game
       end
     end
 
-    if @game_map && @game_map.roof_events.any?
-      @game_map.roof_events.each_with_index do |ev, idx|
-        tx = ev['trigger_x']
-        ty = ev['trigger_y']
-        ex = ev['exit_x']
-        ey = ev['exit_y']
-
-        # Наступил на красную клетку – крыша открывается (исчезает)
-        if tx && ty && @player.x == tx && @player.y == ty
-          @zone_hidden[idx] = true
-        end
-
-        # Наступил на голубую клетку – крыша закрывается (появляется)
-        if ex && ey && @player.x == ex && @player.y == ey
-          @zone_hidden[idx] = false
-        end
-      end
+ if @game_map && @game_map.roof_events.any?
+    @game_map.roof_events.each_with_index do |ev, idx|
+    # Проверка триггеров (скрыть крышу)
+    triggered = false
+    if ev['triggers']
+      triggered = ev['triggers'].any? { |t| @player.x == t[0] && @player.y == t[1] }
+    elsif ev['trigger_x'] && ev['trigger_y']
+      triggered = (@player.x == ev['trigger_x'] && @player.y == ev['trigger_y'])
     end
+
+    if triggered
+      @zone_hidden[idx] = true
+    end
+
+    # Проверка выходов (показать крышу)
+    exited = false
+    if ev['exits']
+      exited = ev['exits'].any? { |e| @player.x == e[0] && @player.y == e[1] }
+    elsif ev['exit_x'] && ev['exit_y']
+      exited = (@player.x == ev['exit_x'] && @player.y == ev['exit_y'])
+    end
+
+    if exited
+      @zone_hidden[idx] = false
+    end
+  end
+end
 
     if @game_map && @game_map.tile_events.any?
       @game_map.tile_events.each do |ev|
