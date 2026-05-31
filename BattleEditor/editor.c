@@ -297,7 +297,8 @@ void init_editor(BattleEditor* ed, SDL_Renderer* ren) {
     ed->terrainEditMode = 0;
     ed->terrainPaintValue = 1;
     ed->terrainPainting = 0;
-    ed->battleListScroll = 0;        
+    ed->battleListScroll = 0; 
+    ed->saveFlashTimer = 0.0f;       
     ed->terrain = NULL;
     load_json_data(ed);
     if (ed->actorsCount > 0) ed->selectedAllyId = 0;
@@ -346,6 +347,13 @@ static void draw_slot_sprite(SDL_Renderer* r, TTF_Font* font, BattleEditor* ed, 
         if (s) { SDL_Texture* t = SDL_CreateTextureFromSurface(r, s);
             SDL_Rect d = {x+2, y+2, s->w, s->h}; SDL_RenderCopy(r, t, NULL, &d);
             SDL_FreeSurface(s); SDL_DestroyTexture(t); }
+    }
+}
+
+void update_editor(BattleEditor* ed) {
+    if (ed->saveFlashTimer > 0.0f) {
+        ed->saveFlashTimer -= 0.016f;   // примерно 1 кадр при 60 FPS
+        if (ed->saveFlashTimer < 0.0f) ed->saveFlashTimer = 0.0f;
     }
 }
 
@@ -536,10 +544,15 @@ void draw_map_area(BattleEditor* ed) {
         SDL_RenderCopy(ed->renderer, t, NULL, &d);
         SDL_FreeSurface(btnSurf); SDL_DestroyTexture(t); }
 
-        // Save button
+    // Save button
+
     {
         SDL_Rect btnSave = {BTN_SAVE_X, BTN_SAVE_Y, BTN_SAVE_W, BTN_SAVE_H};
-        SDL_SetRenderDrawColor(ed->renderer, 200, 140, 80, 255);
+        if (ed->saveFlashTimer > 0.0f) {
+            SDL_SetRenderDrawColor(ed->renderer, 0, 200, 0, 255);  // зелёный
+        } else {
+            SDL_SetRenderDrawColor(ed->renderer, 200, 140, 80, 255); // обычный
+        }
         SDL_RenderFillRect(ed->renderer, &btnSave);
         SDL_SetRenderDrawColor(ed->renderer, 255, 255, 255, 255);
         SDL_RenderDrawRect(ed->renderer, &btnSave);
@@ -555,7 +568,7 @@ void draw_map_area(BattleEditor* ed) {
 
     if (ed->terrainEditMode) {
     // Селекторы теперь после кнопки Save
-    int selStartX = BTN_SAVE_X + BTN_SAVE_W + 10;
+    int selStartX = BTN_ZOOM_OUT_X + BTN_ZOOM_OUT_W + 10;
         SDL_Rect tBtnBlocked = {selStartX, BTN_TERRAIN_Y, 24, 24};
         SDL_Rect tBtnFly     = {selStartX + 24 + 5, BTN_TERRAIN_Y, 24, 24};
         SDL_Rect tBtnWalk    = {selStartX + 24 + 5 + 24 + 5, BTN_TERRAIN_Y, 24, 24};
@@ -621,11 +634,11 @@ void draw_map_area(BattleEditor* ed) {
         // Вычисляем info_x перед первым использованием
         int info_x;
         if (ed->terrainEditMode) {
-            // После кнопки Save + селекторов (ширина 24*3+промежутки 5*2) + отступ
-            info_x = BTN_SAVE_X + BTN_SAVE_W + 10 + 24*3 + 5*2 + 15;
+            // После зум-кнопок + селекторов (3 шт. по 24, 2 промежутка по 5) + отступ
+            info_x = BTN_ZOOM_OUT_X + BTN_ZOOM_OUT_W + 10 + 24*3 + 5*2 + 15;
         } else {
-            // Просто правее кнопки Save
-            info_x = BTN_SAVE_X + BTN_SAVE_W + 15;
+            // Правее зум-кнопок
+            info_x = BTN_ZOOM_OUT_X + BTN_ZOOM_OUT_W + 15;
         }
 
         SDL_Surface* s = TTF_RenderText_Solid(ed->font, infoText, (SDL_Color){255,255,0});
@@ -668,6 +681,36 @@ void draw_map_area(BattleEditor* ed) {
                 SDL_RenderCopy(ed->renderer, t, NULL, &d);
                 SDL_FreeSurface(s); SDL_DestroyTexture(t);
             }
+        }
+    }
+
+    // Кнопки Zoom In / Zoom Out
+    {
+        SDL_Rect btnZoomIn  = {BTN_ZOOM_IN_X, BTN_ZOOM_IN_Y, BTN_ZOOM_IN_W, BTN_ZOOM_IN_H};
+        SDL_Rect btnZoomOut = {BTN_ZOOM_OUT_X, BTN_ZOOM_OUT_Y, BTN_ZOOM_OUT_W, BTN_ZOOM_OUT_H};
+
+        SDL_SetRenderDrawColor(ed->renderer, 100, 100, 100, 255);
+        SDL_RenderFillRect(ed->renderer, &btnZoomIn);
+        SDL_RenderFillRect(ed->renderer, &btnZoomOut);
+        SDL_SetRenderDrawColor(ed->renderer, 255, 255, 255, 255);
+        SDL_RenderDrawRect(ed->renderer, &btnZoomIn);
+        SDL_RenderDrawRect(ed->renderer, &btnZoomOut);
+
+        SDL_Surface* sIn  = TTF_RenderText_Solid(ed->font, "+", (SDL_Color){255,255,255});
+        SDL_Surface* sOut = TTF_RenderText_Solid(ed->font, "-", (SDL_Color){255,255,255});
+        if (sIn) {
+            SDL_Texture* t = SDL_CreateTextureFromSurface(ed->renderer, sIn);
+            SDL_Rect d = {btnZoomIn.x + 8, btnZoomIn.y + 4, sIn->w, sIn->h};
+            SDL_RenderCopy(ed->renderer, t, NULL, &d);
+            SDL_FreeSurface(sIn);
+            SDL_DestroyTexture(t);
+        }
+        if (sOut) {
+            SDL_Texture* t = SDL_CreateTextureFromSurface(ed->renderer, sOut);
+            SDL_Rect d = {btnZoomOut.x + 8, btnZoomOut.y + 4, sOut->w, sOut->h};
+            SDL_RenderCopy(ed->renderer, t, NULL, &d);
+            SDL_FreeSurface(sOut);
+            SDL_DestroyTexture(t);
         }
     }
 
@@ -1082,11 +1125,6 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
             if (mx >= VIEW_X && mx < VIEW_X + VIEW_W && my >= VIEW_Y && my < VIEW_Y + VIEW_H) {
                 int tx = ed->camera_x + (mx - VIEW_X) / ts;
                 int ty = ed->camera_y + (my - VIEW_Y) / ts;
-                if (ed->viewMode == 1) { // боевой режим – координаты внутри зоны
-                    // уже локальные, ничего не добавляем
-                } else { // глобальный режим – переводим в абсолютные координаты карты
-                    // tx,ty уже в абсолютных координатах карты (т.к. camera_x/y в системе карты)
-                }
                 // ищем союзника в этой клетке
                 for (int i = 0; i < MAX_ALLIES; i++) {
                     if (ed->allies[i].used) {
@@ -1116,18 +1154,16 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
 
     // === Перетаскивание юнита ===
     if (e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT && !ed->draggingUnit) {
-        // Игнорируем, если уже начато выделение зоны или работа с инспектором
         if (!ed->selecting_zone && !ed->scrollbar_drag_h && !ed->scrollbar_drag_v && !ed->inspectorVisible) {
             if (ed->hoveredAllyIdx >= 0 || ed->hoveredEnemyIdx >= 0) {
                 ed->draggingUnit = 1;
                 ed->selecting_zone = 0;
                 ed->dragIsEnemy = (ed->hoveredEnemyIdx >= 0);
                 ed->dragSlotIndex = ed->dragIsEnemy ? ed->hoveredEnemyIdx : ed->hoveredAllyIdx;
-                // запомним стартовые координаты (на случай отмены)
                 UnitSlot* u = ed->dragIsEnemy ? &ed->enemies[ed->dragSlotIndex] : &ed->allies[ed->dragSlotIndex];
                 ed->dragStartX = u->x;
                 ed->dragStartY = u->y;
-                return; // поглощаем событие, чтобы не сработали другие обработки
+                return;
             }
         }
     }
@@ -1139,8 +1175,7 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
         int tx = ed->camera_x + (mx - VIEW_X) / ts;
         int ty = ed->camera_y + (my - VIEW_Y) / ts;
 
-        // ограничение по границам
-        if (ed->viewMode == 1) { // боевой режим
+        if (ed->viewMode == 1) {
             int bw = ed->entries[ed->currentEntryIndex].battle_width;
             int bh = ed->entries[ed->currentEntryIndex].battle_height;
             int mw_fallback = ed->currentMap.w > 0 ? ed->currentMap.w : FALLBACK_MAP_W;
@@ -1151,7 +1186,7 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
             if (ty < 0) ty = 0;
             if (tx >= bw) tx = bw - 1;
             if (ty >= bh) ty = bh - 1;
-        } else { // глобальный режим – координаты карты
+        } else {
             int mw = ed->currentMap.w > 0 ? ed->currentMap.w : FALLBACK_MAP_W;
             int mh = ed->currentMap.h > 0 ? ed->currentMap.h : FALLBACK_MAP_H;
             if (tx < 0) tx = 0;
@@ -1169,16 +1204,15 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
 
     if (e->type == SDL_MOUSEBUTTONUP && e->button.button == SDL_BUTTON_LEFT && ed->draggingUnit) {
         ed->draggingUnit = 0;
-        // Дополнительно можно проверить, что клетка свободна, но пока разрешаем ставить куда угодно
         return;
     }
 
-        // --- Кнопки переключения режима ---
+    // --- Кнопки переключения режима ---
     if (e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT) {
         // Кнопка MAP
         if (mx >= BTN_MAP_X && mx < BTN_MAP_X + BTN_MAP_W &&
             my >= BTN_MAP_Y && my < BTN_MAP_Y + BTN_MAP_H) {
-            ed->viewMode = 0;   // глобальный режим
+            ed->viewMode = 0;
             ed->camera_x = ed->camera_y = 0;
             recalc_tile_size(ed);
             return;
@@ -1187,6 +1221,7 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
         // Кнопка SAVE
         if (mx >= BTN_SAVE_X && mx < BTN_SAVE_X + BTN_SAVE_W &&
             my >= BTN_SAVE_Y && my < BTN_SAVE_Y + BTN_SAVE_H) {
+            ed->saveFlashTimer = 0.3f;
             save_current_battle(ed);
             return;
         }
@@ -1194,7 +1229,7 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
         // Кнопка BATTLE
         if (mx >= BTN_BATTLE_X && mx < BTN_BATTLE_X + BTN_BATTLE_W &&
             my >= BTN_BATTLE_Y && my < BTN_BATTLE_Y + BTN_BATTLE_H) {
-            ed->viewMode = 1;   // боевой режим
+            ed->viewMode = 1;
             ed->camera_x = ed->camera_y = 0;
             recalc_tile_size(ed);
             return;
@@ -1202,12 +1237,57 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
         // Кнопка TERRAIN
         if (mx >= BTN_TERRAIN_X && mx < BTN_TERRAIN_X + BTN_TERRAIN_W &&
             my >= BTN_TERRAIN_Y && my < BTN_TERRAIN_Y + BTN_TERRAIN_H) {
-            ed->terrainEditMode = !ed->terrainEditMode;   // переключаем
+            ed->terrainEditMode = !ed->terrainEditMode;
             ed->selecting_zone = 0;
             ed->draggingUnit = 0;
             return;
         }
-    }
+
+        // Кнопка Zoom In
+        if (mx >= BTN_ZOOM_IN_X && mx < BTN_ZOOM_IN_X + BTN_ZOOM_IN_W &&
+            my >= BTN_ZOOM_IN_Y && my < BTN_ZOOM_IN_Y + BTN_ZOOM_IN_H) {
+            float zoomLevels[] = {0.5f, 1.0f, 2.0f, 4.0f, 8.0f, 16.0f};
+            int idx = -1;
+            // ищем текущий уровень зума
+            for (int i = 0; i < 6; i++) {
+                if (fabsf(ed->zoom - zoomLevels[i]) < 0.01f) { idx = i; break; }
+            }
+            if (idx == -1) {
+                // если точного совпадения нет, округляем вверх
+                for (int i = 0; i < 6; i++) {
+                    if (ed->zoom < zoomLevels[i]) { idx = i - 1; break; }
+                }
+                if (idx == -1) idx = 5; // больше всех — максимум
+            }
+            if (idx < 5) {
+                ed->zoom = zoomLevels[idx + 1];
+                recalc_tile_size(ed);
+            }
+            return;
+        }
+
+        // Кнопка Zoom Out
+        if (mx >= BTN_ZOOM_OUT_X && mx < BTN_ZOOM_OUT_X + BTN_ZOOM_OUT_W &&
+            my >= BTN_ZOOM_OUT_Y && my < BTN_ZOOM_OUT_Y + BTN_ZOOM_OUT_H) {
+            float zoomLevels[] = {0.5f, 1.0f, 2.0f, 4.0f, 8.0f, 16.0f};
+            int idx = -1;
+            for (int i = 0; i < 6; i++) {
+                if (fabsf(ed->zoom - zoomLevels[i]) < 0.01f) { idx = i; break; }
+            }
+            if (idx == -1) {
+                for (int i = 0; i < 6; i++) {
+                    if (ed->zoom > zoomLevels[i]) { idx = i; }
+                }
+                if (idx == -1) idx = 0; // меньше всех — минимум
+            }
+            if (idx > 0) {
+                ed->zoom = zoomLevels[idx - 1];
+                recalc_tile_size(ed);
+            }
+            return;
+        }
+    }   // ← конец блока
+
 
     // --- Выделение зоны в глобальном режиме ---
     if (ed->viewMode == 0 && !ed->scrollbar_drag_h && !ed->scrollbar_drag_v) {
@@ -1266,11 +1346,10 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
 
     // ===== Селектор типа местности (кнопки) =====
     if (ed->terrainEditMode && e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT) {
-    // Селекторы теперь после кнопки Save
-    int selStartX = BTN_SAVE_X + BTN_SAVE_W + 10;
-    SDL_Rect tBtnBlocked = {selStartX, BTN_TERRAIN_Y, 24, 24};
-    SDL_Rect tBtnFly     = {selStartX + 24 + 5, BTN_TERRAIN_Y, 24, 24};
-    SDL_Rect tBtnWalk    = {selStartX + 24 + 5 + 24 + 5, BTN_TERRAIN_Y, 24, 24};
+        int selStartX = BTN_ZOOM_OUT_X + BTN_ZOOM_OUT_W + 10;
+        SDL_Rect tBtnBlocked = {selStartX, BTN_TERRAIN_Y, 24, 24};
+        SDL_Rect tBtnFly     = {selStartX + 24 + 5, BTN_TERRAIN_Y, 24, 24};
+        SDL_Rect tBtnWalk    = {selStartX + 24 + 5 + 24 + 5, BTN_TERRAIN_Y, 24, 24};
 
         if (mx >= tBtnBlocked.x && mx < tBtnBlocked.x + tBtnBlocked.w && my >= tBtnBlocked.y && my < tBtnBlocked.y + tBtnBlocked.h) {
             ed->terrainPaintValue = -1;
@@ -1289,11 +1368,9 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
     // ===== Рисование местности зажатой кнопкой =====
     if (ed->terrainEditMode) {
         if (e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT) {
-            // Начинаем рисовать, только если клик по области карты
             if (mx >= VIEW_X && mx < VIEW_X + VIEW_W && my >= VIEW_Y && my < VIEW_Y + VIEW_H) {
                 ed->terrainPainting = 1;
-                // сразу закрасим первую клетку, притворившись движением
-                e->type = SDL_MOUSEMOTION;
+                e->type = SDL_MOUSEMOTION; // хитрый трюк, чтобы сразу закрасить первую клетку
             }
         }
         if (e->type == SDL_MOUSEBUTTONUP && e->button.button == SDL_BUTTON_LEFT) {
@@ -1330,20 +1407,40 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
 
     // +++ сначала обработка инспектора, если видим
     if (ed->inspectorVisible && e->type == SDL_MOUSEBUTTONDOWN && e->button.button == SDL_BUTTON_LEFT) {
-        // проверяем клик внутри панели инспектора
         if (mx >= INSPECTOR_X && mx < INSPECTOR_X + INSPECTOR_W &&
             my >= INSPECTOR_Y && my < INSPECTOR_Y + INSPECTOR_H) {
-            // координаты кнопок
             SDL_Rect btnLeft  = {INSPECTOR_X + 10, INSPECTOR_Y + 15, 30, 30};
             SDL_Rect btnRight = {INSPECTOR_X + INSPECTOR_W - 40, INSPECTOR_Y + 15, 30, 30};
+
             if (mx >= btnLeft.x && mx < btnLeft.x + btnLeft.w && my >= btnLeft.y && my < btnLeft.y + btnLeft.h) {
                 // стрелка влево
                 int panel = ed->inspectorPanel;
                 UnitSlot* slot = (panel == 0) ? &ed->allies[ed->inspectorSlotIdx] : &ed->enemies[ed->inspectorSlotIdx];
                 int count = (panel == 0) ? ed->actorsCount : ed->enemiesCount;
                 cJSON* array = (panel == 0) ? ed->actorsArray : ed->enemiesArray;
-                int newId = slot->id - 1;
-                if (newId < 0) newId = count - 1;
+
+                int newId = slot->id;
+                int attempts = 0;
+                do {
+                    newId = newId - 1;
+                    if (newId < 0) newId = count - 1;
+                    attempts++;
+                    if (attempts > count) break; // прошли полный круг – нет доступных
+                    if (panel == 0) {
+                        // проверка уникальности для союзников
+                        int duplicate = 0;
+                        for (int j = 0; j < MAX_ALLIES; j++) {
+                            if (ed->allies[j].used && ed->allies[j].id == newId && j != ed->inspectorSlotIdx) {
+                                duplicate = 1;
+                                break;
+                            }
+                        }
+                        if (!duplicate) break; // нашли свободный ID
+                    } else {
+                        break; // для врагов можно любой
+                    }
+                } while (1);
+
                 set_unit_from_json(slot, array, newId);
                 if (slot->tex) { SDL_DestroyTexture(slot->tex); slot->tex = NULL; }
             } else if (mx >= btnRight.x && mx < btnRight.x + btnRight.w && my >= btnRight.y && my < btnRight.y + btnRight.h) {
@@ -1352,17 +1449,34 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
                 UnitSlot* slot = (panel == 0) ? &ed->allies[ed->inspectorSlotIdx] : &ed->enemies[ed->inspectorSlotIdx];
                 int count = (panel == 0) ? ed->actorsCount : ed->enemiesCount;
                 cJSON* array = (panel == 0) ? ed->actorsArray : ed->enemiesArray;
-                int newId = slot->id + 1;
-                if (newId >= count) newId = 0;
+
+                int newId = slot->id;
+                int attempts = 0;
+                do {
+                    newId = newId + 1;
+                    if (newId >= count) newId = 0;
+                    attempts++;
+                    if (attempts > count) break;
+                    if (panel == 0) {
+                        int duplicate = 0;
+                        for (int j = 0; j < MAX_ALLIES; j++) {
+                            if (ed->allies[j].used && ed->allies[j].id == newId && j != ed->inspectorSlotIdx) {
+                                duplicate = 1;
+                                break;
+                            }
+                        }
+                        if (!duplicate) break;
+                    } else {
+                        break;
+                    }
+                } while (1);
+
                 set_unit_from_json(slot, array, newId);
                 if (slot->tex) { SDL_DestroyTexture(slot->tex); slot->tex = NULL; }
             }
-            // иначе клик внутри инспектора, но не по кнопкам – ничего не делаем
             return;
         } else {
-            // клик вне инспектора → закрыть
             ed->inspectorVisible = 0;
-            // не return, пусть событие обработается ниже (например, для карты)
         }
     }
 
@@ -1388,7 +1502,7 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
     // Прокрутка списка битв колёсиком
     if (e->type == SDL_MOUSEWHEEL && mx >= list_x && mx < list_x + list_w && my >= list_y && my < list_y + list_h) {
         int max_visible = (list_h - 30) / 18;
-        ed->battleListScroll -= e->wheel.y * 2; // 2 строки
+        ed->battleListScroll -= e->wheel.y * 2;
         if (ed->battleListScroll < 0) ed->battleListScroll = 0;
         if (ed->battleListScroll > ed->entryCount - max_visible) ed->battleListScroll = ed->entryCount - max_visible;
         return;
@@ -1446,7 +1560,7 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
             return;
         }
 
-                // Кнопки Add/Del для врагов
+        // Кнопки Add/Del для врагов
         {
             SDL_Rect addBtn = {ENEMY_PANEL_X, ENEMY_PANEL_Y + ENEMY_ROWS * TILE_SIZE + 5, 50, 20};
             SDL_Rect delBtn = {ENEMY_PANEL_X + 55, ENEMY_PANEL_Y + ENEMY_ROWS * TILE_SIZE + 5, 50, 20};
@@ -1457,7 +1571,7 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
                     if (!ed->enemies[i].used) {
                         set_unit_from_json(&ed->enemies[i], ed->enemiesArray, ed->selectedEnemyId);
                         ed->enemies[i].x = 0;
-                        ed->enemies[i].y = 0;   // по умолчанию
+                        ed->enemies[i].y = 0;
                         ed->selectedEnemyId = (ed->selectedEnemyId + 1) % ed->enemiesCount;
                         ed->activePanel = 1;
                         ed->selectedSlot = i;
@@ -1477,6 +1591,67 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
                         SDL_DestroyTexture(ed->enemies[ed->selectedSlot].tex);
                     memset(&ed->enemies[ed->selectedSlot], 0, sizeof(UnitSlot));
                     if (ed->inspectorVisible && ed->inspectorPanel == 1
+                        && ed->inspectorSlotIdx == ed->selectedSlot)
+                        ed->inspectorVisible = 0;
+                }
+                return;
+            }
+        }
+
+        // Кнопки Add/Del для союзников (с проверкой уникальности)
+        {
+            SDL_Rect addBtn = {ALLY_PANEL_X, ALLY_PANEL_Y + ALLY_ROWS * TILE_SIZE + 5, 50, 20};
+            SDL_Rect delBtn = {ALLY_PANEL_X + 55, ALLY_PANEL_Y + ALLY_ROWS * TILE_SIZE + 5, 50, 20};
+
+            if (mx >= addBtn.x && mx < addBtn.x + addBtn.w && my >= addBtn.y && my < addBtn.y + addBtn.h) {
+                // Найти первый свободный слот
+                int slot = -1;
+                for (int i = 0; i < MAX_ALLIES; i++) {
+                    if (!ed->allies[i].used) { slot = i; break; }
+                }
+                if (slot == -1) return;   // нет свободных слотов
+
+                // Проверка уникальности: найти actor_id, которого ещё нет среди союзников
+                int startId = ed->selectedAllyId;
+                int newId = -1;
+                for (int attempt = 0; attempt < ed->actorsCount; attempt++) {
+                    int testId = (startId + attempt) % ed->actorsCount;
+                    // проверим, используется ли уже testId
+                    int duplicate = 0;
+                    for (int j = 0; j < MAX_ALLIES; j++) {
+                        if (ed->allies[j].used && ed->allies[j].id == testId) {
+                            duplicate = 1;
+                            break;
+                        }
+                    }
+                    if (!duplicate) {
+                        newId = testId;
+                        break;
+                    }
+                }
+                if (newId == -1) return;   // все актёры уже расставлены
+
+                // Создаём союзника
+                set_unit_from_json(&ed->allies[slot], ed->actorsArray, newId);
+                ed->allies[slot].x = 0;
+                ed->allies[slot].y = 0;
+                ed->selectedAllyId = (newId + 1) % ed->actorsCount;   // для удобства следующий Add предложит другого
+                ed->activePanel = 0;
+                ed->selectedSlot = slot;
+                ed->inspectorVisible = 1;
+                ed->inspectorPanel = 0;
+                ed->inspectorSlotIdx = slot;
+                return;
+            }
+
+            if (mx >= delBtn.x && mx < delBtn.x + delBtn.w && my >= delBtn.y && my < delBtn.y + delBtn.h) {
+                // Удалить выбранного союзника
+                if (ed->activePanel == 0 && ed->selectedSlot >= 0 && ed->selectedSlot < MAX_ALLIES
+                    && ed->allies[ed->selectedSlot].used) {
+                    if (ed->allies[ed->selectedSlot].tex)
+                        SDL_DestroyTexture(ed->allies[ed->selectedSlot].tex);
+                    memset(&ed->allies[ed->selectedSlot], 0, sizeof(UnitSlot));
+                    if (ed->inspectorVisible && ed->inspectorPanel == 0
                         && ed->inspectorSlotIdx == ed->selectedSlot)
                         ed->inspectorVisible = 0;
                 }
@@ -1512,14 +1687,6 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
 
     if (e->type != SDL_KEYDOWN) return;
 
-    switch(e->key.keysym.sym) {
-        case SDLK_1: ed->zoom = 0.5f; recalc_tile_size(ed); return;
-        case SDLK_2: ed->zoom = 1.0f; recalc_tile_size(ed); return;
-        case SDLK_3: ed->zoom = 2.0f; recalc_tile_size(ed); return;
-        case SDLK_4: ed->zoom = 4.0f; recalc_tile_size(ed); return;
-        case SDLK_5: ed->zoom = 8.0f; recalc_tile_size(ed); return;
-        case SDLK_6: ed->zoom = 16.0f; recalc_tile_size(ed); return;
-    }
 
     if (e->key.keysym.mod & KMOD_SHIFT) {
         int step = (int)(48 / ed->zoom); if (step < 1) step = 1;
@@ -1547,7 +1714,6 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
                 int n = slots[ed->selectedSlot].id - 1; if(n<0) n=count-1;
                 set_unit_from_json(&slots[ed->selectedSlot], array, n);
                 if(slots[ed->selectedSlot].tex) { SDL_DestroyTexture(slots[ed->selectedSlot].tex); slots[ed->selectedSlot].tex=NULL; }
-                // если инспектор открыт для этого слота, обновим данные автоматически при следующей отрисовке
             } else { if(ed->selectedSlot%cols > 0) ed->selectedSlot--; }
             break;
         case SDLK_RIGHT:
@@ -1561,7 +1727,6 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
         case SDLK_SPACE:
             ed->viewMode = !ed->viewMode;
             if (ed->viewMode) {
-                // перешли в боевой режим – сбросим камеру в начало зоны
                 ed->camera_x = 0;
                 ed->camera_y = 0;
             }
@@ -1569,15 +1734,36 @@ void handle_input(BattleEditor* ed, SDL_Event* e) {
             break;   
         case SDLK_TAB:   ed->activePanel = !ed->activePanel; ed->selectedSlot=0; break;
         case SDLK_a:
-            if(!slots[ed->selectedSlot].used && count>0) {
-                set_unit_from_json(&slots[ed->selectedSlot], array, *selId);
-                if(slots[ed->selectedSlot].tex) { SDL_DestroyTexture(slots[ed->selectedSlot].tex); slots[ed->selectedSlot].tex=NULL; }
-                *selId = (*selId+1) % count;
+            if (!slots[ed->selectedSlot].used && count > 0) {
+                if (ed->activePanel == 0) {   // союзники – проверка уникальности
+                    int startId = *selId;
+                    int newId = -1;
+                    for (int attempt = 0; attempt < ed->actorsCount; attempt++) {
+                        int testId = (startId + attempt) % ed->actorsCount;
+                        int duplicate = 0;
+                        for (int j = 0; j < MAX_ALLIES; j++) {
+                            if (ed->allies[j].used && ed->allies[j].id == testId) {
+                                duplicate = 1;
+                                break;
+                            }
+                        }
+                        if (!duplicate) {
+                            newId = testId;
+                            break;
+                        }
+                    }
+                    if (newId == -1) break;
+                    set_unit_from_json(&slots[ed->selectedSlot], array, newId);
+                    *selId = (newId + 1) % count;
+                } else {   // враги
+                    set_unit_from_json(&slots[ed->selectedSlot], array, *selId);
+                    *selId = (*selId + 1) % count;
+                }
+                if (slots[ed->selectedSlot].tex) { SDL_DestroyTexture(slots[ed->selectedSlot].tex); slots[ed->selectedSlot].tex = NULL; }
             }
             break;
         case SDLK_d:
             if(slots[ed->selectedSlot].used) { if(slots[ed->selectedSlot].tex) SDL_DestroyTexture(slots[ed->selectedSlot].tex); memset(&slots[ed->selectedSlot],0,sizeof(UnitSlot)); }
-            // если инспектор был для этого слота, скроем
             if (ed->inspectorVisible && ed->inspectorPanel == ed->activePanel && ed->inspectorSlotIdx == ed->selectedSlot)
                 ed->inspectorVisible = 0;
             break;

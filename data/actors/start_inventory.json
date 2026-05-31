@@ -90,7 +90,7 @@
 			"start_level":	1,
 			"items":	[{
 					"item":	"Medical Herb",
-					"equipped":	true
+					"equipped":	false
 				}, {
 					"item":	"Black Ring",
 					"equipped":	true

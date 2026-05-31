@@ -55,6 +55,18 @@
 #define BTN_SAVE_W      50
 #define BTN_SAVE_H      24
 
+#define BTN_ZOOM_IN_X   (BTN_SAVE_X + BTN_SAVE_W + 10)
+#define BTN_ZOOM_IN_Y   5
+#define BTN_ZOOM_IN_W   30
+#define BTN_ZOOM_IN_H   24
+
+#define BTN_ZOOM_OUT_X  (BTN_ZOOM_IN_X + BTN_ZOOM_IN_W + 5)
+#define BTN_ZOOM_OUT_Y  5
+#define BTN_ZOOM_OUT_W  30
+#define BTN_ZOOM_OUT_H  24
+
+
+
 typedef struct {
     int id;
     char name[64];
@@ -140,6 +152,8 @@ typedef struct {
     int terrainPainting;      // зажата ли кнопка мыши для рисования
     int** terrain;            // [height][width] значения -1,0,1
 
+    float saveFlashTimer;
+
 } BattleEditor;
 
 void init_editor(BattleEditor* ed, SDL_Renderer* ren);
@@ -152,3 +166,4 @@ void draw_map_area(BattleEditor* ed);
 void switch_battle(BattleEditor* ed, int newIdx);
 void set_unit_from_json(UnitSlot* unit, cJSON* array, int id);
 void save_current_battle(BattleEditor* ed);
+void update_editor(BattleEditor* ed);

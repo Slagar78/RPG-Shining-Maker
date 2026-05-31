@@ -41,6 +41,7 @@ int main(int argc, char* argv[]) {
         while (SDL_PollEvent(&e)) { if (e.type == SDL_QUIT) run = 0; handle_input(&ed, &e); }
         ed.anim_counter++;
         SDL_SetRenderDrawColor(ren, 50,50,50,255);
+        update_editor(&ed);
         SDL_RenderClear(ren);
         draw_ally_panel(&ed);
         draw_enemy_panel(&ed);
