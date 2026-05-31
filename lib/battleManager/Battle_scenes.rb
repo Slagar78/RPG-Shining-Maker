@@ -134,13 +134,24 @@ class BattleScene
     end
   end
 
-    def start(attacker_unit, defender_unit, damage = 0)
+  def start(attacker_unit, defender_unit, damage = 0)
     @attacker = attacker_unit
     @defender = defender_unit
     @damage = damage
     @damage_applied = false
     @timer = DELAY_DURATION
     @active = true
+
+    # --- звук атаки при входе в сцену ---
+    @battle_manager.audio.play_sfx("attack") if @battle_manager.audio
+
+    # --- музыка карты ---
+    if @battle_manager.audio
+      @scene_saved_music_file = @battle_manager.audio.current_file
+      @scene_saved_music_vol = @battle_manager.audio.instance_variable_get(:@saved_music_volume)
+      @battle_manager.audio.stop
+    end
+
     @finished = false
     @phase = :delay
     @render_texture = Raylib.LoadRenderTexture(1152, 960)
@@ -177,9 +188,10 @@ class BattleScene
   @finished = true
   @phase = :shutter_close
   @shutter_progress = 0.0
+  # Убираем: if @battle_manager.audio ... resume_music
 end
 
-    def update
+def update
   return unless @active
   dt = Raylib.GetFrameTime()
 
@@ -200,8 +212,13 @@ end
   end
 
   if @phase == :finished
-    # Завершаем ход и переходим к следующему юниту
     @battle_manager.end_current_turn
+    @battle_manager.audio.stop_sfx("attack") if @battle_manager.audio
+
+    if @battle_manager.audio && @scene_saved_music_file
+      @battle_manager.audio.play(@scene_saved_music_file, @scene_saved_music_vol || 0.8)
+    end
+
     # Очистка ресурсов
     Raylib.UnloadRenderTexture(@render_texture) if @render_texture
     @render_texture = nil
@@ -214,22 +231,22 @@ end
   end
 
   if @phase == :shutter_close
-  @shutter_progress += dt * 2.0
-  if @shutter_progress >= 1.0
-    @shutter_progress = 1.0
-    @phase = :shutter_hold
-    @shutter_hold_timer = 0.5   # сколько держать чёрный экран (сек)
+    @shutter_progress += dt * 2.0
+    if @shutter_progress >= 1.0
+      @shutter_progress = 1.0
+      @phase = :shutter_hold
+      @shutter_hold_timer = 0.5
+    end
+    return
   end
-  return
-end
 
-if @phase == :shutter_hold
-  @shutter_hold_timer -= dt
-  if @shutter_hold_timer <= 0
-    @phase = :finished
+  if @phase == :shutter_hold
+    @shutter_hold_timer -= dt
+    if @shutter_hold_timer <= 0
+      @phase = :finished
+    end
+    return
   end
-  return
-end
 
   if @phase == :display
     @sub_phase_timer += dt
@@ -258,6 +275,7 @@ end
         @sub_phase_timer = 0.0
         @attacker_current_frame = 0
         @defender_current_frame = 0
+        # Звук атаки здесь больше не нужен – он уже проигрывается при старте сцены
       end
     when :attack
       @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :attack, @attacker_current_frame, @attacker_anim_timer, dt)
@@ -286,7 +304,6 @@ end
     end
   end
 end
-
 
 def draw
   return unless @active && @render_texture

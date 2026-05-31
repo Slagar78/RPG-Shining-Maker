@@ -1,20 +1,23 @@
 # lib/AudioManager.rb
 class AudioManager
+  attr_reader :current_file
+
   def initialize
     @current_bgm = nil
     @current_file = nil
-    @sfx = {} # Хранилище для звуков
+    @sfx = {}
+    @saved_music_volume = 0.8
   end
 
   # ── Фоновая музыка ──
   def play(file, volume = 0.8)
     return if file.nil? || file.empty?
     return if @current_file == file
-
     stop
     @current_bgm = Raylib.LoadMusicStream(file)
     @current_bgm.looping = true
-    Raylib.SetMusicVolume(@current_bgm, volume.clamp(0.0, 1.0))
+    @saved_music_volume = volume.clamp(0.0, 1.0)
+    Raylib.SetMusicVolume(@current_bgm, @saved_music_volume)
     Raylib.PlayMusicStream(@current_bgm)
     @current_file = file
   end
@@ -33,20 +36,39 @@ class AudioManager
     end
   end
 
+  # ── Заглушение и восстановление музыки ──
+  def mute_music
+    return unless @current_bgm
+    begin
+      vol = Raylib.GetMusicVolume(@current_bgm)
+      @saved_music_volume = vol.clamp(0.0, 1.0)
+    rescue
+      @saved_music_volume = 0.8
+    end
+    Raylib.SetMusicVolume(@current_bgm, 0.0)
+  end
+
+  def unmute_music
+    return unless @current_bgm
+    Raylib.SetMusicVolume(@current_bgm, @saved_music_volume.clamp(0.0, 1.0))
+  end
+
   # ── Звуковые эффекты ──
-  # Загружает звук и кладет в хранилище под именем (ключом)
   def load_sfx(name, path)
     return unless File.exist?(path)
     @sfx[name] = Raylib.LoadSound(path)
   end
 
-  # Проигрывает звук
   def play_sfx(name)
     sound = @sfx[name]
     Raylib.PlaySound(sound) if sound
   end
 
-  # Установить громкость загруженного звука (0.0..1.0)
+  def stop_sfx(name)
+    sound = @sfx[name]
+    Raylib.StopSound(sound) if sound
+  end
+
   def set_sfx_volume(name, volume)
     sound = @sfx[name]
     return unless sound

@@ -868,10 +868,11 @@ if __FILE__ == $0
   audio.load_sfx("cancel_menu", "assets/sounds/buttons/Cancel.ogg")
   audio.load_sfx("cursor",      "assets/sounds/buttons/Cursor.ogg")
   audio.load_sfx("error",       "assets/sounds/buttons/Error.ogg")
-
-  if battle.music_file && !battle.music_file.empty?
-    audio.play(battle.music_file, battle.music_volume)
-  end
+  audio.load_sfx("attack", "assets/sounds/sounds_BattleScenes/Attack.mp3")
+  
+if battle.music_file && !battle.music_file.empty?
+  audio.play(battle.music_file, battle.music_volume)
+end
 
   until WindowShouldClose()
     battle.handle_input
