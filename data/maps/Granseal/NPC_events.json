@@ -1,7 +1,7 @@
 [
   {
     "id": "npc1",
-    "x": 10, "y": 8,
+    "x": 7, "y": 18,
     "sprite": "mapsprite193",
     "behavior": "static",
     "direction": "down"
@@ -13,6 +13,13 @@
     "behavior": "wander",
     "home_x": 20, "home_y": 13,
     "radius": 3,
+    "direction": "down"
+  },
+  {
+    "id": "npc3",
+    "x": 32, "y": 11,
+    "sprite": "mapsprite192",
+    "behavior": "static",
     "direction": "down"
   }
 ]

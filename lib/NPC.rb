@@ -10,7 +10,7 @@ class NPC
   DIR_MAP = {
     'up'    => 0,
     'left'  => 1,
-    'right' => 1,   # та же строка, что и left
+    'right' => 1,   # та же строка, что и left (зеркалируется через текстуру)
     'down'  => 2
   }
 
@@ -36,6 +36,11 @@ class NPC
     # Текстуры: левая (обычная) и правая (зеркальная)
     @tex_left = nil
     @tex_right = nil
+
+    # Резервирование клетки, чтобы персонажи не накладывались друг на друга
+    @target_x = nil
+    @target_y = nil
+
     load_sprite
   end
 
@@ -85,7 +90,15 @@ class NPC
       @pixel_offset = 0
       @moving = false
       @move_dir = nil
+      # Цель достигнута – сбрасываем резервирование
+      @target_x = nil
+      @target_y = nil
     end
+  end
+
+  # Проверяет, зарезервировал ли этот NPC целевую клетку (tx,ty) для своего текущего движения
+  def moving_to?(tx, ty)
+    @moving && @target_x == tx && @target_y == ty
   end
 
   def visual_x
@@ -115,7 +128,6 @@ class NPC
   end
 
   def draw(camera)
-    # Выбираем текстуру в зависимости от направления
     texture = (@direction == 'right') ? @tex_right : @tex_left
     return unless texture
 
@@ -131,40 +143,57 @@ class NPC
 
   private
 
-def update_wander(map, player)
-  return if @moving
+  def update_wander(map, player)
+    return if @moving
 
-  if @wait_timer > 0
-    @wait_timer -= 1
-    return
-  end
-
-  dirs = [:down, :left, :right, :up].shuffle
-  dirs.each do |dir|
-    new_x = @x
-    new_y = @y
-    case dir
-    when :down  then new_y += 1
-    when :up    then new_y -= 1
-    when :left  then new_x -= 1
-    when :right then new_x += 1
+    if @wait_timer > 0
+      @wait_timer -= 1
+      return
     end
 
-    next if (new_x - @home_x).abs > @radius
-    next if (new_y - @home_y).abs > @radius
-    next if map && !map.passable?(new_x, new_y)
-    next if map && map.npc_at?(new_x, new_y)   # ← не заходить на клетку с другим NPC
-    next if player && new_x == player.x && new_y == player.y
+    dirs = [:down, :left, :right, :up].shuffle
+    dirs.each do |dir|
+      new_x = @x
+      new_y = @y
+      case dir
+      when :down  then new_y += 1
+      when :up    then new_y -= 1
+      when :left  then new_x -= 1
+      when :right then new_x += 1
+      end
 
-    @direction = dir.to_s
-    @move_dir = dir
-    @moving = true
-    @pixel_offset = 0
-    @wait_timer = rand(30..60)   # спокойная пауза
-    return
+      # Проверка радиуса блуждания
+      next if (new_x - @home_x).abs > @radius
+      next if (new_y - @home_y).abs > @radius
+
+      # Проходимость тайла карты (стены и т.п.)
+      next if map && !map.passable?(new_x, new_y)
+
+      # Не заходить на клетку, где уже стоит другой NPC
+      next if map && map.npcs.any? { |other| other != self && other.x == new_x && other.y == new_y }
+
+      # Не заходить на клетку, куда другой NPC уже начал движение (зарезервировал)
+      next if map && map.npcs.any? { |other| other != self && other.moving_to?(new_x, new_y) }
+
+      # Не заходить на клетку игрока (с учётом его резервирования)
+      if player
+        next if player.x == new_x && player.y == new_y
+        next if player.respond_to?(:moving_to?) && player.moving_to?(new_x, new_y)
+      end
+
+      # Если всё ок – резервируем клетку и начинаем движение
+      @target_x = new_x
+      @target_y = new_y
+      @direction = dir.to_s
+      @move_dir = dir
+      @moving = true
+      @pixel_offset = 0
+      @wait_timer = rand(30..60)
+      return
+    end
+
+    # Не удалось найти подходящего направления – ещё подождём
+    @wait_timer = rand(30..60)
   end
-
-  @wait_timer = rand(30..60)
-end
-
+  
 end

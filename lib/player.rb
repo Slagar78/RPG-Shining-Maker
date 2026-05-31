@@ -48,9 +48,17 @@ class Player
     @stairs_dy     = 0
     @target_x      = 0
     @target_y      = 0
+			
+	@reserved_x = nil
+    @reserved_y = nil
 
     init_render_objects
     load_textures
+
+  end
+
+  def moving_to?(tx, ty)
+    @moving && @reserved_x == tx && @reserved_y == ty
   end
 
   def init_render_objects
@@ -144,10 +152,11 @@ end
     end
 
     if @map
-      return if new_x < 0 || new_x >= @map.width
-      return if new_y < 0 || new_y >= @map.height
-      return unless @map.passable?(new_x, new_y, @x, @y) && @map.inside_area?(new_x, new_y)
-	  return if @map.npc_at?(new_x, new_y)
+    return if new_x < 0 || new_x >= @map.width
+    return if new_y < 0 || new_y >= @map.height
+    return unless @map.passable?(new_x, new_y, @x, @y) && @map.inside_area?(new_x, new_y)
+    return if @map.npc_at?(new_x, new_y)                                          # ← стоящие NPC
+    return if @map.npcs.any? { |npc| npc.moving_to?(new_x, new_y) }              # ← движущиеся NPC
     else
       return if new_x < 0 || new_x >= DEFAULT_GRID_W
       return if new_y < 0 || new_y >= DEFAULT_GRID_H
@@ -155,6 +164,8 @@ end
 
     @slide_dir = dir
     @move_dir  = dir
+	@reserved_x = new_x
+    @reserved_y = new_y
     @moving    = true
     @pixel_offset = 0
   end
@@ -196,6 +207,10 @@ def update_movement
     when DIR_UP    then @y -= 1
     end
 
+    # Снимаем резервирование, т.к. шаг выполнен
+    @reserved_x = nil
+    @reserved_y = nil
+
     # Проверка на вход в лестницу после каждого шага
     maybe_start_stairs
 
@@ -216,6 +231,7 @@ def update_movement
         @sliding = true
         @moving  = true
         @pixel_offset = 0
+        # на льду резервирование остаётся сброшенным (или можно заново зарезервировать следующую клетку)
       else
         @sliding = false
         @moving  = false
@@ -325,6 +341,5 @@ def visual_y
     base
   end
 end
-
 
 end
