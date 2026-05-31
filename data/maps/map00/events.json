@@ -1,0 +1,9 @@
+[{
+		"type":	"warp",
+		"trigger_x":	6,
+		"trigger_y":	5,
+		"target_map":	"Granseal",
+		"target_x":	4,
+		"target_y":	5,
+		"facing":	0
+	}]

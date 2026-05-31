@@ -33,12 +33,13 @@ typedef enum {
     MODE_MAP_EDITOR,
     MODE_MAP_CREATOR,
     MODE_BATTLE_EDITOR,
-    MODE_BATTLE_SCENES,   // новая кнопка
+    MODE_BATTLE_SCENES,
     MODE_TEXT_EDITOR,
     MODE_DATABASE,
     MODE_PLAYTEST,
     MODE_BATTLE_TEST,
     MODE_TILESET_ANIM,
+    MODE_EVENT_EDITOR,   // редактор событий карты
     MODE_COUNT
 } EditorMode;
 
@@ -326,7 +327,8 @@ int main(int argc, char *argv[]) {
         "text.png", "database.png",
         "play.png",
         "battle_test.png",
-        "tileset_anim.png"
+        "tileset_anim.png",
+        "event.png"
     };
 
     SDL_Texture *icons[MODE_COUNT] = { NULL };
@@ -357,6 +359,7 @@ int main(int argc, char *argv[]) {
         { {380,35, 48,48}, MODE_PLAYTEST,       icons[6], 0.0f, NULL },
         { {440,35, 48,48}, MODE_BATTLE_TEST,    icons[7], 0.0f, NULL },
         { {500,35, 48,48},  MODE_TILESET_ANIM,   icons[8], 0.0f, "Maker/TilesetAnimation.exe" },
+        { {560, 35, 48, 48}, MODE_EVENT_EDITOR, icons[9], 0.0f, "Maker/map_event_editor.exe" },
     };
 
     EditorMode currentMode = MODE_MAP_EDITOR;
