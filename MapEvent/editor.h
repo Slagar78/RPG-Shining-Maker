@@ -104,7 +104,6 @@ typedef struct Editor {
     char warp_trigger_y_buf[12];
     char warp_target_x_buf[12];
     char warp_target_y_buf[12];
-    char warp_facing_buf[2];        // 1 цифра
 } Editor;
 
 void editor_init(Editor *ed);

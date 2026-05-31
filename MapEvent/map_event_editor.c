@@ -82,7 +82,6 @@ void editor_init(Editor *ed) {
     ed->warp_trigger_y_buf[0] = '\0';
     ed->warp_target_x_buf[0]  = '\0';
     ed->warp_target_y_buf[0]  = '\0';
-    ed->warp_facing_buf[0]     = '\0';
 
     memset(&ed->warp_list_rect, 0, sizeof(ed->warp_list_rect));
 }
@@ -219,6 +218,7 @@ void render_map(Editor *ed) {
     if (end_x > map->width) end_x = map->width;
     if (end_y > map->height) end_y = map->height;
 
+    // ── Слой 1 (основной) ──────────────────────
     if (ed->show_layer1) {
         for (int x = start_x; x < end_x; x++) {
             for (int y = start_y; y < end_y; y++) {
@@ -241,6 +241,7 @@ void render_map(Editor *ed) {
         }
     }
 
+    // ── Слой 2 (верхний, полупрозрачный если включены оба) ──
     if (ed->show_layer2) {
         for (int x = start_x; x < end_x; x++) {
             for (int y = start_y; y < end_y; y++) {
@@ -271,9 +272,9 @@ void render_map(Editor *ed) {
         }
     }
 
-    // === Подсветка выбранных объектов ===
+    // ================== ПОДСВЕТКА ВЫБРАННЫХ ОБЪЕКТОВ ==================
 
-    // Выбранная крыша
+    // ── Выбранная крыша (Roof) ─────────────────
     if (ed->selected_roof_event >= 0 && ed->selected_roof_event < ed->roof_event_count) {
         RoofEvent *re = &ed->roof_events[ed->selected_roof_event];
 
@@ -321,7 +322,7 @@ void render_map(Editor *ed) {
         }
     }
 
-    // Выбранный Tile Change
+    // ── Выбранный Tile Change ─────────────────
     if (ed->selected_tile_change >= 0 && ed->selected_tile_change < ed->tile_change_count) {
         TileChangeEvent *tc = &ed->tile_changes[ed->selected_tile_change];
         if (tc->trigger_x >= 0 && tc->trigger_y >= 0) {
@@ -344,7 +345,7 @@ void render_map(Editor *ed) {
         }
     }
 
-    // Выбранная лестница
+    // ── Выбранная лестница (Stairs) ───────────
     if (ed->selected_stair >= 0 && ed->selected_stair < ed->stair_event_count) {
         StairEvent *se = &ed->stair_events[ed->selected_stair];
         int x1 = se->start_x, y1 = se->start_y, x2 = se->end_x, y2 = se->end_y;
@@ -368,7 +369,7 @@ void render_map(Editor *ed) {
         }
     }
 
-    // Выбранный варп
+    // ── Выбранный варп (Warp) ─────────────────
     if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
         WarpEvent *we = &ed->warp_events[ed->selected_warp];
         if (we->trigger_x >= 0 && we->trigger_y >= 0 && we->trigger_x < map->width && we->trigger_y < map->height) {
@@ -383,15 +384,17 @@ void render_map(Editor *ed) {
                 for (int dy = -1; dy <= 1; dy++)
                     SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){tile_dst.x+dx, tile_dst.y+dy, tile_dst.w, tile_dst.h});
             SDL_SetRenderDrawBlendMode(ed->renderer, SDL_BLENDMODE_NONE);
+
+            // Стрелка направления (0=Down, 1=Left, 2=Right, 3=Up)
             float cx = tile_dst.x + scaled_tile/2.0f, cy = tile_dst.y + scaled_tile/2.0f, sz = scaled_tile * 0.3f;
             SDL_FPoint arrow[3];
             switch (we->facing) {
-                case 2: arrow[0] = (SDL_FPoint){cx, cy + sz}; arrow[1] = (SDL_FPoint){cx - sz, cy - sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy - sz/2}; break;
-                case 4: arrow[0] = (SDL_FPoint){cx - sz, cy}; arrow[1] = (SDL_FPoint){cx + sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx + sz/2, cy + sz}; break;
-                case 6: arrow[0] = (SDL_FPoint){cx + sz, cy}; arrow[1] = (SDL_FPoint){cx - sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx - sz/2, cy + sz}; break;
-                case 8: arrow[0] = (SDL_FPoint){cx, cy - sz}; arrow[1] = (SDL_FPoint){cx - sz, cy + sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy + sz/2}; break;
+                case 0: arrow[0] = (SDL_FPoint){cx, cy + sz}; arrow[1] = (SDL_FPoint){cx - sz, cy - sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy - sz/2}; break; // Down
+                case 1: arrow[0] = (SDL_FPoint){cx - sz, cy}; arrow[1] = (SDL_FPoint){cx + sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx + sz/2, cy + sz}; break; // Left
+                case 2: arrow[0] = (SDL_FPoint){cx + sz, cy}; arrow[1] = (SDL_FPoint){cx - sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx - sz/2, cy + sz}; break; // Right
+                case 3: arrow[0] = (SDL_FPoint){cx, cy - sz}; arrow[1] = (SDL_FPoint){cx - sz, cy + sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy + sz/2}; break; // Up
             }
-            if (we->facing >= 2 && we->facing <= 8) {
+            if (we->facing >= 0 && we->facing <= 3) {
                 SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 255);
                 SDL_RenderDrawLinesF(ed->renderer, arrow, 3);
                 SDL_RenderDrawLineF(ed->renderer, arrow[2].x, arrow[2].y, arrow[0].x, arrow[0].y);
@@ -399,7 +402,9 @@ void render_map(Editor *ed) {
         }
     }
 
-    // === Показ ВСЕХ объектов при включённых чекбоксах ===
+    // ================== ПОКАЗ ВСЕХ ОБЪЕКТОВ (ЧЕКБОКСЫ) ==================
+
+    // ── Все крыши ─────────────────────────────
     if (ed->show_all_roofs) {
         for (int i = 0; i < ed->roof_event_count; i++) {
             if (i == ed->selected_roof_event) continue;
@@ -416,6 +421,7 @@ void render_map(Editor *ed) {
         }
     }
 
+    // ── Все Tile Changes ──────────────────────
     if (ed->show_all_tile_changes) {
         for (int i = 0; i < ed->tile_change_count; i++) {
             if (i == ed->selected_tile_change) continue;
@@ -430,6 +436,7 @@ void render_map(Editor *ed) {
         }
     }
 
+    // ── Все лестницы ──────────────────────────
     if (ed->show_all_stairs) {
         for (int i = 0; i < ed->stair_event_count; i++) {
             if (i == ed->selected_stair) continue;
@@ -456,6 +463,7 @@ void render_map(Editor *ed) {
         }
     }
 
+    // ── Все варпы ─────────────────────────────
     if (ed->show_all_warps) {
         for (int i = 0; i < ed->warp_event_count; i++) {
             if (i == ed->selected_warp) continue;
@@ -466,15 +474,16 @@ void render_map(Editor *ed) {
                                 scaled_tile, scaled_tile };
                 SDL_SetRenderDrawColor(ed->renderer, 200, 0, 200, 80);
                 SDL_RenderFillRectF(ed->renderer, &t);
+
                 float cx = t.x + t.w/2.0f, cy = t.y + t.h/2.0f, sz = t.w * 0.3f;
                 SDL_FPoint arrow[3];
                 switch (we->facing) {
-                    case 2: arrow[0] = (SDL_FPoint){cx, cy + sz}; arrow[1] = (SDL_FPoint){cx - sz, cy - sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy - sz/2}; break;
-                    case 4: arrow[0] = (SDL_FPoint){cx - sz, cy}; arrow[1] = (SDL_FPoint){cx + sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx + sz/2, cy + sz}; break;
-                    case 6: arrow[0] = (SDL_FPoint){cx + sz, cy}; arrow[1] = (SDL_FPoint){cx - sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx - sz/2, cy + sz}; break;
-                    case 8: arrow[0] = (SDL_FPoint){cx, cy - sz}; arrow[1] = (SDL_FPoint){cx - sz, cy + sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy + sz/2}; break;
+                    case 0: arrow[0] = (SDL_FPoint){cx, cy + sz}; arrow[1] = (SDL_FPoint){cx - sz, cy - sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy - sz/2}; break; // Down
+                    case 1: arrow[0] = (SDL_FPoint){cx - sz, cy}; arrow[1] = (SDL_FPoint){cx + sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx + sz/2, cy + sz}; break; // Left
+                    case 2: arrow[0] = (SDL_FPoint){cx + sz, cy}; arrow[1] = (SDL_FPoint){cx - sz/2, cy - sz}; arrow[2] = (SDL_FPoint){cx - sz/2, cy + sz}; break; // Right
+                    case 3: arrow[0] = (SDL_FPoint){cx, cy - sz}; arrow[1] = (SDL_FPoint){cx - sz, cy + sz/2}; arrow[2] = (SDL_FPoint){cx + sz, cy + sz/2}; break; // Up
                 }
-                if (we->facing >= 2 && we->facing <= 8) {
+                if (we->facing >= 0 && we->facing <= 3) {
                     SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 100);
                     SDL_RenderDrawLinesF(ed->renderer, arrow, 3);
                     SDL_RenderDrawLineF(ed->renderer, arrow[2].x, arrow[2].y, arrow[0].x, arrow[0].y);
@@ -485,6 +494,7 @@ void render_map(Editor *ed) {
 
     SDL_RenderSetClipRect(ed->renderer, NULL);
 
+    // ── Информация о клетке под мышью ─────────
     int mx, my;
     get_logical_mouse(ed->window, &mx, &my);
     if (mx >= MAP_X && mx < MAP_X + MAP_VISIBLE_W && my >= MAP_Y && my < MAP_Y + MAP_VISIBLE_H) {
@@ -501,11 +511,13 @@ void render_map(Editor *ed) {
         }
     }
 
+    // ── Полосы прокрутки ──────────────────────
     float map_pixel_w = map->width * TILE_SIZE;
     float map_pixel_h = map->height * TILE_SIZE;
     float view_w = MAP_VISIBLE_W / zoom;
     float view_h = MAP_VISIBLE_H / zoom;
 
+    // Вертикальная полоса прокрутки
     {
         SDL_Rect track = { MAP_X + MAP_VISIBLE_W + 2, MAP_Y, SCROLLBAR_SIZE - 4, MAP_VISIBLE_H };
         SDL_SetRenderDrawColor(ed->renderer, 200,200,200,255);
@@ -520,6 +532,8 @@ void render_map(Editor *ed) {
             SDL_RenderFillRect(ed->renderer, &thumb);
         }
     }
+
+    // Горизонтальная полоса прокрутки
     {
         SDL_Rect track = { MAP_X + 2, MAP_Y + MAP_VISIBLE_H, MAP_VISIBLE_W - 4, SCROLLBAR_SIZE };
         SDL_SetRenderDrawColor(ed->renderer, 200,200,200,255);
@@ -805,18 +819,44 @@ static void draw_warp_field(Editor *ed, const char *label, int field_idx, int li
         draw_text_centered(ed->renderer, ed->font, ed->warp_target_y_buf,
                            y_rect.x + y_rect.w/2, y_rect.y + y_rect.h/2, (SDL_Color){0,0,0,255});
     }
-    // --- Facing ---
+
+    // --- Facing (выбор стрелками) ---
     else if (field_idx == 5) {
-        SDL_Rect fld_rect = {90, line_y, 40, 22};
+        const char *dir_names[4] = {"Down","Left","Right","Up"};
+
+        SDL_Rect fld_rect = {90, line_y, 130, 22};
         bool active = (ed->warp_edit_field == 5);
-        SDL_SetRenderDrawColor(ed->renderer, active ? 255 : 200, 200, 200, 255);
+        SDL_SetRenderDrawColor(ed->renderer, active ? 220 : 200, 200, 200, 255);
         SDL_RenderFillRect(ed->renderer, &fld_rect);
         SDL_SetRenderDrawColor(ed->renderer, 0, 0, 0, 255);
         SDL_RenderDrawRect(ed->renderer, &fld_rect);
-        draw_text_centered(ed->renderer, ed->font, ed->warp_facing_buf,
-                           fld_rect.x + fld_rect.w/2, fld_rect.y + fld_rect.h/2,
+
+        SDL_Rect left_arrow  = { fld_rect.x, fld_rect.y, 22, fld_rect.h };
+        SDL_Rect right_arrow = { fld_rect.x + fld_rect.w - 22, fld_rect.y, 22, fld_rect.h };
+        SDL_Rect name_rect   = { left_arrow.x + left_arrow.w, fld_rect.y,
+                                 right_arrow.x - (left_arrow.x + left_arrow.w), fld_rect.h };
+
+        SDL_SetRenderDrawColor(ed->renderer, 80, 80, 80, 255);
+        SDL_RenderFillRect(ed->renderer, &left_arrow);
+        SDL_RenderFillRect(ed->renderer, &right_arrow);
+        draw_text_centered(ed->renderer, ed->font, "<",
+                           left_arrow.x + left_arrow.w/2, left_arrow.y + left_arrow.h/2,
+                           (SDL_Color){255,255,255,255});
+        draw_text_centered(ed->renderer, ed->font, ">",
+                           right_arrow.x + right_arrow.w/2, right_arrow.y + right_arrow.h/2,
+                           (SDL_Color){255,255,255,255});
+
+        int dir_index = 0;
+        if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
+            dir_index = ed->warp_events[ed->selected_warp].facing;
+            if (dir_index < 0) dir_index = 0;
+            if (dir_index > 3) dir_index = 0;
+        }
+        draw_text_centered(ed->renderer, ed->font, dir_names[dir_index],
+                           name_rect.x + name_rect.w/2, name_rect.y + name_rect.h/2,
                            (SDL_Color){0,0,0,255});
     }
+
     // --- Target Map (выбор стрелками) ---
     else {
         SDL_Rect fld_rect = {90, line_y, 130, 20};
@@ -886,13 +926,36 @@ static void check_warp_click(Editor *ed, int field_idx, int line_y, int mx, int 
             SDL_StartTextInput();
         }
     }
+    
     else if (field_idx == 5) {
-        SDL_Rect fld = {90, line_y, 40, 22};
-        if (mx >= fld.x && mx < fld.x + fld.w && my >= fld.y && my < fld.y + fld.h) {
-            ed->warp_edit_field = 5;
-            SDL_StartTextInput();
+        SDL_Rect fld_rect = {90, line_y, 130, 22};
+        SDL_Rect left_arrow  = { fld_rect.x, fld_rect.y, 22, fld_rect.h };
+        SDL_Rect right_arrow = { fld_rect.x + fld_rect.w - 22, fld_rect.y, 22, fld_rect.h };
+
+        if (ed->selected_warp >= 0 && ed->selected_warp < ed->warp_event_count) {
+            WarpEvent *we = &ed->warp_events[ed->selected_warp];
+
+            if (mx >= left_arrow.x && mx < left_arrow.x + left_arrow.w &&
+                my >= left_arrow.y && my < left_arrow.y + left_arrow.h) {
+                we->facing = (we->facing - 1 + 4) % 4;   // 0..3
+                ed->warp_edit_field = 5;
+                SDL_StopTextInput();
+            }
+            else if (mx >= right_arrow.x && mx < right_arrow.x + right_arrow.w &&
+                     my >= right_arrow.y && my < right_arrow.y + right_arrow.h) {
+                we->facing = (we->facing + 1) % 4;
+                ed->warp_edit_field = 5;
+                SDL_StopTextInput();
+            }
+            else if (mx >= fld_rect.x && mx < fld_rect.x + fld_rect.w &&
+                     my >= fld_rect.y && my < fld_rect.y + fld_rect.h) {
+                // Клик по центру просто активирует поле (без ввода)
+                ed->warp_edit_field = 5;
+                SDL_StopTextInput();
+            }
         }
     }
+
     else {  // field_idx == 1 (Target Map)
         SDL_Rect fld = {90, line_y, 130, 20};
         if (mx >= fld.x && mx < fld.x + fld.w && my >= fld.y && my < fld.y + fld.h) {
@@ -1586,7 +1649,7 @@ void handle_input(Editor *ed, bool *running) {
             }
         }
 
-                // ================== Текстовый ввод (Warps) ==================
+        // ================== Текстовый ввод (Warps) ==================
         if (ed->warp_edit_field != -1) {
             if (e.type == SDL_KEYDOWN) {
                 if (e.key.keysym.sym == SDLK_BACKSPACE) {
@@ -1596,7 +1659,6 @@ void handle_input(Editor *ed, bool *running) {
                         case 1: buf = ed->warp_trigger_y_buf; break;
                         case 3: buf = ed->warp_target_x_buf; break;
                         case 4: buf = ed->warp_target_y_buf; break;
-                        case 5: buf = ed->warp_facing_buf; break;
                         case 2: buf = ed->warp_input_buf; break;
                     }
                     if (buf && strlen(buf) > 0) buf[strlen(buf)-1] = '\0';
@@ -1612,8 +1674,7 @@ void handle_input(Editor *ed, bool *running) {
                             we->target_x = atoi(ed->warp_target_x_buf);
                             we->target_y = atoi(ed->warp_target_y_buf);
                         }
-                        if (strlen(ed->warp_facing_buf) > 0)
-                            we->facing = atoi(ed->warp_facing_buf);
+                        // Facing теперь устанавливается только стрелками, здесь не трогаем
                         if (ed->warp_edit_field == 2 && strlen(ed->warp_input_buf) > 0) {
                             snprintf(we->target_map, sizeof(we->target_map), "%s", ed->warp_input_buf);
                             we->target_map[63] = '\0';
@@ -1654,7 +1715,6 @@ void handle_input(Editor *ed, bool *running) {
                     case 1: buf = ed->warp_trigger_y_buf; maxlen = 4; break;
                     case 3: buf = ed->warp_target_x_buf;  maxlen = 4; break;
                     case 4: buf = ed->warp_target_y_buf;  maxlen = 4; break;
-                    case 5: buf = ed->warp_facing_buf;    maxlen = 1; allowed = "23468"; break;
                     case 2: buf = ed->warp_input_buf;     maxlen = 63; allowed = NULL; break;
                 }
                 if (buf) {
@@ -2033,7 +2093,7 @@ void handle_input(Editor *ed, bool *running) {
                             we->trigger_x = we->trigger_y = -1;
                             we->target_map[0] = '\0';
                             we->target_x = we->target_y = 0;
-                            we->facing = 2; // по умолчанию вниз
+                            we->facing = 0; // Down
                             ed->selected_warp = ed->warp_event_count - 1;
                             ed->warp_edit_field = -1;
                             ed->warp_input_buf[0] = '\0';
@@ -2057,7 +2117,7 @@ void handle_input(Editor *ed, bool *running) {
                     snprintf(ed->warp_trigger_y_buf, sizeof(ed->warp_trigger_y_buf), "%d", we->trigger_y);
                     snprintf(ed->warp_target_x_buf,  sizeof(ed->warp_target_x_buf),  "%d", we->target_x);
                     snprintf(ed->warp_target_y_buf,  sizeof(ed->warp_target_y_buf),  "%d", we->target_y);
-                    snprintf(ed->warp_facing_buf,    sizeof(ed->warp_facing_buf),    "%d", we->facing);
+                    
                     return;
                     }
                 }

@@ -358,19 +358,29 @@ end
       end
     end
 
-    # Проверка варпов (телепортов)
-    if @game_state == :playing && @game_map && @game_map.warp_events.any? && !@player.moving
+   # Проверка варпов (телепортов)
+   if @game_state == :playing && @game_map && @game_map.warp_events.any? && !@player.moving
       @game_map.warp_events.each do |warp|
-        if @player.x == warp['trigger_x'] && @player.y == warp['trigger_y']
-          target_map = warp['target_map']
-          target_x = warp['target_x']
-          target_y = warp['target_y']
-          facing = warp['facing']
-          change_map(target_map, target_x, target_y, facing)
-          break
-        end
-      end
+      if @player.x == warp['trigger_x'] && @player.y == warp['trigger_y']
+      target_map = warp['target_map']
+      target_x = warp['target_x']
+      target_y = warp['target_y']
+
+      # Конвертация из нового формата редактора (0–3) в старые значения игры (2,4,6,8)
+      raw_facing = warp['facing'] || 0
+      facing = case raw_facing
+               when 0 then 2   # Down
+               when 1 then 4   # Left
+               when 2 then 6   # Right
+               when 3 then 8   # Up
+               else 2          # по умолчанию Down
+               end
+
+      change_map(target_map, target_x, target_y, facing)
+      break
     end
+  end
+end
 
     if @pending_menu_request
       if !@player.moving

@@ -192,6 +192,12 @@ void load_events_from_json(Editor *ed, const char *folder) {
                     we->target_x = tox->valueint;
                     we->target_y = toy->valueint;
                     we->facing = facing->valueint;
+                    // Конвертация старых значений (2,4,6,8) в новые 0..3
+                    if (we->facing == 2) we->facing = 0;       // Down
+                    else if (we->facing == 4) we->facing = 1;  // Left
+                    else if (we->facing == 6) we->facing = 2;  // Right
+                    else if (we->facing == 8) we->facing = 3;  // Up
+                    // Если уже 0..3 — оставляем как есть
                 }
             }
         }
