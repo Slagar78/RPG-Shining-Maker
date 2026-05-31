@@ -145,12 +145,8 @@ class BattleScene
     # --- звук атаки при входе в сцену ---
     @battle_manager.audio.play_sfx("attack") if @battle_manager.audio
 
-    # --- музыка карты ---
-    if @battle_manager.audio
-      @scene_saved_music_file = @battle_manager.audio.current_file
-      @scene_saved_music_vol = @battle_manager.audio.instance_variable_get(:@saved_music_volume)
-      @battle_manager.audio.stop
-    end
+    # --- ставим фоновую музыку на паузу (работает с OGG) ---
+    @battle_manager.audio.pause_music if @battle_manager.audio
 
     @finished = false
     @phase = :delay
@@ -213,11 +209,8 @@ def update
 
   if @phase == :finished
     @battle_manager.end_current_turn
-    @battle_manager.audio.stop_sfx("attack") if @battle_manager.audio
-
-    if @battle_manager.audio && @scene_saved_music_file
-      @battle_manager.audio.play(@scene_saved_music_file, @scene_saved_music_vol || 0.8)
-    end
+    @battle_manager.audio.stop_sfx("attack") if @battle_manager.audio   # выключаем боевую музыку
+    @battle_manager.audio.resume_music if @battle_manager.audio         # снимаем фоновую музыку с паузы
 
     # Очистка ресурсов
     Raylib.UnloadRenderTexture(@render_texture) if @render_texture

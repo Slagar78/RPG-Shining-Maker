@@ -2,7 +2,7 @@
     "folder":        "battle01",
     "name":          "Battle #1",
     "map_id":        "map00",
-    "music":         "assets/sounds/Shinzo.mp3",
+    "music":         "assets/sounds/Shinzo.ogg",
     "music_volume":  0.800000011920929,
     "battle_x":      10,
     "battle_y":      14,

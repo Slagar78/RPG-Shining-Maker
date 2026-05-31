@@ -36,7 +36,18 @@ class AudioManager
     end
   end
 
-  # ── Заглушение и восстановление музыки ──
+  # ── Пауза и продолжение фоновой музыки (работает с OGG) ──
+  def pause_music
+    return unless @current_bgm
+    Raylib.PauseMusicStream(@current_bgm)
+  end
+
+  def resume_music
+    return unless @current_bgm
+    Raylib.ResumeMusicStream(@current_bgm)
+  end
+
+  # ── Заглушение и восстановление музыки (резерв) ──
   def mute_music
     return unless @current_bgm
     begin
