@@ -4,3 +4,5 @@
 0003=The {ITEM} {N}will be discarded. OK ?
 0004=The {ITEM} {N}is discarded.
 0005={LEADER} investigated the area{N}Nothing was there.
+0006='s   attack!
+0007=

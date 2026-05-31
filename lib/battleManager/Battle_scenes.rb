@@ -1,6 +1,8 @@
 # lib/battleManager/Battle_scenes.rb
 
 class BattleScene
+
+  attr_accessor :message_font
   DELAY_DURATION      = 0.4
   END_DELAY_DURATION  = 0.5
   BAR_HEIGHT          = 144
@@ -31,8 +33,9 @@ class BattleScene
   PRE_ATTACK_DURATION = 0.5
   RUN_IN_DURATION      = 0.35   # длительность выезда персонажа
 
-  def initialize(battle_manager)
+  def initialize(battle_manager, game_text = {})
     @battle_manager = battle_manager
+	@game_text = game_text
     @timer = 0.0
     @active = false
     @finished = false
@@ -88,6 +91,15 @@ class BattleScene
       puts "WARNING: message_battle_panel.png not found"
     end
 
+    # Переменные для сообщения перед атакой
+    @attacker_name = ""
+    @current_message = ""
+    @message_reveal_index = 0
+    @message_timer = 0
+    @message_reveal_speed = 2   # кадров на символ
+    @full_message_shown = false
+	@message_done_timer = 0.0 
+
     # Переменные для анимации выезда
     @ally_draw_x = ALLY_X
     @run_in_active = false
@@ -140,6 +152,24 @@ class BattleScene
     @damage = damage
     @damage_applied = false
     @timer = DELAY_DURATION
+	
+	# Имя атакующего
+  if attacker_unit[:actor]
+    @attacker_name = attacker_unit[:actor]["name"] || "???"
+  elsif attacker_unit[:enemy]
+    @attacker_name = attacker_unit[:enemy]["name"] || "???"
+  else
+    @attacker_name = "???"
+  end
+    # Сообщение из gamescript.txt
+    suffix = @game_text["0006"] || "'s attack!"
+    @current_message = "#{@attacker_name}#{suffix}"
+    # Сброс печати
+    @message_reveal_index = 0
+    @message_timer = 0
+    @full_message_shown = false
+	@message_done_timer = 0.0
+	
     @active = true
 
     # --- звук атаки при входе в сцену ---
@@ -258,9 +288,28 @@ def update
         @sub_phase = :pre_attack
         @sub_phase_timer = 0.0
       end
+	  
     when :pre_attack
       update_animation(dt)
-      if @sub_phase_timer >= PRE_ATTACK_DURATION
+
+      # Печать текста
+      unless @full_message_shown
+        @message_timer += 1
+        if @message_timer >= @message_reveal_speed
+          @message_timer = 0
+          @message_reveal_index += 1
+          if @message_reveal_index >= @current_message.length
+            @message_reveal_index = @current_message.length
+            @full_message_shown = true
+          end
+        end
+      else
+        # Если текст уже напечатан – копим паузу
+        @message_done_timer += dt
+      end
+
+      # Переход к атаке только когда текст готов и прошла пауза 0.5 сек
+      if @full_message_shown && @message_done_timer >= 1.0
         movetype_key = @defender[:movetype] || "regular"
         dodge_chance = DamageCalculator.physical_dodge_chance(movetype_key)
         @defender_anim = dodge_chance > 30 ? :dodge : :idle
@@ -268,8 +317,8 @@ def update
         @sub_phase_timer = 0.0
         @attacker_current_frame = 0
         @defender_current_frame = 0
-        # Звук атаки здесь больше не нужен – он уже проигрывается при старте сцены
       end
+	  
     when :attack
       @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :attack, @attacker_current_frame, @attacker_anim_timer, dt)
       @defender_current_frame, @defender_anim_timer = advance_frame(@defender, @defender_anim, @defender_current_frame, @defender_anim_timer, dt)
@@ -365,7 +414,7 @@ def draw
       end
     end
 
-    if @sub_phase == :pre_attack && @message_panel_tex
+   if @sub_phase == :pre_attack && @message_panel_tex
       panel_w = @message_panel_tex.width
       panel_h = @message_panel_tex.height
       panel_y = 960 - 16 - panel_h
@@ -373,6 +422,16 @@ def draw
       src = Raylib::Rectangle.create(0, 0, panel_w, panel_h)
       dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
       Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+
+      # Текст с анимацией печати
+      if @message_font && @current_message.length > 0
+        text = @current_message[0, @message_reveal_index]
+        font_size = 60
+        color = Raylib::WHITE
+        text_x = panel_x + 40
+        text_y = panel_y + 20
+        Raylib.DrawTextEx(@message_font, text, Raylib::Vector2.create(text_x, text_y), font_size, 1, color)
+      end
     end
 
  if @phase == :shutter_close || @phase == :shutter_hold

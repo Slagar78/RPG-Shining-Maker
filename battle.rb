@@ -35,9 +35,10 @@ class BattleManager
   CURSOR_SPEED = 6.0
   CURSOR_HIDE_DELAY = 12
 
-  def initialize(db = nil, font = nil)
+  def initialize(db = nil, font = nil, game_text = {})
     @db = db
     @font = font
+	@game_text = game_text
     @audio = nil
 
     entries_path = "data/battles/entries.json"
@@ -107,7 +108,7 @@ class BattleManager
 
     @cursor_hide_timer = 0
     @pending_menu = false
-    @battle_scene = BattleScene.new(self)
+    @battle_scene = BattleScene.new(self, @game_text)
 	@renderer = BattleRenderer.new(self)
     @start_x = 0
     @start_y = 0
@@ -835,6 +836,20 @@ if __FILE__ == $0
   InitAudioDevice()
 
   db = Database.new
+
+game_text = {}
+begin
+  File.readlines("data/text/gamescript.txt", encoding: 'UTF-8').each do |line|
+    line.strip!
+    next if line.empty? || line.start_with?('#')
+    if line =~ /^(\d+)=(.+)$/
+      game_text[$1] = $2.strip
+    end
+  end
+rescue
+  puts "WARNING: gamescript.txt not loaded"
+end
+  
   $spells = db.spells if db && db.spells
   DamageCalculator.movetypes = db.movetypes
 
@@ -857,9 +872,10 @@ if __FILE__ == $0
   menu_font = LoadFontEx("assets/ui/fonts/main.ttf", 30, cp_ptr, codepoints.size)
   SetTextureFilter(menu_font.texture, TEXTURE_FILTER_POINT)
 
-  battle = BattleManager.new(db, battle_font)
+  battle = BattleManager.new(db, battle_font, game_text)
   battle.battle_scene_font = battle_scene_font
   battle.battle_menu.font = menu_font   # заменяем шрифт в меню на 30px
+  battle.battle_scene.message_font = menu_font
 
   audio = AudioManager.new
   battle.audio = audio
