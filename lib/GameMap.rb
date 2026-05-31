@@ -1,6 +1,7 @@
 # lib/GameMap.rb
 require 'json'
 require 'raylib'
+require_relative 'NPC'
 include Raylib
 
 class GameMap
@@ -9,6 +10,7 @@ class GameMap
   attr_reader :tileset_path
   attr_reader :roof_layers
   attr_reader :layer2, :top_layer, :static_bg
+  attr_reader :npcs
 
   def initialize(map_id = "Granseal")
     @src_rect_cache = {}
@@ -130,6 +132,13 @@ class GameMap
     if @tile_types.length < total_tiles
       @tile_types += Array.new(total_tiles - @tile_types.length, 0)
     end
+
+    @npcs = []
+    npc_file = File.join("data/maps", entry['folder'], "NPC_events.json")
+    if File.exist?(npc_file)
+      npc_data = JSON.parse(File.read(npc_file))
+      npc_data.each { |npc_def| @npcs << NPC.new(npc_def) }
+    end
 	
 	@roof_layers = []
     @roof_events.each_index do |idx|
@@ -175,6 +184,7 @@ class GameMap
 	@stair_events = []
 	@warp_events = []
 	@roof_offsets = []
+	@npcs = []
   end
 
   def tile_src_rect(tile_id)

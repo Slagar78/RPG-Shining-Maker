@@ -271,6 +271,10 @@ class Game
     @player.update_animation
     @player.update_movement if @game_state == :playing
 	
+	if @game_state == :playing && @game_map
+    @game_map.npcs.each { |npc| npc.update(@game_map, @player) }
+    end
+	
 	# Fade-логика для варпа (стиль Sega RPG)
     if @game_state == :warping
       if @warp_delay > 0
@@ -457,6 +461,8 @@ end
       end
 
       @game_map.draw_animated_tiles(@show_anim) if @game_map
+	  
+	  @game_map.npcs.each { |npc| npc.draw(@camera.render_camera) }
 
       @player.draw
 
