@@ -4,7 +4,7 @@ class NPC
   attr_reader :x, :y, :id
 
   TILE_SIZE = 48
-  PIXEL_SPEED = 4
+  PIXEL_SPEED = 3
   ANIM_SPEED = 12
 
   DIR_MAP = {
@@ -131,37 +131,40 @@ class NPC
 
   private
 
-  def update_wander(map, player)
-    return if @moving
-    if @wait_timer > 0
-      @wait_timer -= 1
-      return
-    end
+def update_wander(map, player)
+  return if @moving
 
-    dirs = [:down, :left, :right, :up].shuffle
-    dirs.each do |dir|
-      new_x = @x
-      new_y = @y
-      case dir
-      when :down  then new_y += 1
-      when :up    then new_y -= 1
-      when :left  then new_x -= 1
-      when :right then new_x += 1
-      end
-
-      next if (new_x - @home_x).abs > @radius
-      next if (new_y - @home_y).abs > @radius
-      next if map && !map.passable?(new_x, new_y)
-      next if player && new_x == player.x && new_y == player.y
-
-      @direction = dir.to_s
-      @move_dir = dir
-      @moving = true
-      @pixel_offset = 0
-      @wait_timer = rand(40..120)
-      return
-    end
-
-    @wait_timer = rand(40..120)
+  if @wait_timer > 0
+    @wait_timer -= 1
+    return
   end
+
+  dirs = [:down, :left, :right, :up].shuffle
+  dirs.each do |dir|
+    new_x = @x
+    new_y = @y
+    case dir
+    when :down  then new_y += 1
+    when :up    then new_y -= 1
+    when :left  then new_x -= 1
+    when :right then new_x += 1
+    end
+
+    next if (new_x - @home_x).abs > @radius
+    next if (new_y - @home_y).abs > @radius
+    next if map && !map.passable?(new_x, new_y)
+    next if map && map.npc_at?(new_x, new_y)   # ← не заходить на клетку с другим NPC
+    next if player && new_x == player.x && new_y == player.y
+
+    @direction = dir.to_s
+    @move_dir = dir
+    @moving = true
+    @pixel_offset = 0
+    @wait_timer = rand(30..60)   # спокойная пауза
+    return
+  end
+
+  @wait_timer = rand(30..60)
+end
+
 end

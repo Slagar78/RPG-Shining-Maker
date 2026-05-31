@@ -147,6 +147,7 @@ end
       return if new_x < 0 || new_x >= @map.width
       return if new_y < 0 || new_y >= @map.height
       return unless @map.passable?(new_x, new_y, @x, @y) && @map.inside_area?(new_x, new_y)
+	  return if @map.npc_at?(new_x, new_y)
     else
       return if new_x < 0 || new_x >= DEFAULT_GRID_W
       return if new_y < 0 || new_y >= DEFAULT_GRID_H

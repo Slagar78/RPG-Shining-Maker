@@ -238,6 +238,10 @@ def passable?(x, y, from_x = nil, from_y = nil)
   true
 end
 
+  def npc_at?(x, y)
+    @npcs.any? { |npc| npc.x == x && npc.y == y }
+  end
+
   def tile_type_at(x, y)
     return 1 if x < 0 || x >= @width || y < 0 || y >= @height
     tile_id = @tiles[x][y]
