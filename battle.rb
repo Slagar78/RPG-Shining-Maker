@@ -531,6 +531,15 @@ end
     if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
       case @battle_menu.selected_index
       when 0  # Attack
+        # Блокируем атаку, если стоим на союзнике
+        unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+          @battle_menu.close
+          @battle_state = :player_turn
+          @cursor.visible = true
+          sync_cursor_to_unit
+          return
+        end
+
         targets = find_adjacent_enemies(@current_unit)
         if targets.any?
           @attack_targets = sort_targets_by_angle(targets, @current_unit[:x], @current_unit[:y])
@@ -576,7 +585,16 @@ end
         end
 		
       when 3  # Stay
-        end_current_turn
+        unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+          # Стоим на союзнике – Stay не завершает ход
+          @battle_menu.close
+          @battle_state = :player_turn
+          @cursor.visible = true
+          sync_cursor_to_unit
+          @audio.play_sfx("cancel_menu") if @audio
+        else
+          end_current_turn
+        end
       else
         @battle_menu.close
         @battle_state = :player_turn
@@ -649,21 +667,17 @@ end   # ← это последний end метода handle_input (он уже
       if @battle_player
         @battle_player.update
         
-        # Сначала обрабатываем возможное нажатие A/D с проверкой занятости
+        # Меню открывается всегда, независимо от клетки
         if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-          unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
-            # Клетка занята – полностью игнорируем нажатие, ничего не делаем
+          if @battle_player.moving
+            @pending_menu = true
           else
-            if @battle_player.moving
-              @pending_menu = true
-            else
-              can_attack = adjacent_enemy?(@current_unit)
-              open_battle_menu(can_attack)
-            end
+            can_attack = adjacent_enemy?(@current_unit)
+            open_battle_menu(can_attack)
           end
         end
 
-        # Теперь обновляем позицию и курсор
+        # Обновляем позицию и курсор
         unless @battle_player.moving
           if @current_unit[:x] != @battle_player.x || @current_unit[:y] != @battle_player.y
             if cell_free?(@battle_player.x, @battle_player.y, @current_unit)
@@ -673,11 +687,10 @@ end   # ← это последний end метода handle_input (он уже
           end
           sync_cursor_to_unit
 
+          # Если меню было запрошено во время движения – открываем без проверки
           if @pending_menu
-            if cell_free?(@battle_player.x, @battle_player.y, @current_unit)
-              can_attack = adjacent_enemy?(@current_unit)
-              open_battle_menu(can_attack)
-            end
+            can_attack = adjacent_enemy?(@current_unit)
+            open_battle_menu(can_attack)
             @pending_menu = false
           end
         end
