@@ -41,30 +41,32 @@ class BattlePlayer
     @highlight_tiles = new_tiles
   end
 
-  def try_move(dir, battle_manager = nil)
-    return if @moving
+def try_move(dir, battle_manager = nil)
+  return if @moving
 
-    new_x = @x
-    new_y = @y
-    case dir
-    when DIR_RIGHT then new_x += 1
-    when DIR_LEFT  then new_x -= 1
-    when DIR_DOWN  then new_y += 1
-    when DIR_UP    then new_y -= 1
-    end
-
-    return unless @highlight_tiles.include?([new_x, new_y])
-    return if new_x < 0 || new_x >= @map_width || new_y < 0 || new_y >= @map_height
-
-    if @direction != dir
-      @direction = dir
-      return
-    end
-
-    @move_dir = dir
-    @moving = true
-    @pixel_offset = 0
+  # 1. Сразу разрешаем поворот на месте, если направление изменилось
+  if @direction != dir
+    @direction = dir
+    return
   end
+
+  # 2. Только потом проверяем, можно ли сделать шаг
+  new_x = @x
+  new_y = @y
+  case dir
+  when DIR_RIGHT then new_x += 1
+  when DIR_LEFT  then new_x -= 1
+  when DIR_DOWN  then new_y += 1
+  when DIR_UP    then new_y -= 1
+  end
+
+  return unless @highlight_tiles.include?([new_x, new_y])
+  return if new_x < 0 || new_x >= @map_width || new_y < 0 || new_y >= @map_height
+
+  @move_dir = dir
+  @moving = true
+  @pixel_offset = 0
+end
 
   def move_towards(target_x, target_y, battle_manager = nil)
     dx = target_x - @x
