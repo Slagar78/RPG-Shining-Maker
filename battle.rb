@@ -455,8 +455,13 @@ end
 
 
   def cell_free?(x, y, except_unit = nil)
+  # Для врагов другие враги не блокируют (могут проходить сквозь своих)
+  if except_unit && except_unit[:enemy]
+    (@allies + @enemies).none? { |u| u != except_unit && u[:x] == x && u[:y] == y && u[:actor] }
+  else
     (@allies + @enemies).none? { |u| u != except_unit && u[:x] == x && u[:y] == y }
   end
+end
 
   def next_unit
     next_index = (@current_unit_index + 1) % @turn_order.size
@@ -724,10 +729,15 @@ end   # ← это последний end метода handle_input (он уже
       unless @battle_player.moving
         if @enemy_move_index < @enemy_move_queue.size
           target = @enemy_move_queue[@enemy_move_index]
-          @battle_player.move_towards(target[0], target[1], self)
-          unless @battle_player.moving
-            if @battle_player.x == target[0] && @battle_player.y == target[1]
-              @enemy_move_index += 1
+          # Если клетка занята другим врагом – пропускаем её, не пытаемся встать
+          if @enemies.any? { |e| e != @current_unit && e[:x] == target[0] && e[:y] == target[1] }
+            @enemy_move_index += 1
+          else
+            @battle_player.move_towards(target[0], target[1], self)
+            unless @battle_player.moving
+              if @battle_player.x == target[0] && @battle_player.y == target[1]
+                @enemy_move_index += 1
+              end
             end
           end
         else

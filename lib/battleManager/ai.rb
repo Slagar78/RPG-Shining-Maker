@@ -2,16 +2,14 @@
 
 class EnemyAI
   def self.decide_moves(unit, allies, enemies, highlight_tiles)
-    # Выбираем тактику по полю ai (по умолчанию 0)
-    case unit[:ai]
+    case unit[:ai_type] || unit[:ai] || 0
     when 1
-      decide_moves_defensive(unit, allies, enemies, highlight_tiles)
+      []  # защитный – стоит на месте
     else
       decide_moves_aggressive(unit, allies, enemies, highlight_tiles)
     end
   end
 
-  # Агрессивный ИИ – идёт к ближайшему герою
   def self.decide_moves_aggressive(unit, allies, enemies, highlight_tiles)
     return [] if allies.empty?
 
@@ -19,46 +17,58 @@ class EnemyAI
     return [] unless target
     tx, ty = target[:x], target[:y]
 
-    # 1. Соседние клетки, с которых можно атаковать, и они свободны
+    # Все клетки, занятые любыми юнитами (кроме самого себя)
+    occupied = (allies + enemies)
+      .reject { |u| u.equal?(unit) }
+      .map { |u| [u[:x], u[:y]] }
+
+    # Свободные клетки – только те, где никого нет
+    free_tiles = highlight_tiles.select { |pos| !occupied.include?(pos) }
+
+    # 1. Пытаемся найти свободную клетку рядом с целью для атаки
     attack_positions = []
     [[1,0],[-1,0],[0,1],[0,-1]].each do |dx, dy|
       nx = tx + dx
       ny = ty + dy
-      if highlight_tiles.include?([nx, ny]) &&
-         (allies + enemies).none? { |u| u != unit && u[:x] == nx && u[:y] == ny }
-        attack_positions << [nx, ny]
-      end
+      attack_positions << [nx, ny] if free_tiles.include?([nx, ny])
     end
 
     if attack_positions.any?
-      # Выбираем ближайшую свободную клетку для атаки
-      target_cell = attack_positions.min_by { |pos| (pos[0] - unit[:x]).abs + (pos[1] - unit[:y]).abs }
-      return build_path_to(unit, target_cell, highlight_tiles)
+      goal = attack_positions.min_by { |pos|
+        (pos[0] - unit[:x]).abs + (pos[1] - unit[:y]).abs
+      }
+    elsif free_tiles.any?
+      # 2. Иначе просто идём к ближайшей свободной клетке
+      goal = free_tiles.min_by { |pos|
+        (pos[0] - tx).abs + (pos[1] - ty).abs
+      }
+    else
+      # Вообще нет свободных клеток – стоим на месте, без метаний
+      return []
     end
 
-    # 2. Если атаковать нельзя, идём к любой свободной клетке (приближаемся)
-    free_tiles = highlight_tiles.select do |pos|
-      (allies + enemies).none? { |u| u != unit && u[:x] == pos[0] && u[:y] == pos[1] }
+    # Строим жадный путь (разрешено ходить по любым highlight_tiles)
+    path = build_greedy_path(unit, goal, highlight_tiles)
+
+    # Обрезаем хвост из занятых клеток – чтобы последний шаг был свободным
+    final_occupied = (allies + enemies)
+      .reject { |u| u.equal?(unit) }
+      .map { |u| [u[:x], u[:y]] }
+    while !path.empty? && final_occupied.include?(path.last)
+      path.pop
     end
-    return [] if free_tiles.empty?
 
-    best = free_tiles.min_by { |pos| (pos[0] - tx).abs + (pos[1] - ty).abs }
-    build_path_to(unit, best, highlight_tiles)
+    path
   end
 
-  # Защитный ИИ – стоит на месте, ждёт героя
-  def self.decide_moves_defensive(unit, allies, enemies, highlight_tiles)
-    # Не двигаемся, остаёмся на текущей клетке
-    []
-  end
-
-  # Построение жадного пути от юнита к целевой клетке
-  def self.build_path_to(unit, goal, highlight_tiles)
+  # Жадный путь: можно ходить по всем клеткам из highlight_tiles (включая занятые врагами)
+  def self.build_greedy_path(unit, goal, highlight_tiles)
     path = []
     cx, cy = unit[:x], unit[:y]
     gx, gy = goal[0], goal[1]
+    move = unit[:mov] || 3
 
-    (unit[:mov] || 3).times do
+    move.times do
       candidates = []
       [[1,0],[-1,0],[0,1],[0,-1]].each do |dx, dy|
         nx = cx + dx
@@ -67,6 +77,7 @@ class EnemyAI
       end
       break if candidates.empty?
 
+      # Выбираем ближайшую к цели
       candidates.sort_by! { |x, y| (x - gx).abs + (y - gy).abs }
       cx, cy = candidates.first
       path << [cx, cy]
