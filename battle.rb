@@ -798,10 +798,11 @@ end   # ← это последний end метода handle_input (он уже
 
 when :death_animation
   @death_anim&.update
+  @battle_player&.update_animation
+  
   if @death_anim&.finished
     @death_anim = nil
-
-    # Юнит уже удалён из массивов, просто завершаем ход
+    # Юнит уже удалён из массивов, завершаем ход
     if @current_unit && @current_unit[:hp] > 0
       end_current_turn
     else
@@ -842,13 +843,20 @@ def return_from_battle_scene
 end
 
 def start_unit_death(unit)
-  # Немедленно удаляем из боевых списков, чтобы обычный рендер его не рисовал
+
+  # Удаляем из боевых списков
   if @enemies.include?(unit)
     @enemies.delete(unit)
   elsif @allies.include?(unit)
     @allies.delete(unit)
   end
+
+  # Удаляем из очереди и корректируем индекс
+  removed_index = @turn_order.index(unit)
   @turn_order.delete(unit)
+  if removed_index && removed_index < @current_unit_index
+    @current_unit_index -= 1
+  end
 
   @death_anim = UnitDeath.new(unit, TILE_SIZE)
   @battle_state = :death_animation

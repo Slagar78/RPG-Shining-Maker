@@ -1,6 +1,4 @@
 # lib/battleManager/unit_death.rb
-# Анимация смерти юнита: быстрое вращение на месте (смена направлений по часовой стрелке, два круга)
-
 class UnitDeath
   attr_reader :unit, :finished
 
@@ -8,35 +6,46 @@ class UnitDeath
     @unit = unit
     @tile_size = tile_size
     @timer = 0
-    @switch_speed = 5         # кадров на одно направление (чем меньше, тем быстрее вращение)
-    @current_step = 0         # общее количество смен направлений
-    @max_steps = 8            # два круга по 4 направления = 8 смен
+    @switch_speed = 5
+    @current_step = 0
+    @max_steps = 8
     @finished = false
 
-    # Начинаем с направления вправо (по часовой стрелке)
-    @dir_index = 1            # 0=вниз, 1=вправо, 2=вверх, 3=влево
+    @dir_index = 1
     @anim_frame = 0
     @anim_timer = 0
-    @anim_speed = 5           # скорость смены кадров внутри одного направления
+    @anim_speed = 5
+
+    # Задержка после вращения (в секундах)
+    @delay = 0.7
+    @post_spin_timer = 0.0
+    @spinning_completed = false
   end
 
   def update
     return if @finished
 
+    if @spinning_completed
+      # Ждём, пока пройдёт задержка
+      @post_spin_timer += Raylib.GetFrameTime()
+      if @post_spin_timer >= @delay
+        @finished = true
+      end
+      return
+    end
+
+    # Фаза вращения
     @timer += 1
-    # Переключение направления каждые @switch_speed кадров
     if @timer >= @switch_speed
       @timer = 0
       @current_step += 1
       if @current_step >= @max_steps
-        @finished = true
+        @spinning_completed = true
         return
       end
-      # По часовой стрелке: 1 -> 2 -> 3 -> 0 -> 1 ...
       @dir_index = (@dir_index + 1) % 4
     end
 
-    # Анимация кадров (ноги) для живости
     @anim_timer += 1
     if @anim_timer >= @anim_speed
       @anim_timer = 0
@@ -45,24 +54,19 @@ class UnitDeath
   end
 
   def draw(camera, highlight_tex = nil)
-    return if @finished
+    return if @finished || @spinning_completed
     tex = @unit[:tex]
     return unless tex
 
-    # Ряд и флип по текущему направлению
     row, flip = case @dir_index
-                when 0  # вниз
-                  [2, false]
-                when 1  # вправо
-                  [1, true]
-                when 2  # вверх
-                  [0, false]
-                when 3  # влево
-                  [1, false]
+                when 0 then [2, false]
+                when 1 then [1, true]
+                when 2 then [0, false]
+                when 3 then [1, false]
                 end
 
     src_width = @tile_size.to_f
-    src_width = -src_width if flip   # отражаем текстуру по горизонтали для вправо
+    src_width = -src_width if flip
 
     src = Raylib::Rectangle.create(
       @anim_frame * @tile_size.to_f,
@@ -71,7 +75,6 @@ class UnitDeath
       @tile_size.to_f
     )
 
-    # Рисуем по центру клетки
     screen_x = @unit[:x] * @tile_size - camera.x + @tile_size / 2.0
     screen_y = @unit[:y] * @tile_size - camera.y + @tile_size / 2.0
     dest = Raylib::Rectangle.create(
