@@ -415,7 +415,6 @@ end
     # свои не блокируют
   else
     blocking_positions = @allies.map { |a| [a[:x], a[:y]] }
-    # враги не блокируют друг друга
   end
 
   # Проверка проходимости клетки (без учёта своих)
@@ -659,13 +658,18 @@ end   # ← это последний end метода handle_input (он уже
           end
           sync_cursor_to_unit
           if @pending_menu
-            can_attack = adjacent_enemy?(@current_unit)
-            open_battle_menu(can_attack)
-            @pending_menu = false
+              can_attack = adjacent_enemy?(@current_unit)
+              open_battle_menu(can_attack)
+              @pending_menu = false
+            end
           end
-        end
 
         if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+          # Проверяем по фактической позиции игрока на поле
+          unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+            return
+          end
+
           if @battle_player.moving
             @pending_menu = true
           else
