@@ -3,6 +3,7 @@ require 'json'
 require 'raylib'
 require_relative 'lib/battleManager/hp_mp_panel'
 require_relative 'lib/battleManager/battle_sprite_animation'
+require_relative 'lib/battleManager/unit_death'
 
 shared_lib_path = Gem::Specification.find_by_name('raylib-bindings').full_gem_path + '/lib/'
 Raylib.load_lib(shared_lib_path + 'libraylib.dll')
@@ -118,6 +119,8 @@ class BattleManager
     @attack_targets = []
     @attack_target_index = 0
     @highlight_tex = load_highlight_texture
+	@death_anim = nil
+    @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
 	
 	@fade_alpha = 0
     @pending_attacker = nil
@@ -782,14 +785,32 @@ end   # ← это последний end метода handle_input (он уже
 
      when :fade_to_battle
       @fade_alpha += 600 * GetFrameTime()
-      if @fade_alpha >= 255
-        @fade_alpha = 255
-        @battle_scene.start(@pending_attacker, @pending_defender, @pending_damage)
-        @pending_attacker = nil
-        @pending_defender = nil
-        @pending_damage = 0
-        @battle_state = :battle_scene
-      end
+      
+	if @fade_alpha >= 255
+      @fade_alpha = 255
+      @battle_scene.start(@pending_attacker, @pending_defender, @pending_damage)
+      @last_defender = @pending_defender
+      @pending_attacker = nil
+      @pending_defender = nil
+      @pending_damage = 0
+      @battle_state = :battle_scene
+    end
+
+when :death_animation
+  @death_anim&.update
+  if @death_anim&.finished
+    @death_anim = nil
+
+    # Юнит уже удалён из массивов, просто завершаем ход
+    if @current_unit && @current_unit[:hp] > 0
+      end_current_turn
+    else
+      @current_unit_index += 1
+      @current_unit_index = 0 if @current_unit_index >= @turn_order.size
+      @current_unit = @turn_order[@current_unit_index]
+      start_current_turn if @current_unit
+    end
+  end
 	  	  	  
     end  # ← конец case
   end    # ← конец метода update
@@ -807,13 +828,33 @@ end   # ← это последний end метода handle_input (он уже
 
   def draw
     @renderer.draw
+	@death_anim.draw(@camera) if @death_anim
   end
 
-  def return_from_battle_scene
-    @battle_state = :player_turn
-    @cursor.visible = true
-    sync_cursor_to_unit
+def return_from_battle_scene
+  if @last_defender && @last_defender[:hp] <= 0
+    start_unit_death(@last_defender)
+  else
+    # Завершаем ход атакующего (он уже ударил) и переходим к следующему юниту
+    end_current_turn
   end
+  @last_defender = nil
+end
+
+def start_unit_death(unit)
+  # Немедленно удаляем из боевых списков, чтобы обычный рендер его не рисовал
+  if @enemies.include?(unit)
+    @enemies.delete(unit)
+  elsif @allies.include?(unit)
+    @allies.delete(unit)
+  end
+  @turn_order.delete(unit)
+
+  @death_anim = UnitDeath.new(unit, TILE_SIZE)
+  @battle_state = :death_animation
+  @cursor.visible = false
+  @battle_menu.close if @battle_menu
+end
 
   def open_battle_menu(can_attack = false)
     @cursor.visible = false

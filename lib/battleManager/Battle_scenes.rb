@@ -238,7 +238,7 @@ def update
   end
 
   if @phase == :finished
-    @battle_manager.end_current_turn
+    @battle_manager.return_from_battle_scene
     @battle_manager.audio.stop_sfx("attack") if @battle_manager.audio   # выключаем боевую музыку
     @battle_manager.audio.resume_music if @battle_manager.audio         # снимаем фоновую музыку с паузы
 
