@@ -649,6 +649,21 @@ end   # ← это последний end метода handle_input (он уже
       if @battle_player
         @battle_player.update
         
+        # Сначала обрабатываем возможное нажатие A/D с проверкой занятости
+        if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+          unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+            # Клетка занята – полностью игнорируем нажатие, ничего не делаем
+          else
+            if @battle_player.moving
+              @pending_menu = true
+            else
+              can_attack = adjacent_enemy?(@current_unit)
+              open_battle_menu(can_attack)
+            end
+          end
+        end
+
+        # Теперь обновляем позицию и курсор
         unless @battle_player.moving
           if @current_unit[:x] != @battle_player.x || @current_unit[:y] != @battle_player.y
             if cell_free?(@battle_player.x, @battle_player.y, @current_unit)
@@ -657,24 +672,13 @@ end   # ← это последний end метода handle_input (он уже
             end
           end
           sync_cursor_to_unit
+
           if @pending_menu
+            if cell_free?(@battle_player.x, @battle_player.y, @current_unit)
               can_attack = adjacent_enemy?(@current_unit)
               open_battle_menu(can_attack)
-              @pending_menu = false
             end
-          end
-
-        if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-          # Проверяем по фактической позиции игрока на поле
-          unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
-            return
-          end
-
-          if @battle_player.moving
-            @pending_menu = true
-          else
-            can_attack = adjacent_enemy?(@current_unit)
-            open_battle_menu(can_attack)
+            @pending_menu = false
           end
         end
 
