@@ -60,6 +60,9 @@ class BattleRenderer
 
     # --- курсор ---
     @manager.cursor.draw(cam_x, cam_y)
+	
+	# --- информационная рамка под спрайтами ---
+    draw_info_cursor
 
     # --- союзники (кроме активного игрока) ---
     @manager.allies.each do |ally|
@@ -145,6 +148,19 @@ class BattleRenderer
   end
 
   private
+
+  def draw_info_cursor
+    return unless @manager.instance_variable_get(:@info_cursor_tex)
+    return unless [:info_mode, :info_profile].include?(@manager.battle_state)
+
+    tex = @manager.instance_variable_get(:@info_cursor_tex)
+    x = @manager.instance_variable_get(:@info_cursor_x) * BattleManager::TILE_SIZE - @manager.camera.x
+    y = @manager.instance_variable_get(:@info_cursor_y) * BattleManager::TILE_SIZE - @manager.camera.y
+
+    src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
+    dst = Raylib::Rectangle.create(x, y, BattleManager::TILE_SIZE, BattleManager::TILE_SIZE)
+    Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+  end
 
   def draw_active_unit(cam_x, cam_y)
     bp = @manager.battle_player

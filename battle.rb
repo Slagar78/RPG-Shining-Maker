@@ -4,6 +4,7 @@ require 'raylib'
 require_relative 'lib/battleManager/hp_mp_panel'
 require_relative 'lib/battleManager/battle_sprite_animation'
 require_relative 'lib/battleManager/unit_death'
+require_relative 'lib/ui'
 
 shared_lib_path = Gem::Specification.find_by_name('raylib-bindings').full_gem_path + '/lib/'
 Raylib.load_lib(shared_lib_path + 'libraylib.dll')
@@ -110,7 +111,17 @@ class BattleManager
     @cursor_hide_timer = 0
     @pending_menu = false
     @battle_scene = BattleScene.new(self, @game_text)
-	@renderer = BattleRenderer.new(self)
+
+    # Загружаем start_inventory (общий, как в game.rb)
+    @start_inventory = []
+  if File.exist?("data/actors/start_inventory.json")
+    data = JSON.parse(File.read("data/actors/start_inventory.json"))
+    @start_inventory = data["start_inventory"] || []
+  end
+    @profile = Profile.new(@font, @db, @start_inventory)
+	@portrait_cache = {}
+
+    @renderer = BattleRenderer.new(self)
     @start_x = 0
     @start_y = 0
     @attack_target = nil
@@ -119,6 +130,10 @@ class BattleManager
     @attack_targets = []
     @attack_target_index = 0
     @highlight_tex = load_highlight_texture
+	@info_cursor_tex = load_highlight_texture   # текстура рамки (та же)
+    @info_cursor_x = 0
+    @info_cursor_y = 0
+    @info_target = nil
 	@death_anim = nil
     @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
 	
@@ -395,7 +410,7 @@ end
   end
 
 
-    def calculate_move_range(unit)
+def calculate_move_range(unit)
   start_x = unit[:x]
   start_y = unit[:y]
   move   = unit[:mov]
@@ -521,6 +536,14 @@ end
 
   when :player_turn
     @battle_player.handle_input(self) if @battle_player
+	
+	if IsKeyPressed(KEY_S)
+      @info_cursor_x = @current_unit[:x]
+      @info_cursor_y = @current_unit[:y]
+      @battle_state = :info_mode
+      return
+    end
+	
     if @battle_player.moving
       @cursor.visible = false
     end
@@ -614,6 +637,37 @@ end
       @cursor.visible = true
       sync_cursor_to_unit
       @audio.play_sfx("cancel_menu") if @audio
+    end
+
+  when :info_mode
+    if IsKeyPressed(KEY_LEFT)
+      @info_cursor_x = [@info_cursor_x - 1, 0].max
+    elsif IsKeyPressed(KEY_RIGHT)
+      @info_cursor_x = [@info_cursor_x + 1, @battle_w - 1].min
+    elsif IsKeyPressed(KEY_UP)
+      @info_cursor_y = [@info_cursor_y - 1, 0].max
+    elsif IsKeyPressed(KEY_DOWN)
+      @info_cursor_y = [@info_cursor_y + 1, @battle_h - 1].min
+    end
+
+    if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+      ally = @allies.find { |a| a[:x] == @info_cursor_x && a[:y] == @info_cursor_y }
+      if ally
+        open_profile_for_ally(ally)
+        @battle_state = :info_profile
+      end
+    end
+
+    if IsKeyPressed(KEY_S)
+      @battle_state = :player_turn
+      @cursor.visible = true
+      sync_cursor_to_unit
+    end
+
+    when :info_profile
+    # Только запускаем анимацию закрытия по S, состояние сменится в update
+    if IsKeyPressed(KEY_S)
+      @profile.close
     end
 
   when :magic_select
@@ -827,9 +881,19 @@ end   # ← это последний end метода handle_input (он уже
       @battle_state = :battle_scene
     end
 
-when :death_animation
-  @death_anim&.update
-  @battle_player&.update_animation
+    when :info_mode
+      @battle_player&.update_animation   # чтобы персонаж топтался на месте
+    when :info_profile
+      @battle_player&.update_animation
+      @profile.update
+      if @profile.instance_variable_get(:@ready_to_close)
+        @profile.force_close
+        @battle_state = :info_mode
+      end
+
+    when :death_animation
+      @death_anim&.update
+      @battle_player&.update_animation
   
   if @death_anim&.finished
     @death_anim = nil
@@ -858,10 +922,13 @@ when :death_animation
     end
   end
 
-  def draw
-    @renderer.draw
-	@death_anim.draw(@camera) if @death_anim
+def draw
+  @renderer.draw
+  @death_anim.draw(@camera) if @death_anim
+  if @battle_state == :info_profile
+    @profile.draw
   end
+end
 
 def return_from_battle_scene
   if @last_defender && @last_defender[:hp] <= 0
@@ -901,6 +968,25 @@ end
     @battle_state = :action_menu
     @audio.play_sfx("confirm") if @audio
   end
+
+def draw_info_cursor
+  return unless @info_cursor_tex
+  x = @info_cursor_x * TILE_SIZE - @camera.x
+  y = @info_cursor_y * TILE_SIZE - @camera.y
+  dest = Rectangle.create(x, y, TILE_SIZE, TILE_SIZE)
+  src = Rectangle.create(0, 0, TILE_SIZE, TILE_SIZE)
+  DrawTexturePro(@info_cursor_tex, src, dest, Vector2.create(0,0), 0, WHITE)
+end
+
+def open_profile_for_ally(ally_unit)
+  party = @allies.map { |a| a[:actor] }.compact
+  classes_data = @db.classes
+  class_names = {}
+  classes_data.each { |c| class_names[c["id"]] = c["name"] }
+
+  # Используем уже созданный @profile и общий кэш портретов
+  @profile.open(ally_unit[:actor]["name"], party, class_names, classes_data, @portrait_cache, @start_inventory)
+end
 
   def unload
     UnloadRenderTexture(@static_bg) if @static_bg
