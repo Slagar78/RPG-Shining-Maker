@@ -208,8 +208,8 @@ class BattleManager
         hp: max_hp, max_hp: max_hp,
         mp: max_mp, max_mp: max_mp,
 
-        atk: actor ? (actor["atk"] || 10) : 10,
-        def: actor ? (actor["def"] || 5) : 5,
+        atk: (klass ? @db.stat_at_level(klass["attack_growth"], lv) : 4),
+        def: (klass ? @db.stat_at_level(klass["defense_growth"], lv) : 5),
         movetype: klass ? (klass["movetype"] || "regular") : "regular"
       }
     end
