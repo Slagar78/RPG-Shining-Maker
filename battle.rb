@@ -739,7 +739,7 @@ end   # ← это последний end метода handle_input
             @pending_menu = true
           else
             can_attack = adjacent_enemy?(@current_unit)
-            open_battle_menu(can_attack)
+            open_battle_menu
           end
         end
 
@@ -762,7 +762,7 @@ end   # ← это последний end метода handle_input
           # Если меню было запрошено во время движения – открываем без проверки
           if @pending_menu
             can_attack = adjacent_enemy?(@current_unit)
-            open_battle_menu(can_attack)
+            open_battle_menu
             @pending_menu = false
           end
         end
@@ -975,12 +975,13 @@ def start_unit_death(unit)
   @battle_menu.close if @battle_menu
 end
 
-  def open_battle_menu(can_attack = false)
-    @cursor.visible = false
-    @battle_menu.open(can_attack)
-    @battle_state = :action_menu
-    @audio.play_sfx("confirm") if @audio
-  end
+def open_battle_menu
+  can_attack = adjacent_enemy?(@current_unit)
+  @cursor.visible = false
+  @battle_menu.open(can_attack)
+  @battle_state = :action_menu
+  @audio.play_sfx("confirm") if @audio
+end
 
 def draw_info_cursor
   return unless @info_cursor_tex
