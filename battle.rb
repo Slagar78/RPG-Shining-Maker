@@ -247,8 +247,8 @@ class BattleManager
         hp: base_hp, max_hp: base_hp,
         mp: base_mp, max_mp: base_mp,
 
-        atk: enemy ? (enemy["stats"]["atk"] || 12) : 12,
-        def: enemy ? (enemy["stats"]["def"] || 6) : 6,
+        atk: enemy ? enemy["stats"]["base_att"] : 0,
+        def: enemy ? enemy["stats"]["base_def"] : 0,
         movetype: enemy ? (enemy["movetype"] || "regular") : "regular"
       }
     end
