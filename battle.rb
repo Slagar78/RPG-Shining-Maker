@@ -660,6 +660,7 @@ end
       if ally
         open_profile_for_ally(ally)
         @battle_state = :info_profile
+		@audio.play_sfx("confirm") if @audio
       end
     end
 
@@ -672,6 +673,7 @@ end
     when :info_profile
     # Только запускаем анимацию закрытия по S, состояние сменится в update
     if IsKeyPressed(KEY_S)
+	@audio.play_sfx("cancel_menu") if @audio
       @profile.close
     end
 
