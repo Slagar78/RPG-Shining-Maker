@@ -344,19 +344,22 @@ class BattleManager
     occupied
   end
 
-
-def find_adjacent_enemies(unit)
-  ux = unit[:x]
-  uy = unit[:y]
-  @enemies.select do |enemy|
-    ex = enemy[:x]
-    ey = enemy[:y]
-    (ex - ux).abs + (ey - uy).abs == 1 && enemy[:hp] > 0  # ← только живые
-  end
+def adjacent_enemy?(unit)
+  result = !find_adjacent_enemies(unit).empty?
+  # puts "[DEBUG adjacent?] unit=(#{unit[:x]},#{unit[:y]}) hp=#{unit[:hp]} result=#{result}"
+  result
 end
 
-def adjacent_enemy?(unit)
-  !find_adjacent_enemies(unit).empty?
+def find_adjacent_enemies(unit)
+  ux, uy = unit[:x], unit[:y]
+  enemies = @enemies.select do |e|
+    ex, ey = e[:x], e[:y]
+    dist = (ex - ux).abs + (ey - uy).abs
+    alive = e[:hp] > 0
+    dist == 1 && alive
+  end
+  # puts "[DEBUG find_adjacent] found #{enemies.size} enemies"
+  enemies
 end
 
 def sort_targets_by_angle(targets, from_x, from_y)
@@ -762,6 +765,7 @@ end   # ← это последний end метода handle_input
 
           # Если меню было запрошено во время движения – открываем без проверки
           if @pending_menu
+		  # puts "[DEBUG pending_menu] moving=#{@battle_player.moving}"
             can_attack = adjacent_enemy?(@current_unit)
             open_battle_menu
             @pending_menu = false
@@ -983,6 +987,12 @@ def start_unit_death(unit)
 end
 
 def open_battle_menu
+  # Принудительно синхронизируем позицию юнита с визуальным положением (если игрок не двигается)
+  if @battle_player && !@battle_player.moving
+    @current_unit[:x] = @battle_player.x
+    @current_unit[:y] = @battle_player.y
+  end
+
   can_attack = adjacent_enemy?(@current_unit)
   @cursor.visible = false
   @battle_menu.open(can_attack)
