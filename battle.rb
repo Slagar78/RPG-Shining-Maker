@@ -136,6 +136,7 @@ class BattleManager
     @info_cursor_y = 0
     @info_target = nil
 	@death_anim = nil
+	@last_attacker = nil
     @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
 	
 	@fade_alpha = 0
@@ -350,7 +351,7 @@ def find_adjacent_enemies(unit)
   @enemies.select do |enemy|
     ex = enemy[:x]
     ey = enemy[:y]
-    (ex - ux).abs + (ey - uy).abs == 1
+    (ex - ux).abs + (ey - uy).abs == 1 && enemy[:hp] > 0  # ← только живые
   end
 end
 
@@ -427,10 +428,10 @@ def calculate_move_range(unit)
   # Определяем, какие юниты блокируют проход (противоположная команда)
   is_ally = @allies.include?(unit)
   if is_ally
-    blocking_positions = @enemies.map { |e| [e[:x], e[:y]] }
+    blocking_positions = @enemies.select { |e| e[:hp] > 0 }.map { |e| [e[:x], e[:y]] }
     # свои не блокируют
   else
-    blocking_positions = @allies.map { |a| [a[:x], a[:y]] }
+    blocking_positions = @allies.select { |a| a[:hp] > 0 }.map { |a| [a[:x], a[:y]] }
   end
 
   # Проверка проходимости клетки (без учёта своих)
@@ -887,6 +888,7 @@ end   # ← это последний end метода handle_input
 	if @fade_alpha >= 255
       @fade_alpha = 255
       @battle_scene.start(@pending_attacker, @pending_defender, @pending_damage)
+	  @last_attacker = @pending_attacker
       @last_defender = @pending_defender
       @pending_attacker = nil
       @pending_defender = nil
@@ -945,12 +947,17 @@ end
 
 def return_from_battle_scene
   if @last_defender && @last_defender[:hp] <= 0
+    # Если атакующий – союзник, начисляем +1 убийство
+    if @last_attacker && @last_attacker[:actor]
+      @last_attacker[:actor]["kills"] ||= 0
+      @last_attacker[:actor]["kills"] += 1
+    end
     start_unit_death(@last_defender)
   else
-    # Завершаем ход атакующего (он уже ударил) и переходим к следующему юниту
     end_current_turn
   end
   @last_defender = nil
+  @last_attacker = nil
 end
 
 def start_unit_death(unit)
