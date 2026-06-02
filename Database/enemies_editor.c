@@ -424,11 +424,11 @@ static void open_edit_fields(cJSON *enemy) {
     edit_field_count = EF_MAPSPRITE+1;
 
     // Battle Sprite
-    const char *bspr = json_string(enemy, "battle_sprite");
+    const char *bspr = json_string(enemy, "battle_sprite_path");
     strncpy(battlesprite_buf, bspr, 63); battlesprite_buf[63] = '\0';
     f = &edit_fields[EF_BATTLESPRITE];
     snprintf(f->text, sizeof(f->text), "%s", battlesprite_buf);
-    f->active = 0; f->json_obj = enemy; f->json_key = "battle_sprite"; f->is_numeric = 0; f->max_len = 0; f->is_special = 0;
+    f->active = 0; f->json_obj = enemy; f->json_key = "battle_sprite_path"; f->is_numeric = 0; f->max_len = 0; f->is_special = 0;
     f->rect = (SDL_Rect){base_x+field_offset, base_y + EF_BATTLESPRITE*gap, 150, line_h};
     edit_field_count = EF_BATTLESPRITE+1;
 
@@ -1227,44 +1227,83 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         my >= add_btn_rect.y && my < add_btn_rect.y+add_btn_rect.h) {
         if (active_field_index >= 0) commit_field(active_field_index);
         active_field_index = -1;
-        cJSON *new_enemy = cJSON_CreateObject();
-        int new_id = 0;
-        for (int i = 0; i < enemies_count; i++) {
-            int id = json_int(cJSON_GetArrayItem(enemies_array, i), "id", -1);
-            if (id >= new_id) new_id = id + 1;
-        }
-        cJSON_AddNumberToObject(new_enemy, "id", new_id);
-        cJSON_AddStringToObject(new_enemy, "name", "New Enemy");
-        cJSON_AddStringToObject(new_enemy, "portrait", portrait_list_count > 0 ? portrait_list[0] : "Mushra");
-        cJSON_AddStringToObject(new_enemy, "mapsprite", mapsprite_list_count > 0 ? mapsprite_list[0] : "hero");
-        cJSON_AddStringToObject(new_enemy, "battle_sprite", "");
-        cJSON_AddStringToObject(new_enemy, "race", "Enterran");
-        cJSON_AddStringToObject(new_enemy, "status", "normal");
-        cJSON *res = cJSON_CreateObject();
-        cJSON_AddStringToObject(res, "wind", "none");
-        cJSON_AddStringToObject(res, "lightning", "none");
-        cJSON_AddStringToObject(res, "ice", "none");
-        cJSON_AddStringToObject(res, "fire", "none");
-        cJSON_AddStringToObject(res, "aqua", "none");
-        cJSON_AddStringToObject(res, "earth", "none");
-        cJSON_AddStringToObject(res, "neutral", "none");
-        cJSON_AddStringToObject(res, "affliction", "none");
-        cJSON_AddItemToObject(new_enemy, "resistance", res);
-        cJSON_AddStringToObject(new_enemy, "move_type", "regular");
-        cJSON_AddStringToObject(new_enemy, "initial_status", "none");
-        cJSON *spells = cJSON_CreateArray();
-        for (int i = 0; i < ENEMY_MAX_SPELLS; i++) cJSON_AddItemToArray(spells, cJSON_CreateString("Nothing"));
-        cJSON_AddItemToObject(new_enemy, "spells", spells);
-        cJSON *spell_levels = cJSON_CreateArray();
-        for (int i = 0; i < ENEMY_MAX_SPELLS; i++) cJSON_AddItemToArray(spell_levels, cJSON_CreateNumber(1));
-        cJSON_AddItemToObject(new_enemy, "spell_levels", spell_levels);
-        // prowess по умолчанию
-        cJSON *prowess_arr = cJSON_CreateArray();
-        cJSON_AddItemToArray(prowess_arr, cJSON_CreateString("critical150_1in32"));
-        cJSON_AddItemToArray(prowess_arr, cJSON_CreateString("double_1in32"));
-        cJSON_AddItemToArray(prowess_arr, cJSON_CreateString("counter_1in32"));
-        cJSON_AddItemToObject(new_enemy, "prowess", prowess_arr);
-        cJSON_AddItemToArray(enemies_array, new_enemy);
+
+cJSON *new_enemy = cJSON_CreateObject();
+int new_id = 0;
+for (int i = 0; i < enemies_count; i++) {
+    int id = json_int(cJSON_GetArrayItem(enemies_array, i), "id", -1);
+    if (id >= new_id) new_id = id + 1;
+}
+cJSON_AddNumberToObject(new_enemy, "id", new_id);
+cJSON_AddStringToObject(new_enemy, "name", "New Enemy");
+cJSON_AddStringToObject(new_enemy, "portrait", "Samurai_Ryuma");
+cJSON_AddStringToObject(new_enemy, "mapsprite", "Gizmo");
+cJSON_AddStringToObject(new_enemy, "battle_sprite_path", "assets/battles/battlesprites/enemies/Gizmo");
+cJSON_AddStringToObject(new_enemy, "race", "Cadrian");
+cJSON_AddStringToObject(new_enemy, "status", "normal");
+cJSON_AddNumberToObject(new_enemy, "level", 1);
+cJSON_AddStringToObject(new_enemy, "spell_power", "regular");
+
+// Stats
+cJSON *stats = cJSON_CreateObject();
+cJSON_AddNumberToObject(stats, "max_hp", 5);
+cJSON_AddNumberToObject(stats, "max_mp", 5);
+cJSON_AddNumberToObject(stats, "base_att", 4);
+cJSON_AddNumberToObject(stats, "base_def", 4);
+cJSON_AddNumberToObject(stats, "base_agi", 10);
+cJSON_AddNumberToObject(stats, "base_mov", 3);
+cJSON_AddItemToObject(new_enemy, "stats", stats);
+
+// Resistance
+cJSON *res = cJSON_CreateObject();
+cJSON_AddStringToObject(res, "wind", "none");
+cJSON_AddStringToObject(res, "lightning", "minor");
+cJSON_AddStringToObject(res, "ice", "none");
+cJSON_AddStringToObject(res, "fire", "major");
+cJSON_AddStringToObject(res, "aqua", "weakness");
+cJSON_AddStringToObject(res, "earth", "none");
+cJSON_AddStringToObject(res, "neutral", "none");
+cJSON_AddStringToObject(res, "affliction", "immunity");
+cJSON_AddItemToObject(new_enemy, "resistance", res);
+
+// Prowess
+cJSON *prowess_arr = cJSON_CreateArray();
+cJSON_AddItemToArray(prowess_arr, cJSON_CreateString("critical_poison"));
+cJSON_AddItemToArray(prowess_arr, cJSON_CreateString("double_1in32"));
+cJSON_AddItemToArray(prowess_arr, cJSON_CreateString("counter_1in32"));
+cJSON_AddItemToObject(new_enemy, "prowess", prowess_arr);
+
+// Items
+cJSON *items_arr = cJSON_CreateArray();
+for (int i = 0; i < 4; i++) {
+    cJSON *item_obj = cJSON_CreateObject();
+    cJSON_AddStringToObject(item_obj, "item", "Nothing");
+    cJSON_AddBoolToObject(item_obj, "equipped", 0);
+    cJSON_AddItemToArray(items_arr, item_obj);
+}
+cJSON_AddItemToObject(new_enemy, "items", items_arr);
+
+// Spells
+cJSON *spells = cJSON_CreateArray();
+cJSON_AddItemToArray(spells, cJSON_CreateString("Drain"));
+cJSON_AddItemToArray(spells, cJSON_CreateString("Nothing"));
+cJSON_AddItemToArray(spells, cJSON_CreateString("Nothing"));
+cJSON_AddItemToArray(spells, cJSON_CreateString("Nothing"));
+cJSON_AddItemToObject(new_enemy, "spells", spells);
+
+// Spell levels
+cJSON *spell_levels = cJSON_CreateArray();
+cJSON_AddItemToArray(spell_levels, cJSON_CreateNumber(1));
+cJSON_AddItemToArray(spell_levels, cJSON_CreateNumber(1));
+cJSON_AddItemToArray(spell_levels, cJSON_CreateNumber(1));
+cJSON_AddItemToArray(spell_levels, cJSON_CreateNumber(1));
+cJSON_AddItemToObject(new_enemy, "spell_levels", spell_levels);
+
+cJSON_AddStringToObject(new_enemy, "initial_status", "none");
+cJSON_AddStringToObject(new_enemy, "move_type", "stealth");
+
+cJSON_AddItemToArray(enemies_array, new_enemy);
+
         enemies_count++;
         selected_index = enemies_count - 1;
         open_edit_fields(new_enemy);

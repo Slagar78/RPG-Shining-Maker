@@ -91,5 +91,97 @@
 			"spell_levels":	[1, 1, 1, 1],
 			"initial_status":	"none",
 			"move_type":	"stealth"
+		}, {
+			"id":	2,
+			"name":	"Gizmo",
+			"portrait":	"Samurai_Ryuma",
+			"mapsprite":	"Gizmo",
+			"battle_sprite_path":	"assets/battles/battlesprites/enemies/Gizmo",
+			"race":	"Cadrian",
+			"status":	"normal",
+			"level":	10,
+			"spell_power":	"regular",
+			"stats":	{
+				"max_hp":	5,
+				"max_mp":	12,
+				"base_att":	30,
+				"base_def":	1,
+				"base_agi":	18,
+				"base_mov":	4
+			},
+			"resistance":	{
+				"wind":	"none",
+				"lightning":	"minor",
+				"ice":	"none",
+				"fire":	"major",
+				"aqua":	"weakness",
+				"earth":	"none",
+				"neutral":	"none",
+				"affliction":	"immunity"
+			},
+			"prowess":	["critical_poison", "double_1in32", "counter_1in32"],
+			"items":	[{
+					"item":	"Nothing",
+					"equipped":	false
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}],
+			"spells":	["Drain", "Nothing", "Nothing", "Nothing"],
+			"spell_levels":	[1, 1, 1, 1],
+			"initial_status":	"none",
+			"move_type":	"stealth"
+		}, {
+			"id":	3,
+			"name":	"New Enemy",
+			"portrait":	"Huper_Rusephina",
+			"mapsprite":	"mapsprite107",
+			"battle_sprite_path":	"assets/battles/battlesprites/enemies/Gizmo",
+			"race":	"Cadrian",
+			"status":	"normal",
+			"level":	1,
+			"spell_power":	"regular",
+			"stats":	{
+				"max_hp":	5,
+				"max_mp":	5,
+				"base_att":	4,
+				"base_def":	4,
+				"base_agi":	10,
+				"base_mov":	3
+			},
+			"resistance":	{
+				"wind":	"none",
+				"lightning":	"minor",
+				"ice":	"none",
+				"fire":	"major",
+				"aqua":	"weakness",
+				"earth":	"none",
+				"neutral":	"none",
+				"affliction":	"immunity"
+			},
+			"prowess":	["critical_poison", "double_1in32", "counter_1in32"],
+			"items":	[{
+					"item":	"Nothing",
+					"equipped":	false
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}, {
+					"item":	"Nothing",
+					"equipped":	false
+				}],
+			"spells":	["Drain", "Nothing", "Nothing", "Nothing"],
+			"spell_levels":	[1, 1, 1, 1],
+			"initial_status":	"none",
+			"move_type":	"stealth"
 		}]
 }
