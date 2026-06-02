@@ -32,6 +32,10 @@ class BattleScene
   IDLE_AFTER_DURATION  = 1.5
   PRE_ATTACK_DURATION = 0.5
   RUN_IN_DURATION      = 0.35   # длительность выезда персонажа
+  
+  BLINK_COUNT     = 3
+  BLINK_INTERVAL  = 0.12
+  FADE_DURATION   = 0.4
 
   def initialize(battle_manager, game_text = {})
     @battle_manager = battle_manager
@@ -59,8 +63,15 @@ class BattleScene
     @attack_duration = 0.0
     @damage = 0
     @damage_applied = false
-	  @shutter_progress = 0.0
-	  @shutter_hold_timer = 0.0
+	
+	# Анимация
+    @dying_alpha = 255
+    @dying_blink_timer = 0.0
+    @dying_blinks = 0
+    @dying_visible = true
+	
+	@shutter_progress = 0.0
+	@shutter_hold_timer = 0.0
 	
     @defender_anim = :dodge
 
@@ -329,6 +340,7 @@ def update
           if @attacker_current_frame == attack_frames.size - 1
             @defender[:hp] = [@defender[:hp] - @damage, 0].max
             @damage_applied = true
+		  
           end
         end
       end
@@ -338,11 +350,58 @@ def update
         @attacker_current_frame = 0
         @defender_current_frame = 0
       end
+	  
     when :idle_after
-      update_animation(dt)
-      if @sub_phase_timer >= IDLE_AFTER_DURATION
-        finish
+  # Обновляем только атакующего (защитник застывает в последнем кадре dodge)
+  @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :idle, @attacker_current_frame, @attacker_anim_timer, dt)
+  if @sub_phase_timer >= IDLE_AFTER_DURATION
+    if @defender[:hp] <= 0
+      # Запускаем мигание и исчезновение
+      @sub_phase = :dying
+      @dying_alpha = 255
+      @dying_blink_timer = 0.0
+      @dying_blinks = 0
+      @dying_visible = true
+      # Защитник остаётся в кадре dodge, который был на момент смерти
+      # Атакующий уже стоит в idle
+    else
+      finish
+    end
+  end
+  
+  when :dying
+  if @dying_blinks < BLINK_COUNT
+    @dying_blink_timer += dt
+    if @dying_blink_timer >= BLINK_INTERVAL
+      @dying_blink_timer -= BLINK_INTERVAL
+      @dying_visible = !@dying_visible
+      if @dying_visible
+        @dying_alpha = 255
+      else
+        @dying_alpha = 0
+        @dying_blinks += 1
+        if @dying_blinks >= BLINK_COUNT
+          # Мигание завершено, принудительно начинаем плавное затухание
+          @dying_alpha = 255
+        end
       end
+    end
+  else
+    # Плавное затухание
+    @dying_alpha -= (255.0 / FADE_DURATION) * dt
+    if @dying_alpha <= 0
+      @dying_alpha = 0
+      @sub_phase = :dying_wait
+      @sub_phase_timer = 0.0
+    end
+  end
+
+when :dying_wait
+  @sub_phase_timer += dt
+  if @sub_phase_timer >= 0.5
+    finish
+  end
+	  
     end
   end
 end
@@ -385,13 +444,17 @@ def draw
     def_x = @defender[:enemy] ? ENEMY_X : @ally_draw_x
     def_y = @defender[:enemy] ? ENEMY_Y : ALLY_Y
 
-    if @sub_phase == :attack
-      draw_unit(@defender, @defender_anim, def_x, def_y, false, @defender_current_frame, true)
-      draw_unit(@attacker, :attack, att_x, att_y, false, @attacker_current_frame, true)
-    else
-      draw_unit(@attacker, :idle, att_x, att_y, false, @attacker_current_frame, true)
-      draw_unit(@defender, :idle, def_x, def_y, false, @defender_current_frame, true)
-    end
+if @sub_phase == :attack
+  draw_unit(@defender, @defender_anim, def_x, def_y, false, @defender_current_frame, true)
+  draw_unit(@attacker, :attack, att_x, att_y, false, @attacker_current_frame, true)
+elsif @sub_phase == :dying || @sub_phase == :dying_wait
+  # Защитник замирает в позе получения урона и исчезает (или уже невидим)
+  draw_unit_with_alpha(@defender, :dodge, def_x, def_y, false, @defender_current_frame, true, @dying_alpha)
+  draw_unit(@attacker, :idle, att_x, att_y, false, @attacker_current_frame, true)
+else
+  draw_unit(@attacker, :idle, att_x, att_y, false, @attacker_current_frame, true)
+  draw_unit(@defender, :idle, def_x, def_y, false, @defender_current_frame, true)
+end
 
     if @attacker && @attacker[:max_hp]
       load_panel_texture
@@ -717,4 +780,46 @@ end
     dst = Raylib::Rectangle.create(x, y, TILE_SIZE, TILE_SIZE)
     Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
   end
+  
+  def draw_unit_with_alpha(unit, anim_key, base_x, base_y, flip_h, frame_idx, use_top_left, alpha)
+    return unless unit
+    anim = unit[:battle_anim]
+    color = Raylib::Color.new
+    color.r = 255
+    color.g = 255
+    color.b = 255
+    color.a = alpha
+    
+    if anim
+      anim_data = anim.send(anim_key)
+      if anim_data && !anim_data[:frames].empty?
+        idx = frame_idx % anim_data[:frames].size
+        frame_info = anim_data[:frames][idx]
+        tex = frame_info[:tex]
+        frame_off_x = frame_info[:offset_x] || 0
+        frame_off_y = frame_info[:offset_y] || 0
+
+        x = base_x + anim_data[:offset_x] + frame_off_x
+        y = if use_top_left
+              base_y + anim_data[:offset_y] + frame_off_y
+            else
+              base_y + anim_data[:offset_y] + frame_off_y - (tex.height / 2.0)
+            end
+        src = Raylib::Rectangle.create(0, 0, flip_h ? -tex.width : tex.width, tex.height)
+        dst = Raylib::Rectangle.create(x, y, tex.width, tex.height)
+        Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, color)
+        return
+      end
+    end
+    
+    # Fallback: mapsprite с альфой
+    tex = unit[:tex]
+    return unless tex
+    x = base_x
+    y = base_y - (TILE_SIZE / 2)
+    src = Raylib::Rectangle.create(0, 2 * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+    dst = Raylib::Rectangle.create(x, y, TILE_SIZE, TILE_SIZE)
+    Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, color)
+  end
+  
 end

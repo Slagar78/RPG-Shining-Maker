@@ -59,7 +59,7 @@
 				"max_hp":	5,
 				"max_mp":	12,
 				"base_att":	30,
-				"base_def":	22,
+				"base_def":	1,
 				"base_agi":	18,
 				"base_mov":	4
 			},
