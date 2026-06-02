@@ -110,6 +110,7 @@ class BattleManager
 
     @cursor_hide_timer = 0
     @pending_menu = false
+	@pending_info = false
     @battle_scene = BattleScene.new(self, @game_text)
 
     # Загружаем start_inventory (общий, как в game.rb)
@@ -537,12 +538,16 @@ end
   when :player_turn
     @battle_player.handle_input(self) if @battle_player
 	
-	if IsKeyPressed(KEY_S)
-      @info_cursor_x = @current_unit[:x]
-      @info_cursor_y = @current_unit[:y]
-      @battle_state = :info_mode
-      return
-    end
+  if IsKeyPressed(KEY_S)
+  if @battle_player.moving
+    @pending_info = true          # запомнить, выполнить после движения
+  else
+    @info_cursor_x = @current_unit[:x]
+    @info_cursor_y = @current_unit[:y]
+    @battle_state = :info_mode
+  end
+  return
+end
 	
     if @battle_player.moving
       @cursor.visible = false
@@ -686,7 +691,7 @@ end
       @audio.play_sfx("cancel_menu") if @audio
     end
 	end
-end   # ← это последний end метода handle_input (он уже есть в файле)
+end   # ← это последний end метода handle_input
 
   def update
     @battle_menu.update
@@ -724,7 +729,7 @@ end   # ← это последний end метода handle_input (он уже
 
     when :player_turn
       if @battle_player
-        @battle_player.update
+         @battle_player.update
         
         # Меню открывается всегда, независимо от клетки
         if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
@@ -745,6 +750,12 @@ end   # ← это последний end метода handle_input (он уже
             end
           end
           sync_cursor_to_unit
+		  if @pending_info
+            @info_cursor_x = @current_unit[:x]
+            @info_cursor_y = @current_unit[:y]
+            @battle_state = :info_mode
+            @pending_info = false
+          end
 
           # Если меню было запрошено во время движения – открываем без проверки
           if @pending_menu
