@@ -134,6 +134,14 @@ class BattleManager
     @attack_targets = []
     @attack_target_index = 0
     @highlight_tex = load_highlight_texture
+	
+	@message_panel_tex = Raylib.LoadTexture("assets/ui/message_panel.png")
+    Raylib.SetTextureFilter(@message_panel_tex, Raylib::TEXTURE_FILTER_POINT)
+
+    @give_message_timer = 0
+    @give_message_id = nil
+    @give_message_params = {}
+	
 	@info_cursor_tex = load_highlight_texture   # текстура рамки
     @info_cursor_x = 0
     @info_cursor_y = 0
@@ -593,7 +601,11 @@ def execute_give_to(target_unit)
     item_to_give["equipped"] = false
     donor_items[idx] = { "item" => "NOTHING", "equipped" => false }
     target_items[free_slot] = item_to_give
-    finish_give
+    start_give_message("0001", {
+      '{DONOR}' => donor_actor["name"],
+      '{ITEM}' => @pending_give_item["item"],
+      '{TARGET}' => target_actor["name"]
+    })
   else
     @give_swap_target_unit = target_unit
     # Инвентарь цели заполнен – открываем обмен
@@ -639,9 +651,26 @@ def perform_give_swap(chosen_target_item)
   target_items[target_idx]["equipped"] = false
 
   # Очищаем временные переменные
+    start_give_message("0002", {
+    '{DONOR}' => donor_actor["name"],
+    '{ITEM}' => @pending_give_item["item"],
+    '{RECEIVED_ITEM}' => chosen_target_item["item"],
+    '{TARGET}' => target_actor["name"]
+  })
   @pending_give_item = nil
   @give_targets = []
   @target_highlight = nil
+  @give_swap_target_unit = nil
+end
+
+def start_give_message(id, params)
+  @give_message_id = id
+  @give_message_params = params
+  @give_message_timer = 0
+  @battle_state = :give_message
+  @highlight_tiles = []
+  @target_highlight = nil
+  @give_targets = []
 end
 
 def finish_give
@@ -982,11 +1011,8 @@ end
         @audio.play_sfx("cursor") if @audio
       end
     when :give_swap
-      # обмен выбранного предмета цели с предметом донора
-      perform_give_swap(item)
       @battle_menu.close_item_grid
-      # после обмена завершаем ход
-      end_current_turn
+      perform_give_swap(item)   # он сам вызовет start_give_message
       @audio.play_sfx("confirm") if @audio
     when :drop
       # (пока заглушка)
@@ -1027,6 +1053,11 @@ end
     @battle_state = :item_select
     @battle_menu.open_item_menu
   end
+  
+    when :give_message
+      if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+        finish_give
+      end
 
    end
  end
@@ -1272,6 +1303,12 @@ end
       @enemy_profile.force_close
       @battle_state = :info_mode
     end
+
+    when :give_message
+      @give_message_timer += 1
+      if @give_message_timer >= 180
+        finish_give
+      end
 	
     when :death_animation
       @death_anim&.update
@@ -1310,8 +1347,11 @@ def draw
   @death_anim.draw(@camera) if @death_anim
     if @battle_state == :info_profile
        @profile.draw
-  elsif @battle_state == :enemy_profile
+    elsif @battle_state == :enemy_profile
        @enemy_profile.draw
+    end
+    if @battle_state == :give_message
+      draw_give_message
     end
 end
 
@@ -1388,7 +1428,35 @@ def open_profile_for_enemy(enemy_unit)
   @enemy_profile.open(enemy_unit[:enemy], @portrait_cache)
 end
 
-  def unload
+def draw_give_message
+  template = @game_text[@give_message_id] || ""
+  text = template.dup
+  @give_message_params.each { |key, val| text.gsub!(key, val.to_s) }
+  lines = text.split('{N}')
+
+  panel_w = 480
+  panel_h = 128
+  panel_x = (576 - panel_w) / 2
+  panel_y = 480 - panel_h - 24
+
+  if @message_panel_tex
+    dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
+    src = Raylib::Rectangle.create(0, 0, @message_panel_tex.width, @message_panel_tex.height)
+    Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+  else
+    Raylib.DrawRectangle(panel_x, panel_y, panel_w, panel_h, Raylib::GRAY)
+    Raylib.DrawRectangleLines(panel_x, panel_y, panel_w, panel_h, Raylib::DARKGRAY)
+  end
+
+  y_offset = panel_y + 10
+  font = @battle_scene.message_font || @font
+  lines.each do |line_text|
+    Raylib.DrawTextEx(font, line_text, Raylib::Vector2.create(panel_x + 40, y_offset), 30, 1, Raylib::WHITE)
+    y_offset += 38
+  end
+end
+
+ def unload
     UnloadRenderTexture(@static_bg) if @static_bg
     UnloadRenderTexture(@top_layer) if @top_layer
     UnloadRenderTexture(@layer2) if @layer2
