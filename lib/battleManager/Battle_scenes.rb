@@ -173,8 +173,8 @@ class BattleScene
     @attacker_name = "???"
   end
     # Сообщение из gamescript.txt
-    suffix = @game_text["0006"] || "'s attack!"
-    @current_message = "#{@attacker_name}#{suffix}"
+    template = @game_text["0006"] || "{NAME}'s attack!"
+    @current_message = template.gsub("{NAME}", @attacker_name)
     # Сброс печати
     @message_reveal_index = 0
     @message_timer = 0
@@ -357,8 +357,8 @@ def update
           else
             def_name = "???"
           end
-          dmg_template = @game_text["0007"] || " got{N}damaged  by"
-          @current_message = "#{def_name}#{dmg_template} #{@damage}"
+          template = @game_text["0007"] || "{NAME} got{N}damaged  by"
+          @current_message = template.gsub("{NAME}", def_name) + " #{@damage}"
           @message_reveal_index = 0
           @message_timer = 0
           @full_message_shown = false
