@@ -143,6 +143,12 @@ class BattleManager
     Raylib.SetTextureFilter(@message_panel_tex, Raylib::TEXTURE_FILTER_POINT)
 
     @give_message_timer = 0
+	@give_msg_full_lines = []
+    @give_msg_char_index = 0
+    @give_msg_char_timer = 0
+    @give_msg_char_speed = 3
+    @give_msg_finished = false
+
     @give_message_id = nil
     @give_message_params = {}
 	

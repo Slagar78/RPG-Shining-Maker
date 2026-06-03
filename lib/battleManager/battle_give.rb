@@ -32,7 +32,6 @@ module BattleGive
     free_slot = target_items.index { |entry| entry["item"] == "NOTHING" }
 
     if free_slot
-      # Простая передача
       item_to_give = donor_items[idx].dup
       item_to_give["equipped"] = false
       donor_items[idx] = { "item" => "NOTHING", "equipped" => false }
@@ -44,7 +43,6 @@ module BattleGive
       })
     else
       @give_swap_target_unit = target_unit
-      # Инвентарь цели заполнен – открываем обмен
       target_items_list = target_items.map do |item_entry|
         item_name = item_entry["item"]
         next nil if item_name == "NOTHING"
@@ -95,17 +93,6 @@ module BattleGive
     @give_swap_target_unit = nil
   end
 
-  # Показать сообщение о передаче
-  def start_give_message(id, params)
-    @give_message_id = id
-    @give_message_params = params
-    @give_message_timer = 0
-    @battle_state = :give_message
-    @highlight_tiles = []
-    @target_highlight = nil
-    @give_targets = []
-  end
-
   # Завершить ход после передачи
   def finish_give
     @pending_give_item = nil
@@ -139,28 +126,55 @@ module BattleGive
     end
   end
 
-  # Обработка сообщения о передаче (ожидание или пропуск)
+  # Начало сообщения о передаче с посимвольным выводом
+  def start_give_message(id, params)
+    @give_message_id = id
+    @give_message_params = params
+    @battle_state = :give_message
+    @highlight_tiles = []
+    @target_highlight = nil
+    @give_targets = []
+
+    template = @game_text[id] || ""
+    text = template.dup
+    params.each { |key, val| text.gsub!(key, val.to_s) }
+    @give_msg_full_lines = text.split('{N}')
+    @give_msg_char_index = 0
+    @give_msg_char_timer = 0
+    @give_msg_char_speed = 3
+    @give_msg_finished = false
+  end
+
+  # Обновление анимации печати символов
+  def update_give_message
+    return if @give_msg_finished
+    @give_msg_char_timer += 1
+    if @give_msg_char_timer >= @give_msg_char_speed
+      @give_msg_char_timer = 0
+      total_chars = @give_msg_full_lines.sum(&:length)
+      @give_msg_char_index += 1
+      if @give_msg_char_index >= total_chars
+        @give_msg_char_index = total_chars
+        @give_msg_finished = true
+      end
+    end
+  end
+
+  # Ввод в режиме сообщения: пропуск печати или завершение
   def handle_give_message_input
     if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-      finish_give
+      if @give_msg_finished
+        finish_give
+      else
+        total_chars = @give_msg_full_lines.sum(&:length)
+        @give_msg_char_index = total_chars
+        @give_msg_finished = true
+      end
     end
   end
 
-  # Обновление таймера сообщения
-  def update_give_message
-    @give_message_timer += 1
-    if @give_message_timer >= 180
-      finish_give
-    end
-  end
-
-  # Отрисовка панели сообщения
+  # Отрисовка панели с печатаемым текстом
   def draw_give_message
-    template = @game_text[@give_message_id] || ""
-    text = template.dup
-    @give_message_params.each { |key, val| text.gsub!(key, val.to_s) }
-    lines = text.split('{N}')
-
     panel_w = 480
     panel_h = 128
     panel_x = (576 - panel_w) / 2
@@ -175,11 +189,20 @@ module BattleGive
       Raylib.DrawRectangleLines(panel_x, panel_y, panel_w, panel_h, Raylib::DARKGRAY)
     end
 
+    remaining = @give_msg_char_index
     y_offset = panel_y + 10
     font = @battle_scene.message_font || @font
-    lines.each do |line_text|
-      Raylib.DrawTextEx(font, line_text, Raylib::Vector2.create(panel_x + 40, y_offset), 30, 1, Raylib::WHITE)
-      y_offset += 38
+
+    @give_msg_full_lines.each do |line|
+      if remaining > 0
+        slice = line[0, remaining]
+        Raylib.DrawTextEx(font, slice, Raylib::Vector2.create(panel_x + 20, y_offset), 30, 1, Raylib::WHITE)
+        remaining -= line.length
+        y_offset += 38
+      else
+        break
+      end
     end
   end
+  
 end
