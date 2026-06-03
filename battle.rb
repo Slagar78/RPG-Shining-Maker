@@ -23,8 +23,12 @@ require_relative 'lib/battleManager/Battle_scenes'
 require_relative 'lib/battleManager/calculate_damage'
 require_relative 'lib/battleManager/exp_calculator'
 require_relative 'lib/battleManager/battle_renderer'
+require_relative 'lib/battleManager/battle_give'
+require_relative 'lib/battleManager/battle_utils'
 
 class BattleManager
+  include BattleGive
+  include BattleUtils
   attr_reader :game_map, :battle_entry, :battle_state, :battle_menu
   attr_reader :camera, :static_bg, :layer2, :top_layer,
               :highlight_tiles, :highlight_timer, :current_unit,
@@ -352,54 +356,6 @@ class BattleManager
     @current_unit_index = 0
   end
 
-  def occupied_tiles(except_unit = nil)
-    occupied = []
-    (@allies + @enemies).each do |u|
-      next if u.equal?(except_unit)
-      occupied << [u[:x], u[:y]]
-    end
-    occupied
-  end
-
-def adjacent_enemy?(unit)
-  result = !find_adjacent_enemies(unit).empty?
-  # puts "[DEBUG adjacent?] unit=(#{unit[:x]},#{unit[:y]}) hp=#{unit[:hp]} result=#{result}"
-  result
-end
-
-def find_adjacent_enemies(unit)
-  ux, uy = unit[:x], unit[:y]
-  enemies = @enemies.select do |e|
-    ex, ey = e[:x], e[:y]
-    dist = (ex - ux).abs + (ey - uy).abs
-    alive = e[:hp] > 0
-    dist == 1 && alive
-  end
-  # puts "[DEBUG find_adjacent] found #{enemies.size} enemies"
-  enemies
-end
-
-def adjacent_allies(unit)
-  ux, uy = unit[:x], unit[:y]
-  @allies.select do |a|
-    ax, ay = a[:x], a[:y]
-    dist = (ax - ux).abs + (ay - uy).abs
-    alive = a[:hp] > 0
-    dist == 1 && alive && a != unit
-  end
-end
-
-def sort_targets_by_angle(targets, from_x, from_y)
-  targets.sort_by do |t|
-    dx = t[:x] - from_x
-    dy = t[:y] - from_y
-    # Вычисляем угол от оси X (вправо) в диапазоне [0, 2*PI)
-    rad = Math.atan2(dy, dx)
-    angle = rad >= 0 ? rad : rad + 2 * Math::PI
-    angle
-  end
-end
-
   def start_current_turn
     @current_unit = @turn_order[@current_unit_index]
     return unless @current_unit
@@ -440,75 +396,6 @@ end
     return unless @current_unit
     @cursor.move_to(@current_unit[:x], @current_unit[:y])
   end
-
-
-def calculate_move_range(unit)
-  start_x = unit[:x]
-  start_y = unit[:y]
-  move   = unit[:mov]
-  w      = @battle_w
-  h      = @battle_h
-
-  # visited[y][x] – клетка достигнута
-  visited = Array.new(h) { Array.new(w, false) }
-  queue = []
-  visited[start_y][start_x] = true
-  queue.push([start_x, start_y, move])
-
-  # Определяем, какие юниты блокируют проход (противоположная команда)
-  is_ally = @allies.include?(unit)
-  if is_ally
-    blocking_positions = @enemies.select { |e| e[:hp] > 0 }.map { |e| [e[:x], e[:y]] }
-    # свои не блокируют
-  else
-    blocking_positions = @allies.select { |a| a[:hp] > 0 }.map { |a| [a[:x], a[:y]] }
-  end
-
-  # Проверка проходимости клетки (без учёта своих)
-  passable = lambda do |nx, ny|
-    return false if nx < 0 || nx >= w || ny < 0 || ny >= h
-    gx = nx + @battle_x
-    gy = ny + @battle_y
-    return false if gy < 0 || gy >= @terrain.size || gx < 0 || gx >= @terrain[gy].size
-    return false if @terrain[gy][gx] == -1             # стена
-    return false if blocking_positions.include?([nx, ny]) # чужой юнит блокирует
-    true
-  end
-
-  while queue.any?
-    x, y, steps = queue.shift
-    next if steps <= 0
-
-    [[0,1],[0,-1],[1,0],[-1,0]].each do |dx, dy|
-      nx = x + dx
-      ny = y + dy
-      next if visited[ny][nx]
-      next unless passable.call(nx, ny)
-
-      visited[ny][nx] = true
-      queue.push([nx, ny, steps - 1])
-    end
-  end
-
-  # Возвращаем все достигнутые клетки (включая занятые своими)
-  result = []
-  h.times do |y|
-    w.times do |x|
-      result << [x, y] if visited[y][x]
-    end
-  end
-  result
-end
-
-
-  def cell_free?(x, y, except_unit = nil)
-  # Для врагов другие враги не блокируют (могут проходить сквозь своих)
-  if except_unit && except_unit[:enemy]
-    (@allies + @enemies).none? { |u| u != except_unit && u[:x] == x && u[:y] == y && u[:actor] }
-  else
-    (@allies + @enemies).none? { |u| u != except_unit && u[:x] == x && u[:y] == y }
-  end
-end
 
   def next_unit
     next_index = (@current_unit_index + 1) % @turn_order.size
@@ -576,111 +463,6 @@ def current_actor_items
   end.compact
 end
 
-def execute_give_to(target_unit)
-  return unless @pending_give_item && target_unit
-  donor = @current_unit
-  donor_actor = donor[:actor]
-  target_actor = target_unit[:actor]
-  return unless donor_actor && target_actor
-
-  donor_entry = @start_inventory.find { |inv| inv["actor_id"] == donor_actor["id"] }
-  target_entry = @start_inventory.find { |inv| inv["actor_id"] == target_actor["id"] }
-  return unless donor_entry && target_entry
-
-  donor_items = donor_entry["items"]
-  target_items = target_entry["items"]
-
-  idx = donor_items.index { |entry| entry["item"] == @pending_give_item["item"] }
-  return unless idx
-
-  free_slot = target_items.index { |entry| entry["item"] == "NOTHING" }
-
-  if free_slot
-    # Простая передача
-    item_to_give = donor_items[idx].dup
-    item_to_give["equipped"] = false
-    donor_items[idx] = { "item" => "NOTHING", "equipped" => false }
-    target_items[free_slot] = item_to_give
-    start_give_message("0001", {
-      '{DONOR}' => donor_actor["name"],
-      '{ITEM}' => @pending_give_item["item"],
-      '{TARGET}' => target_actor["name"]
-    })
-  else
-    @give_swap_target_unit = target_unit
-    # Инвентарь цели заполнен – открываем обмен
-    target_items_list = target_items.map do |item_entry|
-      item_name = item_entry["item"]
-      next nil if item_name == "NOTHING"
-      item_data = @db.find_by_name(item_name)
-      icon = item_data ? item_data["icon"] : nil
-      { "item" => item_name, "icon" => icon }
-    end.compact
-    @battle_menu.open_item_grid(:give_swap, target_items_list)
-    @battle_state = :item_grid_select  # обработка пойдёт через уже существующий when
-    # @pending_give_item остаётся, чтобы знать, что передаём
-    @target_highlight = nil
-    @give_targets = []
-  end
-end
-
-def perform_give_swap(chosen_target_item)
-  # chosen_target_item – хеш {"item" => "Potion", "icon" => "..."}
-  donor = @current_unit
-  target = @give_swap_target_unit
-  return unless donor && target && @pending_give_item
-  donor_actor = donor[:actor]
-  target_actor = target[:actor]
-  return unless donor_actor && target_actor
-
-  donor_entry = @start_inventory.find { |inv| inv["actor_id"] == donor_actor["id"] }
-  target_entry = @start_inventory.find { |inv| inv["actor_id"] == target_actor["id"] }
-  return unless donor_entry && target_entry
-
-  donor_items = donor_entry["items"]
-  target_items = target_entry["items"]
-
-  donor_idx = donor_items.index { |e| e["item"] == @pending_give_item["item"] }
-  target_idx = target_items.index { |e| e["item"] == chosen_target_item["item"] }
-  return unless donor_idx && target_idx
-
-  # Меняем местами
-  donor_items[donor_idx], target_items[target_idx] = target_items[target_idx], donor_items[donor_idx]
-  # Снимаем экипировку с обоих
-  donor_items[donor_idx]["equipped"] = false
-  target_items[target_idx]["equipped"] = false
-
-  # Очищаем временные переменные
-    start_give_message("0002", {
-    '{DONOR}' => donor_actor["name"],
-    '{ITEM}' => @pending_give_item["item"],
-    '{RECEIVED_ITEM}' => chosen_target_item["item"],
-    '{TARGET}' => target_actor["name"]
-  })
-  @pending_give_item = nil
-  @give_targets = []
-  @target_highlight = nil
-  @give_swap_target_unit = nil
-end
-
-def start_give_message(id, params)
-  @give_message_id = id
-  @give_message_params = params
-  @give_message_timer = 0
-  @battle_state = :give_message
-  @highlight_tiles = []
-  @target_highlight = nil
-  @give_targets = []
-end
-
-def finish_give
-  @pending_give_item = nil
-  @give_targets = []
-  @target_highlight = nil
-  @give_swap_target_unit = nil
-  # Завершаем ход после передачи
-  end_current_turn
-end
 
 def apply_exp_to_actor(actor, amount, unit)
   return unless actor && amount > 0 && unit
@@ -1028,36 +810,10 @@ end
     @audio.play_sfx("cancel_menu") if @audio
   end
   
-  when :give_targeting
-  if @give_targets.any?
-    if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_UP)
-      @give_target_index = (@give_target_index - 1) % @give_targets.size
-      @target_highlight = @give_targets[@give_target_index]
-      @audio.play_sfx("cursor") if @audio
-    elsif IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_DOWN)
-      @give_target_index = (@give_target_index + 1) % @give_targets.size
-      @target_highlight = @give_targets[@give_target_index]
-      @audio.play_sfx("cursor") if @audio
-    elsif IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-      execute_give_to(@give_targets[@give_target_index])
-    elsif IsKeyPressed(KEY_S)
-      @target_highlight = nil
-      @give_targets = []
-      @pending_give_item = nil
-	  @highlight_tiles = @saved_highlight_tiles.dup
-      @battle_menu.open_item_menu
-      @battle_state = :item_select
-      @audio.play_sfx("cancel_menu") if @audio
-    end
-  else
-    @battle_state = :item_select
-    @battle_menu.open_item_menu
-  end
-  
+    when :give_targeting
+       handle_give_targeting_input
     when :give_message
-      if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-        finish_give
-      end
+       handle_give_message_input
 
    end
  end
@@ -1303,13 +1059,10 @@ end
       @enemy_profile.force_close
       @battle_state = :info_mode
     end
-
-    when :give_message
-      @give_message_timer += 1
-      if @give_message_timer >= 180
-        finish_give
-      end
 	
+	when :give_message
+      update_give_message
+	  
     when :death_animation
       @death_anim&.update
       @battle_player&.update_animation
@@ -1426,34 +1179,6 @@ end
 
 def open_profile_for_enemy(enemy_unit)
   @enemy_profile.open(enemy_unit[:enemy], @portrait_cache)
-end
-
-def draw_give_message
-  template = @game_text[@give_message_id] || ""
-  text = template.dup
-  @give_message_params.each { |key, val| text.gsub!(key, val.to_s) }
-  lines = text.split('{N}')
-
-  panel_w = 480
-  panel_h = 128
-  panel_x = (576 - panel_w) / 2
-  panel_y = 480 - panel_h - 24
-
-  if @message_panel_tex
-    dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
-    src = Raylib::Rectangle.create(0, 0, @message_panel_tex.width, @message_panel_tex.height)
-    Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
-  else
-    Raylib.DrawRectangle(panel_x, panel_y, panel_w, panel_h, Raylib::GRAY)
-    Raylib.DrawRectangleLines(panel_x, panel_y, panel_w, panel_h, Raylib::DARKGRAY)
-  end
-
-  y_offset = panel_y + 10
-  font = @battle_scene.message_font || @font
-  lines.each do |line_text|
-    Raylib.DrawTextEx(font, line_text, Raylib::Vector2.create(panel_x + 40, y_offset), 30, 1, Raylib::WHITE)
-    y_offset += 38
-  end
 end
 
  def unload
