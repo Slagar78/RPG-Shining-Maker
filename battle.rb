@@ -5,6 +5,7 @@ require_relative 'lib/battleManager/hp_mp_panel'
 require_relative 'lib/battleManager/battle_sprite_animation'
 require_relative 'lib/battleManager/unit_death'
 require_relative 'lib/ui'
+require_relative 'lib/enemy_profile'
 
 shared_lib_path = Gem::Specification.find_by_name('raylib-bindings').full_gem_path + '/lib/'
 Raylib.load_lib(shared_lib_path + 'libraylib.dll')
@@ -120,6 +121,7 @@ class BattleManager
     @start_inventory = data["start_inventory"] || []
   end
     @profile = Profile.new(@font, @db, @start_inventory)
+	@enemy_profile = EnemyProfile.new(@font, @db)
 	@portrait_cache = {}
 
     @renderer = BattleRenderer.new(self)
@@ -664,7 +666,14 @@ end
       if ally
         open_profile_for_ally(ally)
         @battle_state = :info_profile
-		@audio.play_sfx("confirm") if @audio
+        @audio.play_sfx("confirm") if @audio
+      else
+        enemy = @enemies.find { |e| e[:x] == @info_cursor_x && e[:y] == @info_cursor_y }
+        if enemy
+          open_profile_for_enemy(enemy)
+          @battle_state = :enemy_profile
+          @audio.play_sfx("confirm") if @audio
+        end
       end
     end
 
@@ -679,6 +688,12 @@ end
     if IsKeyPressed(KEY_S)
 	@audio.play_sfx("cancel_menu") if @audio
       @profile.close
+    end
+	
+	when :enemy_profile
+    if IsKeyPressed(KEY_S)
+      @audio.play_sfx("cancel_menu") if @audio
+      @enemy_profile.close
     end
 
   when :magic_select
@@ -910,6 +925,14 @@ end   # ← это последний end метода handle_input
         @battle_state = :info_mode
       end
 
+    when :enemy_profile
+      @battle_player&.update_animation
+      @enemy_profile.update
+    if @enemy_profile.instance_variable_get(:@ready_to_close)
+      @enemy_profile.force_close
+      @battle_state = :info_mode
+    end
+	
     when :death_animation
       @death_anim&.update
       @battle_player&.update_animation
@@ -944,10 +967,13 @@ end   # ← это последний end метода handle_input
 def draw
   @renderer.draw
   @death_anim.draw(@camera) if @death_anim
-  if @battle_state == :info_profile
-    @profile.draw
-  end
+    if @battle_state == :info_profile
+       @profile.draw
+  elsif @battle_state == :enemy_profile
+       @enemy_profile.draw
+    end
 end
+
 
 def return_from_battle_scene
   if @last_defender && @last_defender[:hp] <= 0
@@ -1017,6 +1043,10 @@ def open_profile_for_ally(ally_unit)
 
   # Используем уже созданный @profile и общий кэш портретов
   @profile.open(ally_unit[:actor]["name"], party, class_names, classes_data, @portrait_cache, @start_inventory)
+end
+
+def open_profile_for_enemy(enemy_unit)
+  @enemy_profile.open(enemy_unit[:enemy], @portrait_cache)
 end
 
   def unload
