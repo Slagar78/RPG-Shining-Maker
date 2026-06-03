@@ -539,6 +539,21 @@ def current_actor_spells
   klass["spell_list"].select { |s| s["level"] <= actor["level"] }
 end
 
+def current_actor_items
+  return [] unless @current_unit && @current_unit[:actor]
+  actor = @current_unit[:actor]
+  entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
+  return [] unless entry
+
+  entry["items"].map do |item_entry|
+    item_name = item_entry["item"]
+    next nil if item_name == "NOTHING"
+    item_data = @db ? @db.find_by_name(item_name) : nil
+    icon = item_data ? item_data["icon"] : nil
+    { "item" => item_name, "icon" => icon }
+  end.compact
+end
+
 def apply_exp_to_actor(actor, amount, unit)
   return unless actor && amount > 0 && unit
   actor["exp"] ||= 0
@@ -590,198 +605,262 @@ end
  def handle_input
    case @battle_state
    when :cursor_moving
-    # ничего не делаем — движение обрабатывается в update
+     # ничего не делаем — движение обрабатывается в update
 
-  when :player_turn
-    @battle_player.handle_input(self) if @battle_player
-	
-  if IsKeyPressed(KEY_S)
-  if @battle_player.moving
-    @pending_info = true          # запомнить, выполнить после движения
-  else
-    @info_cursor_x = @current_unit[:x]
-    @info_cursor_y = @current_unit[:y]
-    @battle_state = :info_mode
-  end
-  return
-end
-	
-    if @battle_player.moving
-      @cursor.visible = false
-    end
-    @camera.follow_unit(@current_unit)
+   when :player_turn
+     @battle_player.handle_input(self) if @battle_player
 
-  when :action_menu
-    prev_index = @battle_menu.selected_index
-    @battle_menu.handle_input
-    if @battle_menu.selected_index != prev_index && @audio
-      @audio.play_sfx("cursor")
-    end
+     if IsKeyPressed(KEY_S)
+       if @battle_player.moving
+         @pending_info = true          # запомнить, выполнить после движения
+       else
+         @info_cursor_x = @current_unit[:x]
+         @info_cursor_y = @current_unit[:y]
+         @battle_state = :info_mode
+       end
+       return
+     end
 
-    if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-      case @battle_menu.selected_index
-      when 0  # Attack
-        # Блокируем атаку, если стоим на союзнике
-        unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
-          @battle_menu.close
-          @battle_state = :player_turn
-          @cursor.visible = true
-          sync_cursor_to_unit
-          return
-        end
+     if @battle_player.moving
+       @cursor.visible = false
+     end
+     @camera.follow_unit(@current_unit)
 
-        targets = find_adjacent_enemies(@current_unit)
-        if targets.any?
-          @attack_targets = sort_targets_by_angle(targets, @current_unit[:x], @current_unit[:y])
-          @attack_target_index = 0
-          @attack_target = @attack_targets[0]
-          @target_highlight = @attack_targets[0]
-          @battle_menu.close
+   when :action_menu
+     prev_index = @battle_menu.selected_index
+     @battle_menu.handle_input
+     if @battle_menu.selected_index != prev_index && @audio
+       @audio.play_sfx("cursor")
+     end
 
-          @battle_state = :attack_targeting
-          # Радиус атаки 
-          neighbors = [
-            [@current_unit[:x] + 1, @current_unit[:y]],
-            [@current_unit[:x] - 1, @current_unit[:y]],
-            [@current_unit[:x],     @current_unit[:y] + 1],
-            [@current_unit[:x],     @current_unit[:y] - 1]
-          ].select { |nx, ny| nx >= 0 && nx < @battle_w && ny >= 0 && ny < @battle_h }
-          @highlight_tiles = neighbors
+     if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+       case @battle_menu.selected_index
+       when 0  # Attack
+         # Блокируем атаку, если стоим на союзнике
+         unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+           @battle_menu.close
+           @battle_state = :player_turn
+           @cursor.visible = true
+           sync_cursor_to_unit
+           return
+         end
 
-          if @battle_player
-            @battle_player.face_target(@attack_target[:x], @attack_target[:y])
-          end
-          @audio.play_sfx("cursor") if @audio
-        else
-          @battle_menu.close
-          @battle_state = :player_turn
-          @cursor.visible = true
-          sync_cursor_to_unit
-          @audio.play_sfx("error") if @audio
-        end
-		
-		when 1  # Magic
-        spells = current_actor_spells
-        if spells.any?
-          @battle_menu.open_magic(spells)
-          @battle_state = :magic_select
-          @audio.play_sfx("confirm") if @audio
-        else
-          @battle_menu.close
-          @battle_state = :player_turn
-          @cursor.visible = true
-          sync_cursor_to_unit
-          @audio.play_sfx("error") if @audio
-        end
-		
-		when 2  # Item
-          @battle_menu.open_item_menu
-          @battle_state = :item_select
-          @audio.play_sfx("confirm") if @audio
-		
-        when 3  # Stay
-          unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
-            # Стоим на союзнике – Stay не завершает ход
-            @battle_menu.close
-            @battle_state = :player_turn
-            @cursor.visible = true
-            sync_cursor_to_unit
-            @audio.play_sfx("cancel_menu") if @audio
-          else
-            end_current_turn
-          end
-        else
-          @battle_menu.close
-          @battle_state = :player_turn
-          @cursor.visible = true
-          sync_cursor_to_unit
-          @audio.play_sfx("cancel_menu") if @audio
-        end
-	  
-    elsif IsKeyPressed(KEY_S)
-      @battle_menu.close
-      @battle_state = :player_turn
-      @cursor.visible = true
-      sync_cursor_to_unit
-      @audio.play_sfx("cancel_menu") if @audio
-    end
+         targets = find_adjacent_enemies(@current_unit)
+         if targets.any?
+           @attack_targets = sort_targets_by_angle(targets, @current_unit[:x], @current_unit[:y])
+           @attack_target_index = 0
+           @attack_target = @attack_targets[0]
+           @target_highlight = @attack_targets[0]
+           @battle_menu.close
 
-  when :info_mode
-    if IsKeyPressed(KEY_LEFT)
-      @info_cursor_x = [@info_cursor_x - 1, 0].max
-    elsif IsKeyPressed(KEY_RIGHT)
-      @info_cursor_x = [@info_cursor_x + 1, @battle_w - 1].min
-    elsif IsKeyPressed(KEY_UP)
-      @info_cursor_y = [@info_cursor_y - 1, 0].max
-    elsif IsKeyPressed(KEY_DOWN)
-      @info_cursor_y = [@info_cursor_y + 1, @battle_h - 1].min
-    end
+           @battle_state = :attack_targeting
+           # Радиус атаки 
+           neighbors = [
+             [@current_unit[:x] + 1, @current_unit[:y]],
+             [@current_unit[:x] - 1, @current_unit[:y]],
+             [@current_unit[:x],     @current_unit[:y] + 1],
+             [@current_unit[:x],     @current_unit[:y] - 1]
+           ].select { |nx, ny| nx >= 0 && nx < @battle_w && ny >= 0 && ny < @battle_h }
+           @highlight_tiles = neighbors
 
-    if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-      ally = @allies.find { |a| a[:x] == @info_cursor_x && a[:y] == @info_cursor_y }
-      if ally
-        open_profile_for_ally(ally)
-        @battle_state = :info_profile
-        @audio.play_sfx("confirm") if @audio
-      else
-        enemy = @enemies.find { |e| e[:x] == @info_cursor_x && e[:y] == @info_cursor_y }
-        if enemy
-          open_profile_for_enemy(enemy)
-          @battle_state = :enemy_profile
-          @audio.play_sfx("confirm") if @audio
-        end
-      end
-    end
+           if @battle_player
+             @battle_player.face_target(@attack_target[:x], @attack_target[:y])
+           end
+           @audio.play_sfx("cursor") if @audio
+         else
+           @battle_menu.close
+           @battle_state = :player_turn
+           @cursor.visible = true
+           sync_cursor_to_unit
+           @audio.play_sfx("error") if @audio
+         end
 
-    if IsKeyPressed(KEY_S)
-      @battle_state = :player_turn
-      @cursor.visible = true
-      sync_cursor_to_unit
-    end
+       when 1  # Magic
+         spells = current_actor_spells
+         if spells.any?
+           @battle_menu.open_magic(spells)
+           @battle_state = :magic_select
+           @audio.play_sfx("confirm") if @audio
+         else
+           @battle_menu.close
+           @battle_state = :player_turn
+           @cursor.visible = true
+           sync_cursor_to_unit
+           @audio.play_sfx("error") if @audio
+         end
 
-    when :info_profile
-    # Только запускаем анимацию закрытия по S, состояние сменится в update
-    if IsKeyPressed(KEY_S)
-	@audio.play_sfx("cancel_menu") if @audio
-      @profile.close
-    end
-	
-	when :enemy_profile
-    if IsKeyPressed(KEY_S)
-      @audio.play_sfx("cancel_menu") if @audio
-      @enemy_profile.close
-    end
+       when 2  # Item
+         @battle_menu.open_item_menu
+         @battle_state = :item_select
+         @audio.play_sfx("confirm") if @audio
 
-    when :magic_select
-        @battle_menu.handle_input
-      if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-        @battle_menu.close_magic
-        @battle_state = :player_turn
-        @cursor.visible = true
-        sync_cursor_to_unit
-        @audio.play_sfx("confirm") if @audio
-      elsif IsKeyPressed(KEY_S)
-        @battle_menu.close_magic
-        @battle_state = :action_menu          # возврат в главное меню
-        @audio.play_sfx("cancel_menu") if @audio
-      end
+       when 3  # Stay
+         unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+           # Стоим на союзнике – Stay не завершает ход
+           @battle_menu.close
+           @battle_state = :player_turn
+           @cursor.visible = true
+           sync_cursor_to_unit
+           @audio.play_sfx("cancel_menu") if @audio
+         else
+           end_current_turn
+         end
+       else
+         @battle_menu.close
+         @battle_state = :player_turn
+         @cursor.visible = true
+         sync_cursor_to_unit
+         @audio.play_sfx("cancel_menu") if @audio
+       end
+
+     elsif IsKeyPressed(KEY_S)
+       @battle_menu.close
+       @battle_state = :player_turn
+       @cursor.visible = true
+       sync_cursor_to_unit
+       @audio.play_sfx("cancel_menu") if @audio
+     end
+
+   when :info_mode
+     if IsKeyPressed(KEY_LEFT)
+       @info_cursor_x = [@info_cursor_x - 1, 0].max
+     elsif IsKeyPressed(KEY_RIGHT)
+       @info_cursor_x = [@info_cursor_x + 1, @battle_w - 1].min
+     elsif IsKeyPressed(KEY_UP)
+       @info_cursor_y = [@info_cursor_y - 1, 0].max
+     elsif IsKeyPressed(KEY_DOWN)
+       @info_cursor_y = [@info_cursor_y + 1, @battle_h - 1].min
+     end
+
+     if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+       ally = @allies.find { |a| a[:x] == @info_cursor_x && a[:y] == @info_cursor_y }
+       if ally
+         open_profile_for_ally(ally)
+         @battle_state = :info_profile
+         @audio.play_sfx("confirm") if @audio
+       else
+         enemy = @enemies.find { |e| e[:x] == @info_cursor_x && e[:y] == @info_cursor_y }
+         if enemy
+           open_profile_for_enemy(enemy)
+           @battle_state = :enemy_profile
+           @audio.play_sfx("confirm") if @audio
+         end
+       end
+     end
+
+     if IsKeyPressed(KEY_S)
+       @battle_state = :player_turn
+       @cursor.visible = true
+       sync_cursor_to_unit
+     end
+
+   when :info_profile
+     # Только запускаем анимацию закрытия по S, состояние сменится в update
+     if IsKeyPressed(KEY_S)
+       @audio.play_sfx("cancel_menu") if @audio
+       @profile.close
+     end
+
+   when :enemy_profile
+     if IsKeyPressed(KEY_S)
+       @audio.play_sfx("cancel_menu") if @audio
+       @enemy_profile.close
+     end
+
+   when :magic_select
+     @battle_menu.handle_input
+     if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+       @battle_menu.close_magic
+       @battle_state = :player_turn
+       @cursor.visible = true
+       sync_cursor_to_unit
+       @audio.play_sfx("confirm") if @audio
+     elsif IsKeyPressed(KEY_S)
+       @battle_menu.close_magic
+       @battle_state = :action_menu          # возврат в главное меню
+       @audio.play_sfx("cancel_menu") if @audio
+     end
 
     when :item_select
-        @battle_menu.handle_input
-      if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-        action = @battle_menu.selected_item_action
+  @battle_menu.handle_input
+  if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+    action = @battle_menu.selected_item_action   # 0=Use, 1=Give, 2=Equip, 3=Drop
+    case action
+    when 0  # Use
+      items = current_actor_items
+      if items.any?
+        @battle_menu.close_item_menu
+        @battle_menu.open_item_grid(:use, items)
+        @battle_state = :item_grid_select
+        @audio.play_sfx("confirm") if @audio
+      else
         @battle_menu.close_item_menu
         @battle_state = :player_turn
         @cursor.visible = true
         sync_cursor_to_unit
-        @audio.play_sfx("confirm") if @audio
-      elsif IsKeyPressed(KEY_S)
+        @audio.play_sfx("error") if @audio
+      end
+    when 1  # Give
+      items = current_actor_items
+      if items.any?
         @battle_menu.close_item_menu
-        @battle_state = :action_menu          # возврат в главное меню
-        @audio.play_sfx("cancel_menu") if @audio
-      end	
-	end
-end   # ← это последний end метода handle_input
+        @battle_menu.open_item_grid(:give, items)
+        @battle_state = :item_grid_select
+        @audio.play_sfx("confirm") if @audio
+      else
+        @battle_menu.close_item_menu
+        @battle_state = :player_turn
+        @cursor.visible = true
+        sync_cursor_to_unit
+        @audio.play_sfx("error") if @audio
+      end
+    when 3  # Drop
+      items = current_actor_items
+      if items.any?
+        @battle_menu.close_item_menu
+        @battle_menu.open_item_grid(:drop, items)
+        @battle_state = :item_grid_select
+        @audio.play_sfx("confirm") if @audio
+      else
+        @battle_menu.close_item_menu
+        @battle_state = :player_turn
+        @cursor.visible = true
+        sync_cursor_to_unit
+        @audio.play_sfx("error") if @audio
+      end
+    when 2  # Equip – пока просто закрываем меню
+      @battle_menu.close_item_menu
+      @battle_state = :player_turn
+      @cursor.visible = true
+      sync_cursor_to_unit
+      @audio.play_sfx("cancel_menu") if @audio
+    end
+  elsif IsKeyPressed(KEY_S)
+    @battle_menu.close_item_menu
+    @battle_state = :action_menu          # возврат в главное меню
+    @audio.play_sfx("cancel_menu") if @audio
+  end
+  
+    when :item_grid_select
+     @battle_menu.handle_input
+     @battle_player&.update_animation
+     if (result = @battle_menu.fetch_pending_grid_item)
+       item, mode = result
+       @battle_menu.close_item_grid
+       # Здесь позже разветвим логику (use/give/drop)
+       # Пока просто возвращаемся в подменю 4 плиток
+       @battle_menu.open_item_menu
+       @battle_state = :item_select
+       @audio.play_sfx("confirm") if @audio
+     elsif IsKeyPressed(KEY_S)
+       @battle_menu.close_item_grid
+       @battle_menu.open_item_menu
+       @battle_state = :item_select
+       @audio.play_sfx("cancel_menu") if @audio
+     end
+
+   end
+ end
 
   def update
     @battle_menu.update
@@ -903,6 +982,9 @@ end   # ← это последний end метода handle_input
 
     when :action_menu
       @battle_player&.update_animation
+	  
+	when :item_grid_select
+      @battle_player&.update_animation  
 
   when :attack_targeting
   @battle_player&.update_animation  # только анимация, без движения

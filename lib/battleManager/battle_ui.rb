@@ -17,8 +17,8 @@ class BattleMenu
     @item_tiles = [
       { "id" => 0, "name" => "use",   "icon" => "assets/ui/menu/Use.png",   "icon_anim" => "assets/ui/menu/Use_Anim.png" },
       { "id" => 1, "name" => "give",  "icon" => "assets/ui/menu/Give.png",  "icon_anim" => "assets/ui/menu/Give_Anim.png" },
-      { "id" => 2, "name" => "drop",  "icon" => "assets/ui/menu/Drop.png",  "icon_anim" => "assets/ui/menu/Drop_Anim.png" },
-      { "id" => 3, "name" => "equip", "icon" => "assets/ui/menu/Equip.png", "icon_anim" => "assets/ui/menu/Equip_Anim.png" }
+      { "id" => 2, "name" => "equip", "icon" => "assets/ui/menu/Equip.png", "icon_anim" => "assets/ui/menu/Equip_Anim.png" },
+      { "id" => 3, "name" => "drop",  "icon" => "assets/ui/menu/Drop.png",  "icon_anim" => "assets/ui/menu/Drop_Anim.png" }
     ]
 
     @visible = false
@@ -33,6 +33,13 @@ class BattleMenu
     @magic_selected = 0
     @empty_magic_tex = nil
     @magic_icon_cache = {}
+
+    # --- универсальный грид предметов (Use / Give / Drop) ---
+    @item_grid_mode = nil        # :use, :give, :drop или nil
+    @items = []
+    @item_selected = 0
+    @item_icons = {}
+    @pending_grid_item = nil    # будет [item, mode]
 
     @item_menu_mode = false
     @item_menu_selected = 0
@@ -107,12 +114,14 @@ class BattleMenu
     @anim_timer = 0
     @magic_mode = false
     @item_menu_mode = false
+    @item_grid_mode = nil   # закрываем и грид, если был открыт
   end
 
   def close
     @visible = false
     @magic_mode = false
     @item_menu_mode = false
+    @item_grid_mode = nil
   end
 
   # --- Магия ---
@@ -145,8 +154,51 @@ class BattleMenu
     @item_menu_mode = false
   end
 
+  # --- Универсальный грид предметов (крест 4 иконки) ---
+  def open_item_grid(mode, items)
+    @item_grid_mode = mode
+    @items = items.first(4)
+    @item_selected = 0
+    @visible = true
+    @pending_grid_item = nil
+  end
+
+  def close_item_grid
+    @item_grid_mode = nil
+    @items = []
+    @item_selected = 0
+    @pending_grid_item = nil
+  end
+
+  def selected_item
+    @items[@item_selected]
+  end
+
+  # Возвращает [item, mode] или nil, если ничего не выбрано
+  def fetch_pending_grid_item
+    result = @pending_grid_item
+    @pending_grid_item = nil
+    result
+  end
+
+  def load_item_icon(item)
+    return nil unless item && item["icon"]
+    path = item["icon"]
+    return @item_icons[path] if @item_icons.key?(path)
+
+    if File.exist?(path)
+      img = Raylib.LoadImage(path)
+      tex = Raylib.LoadTextureFromImage(img)
+      Raylib.UnloadImage(img)
+      Raylib.SetTextureFilter(tex, Raylib::TEXTURE_FILTER_POINT)
+      @item_icons[path] = tex
+    else
+      @item_icons[path] = nil
+    end
+  end
+
   def selected_item_action
-    @item_menu_selected   # 0=Use, 1=Give, 2=Drop, 3=Equip
+    @item_menu_selected   # 0=Use, 1=Give, 2=Equip, 3=Drop
   end
 
   # --- Обработка ввода ---
@@ -180,6 +232,25 @@ class BattleMenu
       return
     end
 
+    if @item_grid_mode
+      if Raylib.IsKeyPressed(Raylib::KEY_UP)
+        @item_selected = 0
+      elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
+        @item_selected = 1
+      elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+        @item_selected = 2
+      elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
+        @item_selected = 3
+      end
+      @item_selected = @item_selected.clamp(0, [@items.size - 1, 0].max)
+
+      if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
+        @pending_grid_item = [selected_item, @item_grid_mode]
+        # внешний код заберёт результат и решит, что делать
+      end
+      return
+    end
+
     # Основное меню
     if Raylib.IsKeyPressed(Raylib::KEY_UP)
       @selected_index = 0
@@ -202,6 +273,11 @@ class BattleMenu
 
     center_x = 576 / 2
     center_y = 480 - 80
+
+    if @item_grid_mode
+      draw_item_grid_icons(center_x, center_y, @offset)
+      return
+    end
 
     if @item_menu_mode
       draw_tile_menu(@item_textures, @item_tiles, @item_menu_selected, center_x, center_y)
@@ -243,7 +319,6 @@ class BattleMenu
         src = Raylib::Rectangle.create(0, 0, @tile_size, @tile_size)
         Raylib.DrawTexturePro(texture, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
       else
-        # Если текстура не загрузилась – рисуем пустой квадрат с рамкой
         Raylib.DrawRectangle(pos[:x] - @tile_size/2, pos[:y] - @tile_size/2, @tile_size, @tile_size, Raylib::GRAY)
         Raylib.DrawRectangleLines(pos[:x] - @tile_size/2, pos[:y] - @tile_size/2, @tile_size, @tile_size, Raylib::DARKGRAY)
       end
@@ -268,7 +343,7 @@ class BattleMenu
     end
   end
 
-  # Отдельная отрисовка иконок магии (оставлена без изменений)
+  # Отрисовка иконок магии
   def draw_magic_icons(cx, cy, offset)
     positions = [
       { x: cx,       y: cy - 24 },
@@ -355,6 +430,48 @@ class BattleMenu
         text_y = panel_y + (@magic_panel_h - text_size.y) / 2 - 20
         Raylib.DrawTextEx(@font, name, Raylib::Vector2.create(text_x, text_y), font_size, 1, Raylib::WHITE)
       end
+    end
+  end
+
+  # Отрисовка грида иконок предметов (Use/Give/Drop)
+  def draw_item_grid_icons(cx, cy, offset)
+    positions = [
+      { x: cx,       y: cy - 24 },
+      { x: cx - 32,  y: cy },
+      { x: cx + 32,  y: cy },
+      { x: cx,       y: cy + 24 }
+    ]
+
+    # Невыбранные иконки
+    4.times do |i|
+      next if i == @item_selected
+      item = @items[i]
+      pos = positions[i]
+      icon = load_item_icon(item)
+      base_w = 32
+      base_h = 48
+      dst = Raylib::Rectangle.create(pos[:x] - base_w/2, pos[:y] - base_h/2, base_w, base_h)
+      src = Raylib::Rectangle.create(0, 0, base_w, base_h)
+      if icon
+        Raylib.DrawTexturePro(icon, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+      else
+        Raylib.DrawRectangle(dst.x, dst.y, base_w, base_h, Raylib::GRAY)
+      end
+    end
+
+    # Выбранная (увеличенная)
+    sel_item = @items[@item_selected]
+    sel_pos = positions[@item_selected]
+    icon = load_item_icon(sel_item)
+    scale = 1.2
+    new_w = 32 * scale
+    new_h = 48 * scale
+    dst = Raylib::Rectangle.create(sel_pos[:x] - new_w/2, sel_pos[:y] - new_h/2, new_w, new_h)
+    src = Raylib::Rectangle.create(0, 0, 32, 48)
+    if icon
+      Raylib.DrawTexturePro(icon, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+    else
+      Raylib.DrawRectangle(dst.x, dst.y, new_w, new_h, Raylib::GRAY)
     end
   end
 
