@@ -157,10 +157,11 @@ class BattleScene
     end
   end
 
-  def start(attacker_unit, defender_unit, damage = 0)
+  def start(attacker_unit, defender_unit, damage = 0, exp_amount = 0)
     @attacker = attacker_unit
     @defender = defender_unit
     @damage = damage
+	@exp_amount = exp_amount
     @damage_applied = false
     @timer = DELAY_DURATION
 	
@@ -219,6 +220,38 @@ class BattleScene
 
     puts ">>> Battle scene starting: #{attacker_unit[:enemy] ? 'Enemy' : 'Ally'} vs #{defender_unit[:enemy] ? 'Enemy' : 'Ally'}"
   end
+
+def prepare_damage_message
+  if @defender[:actor]
+    def_name = @defender[:actor]["name"] || "???"
+  elsif @defender[:enemy]
+    def_name = @defender[:enemy]["name"] || "???"
+  else
+    def_name = "???"
+  end
+  template = @game_text["0007"] || "{NAME} got{N}damaged  by"
+  @current_message = template.gsub("{NAME}", def_name) + " #{@damage}"
+  @message_reveal_index = 0
+  @message_timer = 0
+  @full_message_shown = false
+  @message_done_timer = 0.0
+end
+
+def prepare_exp_message
+  if @attacker[:actor]
+    name = @attacker[:actor]["name"] || "???"
+  elsif @attacker[:enemy]
+    name = @attacker[:enemy]["name"] || "???"
+  else
+    name = "???"
+  end
+  template = @game_text["0008"] || "{NAME}  earned  {N}EXP.  points."
+  @current_message = template.gsub("{NAME}", name).gsub("{EXP}", @exp_amount.to_s)
+  @message_reveal_index = 0
+  @message_timer = 0
+  @full_message_shown = false
+  @message_done_timer = 0.0
+end
 
  def finish
   return if @finished
@@ -349,20 +382,8 @@ def update
 	  
       if @sub_phase_timer >= @attack_duration
         if @damage_applied && @damage > 0
-          # Формируем сообщение об уроне в том же поле @current_message
-          if @defender[:actor]
-            def_name = @defender[:actor]["name"] || "???"
-          elsif @defender[:enemy]
-            def_name = @defender[:enemy]["name"] || "???"
-          else
-            def_name = "???"
-          end
-          template = @game_text["0007"] || "{NAME} got{N}damaged  by"
-          @current_message = template.gsub("{NAME}", def_name) + " #{@damage}"
-          @message_reveal_index = 0
-          @message_timer = 0
-          @full_message_shown = false
-          @message_done_timer = 0.0
+          # Всегда сначала показываем урон, потом опыт (независимо от смерти)
+          prepare_damage_message
           @sub_phase = :damage_message
           @sub_phase_timer = 0.0
         else
@@ -395,6 +416,36 @@ def update
       end
 
       if @full_message_shown && @message_done_timer >= 1.0
+        prepare_exp_message
+        @sub_phase = :exp_message
+        @sub_phase_timer = 0.0
+      end
+
+    when :exp_message
+      @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :idle, @attacker_current_frame, @attacker_anim_timer, dt)
+      unless @full_message_shown
+        @message_timer += 1
+        if @message_timer >= @message_reveal_speed
+          @message_timer = 0
+          @message_reveal_index += 1
+          if @current_message[@message_reveal_index, 3] == "{N}"
+            @message_reveal_index += 3
+          end
+          if @message_reveal_index >= @current_message.length
+            @message_reveal_index = @current_message.length
+            @full_message_shown = true
+          end
+        end
+      else
+        @message_done_timer += dt
+      end
+
+      if @full_message_shown && @message_done_timer >= 1.0
+        # Начисляем опыт здесь
+        if @attacker[:actor] && @exp_amount > 0
+          @battle_manager.apply_exp_to_actor(@attacker[:actor], @exp_amount, @attacker)
+        end
+
         if @defender[:hp] <= 0
           @sub_phase = :dying
           @dying_alpha = 255
@@ -535,7 +586,7 @@ end
       end
     end
 
-    if (@sub_phase == :pre_attack || @sub_phase == :damage_message) && @message_panel_tex
+    if (@sub_phase == :pre_attack || @sub_phase == :damage_message || @sub_phase == :exp_message) && @message_panel_tex
       panel_w = @message_panel_tex.width
       panel_h = @message_panel_tex.height
       panel_y = 960 - 16 - panel_h

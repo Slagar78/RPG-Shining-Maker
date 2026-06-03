@@ -147,6 +147,7 @@ class BattleManager
     @pending_attacker = nil
     @pending_defender = nil
     @pending_damage = 0
+	@pending_exp_amount = 0
 
     prepare_turn_order
 
@@ -928,7 +929,20 @@ end   # ← это последний end метода handle_input
 
     if @attack_confirm_ready && (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D))
       dmg = DamageCalculator.physical_for_units(@current_unit, @attack_target)
-      @last_defender_hp_before = @attack_target[:hp] 
+      @last_defender_hp_before = @attack_target[:hp]
+    # === СЧИТАЕМ ОПЫТ ===
+      exp_amount = 0
+    if @current_unit[:actor]   # опыт даётся только союзникам
+      if @attack_target[:hp] - dmg <= 0
+    # Удар смертельный → опыт за уничтожение
+      exp_amount = ExpCalculator.calculate_destroy_exp(@current_unit, @attack_target)
+    else
+    # Враг выживет → опыт за урон
+      exp_amount = ExpCalculator.calculate_damage_exp(@current_unit, @attack_target, dmg)
+      end
+    end
+    @pending_exp_amount = exp_amount
+	  
       # Запоминаем данные для боевой сцены
       @pending_attacker = @current_unit
       @pending_defender = @attack_target
@@ -978,7 +992,7 @@ end   # ← это последний end метода handle_input
       
 	if @fade_alpha >= 255
       @fade_alpha = 255
-      @battle_scene.start(@pending_attacker, @pending_defender, @pending_damage)
+      @battle_scene.start(@pending_attacker, @pending_defender, @pending_damage, @pending_exp_amount)
 	  @last_attacker = @pending_attacker
       @last_defender = @pending_defender
       @pending_attacker = nil
@@ -1049,25 +1063,12 @@ end
 
 def return_from_battle_scene
   if @last_defender && @last_defender[:hp] <= 0
-    # Враг уничтожен
     if @last_attacker && @last_attacker[:actor]
       @last_attacker[:actor]["kills"] ||= 0
       @last_attacker[:actor]["kills"] += 1
-
-      # Опыт за уничтожение
-      exp_amount = ExpCalculator.calculate_destroy_exp(@last_attacker, @last_defender)
-      apply_exp_to_actor(@last_attacker[:actor], exp_amount, @last_attacker)
     end
     start_unit_death(@last_defender)
   else
-    # Враг выжил – начисляем опыт за фактический урон
-    if @last_attacker && @last_attacker[:actor] && @last_defender_hp_before
-      real_damage = @last_defender_hp_before - @last_defender[:hp]
-      if real_damage > 0
-        exp_amount = ExpCalculator.calculate_damage_exp(@last_attacker, @last_defender, real_damage)
-        apply_exp_to_actor(@last_attacker[:actor], exp_amount, @last_attacker)
-      end
-    end
     end_current_turn
   end
   @last_defender = nil
@@ -1076,7 +1077,6 @@ def return_from_battle_scene
 end
 
 def start_unit_death(unit)
-
   # Удаляем из боевых списков
   if @enemies.include?(unit)
     @enemies.delete(unit)

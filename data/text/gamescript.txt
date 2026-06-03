@@ -6,3 +6,4 @@
 0005={LEADER} investigated the area{N}Nothing was there.
 0006={NAME}'s   attack!
 0007={NAME}  got{N}damaged  by
+0008={NAME}  earned  {EXP}  {N}EXP.  points.
