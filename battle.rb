@@ -623,24 +623,29 @@ end
           @audio.play_sfx("error") if @audio
         end
 		
-      when 3  # Stay
-        unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
-          # Стоим на союзнике – Stay не завершает ход
+		when 2  # Item
+          @battle_menu.open_item_menu
+          @battle_state = :item_select
+          @audio.play_sfx("confirm") if @audio
+		
+        when 3  # Stay
+          unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+            # Стоим на союзнике – Stay не завершает ход
+            @battle_menu.close
+            @battle_state = :player_turn
+            @cursor.visible = true
+            sync_cursor_to_unit
+            @audio.play_sfx("cancel_menu") if @audio
+          else
+            end_current_turn
+          end
+        else
           @battle_menu.close
           @battle_state = :player_turn
           @cursor.visible = true
           sync_cursor_to_unit
           @audio.play_sfx("cancel_menu") if @audio
-        else
-          end_current_turn
         end
-      else
-        @battle_menu.close
-        @battle_state = :player_turn
-        @cursor.visible = true
-        sync_cursor_to_unit
-        @audio.play_sfx("cancel_menu") if @audio
-      end
 	  
     elsif IsKeyPressed(KEY_S)
       @battle_menu.close
@@ -696,21 +701,34 @@ end
       @enemy_profile.close
     end
 
-  when :magic_select
-    @battle_menu.handle_input
-    if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-      @battle_menu.close_magic
-      @battle_state = :player_turn
-      @cursor.visible = true
-      sync_cursor_to_unit
-      @audio.play_sfx("confirm") if @audio
-    elsif IsKeyPressed(KEY_S)
-      @battle_menu.close_magic
-      @battle_state = :player_turn
-      @cursor.visible = true
-      sync_cursor_to_unit
-      @audio.play_sfx("cancel_menu") if @audio
-    end
+    when :magic_select
+        @battle_menu.handle_input
+      if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+        @battle_menu.close_magic
+        @battle_state = :player_turn
+        @cursor.visible = true
+        sync_cursor_to_unit
+        @audio.play_sfx("confirm") if @audio
+      elsif IsKeyPressed(KEY_S)
+        @battle_menu.close_magic
+        @battle_state = :action_menu          # возврат в главное меню
+        @audio.play_sfx("cancel_menu") if @audio
+      end
+
+    when :item_select
+        @battle_menu.handle_input
+      if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+        action = @battle_menu.selected_item_action
+        @battle_menu.close_item_menu
+        @battle_state = :player_turn
+        @cursor.visible = true
+        sync_cursor_to_unit
+        @audio.play_sfx("confirm") if @audio
+      elsif IsKeyPressed(KEY_S)
+        @battle_menu.close_item_menu
+        @battle_state = :action_menu          # возврат в главное меню
+        @audio.play_sfx("cancel_menu") if @audio
+      end	
 	end
 end   # ← это последний end метода handle_input
 
@@ -896,10 +914,13 @@ end   # ← это последний end метода handle_input
   end
 
     when :magic_select
-    @battle_player&.update_animation 
+      @battle_player&.update_animation 
+	
+	when :item_select
+      @battle_player&.update_animation
 
     when :battle_scene
-    @battle_scene.update
+      @battle_scene.update
 
      when :fade_to_battle
       @fade_alpha += 600 * GetFrameTime()
@@ -966,6 +987,7 @@ end   # ← это последний end метода handle_input
 
 def draw
   @renderer.draw
+  @battle_menu.draw if @battle_menu.visible
   @death_anim.draw(@camera) if @death_anim
     if @battle_state == :info_profile
        @profile.draw
