@@ -21,6 +21,7 @@ require_relative 'lib/battleManager/cursor'
 require_relative 'lib/battleManager/camera_battle'
 require_relative 'lib/battleManager/Battle_scenes'
 require_relative 'lib/battleManager/calculate_damage'
+require_relative 'lib/battleManager/exp_calculator'
 require_relative 'lib/battleManager/battle_renderer'
 
 class BattleManager
@@ -133,13 +134,14 @@ class BattleManager
     @attack_targets = []
     @attack_target_index = 0
     @highlight_tex = load_highlight_texture
-	@info_cursor_tex = load_highlight_texture   # текстура рамки (та же)
+	@info_cursor_tex = load_highlight_texture   # текстура рамки
     @info_cursor_x = 0
     @info_cursor_y = 0
     @info_target = nil
 	@death_anim = nil
 	@last_attacker = nil
     @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
+	@last_defender_hp_before = nil
 	
 	@fade_alpha = 0
     @pending_attacker = nil
@@ -536,6 +538,14 @@ def current_actor_spells
   klass["spell_list"].select { |s| s["level"] <= actor["level"] }
 end
 
+def apply_exp_to_actor(actor, amount)
+  return unless actor && amount > 0
+  actor["exp"] ||= 0
+  actor["exp"] += amount
+  puts "#{actor['name']} получил #{amount} опыта. Всего: #{actor['exp']}"
+  # Здесь потом добавим проверку повышения уровня
+end
+
  def handle_input
    case @battle_state
    when :cursor_moving
@@ -878,6 +888,7 @@ end   # ← это последний end метода handle_input
 
     if @attack_confirm_ready && (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D))
       dmg = DamageCalculator.physical_for_units(@current_unit, @attack_target)
+      @last_defender_hp_before = @attack_target[:hp] 
       # Запоминаем данные для боевой сцены
       @pending_attacker = @current_unit
       @pending_defender = @attack_target
@@ -996,20 +1007,32 @@ def draw
     end
 end
 
-
 def return_from_battle_scene
   if @last_defender && @last_defender[:hp] <= 0
-    # Если атакующий – союзник, начисляем +1 убийство
+    # Враг уничтожен
     if @last_attacker && @last_attacker[:actor]
       @last_attacker[:actor]["kills"] ||= 0
       @last_attacker[:actor]["kills"] += 1
+
+      # Опыт за уничтожение
+      exp_amount = ExpCalculator.calculate_destroy_exp(@last_attacker, @last_defender)
+      apply_exp_to_actor(@last_attacker[:actor], exp_amount)
     end
     start_unit_death(@last_defender)
   else
+    # Враг выжил – начисляем опыт за фактический урон
+    if @last_attacker && @last_attacker[:actor] && @last_defender_hp_before
+      real_damage = @last_defender_hp_before - @last_defender[:hp]
+      if real_damage > 0
+        exp_amount = ExpCalculator.calculate_damage_exp(@last_attacker, @last_defender, real_damage)
+        apply_exp_to_actor(@last_attacker[:actor], exp_amount)
+      end
+    end
     end_current_turn
   end
   @last_defender = nil
   @last_attacker = nil
+  @last_defender_hp_before = nil
 end
 
 def start_unit_death(unit)
