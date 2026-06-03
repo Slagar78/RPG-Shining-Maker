@@ -303,19 +303,21 @@ def update
     when :pre_attack
       update_animation(dt)
 
-      # Печать текста
       unless @full_message_shown
         @message_timer += 1
         if @message_timer >= @message_reveal_speed
           @message_timer = 0
           @message_reveal_index += 1
+          # Пропускаем управляющий символ {N} целиком
+          if @current_message[@message_reveal_index, 3] == "{N}"
+            @message_reveal_index += 3
+          end
           if @message_reveal_index >= @current_message.length
             @message_reveal_index = @current_message.length
             @full_message_shown = true
           end
         end
       else
-        # Если текст уже напечатан – копим паузу
         @message_done_timer += dt
       end
 
@@ -345,13 +347,68 @@ def update
         end
       end
       if @sub_phase_timer >= @attack_duration
-        @sub_phase = :idle_after
-        @sub_phase_timer = 0.0
-        @attacker_current_frame = 0
-        @defender_current_frame = 0
+        if @damage_applied && @damage > 0
+          # Формируем сообщение об уроне в том же поле @current_message
+          if @defender[:actor]
+            def_name = @defender[:actor]["name"] || "???"
+          elsif @defender[:enemy]
+            def_name = @defender[:enemy]["name"] || "???"
+          else
+            def_name = "???"
+          end
+          dmg_template = @game_text["0007"] || " got{N}damaged  by"
+          @current_message = "#{def_name}#{dmg_template} #{@damage}"
+          @message_reveal_index = 0
+          @message_timer = 0
+          @full_message_shown = false
+          @message_done_timer = 0.0
+          @sub_phase = :damage_message
+          @sub_phase_timer = 0.0
+        else
+          @sub_phase = :idle_after
+          @sub_phase_timer = 0.0
+          @attacker_current_frame = 0
+          @defender_current_frame = 0
+        end
+      end
+
+    when :damage_message
+      @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :idle, @attacker_current_frame, @attacker_anim_timer, dt)
+      # Печать текста
+      unless @full_message_shown
+        @message_timer += 1
+        if @message_timer >= @message_reveal_speed
+          @message_timer = 0
+          @message_reveal_index += 1
+          # Пропускаем управляющий символ {N} целиком
+          if @current_message[@message_reveal_index, 3] == "{N}"
+            @message_reveal_index += 3
+          end
+          if @message_reveal_index >= @current_message.length
+            @message_reveal_index = @current_message.length
+            @full_message_shown = true
+          end
+        end
+      else
+        @message_done_timer += dt
+      end
+
+      if @full_message_shown && @message_done_timer >= 1.0
+        if @defender[:hp] <= 0
+          @sub_phase = :dying
+          @dying_alpha = 255
+          @dying_blink_timer = 0.0
+          @dying_blinks = 0
+          @dying_visible = true
+        else
+          @sub_phase = :idle_after
+          @sub_phase_timer = 0.0
+          @attacker_current_frame = 0
+          @defender_current_frame = 0
+        end
       end
 	  
-    when :idle_after
+  when :idle_after
   # Обновляем только атакующего (защитник застывает в последнем кадре dodge)
   @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :idle, @attacker_current_frame, @attacker_anim_timer, dt)
   if @sub_phase_timer >= IDLE_AFTER_DURATION
@@ -477,7 +534,7 @@ end
       end
     end
 
-   if @sub_phase == :pre_attack && @message_panel_tex
+    if (@sub_phase == :pre_attack || @sub_phase == :damage_message) && @message_panel_tex
       panel_w = @message_panel_tex.width
       panel_h = @message_panel_tex.height
       panel_y = 960 - 16 - panel_h
@@ -492,10 +549,14 @@ end
         font_size = 60
         color = Raylib::WHITE
         text_x = panel_x + 40
-        text_y = panel_y + 20
-        Raylib.DrawTextEx(@message_font, text, Raylib::Vector2.create(text_x, text_y), font_size, 1, color)
+        lines = text.split("{N}", -1)
+        line_height = 70
+        lines.each_with_index do |line, idx|
+          line_y = panel_y + 20 + idx * line_height
+          Raylib.DrawTextEx(@message_font, line, Raylib::Vector2.create(text_x, line_y), font_size, 1, color)
+        end
       end
-    end
+	end
 
  if @phase == :shutter_close || @phase == :shutter_hold
   progress = @phase == :shutter_hold ? 1.0 : @shutter_progress

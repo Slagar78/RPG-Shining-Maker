@@ -62,7 +62,7 @@
 			"id":	1,
 			"name":	"SRST",
 			"full_name":	"Priest",
-			"battle_sprite_path":	"assets/battles/battlesprites/allies/Kutal",
+			"battle_sprite_path":	"assets/battles/battlesprites/allies/Jaha",
 			"move":	4,
 			"move_type":	"HEALER",
 			"race":	"Enterran",
