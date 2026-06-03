@@ -65,7 +65,7 @@ def draw
   draw_info_cursor
 
   # === Рамка цели ===
-  if @manager.battle_state == :attack_targeting && @manager.target_highlight && @manager.highlight_tex
+  if (@manager.battle_state == :attack_targeting || @manager.battle_state == :give_targeting) && @manager.target_highlight && @manager.highlight_tex
     tx = @manager.target_highlight[:x] * BattleManager::TILE_SIZE + cam_x
     ty = @manager.target_highlight[:y] * BattleManager::TILE_SIZE + cam_y
     src = Raylib::Rectangle.create(0, 0, @manager.highlight_tex.width, @manager.highlight_tex.height)

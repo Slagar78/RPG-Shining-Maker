@@ -148,6 +148,10 @@ class BattleManager
     @pending_defender = nil
     @pending_damage = 0
 	@pending_exp_amount = 0
+	@give_swap_target_unit = nil
+	@give_targets = []
+    @give_target_index = 0
+    @pending_give_item = nil
 
     prepare_turn_order
 
@@ -367,6 +371,16 @@ def find_adjacent_enemies(unit)
   enemies
 end
 
+def adjacent_allies(unit)
+  ux, uy = unit[:x], unit[:y]
+  @allies.select do |a|
+    ax, ay = a[:x], a[:y]
+    dist = (ax - ux).abs + (ay - uy).abs
+    alive = a[:hp] > 0
+    dist == 1 && alive && a != unit
+  end
+end
+
 def sort_targets_by_angle(targets, from_x, from_y)
   targets.sort_by do |t|
     dx = t[:x] - from_x
@@ -552,6 +566,91 @@ def current_actor_items
     icon = item_data ? item_data["icon"] : nil
     { "item" => item_name, "icon" => icon }
   end.compact
+end
+
+def execute_give_to(target_unit)
+  return unless @pending_give_item && target_unit
+  donor = @current_unit
+  donor_actor = donor[:actor]
+  target_actor = target_unit[:actor]
+  return unless donor_actor && target_actor
+
+  donor_entry = @start_inventory.find { |inv| inv["actor_id"] == donor_actor["id"] }
+  target_entry = @start_inventory.find { |inv| inv["actor_id"] == target_actor["id"] }
+  return unless donor_entry && target_entry
+
+  donor_items = donor_entry["items"]
+  target_items = target_entry["items"]
+
+  idx = donor_items.index { |entry| entry["item"] == @pending_give_item["item"] }
+  return unless idx
+
+  free_slot = target_items.index { |entry| entry["item"] == "NOTHING" }
+
+  if free_slot
+    # Простая передача
+    item_to_give = donor_items[idx].dup
+    item_to_give["equipped"] = false
+    donor_items[idx] = { "item" => "NOTHING", "equipped" => false }
+    target_items[free_slot] = item_to_give
+    finish_give
+  else
+    @give_swap_target_unit = target_unit
+    # Инвентарь цели заполнен – открываем обмен
+    target_items_list = target_items.map do |item_entry|
+      item_name = item_entry["item"]
+      next nil if item_name == "NOTHING"
+      item_data = @db.find_by_name(item_name)
+      icon = item_data ? item_data["icon"] : nil
+      { "item" => item_name, "icon" => icon }
+    end.compact
+    @battle_menu.open_item_grid(:give_swap, target_items_list)
+    @battle_state = :item_grid_select  # обработка пойдёт через уже существующий when
+    # @pending_give_item остаётся, чтобы знать, что передаём
+    @target_highlight = nil
+    @give_targets = []
+  end
+end
+
+def perform_give_swap(chosen_target_item)
+  # chosen_target_item – хеш {"item" => "Potion", "icon" => "..."}
+  donor = @current_unit
+  target = @give_swap_target_unit
+  return unless donor && target && @pending_give_item
+  donor_actor = donor[:actor]
+  target_actor = target[:actor]
+  return unless donor_actor && target_actor
+
+  donor_entry = @start_inventory.find { |inv| inv["actor_id"] == donor_actor["id"] }
+  target_entry = @start_inventory.find { |inv| inv["actor_id"] == target_actor["id"] }
+  return unless donor_entry && target_entry
+
+  donor_items = donor_entry["items"]
+  target_items = target_entry["items"]
+
+  donor_idx = donor_items.index { |e| e["item"] == @pending_give_item["item"] }
+  target_idx = target_items.index { |e| e["item"] == chosen_target_item["item"] }
+  return unless donor_idx && target_idx
+
+  # Меняем местами
+  donor_items[donor_idx], target_items[target_idx] = target_items[target_idx], donor_items[donor_idx]
+  # Снимаем экипировку с обоих
+  donor_items[donor_idx]["equipped"] = false
+  target_items[target_idx]["equipped"] = false
+
+  # Очищаем временные переменные
+  @pending_give_item = nil
+  @give_targets = []
+  @target_highlight = nil
+end
+
+def finish_give
+  @pending_give_item = nil
+  @give_targets = []
+  @target_highlight = nil
+  @give_swap_target_unit = nil
+  # Завершаем ход после передачи
+  end_current_turn
 end
 
 def apply_exp_to_actor(actor, amount, unit)
@@ -842,22 +941,92 @@ end
   end
   
     when :item_grid_select
-     @battle_menu.handle_input
-     @battle_player&.update_animation
-     if (result = @battle_menu.fetch_pending_grid_item)
-       item, mode = result
-       @battle_menu.close_item_grid
-       # Здесь позже разветвим логику (use/give/drop)
-       # Пока просто возвращаемся в подменю 4 плиток
-       @battle_menu.open_item_menu
-       @battle_state = :item_select
-       @audio.play_sfx("confirm") if @audio
-     elsif IsKeyPressed(KEY_S)
-       @battle_menu.close_item_grid
-       @battle_menu.open_item_menu
-       @battle_state = :item_select
-       @audio.play_sfx("cancel_menu") if @audio
-     end
+  @battle_menu.handle_input
+  @battle_player&.update_animation
+  if (result = @battle_menu.fetch_pending_grid_item)
+    item, mode = result
+    case mode
+    when :use
+      # (пока заглушка, вернёмся позже)
+      @battle_menu.close_item_grid
+      @battle_menu.open_item_menu
+      @battle_state = :item_select
+      @audio.play_sfx("confirm") if @audio
+    when :give
+      @battle_menu.close_item_grid
+	  
+	  if @battle_player
+      @current_unit[:x] = @battle_player.x
+      @current_unit[:y] = @battle_player.y
+      end
+	  
+      @pending_give_item = item
+      @give_targets = adjacent_allies(@current_unit)
+	  
+      if @give_targets.empty?
+        @audio.play_sfx("error") if @audio
+        @pending_give_item = nil
+        @battle_menu.open_item_menu
+        @battle_state = :item_select
+      else
+        @give_target_index = 0
+        @target_highlight = @give_targets[0]
+        @battle_state = :give_targeting
+		neighbors = [
+        [@current_unit[:x] + 1, @current_unit[:y]],
+        [@current_unit[:x] - 1, @current_unit[:y]],
+        [@current_unit[:x],     @current_unit[:y] + 1],
+        [@current_unit[:x],     @current_unit[:y] - 1]
+        ].select { |nx, ny| nx >= 0 && nx < @battle_w && ny >= 0 && ny < @battle_h }
+        @highlight_tiles = neighbors
+        @audio.play_sfx("cursor") if @audio
+      end
+    when :give_swap
+      # обмен выбранного предмета цели с предметом донора
+      perform_give_swap(item)
+      @battle_menu.close_item_grid
+      # после обмена завершаем ход
+      end_current_turn
+      @audio.play_sfx("confirm") if @audio
+    when :drop
+      # (пока заглушка)
+      @battle_menu.close_item_grid
+      @battle_menu.open_item_menu
+      @battle_state = :item_select
+      @audio.play_sfx("confirm") if @audio
+    end
+  elsif IsKeyPressed(KEY_S)
+    @battle_menu.close_item_grid
+    @battle_menu.open_item_menu
+    @battle_state = :item_select
+    @audio.play_sfx("cancel_menu") if @audio
+  end
+  
+  when :give_targeting
+  if @give_targets.any?
+    if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_UP)
+      @give_target_index = (@give_target_index - 1) % @give_targets.size
+      @target_highlight = @give_targets[@give_target_index]
+      @audio.play_sfx("cursor") if @audio
+    elsif IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_DOWN)
+      @give_target_index = (@give_target_index + 1) % @give_targets.size
+      @target_highlight = @give_targets[@give_target_index]
+      @audio.play_sfx("cursor") if @audio
+    elsif IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+      execute_give_to(@give_targets[@give_target_index])
+    elsif IsKeyPressed(KEY_S)
+      @target_highlight = nil
+      @give_targets = []
+      @pending_give_item = nil
+	  @highlight_tiles = @saved_highlight_tiles.dup
+      @battle_menu.open_item_menu
+      @battle_state = :item_select
+      @audio.play_sfx("cancel_menu") if @audio
+    end
+  else
+    @battle_state = :item_select
+    @battle_menu.open_item_menu
+  end
 
    end
  end
@@ -1065,6 +1234,9 @@ end
 	
 	when :item_select
       @battle_player&.update_animation
+	  
+	when :give_targeting
+      @battle_player&.update_animation  
 
     when :battle_scene
       @battle_scene.update
