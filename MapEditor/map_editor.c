@@ -1843,7 +1843,7 @@ void handle_input(Editor *ed, bool *running) {
             ed->current_layer = !ed->current_layer;
         }
 
-        // ========== РЕЖИМ РЕДАКТОРА ==========
+                // ========== РЕЖИМ РЕДАКТОРА ==========
         // Колесо мыши
         if (e.type == SDL_MOUSEWHEEL) {
             int mx, my;
@@ -1960,7 +1960,7 @@ void handle_input(Editor *ed, bool *running) {
 
             // --- Вставка буфера (без Alt) ---
             if (!ed->selecting && ed->has_clipboard &&
-            !(SDL_GetModState() & KMOD_ALT))
+                !(SDL_GetModState() & KMOD_ALT))
             {
                 if (mx >= MAP_X && mx < MAP_X + MAP_W && my >= MAP_Y && my < MAP_Y + MAP_H) {
                     float world_x = (mx - MAP_X) / ed->zoom + ed->cam_x;
@@ -1969,6 +1969,56 @@ void handle_input(Editor *ed, bool *running) {
                     int ty = (int)(world_y / TILE_SIZE);
                     clipboard_paste(&ed->clipboard, current_map(ed), tx, ty, ed->current_layer);
                     ed->paste_just_performed = true;
+                    return;
+                }
+            }
+
+            // === СКРОЛЛБАРЫ КАРТЫ – ===
+            // вертикальный скроллбар
+            if (mx >= MAP_X + MAP_W && mx < MAP_X + MAP_W + SCROLLBAR_SIZE &&
+                my >= MAP_Y && my < MAP_Y + MAP_H) {
+                Map *map = current_map(ed);
+                if (map) {
+                    float view_h = MAP_H / ed->zoom;
+                    float max_cam_y = map->height * TILE_SIZE - view_h;
+                    if (max_cam_y > 0) {
+                        float thumb_h = (view_h / (map->height * TILE_SIZE)) * MAP_H;
+                        if (thumb_h < 8) thumb_h = 8;
+                        float thumb_y = MAP_Y + (ed->cam_y / max_cam_y) * (MAP_H - thumb_h);
+                        if (my >= thumb_y && my <= thumb_y + thumb_h) {
+                            ed->scrollbar_drag_v = true;
+                            ed->scroll_drag_mouse_offset_y = my - (int)thumb_y;
+                        } else {
+                            float target_y = ((my - MAP_Y) / (float)MAP_H) * max_cam_y;
+                            ed->cam_y = target_y;
+                            if (ed->cam_y > max_cam_y) ed->cam_y = max_cam_y;
+                            if (ed->cam_y < 0) ed->cam_y = 0;
+                        }
+                    }
+                }
+                return;   // не даём клику уйти дальше
+            }
+            // Горизонтальный скроллбар
+            if (mx >= MAP_X && mx < MAP_X + MAP_W &&
+                my >= MAP_Y + MAP_H && my < MAP_Y + MAP_H + SCROLLBAR_SIZE) {
+                Map *map = current_map(ed);
+                if (map) {
+                    float view_w = MAP_W / ed->zoom;
+                    float max_cam_x = map->width * TILE_SIZE - view_w;
+                    if (max_cam_x > 0) {
+                        float thumb_w = (view_w / (map->width * TILE_SIZE)) * MAP_W;
+                        if (thumb_w < 8) thumb_w = 8;
+                        float thumb_x = MAP_X + (ed->cam_x / max_cam_x) * (MAP_W - thumb_w);
+                        if (mx >= thumb_x && mx <= thumb_x + thumb_w) {
+                            ed->scrollbar_drag_h = true;
+                            ed->scroll_drag_mouse_offset_x = mx - (int)thumb_x;
+                        } else {
+                            float target_x = ((mx - MAP_X) / (float)MAP_W) * max_cam_x;
+                            ed->cam_x = target_x;
+                            if (ed->cam_x > max_cam_x) ed->cam_x = max_cam_x;
+                            if (ed->cam_x < 0) ed->cam_x = 0;
+                        }
+                    }
                 }
                 return;
             }
@@ -2072,7 +2122,6 @@ void handle_input(Editor *ed, bool *running) {
                         Map *m = &ed->map_list.maps[i];
                         load_tileset(ed, m->tileset_path);
                         load_areas_for_current_map(ed);
-
                         return;
                     }
                 }
@@ -2113,52 +2162,7 @@ void handle_input(Editor *ed, bool *running) {
                     return;
                 }
             }
-            // --- Скроллбары карты ---
-            else if (mx >= MAP_X + MAP_W && mx < MAP_X + MAP_W + SCROLLBAR_SIZE &&
-                     my >= MAP_Y && my < MAP_Y + MAP_H) {
-                Map *map = current_map(ed);
-                if (map) {
-                    float view_h = MAP_H / ed->zoom;
-                    float max_cam_y = map->height * TILE_SIZE - view_h;
-                    if (max_cam_y > 0) {
-                        float thumb_h = (view_h / (map->height * TILE_SIZE)) * MAP_H;
-                        if (thumb_h < 8) thumb_h = 8;
-                        float thumb_y = MAP_Y + (ed->cam_y / max_cam_y) * (MAP_H - thumb_h);
-                        if (my >= thumb_y && my <= thumb_y + thumb_h) {
-                            ed->scrollbar_drag_v = true;
-                            ed->scroll_drag_mouse_offset_y = my - (int)thumb_y;
-                        } else {
-                            float target_y = ((my - MAP_Y) / (float)MAP_H) * max_cam_y;
-                            ed->cam_y = target_y;
-                            if (ed->cam_y > max_cam_y) ed->cam_y = max_cam_y;
-                            if (ed->cam_y < 0) ed->cam_y = 0;
-                        }
-                    }
-                }
-            }
-            else if (mx >= MAP_X && mx < MAP_X + MAP_W &&
-                     my >= MAP_Y + MAP_H && my < MAP_Y + MAP_H + SCROLLBAR_SIZE) {
-                Map *map = current_map(ed);
-                if (map) {
-                    float view_w = MAP_W / ed->zoom;
-                    float max_cam_x = map->width * TILE_SIZE - view_w;
-                    if (max_cam_x > 0) {
-                        float thumb_w = (view_w / (map->width * TILE_SIZE)) * MAP_W;
-                        if (thumb_w < 8) thumb_w = 8;
-                        float thumb_x = MAP_X + (ed->cam_x / max_cam_x) * (MAP_W - thumb_w);
-                        if (mx >= thumb_x && mx <= thumb_x + thumb_w) {
-                            ed->scrollbar_drag_h = true;
-                            ed->scroll_drag_mouse_offset_x = mx - (int)thumb_x;
-                        } else {
-                            float target_x = ((mx - MAP_X) / (float)MAP_W) * max_cam_x;
-                            ed->cam_x = target_x;
-                            if (ed->cam_x > max_cam_x) ed->cam_x = max_cam_x;
-                            if (ed->cam_x < 0) ed->cam_x = 0;
-                        }
-                    }
-                }
-            }
-        }
+        }   // КОНЕЦ if (левая кнопка)
     }   // КОНЕЦ while (SDL_PollEvent)
 
     // ======= НЕПРЕРЫВНЫЕ ДЕЙСТВИЯ (состояние мыши/клавиш) ======= 
