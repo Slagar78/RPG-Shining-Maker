@@ -346,6 +346,7 @@ def update
           end
         end
       end
+	  
       if @sub_phase_timer >= @attack_duration
         if @damage_applied && @damage > 0
           # Формируем сообщение об уроне в том же поле @current_message

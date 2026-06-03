@@ -538,12 +538,52 @@ def current_actor_spells
   klass["spell_list"].select { |s| s["level"] <= actor["level"] }
 end
 
-def apply_exp_to_actor(actor, amount)
-  return unless actor && amount > 0
+def apply_exp_to_actor(actor, amount, unit)
+  return unless actor && amount > 0 && unit
   actor["exp"] ||= 0
   actor["exp"] += amount
   puts "#{actor['name']} получил #{amount} опыта. Всего: #{actor['exp']}"
-  # Здесь потом добавим проверку повышения уровня
+
+  while actor["exp"] >= 100
+    actor["exp"] -= 100
+    level_up(actor, unit)
+  end
+end
+
+def level_up(actor, unit)
+  old_level = actor["level"]
+  actor["level"] = (old_level || 1) + 1
+  new_level = actor["level"]
+  puts "#{actor['name']} достиг уровня #{new_level}!"
+
+  klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
+  return unless klass
+
+  old_max_hp = unit[:max_hp]
+  old_max_mp = unit[:max_mp]
+
+  new_max_hp = @db.stat_at_level(klass["hp_growth"], new_level)
+  new_max_mp = @db.stat_at_level(klass["mp_growth"], new_level)
+  new_atk    = @db.stat_at_level(klass["attack_growth"], new_level)
+  new_def    = @db.stat_at_level(klass["defense_growth"], new_level)
+  new_agi    = @db.stat_at_level(klass["agility_growth"], new_level)
+  new_mov    = klass["move"] || unit[:mov]
+
+  unit[:max_hp] = new_max_hp
+  unit[:max_mp] = new_max_mp
+  unit[:atk]    = new_atk
+  unit[:def]    = new_def
+  unit[:agi]    = new_agi
+  unit[:mov]    = new_mov
+
+  hp_diff = new_max_hp - old_max_hp
+  mp_diff = new_max_mp - old_max_mp
+  unit[:hp] = [unit[:hp] + hp_diff, new_max_hp].min
+  unit[:mp] = [unit[:mp] + mp_diff, new_max_mp].min
+
+  # Обновляем данные актора для сохранения (опционально)
+  actor["hp"] = new_max_hp
+  actor["mp"] = new_max_mp
 end
 
  def handle_input
@@ -1016,7 +1056,7 @@ def return_from_battle_scene
 
       # Опыт за уничтожение
       exp_amount = ExpCalculator.calculate_destroy_exp(@last_attacker, @last_defender)
-      apply_exp_to_actor(@last_attacker[:actor], exp_amount)
+      apply_exp_to_actor(@last_attacker[:actor], exp_amount, @last_attacker)
     end
     start_unit_death(@last_defender)
   else
@@ -1025,7 +1065,7 @@ def return_from_battle_scene
       real_damage = @last_defender_hp_before - @last_defender[:hp]
       if real_damage > 0
         exp_amount = ExpCalculator.calculate_damage_exp(@last_attacker, @last_defender, real_damage)
-        apply_exp_to_actor(@last_attacker[:actor], exp_amount)
+        apply_exp_to_actor(@last_attacker[:actor], exp_amount, @last_attacker)
       end
     end
     end_current_turn
