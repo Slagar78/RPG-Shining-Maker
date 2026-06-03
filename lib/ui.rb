@@ -1772,17 +1772,21 @@ class SearchOverlay
     return unless @visible
     return if @full_text_shown
 
-    full = prepare_text
-    if @reveal_index < full.length
-      @reveal_timer += 1
-      if @reveal_timer >= @reveal_speed
-        @reveal_timer = 0
-        @reveal_index += 1
+  full = prepare_text
+  if @reveal_index < full.length
+    @reveal_timer += 1
+    if @reveal_timer >= @reveal_speed
+      @reveal_timer = 0
+      @reveal_index += 1
+      # Пропускаем управляющий символ {N} целиком
+      while full[@reveal_index, 3] == "{N}"
+        @reveal_index += 3
       end
-    else
-      @full_text_shown = true
     end
+  else
+    @full_text_shown = true
   end
+end
 
   def draw
     return unless @visible
