@@ -186,6 +186,12 @@ end
       BattleManager::TILE_SIZE
     )
     dst = Raylib::Rectangle.create(px, py, BattleManager::TILE_SIZE, BattleManager::TILE_SIZE)
-    Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+	# --- мигание ---
+    tint = if bp.blinking
+         Raylib::Fade(Raylib::WHITE, bp.blink_alpha / 255.0)
+       else
+         Raylib::WHITE
+       end
+    Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, tint)
   end
 end

@@ -405,6 +405,7 @@ class BattleManager
       @enemy_action_timer = 40
       sync_cursor_to_unit
     end
+	@battle_player.blinking = false if @battle_player
     @camera.follow_unit(@current_unit)
   end
 
@@ -536,18 +537,19 @@ end
      # ничего не делаем — движение обрабатывается в update
 
    when :player_turn
-     @battle_player.handle_input(self) if @battle_player
+    @battle_player.handle_input(self) if @battle_player
 
-     if IsKeyPressed(KEY_S)
-       if @battle_player.moving
-         @pending_info = true          # запомнить, выполнить после движения
-       else
-         @info_cursor_x = @current_unit[:x]
-         @info_cursor_y = @current_unit[:y]
-         @battle_state = :info_mode
-       end
-       return
-     end
+  if IsKeyPressed(KEY_S)
+    if @battle_player.moving
+      @pending_info = true
+    else
+      @info_cursor_x = @current_unit[:x]
+      @info_cursor_y = @current_unit[:y]
+      @battle_state = :info_mode
+      @battle_player.blinking = true if @battle_player  # <-- ВКЛЮЧАЕМ
+    end
+    return
+  end
 
      if @battle_player.moving
        @cursor.visible = false
@@ -712,6 +714,7 @@ end
       @battle_state = :player_turn
       @cursor.visible = true
       sync_cursor_to_unit
+	  @battle_player.blinking = false if @battle_player
     end
   end
 
@@ -942,6 +945,7 @@ end
             @info_cursor_x = @current_unit[:x]
             @info_cursor_y = @current_unit[:y]
             @battle_state = :info_mode
+			@battle_player.blinking = true if @battle_player
             @pending_info = false
           end
 
@@ -1110,13 +1114,13 @@ end
     end
 
     when :info_mode
-      @battle_player&.update_animation
+      @battle_player&.update
       @camera.follow_point(
       @info_cursor_x * TILE_SIZE + TILE_SIZE / 2,
       @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
     )
     when :info_profile
-      @battle_player&.update_animation
+      @battle_player&.update
       @profile.update
       if @profile.instance_variable_get(:@ready_to_close)
         @profile.force_close
@@ -1124,7 +1128,7 @@ end
       end
 
     when :enemy_profile
-      @battle_player&.update_animation
+      @battle_player&.update
       @enemy_profile.update
     if @enemy_profile.instance_variable_get(:@ready_to_close)
       @enemy_profile.force_close

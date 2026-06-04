@@ -11,6 +11,7 @@ DIR_UP    = 8
 
 class BattlePlayer
   attr_reader :direction, :moving, :remaining_moves
+  attr_accessor :blinking; attr_reader :blink_alpha
   attr_accessor :x, :y, :map_width, :map_height
 
   def initialize(unit, highlight_tiles, tex, tile_size = TILE_SIZE)
@@ -27,6 +28,11 @@ class BattlePlayer
     @pixel_offset = 0
     @highlight_tiles = highlight_tiles
     @remaining_moves = unit[:mov]
+	
+	@blinking = false
+    @blink_timer = 0
+    @blink_alpha = 255   # начальная непрозрачность
+	
     init_render_objects
   end
 
@@ -116,6 +122,7 @@ end
   def update
     update_movement
     update_animation
+	update_blinking
   end
 
   def update_movement
@@ -142,6 +149,15 @@ end
     end
   end
 
+  def update_blinking
+    return unless @blinking
+    @blink_timer += 1
+    # Плавное изменение альфы от 0 до 255, период – примерно 40 кадров (0.67 сек при 60 FPS)
+    # Значение sin возвращает -1..1, преобразуем в диапазон 0..255
+    raw = Math.sin(@blink_timer * 0.25)   # – скорость мерцания (меньше = медленнее)
+    @blink_alpha = ((raw + 1) * 127.5).to_i.clamp(0, 255)
+  end
+
   def draw
     return unless @tex
     px = visual_x
@@ -161,7 +177,14 @@ end
 
     @dst_rect.x = px
     @dst_rect.y = py
-    DrawTexturePro(@tex, @src_rect, @dst_rect, @draw_origin, 0, WHITE)
+    # Определяем прозрачность: если мигание включено и фаза невидимая — делаем полупрозрачным
+    tint = if @blinking
+         Raylib::Fade(Raylib::WHITE, @blink_alpha / 255.0)
+       else
+         Raylib::WHITE
+       end
+
+    DrawTexturePro(@tex, @src_rect, @dst_rect, @draw_origin, 0, tint)
 
     @src_rect.width = @tile_size
   end
