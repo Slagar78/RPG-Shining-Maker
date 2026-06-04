@@ -168,6 +168,7 @@ class BattleMenu
     @items = []
     @item_selected = 0
     @pending_grid_item = nil
+	@visible = false
   end
 
   def selected_item

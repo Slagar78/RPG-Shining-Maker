@@ -170,6 +170,7 @@ class BattleManager
 	@give_targets = []
     @give_target_index = 0
     @pending_give_item = nil
+	init_give_animation_vars
 
     prepare_turn_order
 
@@ -769,39 +770,43 @@ end
       @battle_menu.open_item_menu
       @battle_state = :item_select
       @audio.play_sfx("confirm") if @audio
+
     when :give
       @battle_menu.close_item_grid
-	  
-	  if @battle_player
-      @current_unit[:x] = @battle_player.x
-      @current_unit[:y] = @battle_player.y
+      
+      if @battle_player
+        @current_unit[:x] = @battle_player.x
+        @current_unit[:y] = @battle_player.y
       end
-	  
+      
       @pending_give_item = item
       @give_targets = adjacent_allies(@current_unit)
-	  
+      
       if @give_targets.empty?
         @audio.play_sfx("error") if @audio
         @pending_give_item = nil
         @battle_menu.open_item_menu
         @battle_state = :item_select
       else
+        # ВСЕГДА переходим в выбор цели (рамка + подсветка)
         @give_target_index = 0
         @target_highlight = @give_targets[0]
         @battle_state = :give_targeting
-		neighbors = [
-        [@current_unit[:x] + 1, @current_unit[:y]],
-        [@current_unit[:x] - 1, @current_unit[:y]],
-        [@current_unit[:x],     @current_unit[:y] + 1],
-        [@current_unit[:x],     @current_unit[:y] - 1]
+        neighbors = [
+          [@current_unit[:x] + 1, @current_unit[:y]],
+          [@current_unit[:x] - 1, @current_unit[:y]],
+          [@current_unit[:x],     @current_unit[:y] + 1],
+          [@current_unit[:x],     @current_unit[:y] - 1]
         ].select { |nx, ny| nx >= 0 && nx < @battle_w && ny >= 0 && ny < @battle_h }
         @highlight_tiles = neighbors
         @audio.play_sfx("cursor") if @audio
       end
+
     when :give_swap
       @battle_menu.close_item_grid
       perform_give_swap(item)   # он сам вызовет start_give_message
       @audio.play_sfx("confirm") if @audio
+	    	  
     when :drop
       # (пока заглушка)
       @battle_menu.close_item_grid
@@ -818,6 +823,8 @@ end
   
     when :give_targeting
        handle_give_targeting_input
+	when :give_animation
+      # ничего не делаем   
     when :give_message
        handle_give_message_input
 
@@ -1030,6 +1037,10 @@ end
 	  
 	when :give_targeting
       @battle_player&.update_animation  
+	  
+	when :give_animation
+      @battle_player&.update_animation
+      update_give_animation  
 
     when :battle_scene
       @battle_scene.update
@@ -1104,14 +1115,17 @@ def draw
   @renderer.draw
   @battle_menu.draw if @battle_menu.visible
   @death_anim.draw(@camera) if @death_anim
-    if @battle_state == :info_profile
-       @profile.draw
-    elsif @battle_state == :enemy_profile
-       @enemy_profile.draw
-    end
-    if @battle_state == :give_message
-      draw_give_message
-    end
+  if @battle_state == :info_profile
+     @profile.draw
+  elsif @battle_state == :enemy_profile
+     @enemy_profile.draw
+  end
+  if @battle_state == :give_animation
+     draw_give_animation
+  end
+  if @battle_state == :give_message
+     draw_give_message
+  end
 end
 
 def return_from_battle_scene

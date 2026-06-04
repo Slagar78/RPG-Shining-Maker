@@ -1,5 +1,49 @@
 # lib/battleManager/battle_give.rb
 module BattleGive
+  # ---------- переменные анимации ----------
+  attr_accessor :give_anim_active, :give_anim_timer,
+                :give_anim_start_x, :give_anim_start_y,
+                :give_anim_end_x, :give_anim_end_y,
+                :give_anim_item_tex, :give_anim_donor_items,
+                :give_anim_target_items, :give_anim_donor_slot,
+                :give_anim_target_slot,
+                :give_anim_message_id, :give_anim_message_params,
+                :item_icon_cache
+
+def init_give_animation_vars
+  @give_anim_active = false
+  @give_anim_timer = 0
+  @give_anim_start_x = 0.0
+  @give_anim_start_y = 0.0
+  @give_anim_end_x = 0.0
+  @give_anim_end_y = 0.0
+  @give_anim_item_tex = nil
+  @give_anim_donor_items = []
+  @give_anim_target_items = []
+  @give_anim_donor_slot = 0
+  @give_anim_target_slot = 0
+  @give_anim_message_id = nil
+  @give_anim_message_params = {}
+  @item_icon_cache = {}
+
+  # Загружаем или создаём текстуру пустого слота
+  path = "assets/items/item_empty.png"
+  if File.exist?(path)
+    img = LoadImage(path)
+    @empty_item_tex = LoadTextureFromImage(img)
+    UnloadImage(img)
+    SetTextureFilter(@empty_item_tex, TEXTURE_FILTER_POINT)
+  else
+    # Программно создаём текстуру 32x48 (тёмный фон, рамка)
+    img = GenImageColor(32, 48, DARKGRAY)
+    # Рамка
+    ImageDrawRectangleLines(img, Rectangle.create(0, 0, 32, 48), GRAY)
+    @empty_item_tex = LoadTextureFromImage(img)
+    UnloadImage(img)
+    SetTextureFilter(@empty_item_tex, TEXTURE_FILTER_POINT)
+  end
+end
+
   # Поиск соседних союзников
   def adjacent_allies(unit)
     ux, uy = unit[:x], unit[:y]
@@ -7,11 +51,11 @@ module BattleGive
       ax, ay = a[:x], a[:y]
       dist = (ax - ux).abs + (ay - uy).abs
       alive = a[:hp] > 0
-      dist == 1 && alive && a != unit
+      dist <= 1 && alive && a != unit
     end
   end
 
-  # Начать передачу выбранному союзнику
+  # Начать передачу выбранному союзнику (изменённая версия)
   def execute_give_to(target_unit)
     return unless @pending_give_item && target_unit
     donor = @current_unit
@@ -32,11 +76,14 @@ module BattleGive
     free_slot = target_items.index { |entry| entry["item"] == "NOTHING" }
 
     if free_slot
+      # Простая передача
       item_to_give = donor_items[idx].dup
       item_to_give["equipped"] = false
       donor_items[idx] = { "item" => "NOTHING", "equipped" => false }
       target_items[free_slot] = item_to_give
-      start_give_message("0001", {
+      # Запуск анимации
+      start_give_animation(donor, target_unit, @pending_give_item["item"],
+                           idx, free_slot, "0001", {
         '{DONOR}' => donor_actor["name"],
         '{ITEM}' => @pending_give_item["item"],
         '{TARGET}' => target_actor["name"]
@@ -126,7 +173,7 @@ module BattleGive
     end
   end
 
-  # Начало сообщения о передаче с посимвольным выводом
+  # Начало сообщения с посимвольным выводом
   def start_give_message(id, params)
     @give_message_id = id
     @give_message_params = params
@@ -204,5 +251,145 @@ module BattleGive
       end
     end
   end
-  
+
+  # ---------- новые методы анимации ----------
+def get_item_texture(item_name)
+  return @empty_item_tex if item_name.nil? || item_name == "NOTHING"
+  return @item_icon_cache[item_name] if @item_icon_cache.key?(item_name)
+  item_data = @db.find_by_name(item_name)
+  path = item_data ? item_data["icon"] : nil
+  tex = nil
+  if path && File.exist?(path)
+    img = LoadImage(path)
+    tex = LoadTextureFromImage(img)
+    UnloadImage(img)
+    SetTextureFilter(tex, TEXTURE_FILTER_POINT)
+  end
+  @item_icon_cache[item_name] = tex
+end
+
+  def actor_items_array(unit)
+    actor = unit[:actor]
+    return [] unless actor
+    entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
+    return [] unless entry
+    entry["items"].map do |e|
+      name = e["item"]
+      icon_path = nil
+      if name != "NOTHING"
+        data = @db.find_by_name(name)
+        icon_path = data ? data["icon"] : nil
+      end
+      { "item" => name, "icon" => icon_path }
+    end
+  end
+
+  def start_give_animation(donor, target, item_name, donor_slot, target_slot, msg_id, msg_params)
+    @give_anim_active = true
+    @give_anim_timer = 0
+    @give_anim_donor_slot = donor_slot
+    @give_anim_target_slot = target_slot
+    @give_anim_item_tex = get_item_texture(item_name)
+    @give_anim_donor_items = actor_items_array(donor)
+    @give_anim_target_items = actor_items_array(target)
+    @give_anim_message_id = msg_id
+    @give_anim_message_params = msg_params
+    @battle_state = :give_animation
+    @highlight_tiles = []
+    @target_highlight = nil
+  end
+
+def update_give_animation
+  @give_anim_timer += 1
+  if @give_anim_timer >= 150   # 2.5 секунды при 60 fps
+    @give_anim_active = false
+    start_give_message(@give_anim_message_id, @give_anim_message_params)
+  end
+end
+
+def draw_give_animation
+  t = @give_anim_timer
+  period = 30          # полсекунды на полный цикл мигания (15 кадров видно, 15 нет)
+
+  # --- Дающий ---
+  # 0..75 кадров: предмет мигает
+  donor_item_alpha = if t < 75
+    ( (t / (period/2)) % 2 == 0 ) ? 255 : 0
+  else
+    # после 75 кадров предмет исчезает, слот становится пустым
+    0
+  end
+  # Текстура для дающего: если рисуем с альфой > 0, показываем сам предмет
+  donor_override_tex = @give_anim_item_tex
+
+  # --- Получатель ---
+  # 0..75 кадров: пустой слот (item_empty) виден без мигания (или с миганием? по желанию)
+  # 75..120: предмет мигает
+  # 120..150: предмет виден постоянно
+  target_item_alpha = if t < 75
+    0   # пусто
+  elsif t < 120
+    ( ((t - 75) / (period/2)) % 2 == 0 ) ? 255 : 0
+  else
+    255
+  end
+  target_override_tex = @give_anim_item_tex
+
+  draw_item_cross(288, 400, @give_anim_donor_items, @give_anim_donor_slot, "Giver",
+                  donor_override_tex, donor_item_alpha)
+  draw_item_cross(400, 400, @give_anim_target_items, @give_anim_target_slot, "Receiver",
+                  target_override_tex, target_item_alpha)
+end
+
+def draw_item_cross(cx, cy, items, selected_slot, title, override_tex, selected_alpha)
+  tw = MeasureText(title, 14)
+  DrawText(title, cx - tw/2, cy - 120, 14, WHITE)
+
+  positions = [
+    { x: cx,        y: cy - 24 },
+    { x: cx - 32,   y: cy },
+    { x: cx + 32,   y: cy },
+    { x: cx,        y: cy + 24 }
+  ]
+
+  4.times do |i|
+    entry = items[i]
+    slot_x = positions[i][:x] - 16
+    slot_y = positions[i][:y] - 24
+    slot_w = 32
+    slot_h = 48
+
+    # Фон слота
+    DrawRectangle(slot_x, slot_y, slot_w, slot_h, DARKGRAY)
+    DrawRectangleLines(slot_x, slot_y, slot_w, slot_h, GRAY)
+
+    if i == selected_slot
+      # Для выделенного слота:
+      # если selected_alpha > 0 — рисуем предмет с этой альфой
+      # иначе — рисуем пустую иконку полностью непрозрачной
+      if selected_alpha > 0
+        tex = override_tex
+        alpha = selected_alpha
+      else
+        tex = @empty_item_tex
+        alpha = 255
+      end
+    else
+      tex = get_item_texture(entry ? entry["item"] : "NOTHING")
+      alpha = 255
+    end
+
+    if tex && alpha > 0
+      color = Fade(WHITE, alpha / 255.0)
+      src = Rectangle.create(0, 0, 32, 48)
+      dst = Rectangle.create(slot_x, slot_y, slot_w, slot_h)
+      DrawTexturePro(tex, src, dst, Vector2.create(0,0), 0, color)
+    end
+
+    if i == selected_slot
+      DrawRectangleLinesEx(Rectangle.create(slot_x - 1, slot_y - 1, slot_w + 2, slot_h + 2), 2, YELLOW)
+    end
+  end
+end
+
 end
