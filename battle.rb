@@ -24,10 +24,12 @@ require_relative 'lib/battleManager/calculate_damage'
 require_relative 'lib/battleManager/exp_calculator'
 require_relative 'lib/battleManager/battle_renderer'
 require_relative 'lib/battleManager/battle_give'
+require_relative 'lib/battleManager/battle_drop'
 require_relative 'lib/battleManager/battle_utils'
 
 class BattleManager
   include BattleGive
+  include BattleDrop
   include BattleUtils
   attr_reader :game_map, :battle_entry, :battle_state, :battle_menu
   attr_reader :camera, :static_bg, :layer2, :top_layer,
@@ -171,6 +173,7 @@ class BattleManager
     @give_target_index = 0
     @pending_give_item = nil
 	init_give_animation_vars
+	init_drop_vars
 
     prepare_turn_order
 
@@ -758,7 +761,7 @@ end
     @audio.play_sfx("cancel_menu") if @audio
   end
   
-    when :item_grid_select
+  when :item_grid_select
   @battle_menu.handle_input
   @battle_player&.update_animation
   if (result = @battle_menu.fetch_pending_grid_item)
@@ -809,18 +812,17 @@ end
       @audio.play_sfx("confirm") if @audio
 	    	  
     when :drop
-      # (пока заглушка)
+      @battle_menu.close_item_grid
+      start_drop_confirm(item)
+      @audio.play_sfx("confirm") if @audio
+    end
+	
+    elsif IsKeyPressed(KEY_S)
       @battle_menu.close_item_grid
       @battle_menu.open_item_menu
       @battle_state = :item_select
-      @audio.play_sfx("confirm") if @audio
+      @audio.play_sfx("cancel_menu") if @audio
     end
-  elsif IsKeyPressed(KEY_S)
-    @battle_menu.close_item_grid
-    @battle_menu.open_item_menu
-    @battle_state = :item_select
-    @audio.play_sfx("cancel_menu") if @audio
-  end
   
     when :give_targeting
        handle_give_targeting_input
@@ -828,6 +830,10 @@ end
       # ничего не делаем   
     when :give_message
        handle_give_message_input
+	when :drop_confirm
+      handle_drop_confirm_input
+    when :drop_message
+      handle_drop_message_input
 
    end
  end
@@ -1080,6 +1086,11 @@ end
 	
 	when :give_message
       update_give_message
+	when :drop_confirm
+      update_drop_confirm
+    when :drop_message
+      @battle_player&.update_animation
+      update_drop_message
 	  
     when :death_animation
       @death_anim&.update
@@ -1126,6 +1137,11 @@ def draw
   end
   if @battle_state == :give_message
      draw_give_message
+  end
+  if @battle_state == :drop_confirm
+    draw_drop_confirm
+  elsif @battle_state == :drop_message
+    draw_drop_message
   end
 end
 
