@@ -3,7 +3,7 @@ class HpMpPanel
   BASE_W = 120
   BASE_H = 88
   PADDING_LEFT = 12
-  PADDING_TOP = 8
+  PADDING_TOP = 10
   LINE_HEIGHT = 22
   FONT_SIZE = 20
 

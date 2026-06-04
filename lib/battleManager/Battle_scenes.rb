@@ -604,7 +604,7 @@ end
         lines = text.split("{N}", -1)
         line_height = 70
         lines.each_with_index do |line, idx|
-          line_y = panel_y + 20 + idx * line_height
+          line_y = panel_y + 30 + idx * line_height
           Raylib.DrawTextEx(@message_font, line, Raylib::Vector2.create(text_x, line_y), font_size, 1, color)
         end
       end
