@@ -466,13 +466,15 @@ def current_actor_items
 
   entry["items"].map do |item_entry|
     item_name = item_entry["item"]
-    next nil if item_name == "NOTHING"
-    item_data = @db ? @db.find_by_name(item_name) : nil
-    icon = item_data ? item_data["icon"] : nil
-    { "item" => item_name, "icon" => icon }
-  end.compact
+    if item_name == "NOTHING"
+      { "item" => "NOTHING", "icon" => nil }
+    else
+      item_data = @db ? @db.find_by_name(item_name) : nil
+      icon = item_data ? item_data["icon"] : nil
+      { "item" => item_name, "icon" => icon }
+    end
+  end
 end
-
 
 def apply_exp_to_actor(actor, amount, unit)
   return unless actor && amount > 0 && unit

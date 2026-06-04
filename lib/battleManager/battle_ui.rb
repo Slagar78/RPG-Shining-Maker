@@ -32,6 +32,7 @@ class BattleMenu
     @spells = []
     @magic_selected = 0
     @empty_magic_tex = nil
+	@empty_item_tex = nil
     @magic_icon_cache = {}
 
     # --- универсальный грид предметов (Use / Give / Drop) ---
@@ -47,6 +48,7 @@ class BattleMenu
     load_textures
     load_commands_panel
     load_magic_panel
+	load_empty_item_tex
   end
 
   def font=(font)
@@ -105,6 +107,18 @@ class BattleMenu
     else
       puts "WARNING: #{path} not found."
       @magic_panel_tex = nil
+    end
+  end
+
+  def load_empty_item_tex
+    path = "assets/items/item_empty.png"
+    if File.exist?(path)
+      img = Raylib.LoadImage(path)
+      @empty_item_tex = Raylib.LoadTextureFromImage(img)
+      Raylib.UnloadImage(img)
+      Raylib.SetTextureFilter(@empty_item_tex, Raylib::TEXTURE_FILTER_POINT)
+    else
+      @empty_item_tex = nil
     end
   end
 
@@ -234,20 +248,27 @@ class BattleMenu
     end
 
     if @item_grid_mode
-      if Raylib.IsKeyPressed(Raylib::KEY_UP)
-        @item_selected = 0
-      elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
-        @item_selected = 1
-      elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
-        @item_selected = 2
-      elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
-        @item_selected = 3
+      # Стрелки: переключение с пропуском пустых слотов
+      if Raylib.IsKeyPressed(Raylib::KEY_UP) || Raylib.IsKeyPressed(Raylib::KEY_LEFT)
+        new_idx = @item_selected
+        loop do
+          new_idx = (new_idx - 1) % 4
+          break if @items[new_idx]&.dig("item") != "NOTHING" || new_idx == @item_selected
+        end
+        @item_selected = new_idx
+      elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT) || Raylib.IsKeyPressed(Raylib::KEY_DOWN)
+        new_idx = @item_selected
+        loop do
+          new_idx = (new_idx + 1) % 4
+          break if @items[new_idx]&.dig("item") != "NOTHING" || new_idx == @item_selected
+        end
+        @item_selected = new_idx
       end
-      @item_selected = @item_selected.clamp(0, [@items.size - 1, 0].max)
 
-      if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
+      # Подтверждение – только если слот не пустой
+      if (Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)) &&
+         @items[@item_selected]&.dig("item") != "NOTHING"
         @pending_grid_item = [selected_item, @item_grid_mode]
-        # внешний код заберёт результат и решит, что делать
       end
       return
     end
@@ -435,46 +456,48 @@ class BattleMenu
   end
 
   # Отрисовка грида иконок предметов (Use/Give/Drop)
-  def draw_item_grid_icons(cx, cy, offset)
-    positions = [
-      { x: cx,       y: cy - 24 },
-      { x: cx - 32,  y: cy },
-      { x: cx + 32,  y: cy },
-      { x: cx,       y: cy + 24 }
-    ]
+def draw_item_grid_icons(cx, cy, offset)
+  positions = [
+    { x: cx,       y: cy - 24 },
+    { x: cx - 32,  y: cy },
+    { x: cx + 32,  y: cy },
+    { x: cx,       y: cy + 24 }
+  ]
 
-    # Невыбранные иконки
-    4.times do |i|
-      next if i == @item_selected
-      item = @items[i]
-      pos = positions[i]
-      icon = load_item_icon(item)
-      base_w = 32
-      base_h = 48
-      dst = Raylib::Rectangle.create(pos[:x] - base_w/2, pos[:y] - base_h/2, base_w, base_h)
-      src = Raylib::Rectangle.create(0, 0, base_w, base_h)
-      if icon
-        Raylib.DrawTexturePro(icon, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
-      else
-        Raylib.DrawRectangle(dst.x, dst.y, base_w, base_h, Raylib::GRAY)
-      end
-    end
-
-    # Выбранная (увеличенная)
-    sel_item = @items[@item_selected]
-    sel_pos = positions[@item_selected]
-    icon = load_item_icon(sel_item)
-    scale = 1.2
-    new_w = 32 * scale
-    new_h = 48 * scale
-    dst = Raylib::Rectangle.create(sel_pos[:x] - new_w/2, sel_pos[:y] - new_h/2, new_w, new_h)
-    src = Raylib::Rectangle.create(0, 0, 32, 48)
-    if icon
-      Raylib.DrawTexturePro(icon, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+  # Невыбранные иконки
+  4.times do |i|
+    next if i == @item_selected
+    item = @items[i]
+    pos = positions[i]
+    icon = load_item_icon(item)
+    tex = icon || @empty_item_tex
+    base_w = 32
+    base_h = 48
+    dst = Raylib::Rectangle.create(pos[:x] - base_w/2, pos[:y] - base_h/2, base_w, base_h)
+    src = Raylib::Rectangle.create(0, 0, base_w, base_h)
+    if tex
+      Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
     else
-      Raylib.DrawRectangle(dst.x, dst.y, new_w, new_h, Raylib::GRAY)
+      Raylib.DrawRectangle(dst.x, dst.y, base_w, base_h, Raylib::GRAY)
     end
   end
+
+  # Выбранная (увеличенная)
+  sel_item = @items[@item_selected]
+  sel_pos = positions[@item_selected]
+  icon = load_item_icon(sel_item)
+  tex = icon || @empty_item_tex
+  scale = 1.2
+  new_w = 32 * scale
+  new_h = 48 * scale
+  dst = Raylib::Rectangle.create(sel_pos[:x] - new_w/2, sel_pos[:y] - new_h/2, new_w, new_h)
+  src = Raylib::Rectangle.create(0, 0, 32, 48)
+  if tex
+    Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+  else
+    Raylib.DrawRectangle(dst.x, dst.y, new_w, new_h, Raylib::GRAY)
+  end
+end
 
   def load_magic_icon(path)
     return nil unless path && !path.empty?
