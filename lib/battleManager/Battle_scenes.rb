@@ -558,7 +558,7 @@ if @sub_phase == :attack
   draw_unit(@attacker, :attack, att_x, att_y, false, @attacker_current_frame, true)
 elsif @sub_phase == :dying || @sub_phase == :dying_wait
   # Защитник замирает в позе получения урона и исчезает (или уже невидим)
-  draw_unit_with_alpha(@defender, :dodge, def_x, def_y, false, @defender_current_frame, true, @dying_alpha)
+  draw_unit_with_alpha(@defender, @defender_anim || :idle, def_x, def_y, false, @defender_current_frame, true, @dying_alpha)
   draw_unit(@attacker, :idle, att_x, att_y, false, @attacker_current_frame, true)
 else
   draw_unit(@attacker, :idle, att_x, att_y, false, @attacker_current_frame, true)
