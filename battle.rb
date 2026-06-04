@@ -172,6 +172,7 @@ class BattleManager
 	@give_targets = []
     @give_target_index = 0
     @pending_give_item = nil
+	@saved_item_menu_action = nil
 	init_give_animation_vars
 	init_drop_vars
 
@@ -612,6 +613,7 @@ end
          end
 
        when 2  # Item
+	     @saved_item_menu_action = nil
          @battle_menu.open_item_menu
          @battle_state = :item_select
          @audio.play_sfx("confirm") if @audio
@@ -707,6 +709,7 @@ end
   @battle_menu.handle_input
   if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
     action = @battle_menu.selected_item_action   # 0=Use, 1=Give, 2=Equip, 3=Drop
+	@saved_item_menu_action = action
     case action
     when 0  # Use
       items = current_actor_items
@@ -758,6 +761,7 @@ end
       @audio.play_sfx("cancel_menu") if @audio
     end
   elsif IsKeyPressed(KEY_S)
+    @saved_item_menu_action = nil
     @battle_menu.close_item_menu
     @battle_state = :action_menu          # возврат в главное меню
     @audio.play_sfx("cancel_menu") if @audio
@@ -772,7 +776,7 @@ end
     when :use
       # (пока заглушка, вернёмся позже)
       @battle_menu.close_item_grid
-      @battle_menu.open_item_menu
+      @battle_menu.open_item_menu(@saved_item_menu_action || 0)
       @battle_state = :item_select
       @audio.play_sfx("confirm") if @audio
 
@@ -790,7 +794,7 @@ end
       if @give_targets.empty?
         @audio.play_sfx("error") if @audio
         @pending_give_item = nil
-        @battle_menu.open_item_menu
+        @battle_menu.open_item_menu(@saved_item_menu_action || 0)
         @battle_state = :item_select
       else
         # ВСЕГДА переходим в выбор цели (рамка + подсветка)
@@ -821,7 +825,7 @@ end
 	
     elsif IsKeyPressed(KEY_S)
       @battle_menu.close_item_grid
-      @battle_menu.open_item_menu
+      @battle_menu.open_item_menu(@saved_item_menu_action || 0)
       @battle_state = :item_select
       @audio.play_sfx("cancel_menu") if @audio
     end

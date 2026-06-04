@@ -84,7 +84,7 @@ module BattleDrop
         @drop_confirm_index = 1 - @drop_confirm_index
       elsif IsKeyPressed(KEY_S)
         @drop_confirm_item = nil
-        @battle_menu.open_item_menu
+        @battle_menu.open_item_menu(@saved_item_menu_action || 0)
         @battle_state = :item_select
         @audio.play_sfx("cancel_menu") if @audio
       elsif IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
@@ -92,7 +92,7 @@ module BattleDrop
           perform_drop
         else                          # No
           @drop_confirm_item = nil
-          @battle_menu.open_item_menu
+          @battle_menu.open_item_menu(@saved_item_menu_action || 0)
           @battle_state = :item_select
           @audio.play_sfx("cancel_menu") if @audio
         end

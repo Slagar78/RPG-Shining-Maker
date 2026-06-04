@@ -157,9 +157,9 @@ class BattleMenu
   end
 
   # --- Подменю предметов (4 плитки) ---
-  def open_item_menu
+  def open_item_menu(selected = nil)
     @item_menu_mode = true
-    @item_menu_selected = 0
+    @item_menu_selected = selected || 0
     @visible = true
     @anim_timer = 0
   end

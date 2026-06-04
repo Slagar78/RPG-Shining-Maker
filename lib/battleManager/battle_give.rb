@@ -177,7 +177,7 @@ def handle_give_targeting_input
     @give_targets = []
     @pending_give_item = nil
     @highlight_tiles = @saved_highlight_tiles.dup
-    @battle_menu.open_item_menu
+    @battle_menu.open_item_menu(@saved_item_menu_action || 0)
     @battle_state = :item_select
     @audio.play_sfx("cancel_menu") if @audio
   end
