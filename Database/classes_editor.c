@@ -127,6 +127,12 @@ static SDL_Rect mt_prev_btn, mt_next_btn;
 static SDL_Rect resistance_prev_rects[8];
 static SDL_Rect resistance_next_rects[8];
 
+static char ally_battlesprite_folder_list[200][64];
+static int ally_battlesprite_folder_count = 0;
+static int selected_ally_battlesprite_idx = -1;
+static char ally_battlesprite_display_name[64] = "";
+SDL_Rect ally_battlesprite_prev_rect, ally_battlesprite_next_rect;
+
 // Прототипы
 static void build_curve_list(void);
 static void build_spell_name_list(void);
@@ -141,11 +147,36 @@ static void add_new_class(void);
 static void delete_class(void);
 static void update_spell_levels(void);
 
+static void scan_ally_battlesprite_folder(void);
+
 static void update_race_status_in_json(void);
 static void update_movetype_in_json(void);
 static void update_resistance_in_json(int idx);
 static void update_prowess_in_json(void);
 static void update_initial_status_in_json(void);
+
+// ----------
+static void scan_ally_battlesprite_folder(void) {
+    ally_battlesprite_folder_count = 0;
+    selected_ally_battlesprite_idx = -1;
+    WIN32_FIND_DATA findFileData;
+    HANDLE hFind = FindFirstFile("../assets/battles/battlesprites/allies/*", &findFileData);
+    if (hFind == INVALID_HANDLE_VALUE) return;
+    do {
+        if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            if (strcmp(findFileData.cFileName, ".") == 0 || strcmp(findFileData.cFileName, "..") == 0)
+                continue;
+            if (ally_battlesprite_folder_count < 200) {
+                size_t len = strlen(findFileData.cFileName);
+                if (len > 63) len = 63;
+                memcpy(ally_battlesprite_folder_list[ally_battlesprite_folder_count], findFileData.cFileName, len);
+                ally_battlesprite_folder_list[ally_battlesprite_folder_count][len] = '\0';
+                ally_battlesprite_folder_count++;
+            }
+        }
+    } while (FindNextFile(hFind, &findFileData) != 0);
+    FindClose(hFind);
+}
 
 // ---------- build_curve_list ----------
 static void build_curve_list(void) {
@@ -282,6 +313,26 @@ static void load_class_fields(void) {
             if (strcmp(val, opts[j]) == 0) { idx = j; break; }
         }
         resistance_indices[i] = idx;
+    }
+
+    const char *bsp = cJSON_GetObjectItem(cls, "battle_sprite_path") ?
+                      cJSON_GetObjectItem(cls, "battle_sprite_path")->valuestring : "";
+    ally_battlesprite_display_name[0] = '\0';
+    {
+        const char *last_slash = strrchr(bsp, '/');
+        if (!last_slash) last_slash = strrchr(bsp, '\\');
+        if (last_slash)
+            strncpy(ally_battlesprite_display_name, last_slash + 1, 63);
+        else
+            strncpy(ally_battlesprite_display_name, bsp, 63);
+        ally_battlesprite_display_name[63] = '\0';
+    }
+    selected_ally_battlesprite_idx = -1;
+    for (int i = 0; i < ally_battlesprite_folder_count; i++) {
+        if (strcmp(ally_battlesprite_folder_list[i], ally_battlesprite_display_name) == 0) {
+            selected_ally_battlesprite_idx = i;
+            break;
+        }
     }
 
     cJSON *prow = cJSON_GetObjectItem(cls, "prowess");
@@ -543,6 +594,19 @@ void classes_draw_edit_panel(SDL_Renderer *renderer, int px, int py) {
     draw_class_field(renderer, px + 10, y, 150, 22, 0, "Name:", name_buf, 30);
     y += 35;
     draw_class_field(renderer, px + 10, y, 150, 22, 1, "Full Name:", full_name_buf, 30);
+    y += 35;
+    // Ally Battle Sprite (справа от Full Name)
+    int bs_x = px + 270;
+    draw_text_ext(renderer, bs_x, y + 3, "Battle Spr:", (SDL_Color){255,255,255,255});
+    draw_text_ext(renderer, bs_x + 110, y + 3, ally_battlesprite_display_name, (SDL_Color){255,255,255,255});
+    ally_battlesprite_prev_rect = (SDL_Rect){bs_x + 200, y, 20, 22};
+    SDL_SetRenderDrawColor(renderer, 70,70,120,255); SDL_RenderFillRect(renderer, &ally_battlesprite_prev_rect);
+    SDL_SetRenderDrawColor(renderer, 255,255,255,255); SDL_RenderDrawRect(renderer, &ally_battlesprite_prev_rect);
+    draw_text_ext(renderer, ally_battlesprite_prev_rect.x+5, ally_battlesprite_prev_rect.y+3, "<", (SDL_Color){255,255,255,255});
+    ally_battlesprite_next_rect = (SDL_Rect){ally_battlesprite_prev_rect.x + 25, y, 20, 22};
+    SDL_SetRenderDrawColor(renderer, 70,70,120,255); SDL_RenderFillRect(renderer, &ally_battlesprite_next_rect);
+    SDL_SetRenderDrawColor(renderer, 255,255,255,255); SDL_RenderDrawRect(renderer, &ally_battlesprite_next_rect);
+    draw_text_ext(renderer, ally_battlesprite_next_rect.x+5, ally_battlesprite_next_rect.y+3, ">", (SDL_Color){255,255,255,255});
     y += 35;
     char mvstr[8]; snprintf(mvstr, sizeof(mvstr), "%d", move_val);
     draw_class_field(renderer, px + 10, y, 70, 22, 2, "Move:", mvstr, 0);
@@ -844,6 +908,28 @@ void classes_handle_input(SDL_Event *evt) {
             return;
         }
 
+        // Ally Battle Sprite arrows
+        if (mx >= ally_battlesprite_prev_rect.x && mx < ally_battlesprite_prev_rect.x+ally_battlesprite_prev_rect.w &&
+            my >= ally_battlesprite_prev_rect.y && my < ally_battlesprite_prev_rect.y+ally_battlesprite_prev_rect.h) {
+            if (ally_battlesprite_folder_count > 0) {
+                selected_ally_battlesprite_idx = (selected_ally_battlesprite_idx - 1 + ally_battlesprite_folder_count) % ally_battlesprite_folder_count;
+                strncpy(ally_battlesprite_display_name, ally_battlesprite_folder_list[selected_ally_battlesprite_idx], 63);
+                ally_battlesprite_display_name[63] = '\0';
+                commit_class_changes();
+            }
+            return;
+        }
+        if (mx >= ally_battlesprite_next_rect.x && mx < ally_battlesprite_next_rect.x+ally_battlesprite_next_rect.w &&
+            my >= ally_battlesprite_next_rect.y && my < ally_battlesprite_next_rect.y+ally_battlesprite_next_rect.h) {
+            if (ally_battlesprite_folder_count > 0) {
+                selected_ally_battlesprite_idx = (selected_ally_battlesprite_idx + 1) % ally_battlesprite_folder_count;
+                strncpy(ally_battlesprite_display_name, ally_battlesprite_folder_list[selected_ally_battlesprite_idx], 63);
+                ally_battlesprite_display_name[63] = '\0';
+                commit_class_changes();
+            }
+            return;
+        }
+
         // --- Список заклинаний ---
         SDL_Rect up_arrow = {px + 20, up_arrow_rect_y, 30, 30};
         if (spell_list_scroll > 0 && mx >= up_arrow.x && mx < up_arrow.x + up_arrow.w &&
@@ -1125,6 +1211,7 @@ static void add_new_class(void) {
     cJSON_AddStringToObject(cls, "full_name", "FullName");
     cJSON_AddNumberToObject(cls, "move", 5);
     cJSON_AddStringToObject(cls, "move_type", "regular");
+        cJSON_AddStringToObject(cls, "battle_sprite_path", "assets/battles/battlesprites/allies/Mushra");
     cJSON_AddStringToObject(cls, "race", "Enterran");
     cJSON_AddStringToObject(cls, "status", "normal");
     cJSON_AddStringToObject(cls, "initial_status", "none");
@@ -1202,6 +1289,7 @@ void classes_reload(void) {
             save_timer = 0;
             build_curve_list();
             build_spell_name_list();
+            scan_ally_battlesprite_folder();
             class_field_count = 0;
             class_active_field = -1;
             if (class_count > 0) { selected_class = 0; load_class_fields(); }
@@ -1217,6 +1305,7 @@ void classes_init(cJSON *json_array, int count) {
     save_timer = 0;
     build_curve_list();
     build_spell_name_list();
+    scan_ally_battlesprite_folder();
     class_field_count = 0;
     class_active_field = -1;
     if (class_count > 0) { selected_class = 0; load_class_fields(); }

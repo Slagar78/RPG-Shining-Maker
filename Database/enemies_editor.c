@@ -8,6 +8,12 @@
 #include <SDL_image.h>
 #include <windows.h>
 
+static char battlesprite_folder_list[200][64];
+static int battlesprite_folder_count = 0;
+static int selected_battlesprite_idx = -1;
+static char battlesprite_display_name[64] = "";
+SDL_Rect battlesprite_prev_rect, battlesprite_next_rect;
+
 // Внешние данные
 extern TTF_Font *g_font;
 extern int g_font_ok;
@@ -178,7 +184,6 @@ static void build_spell_list(void) {
 static char name_buf[64] = "";
 static char portrait_buf[64] = "";
 static char mapsprite_buf[64] = "";
-static char battlesprite_buf[64] = "";
 
 // ---------- ПРОТОТИПЫ ----------
 static void open_edit_fields(cJSON *enemy);
@@ -243,6 +248,7 @@ static void draw_button(SDL_Renderer *r, SDL_Rect btn, const char *label, SDL_Co
 
 static void scan_portrait_folder(void);
 static void scan_mapsprite_folder(void);
+static void scan_battlesprite_folder(void);
 
 // Инициализация редактора
 void enemies_init(cJSON *arr, int count) {
@@ -254,6 +260,7 @@ void enemies_init(cJSON *arr, int count) {
     active_field_index = -1;
     scan_portrait_folder();
     scan_mapsprite_folder();
+    scan_battlesprite_folder();
     build_spell_list();
     if (enemies_count > 0) {
         selected_index = 0;
@@ -333,6 +340,28 @@ static void scan_mapsprite_folder(void) {
     for (int i = 0; i < mapsprite_list_count; i++) {
         if (strcmp(mapsprite_list[i], mapsprite_buf) == 0) { selected_mapsprite_idx = i; break; }
     }
+}
+
+static void scan_battlesprite_folder(void) {
+    battlesprite_folder_count = 0;
+    selected_battlesprite_idx = -1;
+    WIN32_FIND_DATA findFileData;
+    HANDLE hFind = FindFirstFile("../assets/battles/battlesprites/enemies/*", &findFileData);
+    if (hFind == INVALID_HANDLE_VALUE) return;
+    do {
+        if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            if (strcmp(findFileData.cFileName, ".") == 0 || strcmp(findFileData.cFileName, "..") == 0)
+                continue;
+            if (battlesprite_folder_count < 200) {
+                size_t len = strlen(findFileData.cFileName);
+                if (len > 63) len = 63;
+                memcpy(battlesprite_folder_list[battlesprite_folder_count], findFileData.cFileName, len);
+                battlesprite_folder_list[battlesprite_folder_count][len] = '\0';
+                battlesprite_folder_count++;
+            }
+        }
+    } while (FindNextFile(hFind, &findFileData) != 0);
+    FindClose(hFind);
 }
 
 static void load_portrait_texture(SDL_Renderer *renderer) {
@@ -423,12 +452,34 @@ static void open_edit_fields(cJSON *enemy) {
     f->rect = (SDL_Rect){base_x+field_offset, base_y + EF_MAPSPRITE*gap, 150, line_h};
     edit_field_count = EF_MAPSPRITE+1;
 
-    // Battle Sprite
-    const char *bspr = json_string(enemy, "battle_sprite_path");
-    strncpy(battlesprite_buf, bspr, 63); battlesprite_buf[63] = '\0';
+    // Battle Sprite (стрелки выбора папки)
+    const char *bspr_path = json_string(enemy, "battle_sprite_path");
+    battlesprite_display_name[0] = '\0';
+    // извлекаем последнюю папку из пути
+    {
+        const char *last_slash = strrchr(bspr_path, '/');
+        if (!last_slash) last_slash = strrchr(bspr_path, '\\');
+        if (last_slash)
+            strncpy(battlesprite_display_name, last_slash + 1, 63);
+        else
+            strncpy(battlesprite_display_name, bspr_path, 63);
+        battlesprite_display_name[63] = '\0';
+    }
+    selected_battlesprite_idx = -1;
+    for (int i = 0; i < battlesprite_folder_count; i++) {
+        if (strcmp(battlesprite_folder_list[i], battlesprite_display_name) == 0) {
+            selected_battlesprite_idx = i;
+            break;
+        }
+    }
     f = &edit_fields[EF_BATTLESPRITE];
-    snprintf(f->text, sizeof(f->text), "%s", battlesprite_buf);
-    f->active = 0; f->json_obj = enemy; f->json_key = "battle_sprite_path"; f->is_numeric = 0; f->max_len = 0; f->is_special = 0;
+    f->is_special = 6;   // специальный тип: стрелки
+    f->text[0] = '\0';
+    f->active = 0;
+    f->json_obj = enemy;
+    f->json_key = "battle_sprite_path";
+    f->is_numeric = 0;
+    f->max_len = 0;
     f->rect = (SDL_Rect){base_x+field_offset, base_y + EF_BATTLESPRITE*gap, 150, line_h};
     edit_field_count = EF_BATTLESPRITE+1;
 
@@ -816,9 +867,18 @@ void enemies_draw_edit_panel(SDL_Renderer *r, int px, int py) {
     SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &map_next);
     draw_text(r, map_next.x+5, map_next.y+3, ">", white);
     y += 28;
-
-    // Battle Sprite
-    draw_enemy_field(r, base_x, y, 150, 22, EF_BATTLESPRITE, "Battle Spr:", battlesprite_buf);
+   
+    // Battle Sprite (стрелки)
+    draw_text(r, base_x, y+3, "Battle Spr:", white);
+    draw_text(r, base_x+field_offset, y+3, battlesprite_display_name, white);
+    battlesprite_prev_rect = (SDL_Rect){base_x+field_offset+150+5, y, 20, 22};
+    SDL_SetRenderDrawColor(r, 70,70,120,255); SDL_RenderFillRect(r, &battlesprite_prev_rect);
+    SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &battlesprite_prev_rect);
+    draw_text(r, battlesprite_prev_rect.x+5, battlesprite_prev_rect.y+3, "<", white);
+    battlesprite_next_rect = (SDL_Rect){battlesprite_prev_rect.x + 25, y, 20, 22};
+    SDL_SetRenderDrawColor(r, 70,70,120,255); SDL_RenderFillRect(r, &battlesprite_next_rect);
+    SDL_SetRenderDrawColor(r, 255,255,255,255); SDL_RenderDrawRect(r, &battlesprite_next_rect);
+    draw_text(r, battlesprite_next_rect.x+5, battlesprite_next_rect.y+3, ">", white);
     y += 28;
 
     // Race
@@ -1134,6 +1194,40 @@ void enemies_handle_edit_panel_click(int mx, int my, int px, int py) {
         return;
     }
 
+    // Battle Sprite arrows
+    if (mx >= battlesprite_prev_rect.x && mx < battlesprite_prev_rect.x+battlesprite_prev_rect.w &&
+        my >= battlesprite_prev_rect.y && my < battlesprite_prev_rect.y+battlesprite_prev_rect.h) {
+        if (battlesprite_folder_count > 0) {
+            selected_battlesprite_idx = (selected_battlesprite_idx - 1 + battlesprite_folder_count) % battlesprite_folder_count;
+            strncpy(battlesprite_display_name, battlesprite_folder_list[selected_battlesprite_idx], 63);
+            battlesprite_display_name[63] = '\0';
+            cJSON *enemy = cJSON_GetArrayItem(enemies_array, selected_index);
+            if (enemy) {
+                char full[256];
+                snprintf(full, sizeof(full), "assets/battles/battlesprites/enemies/%s", battlesprite_display_name);
+                cJSON *bs = cJSON_GetObjectItem(enemy, "battle_sprite_path");
+                if (bs) cJSON_SetValuestring(bs, full);
+            }
+        }
+        return;
+    }
+    if (mx >= battlesprite_next_rect.x && mx < battlesprite_next_rect.x+battlesprite_next_rect.w &&
+        my >= battlesprite_next_rect.y && my < battlesprite_next_rect.y+battlesprite_next_rect.h) {
+        if (battlesprite_folder_count > 0) {
+            selected_battlesprite_idx = (selected_battlesprite_idx + 1) % battlesprite_folder_count;
+            strncpy(battlesprite_display_name, battlesprite_folder_list[selected_battlesprite_idx], 63);
+            battlesprite_display_name[63] = '\0';
+            cJSON *enemy = cJSON_GetArrayItem(enemies_array, selected_index);
+            if (enemy) {
+                char full[256];
+                snprintf(full, sizeof(full), "assets/battles/battlesprites/enemies/%s", battlesprite_display_name);
+                cJSON *bs = cJSON_GetObjectItem(enemy, "battle_sprite_path");
+                if (bs) cJSON_SetValuestring(bs, full);
+            }
+        }
+        return;
+    }
+
     // Resistance стрелки
     for (int i = 0; i < 8; i++) {
         SDL_Rect *prev = &resistance_prev_rects[i];
@@ -1327,7 +1421,11 @@ cJSON_AddItemToArray(enemies_array, new_enemy);
                 if (arr && cJSON_IsArray(arr)) {
                     enemies_array = cJSON_Duplicate(arr, 1);
                     enemies_count = cJSON_GetArraySize(arr);
-                    if (enemies_count > 0) { selected_index = 0; open_edit_fields(cJSON_GetArrayItem(enemies_array, 0)); }
+                    if (enemies_count > 0) {
+                        selected_index = 0;
+                        scan_battlesprite_folder();                 // обновить список папок
+                        open_edit_fields(cJSON_GetArrayItem(enemies_array, 0)); // переоткрыть поля с новым именем
+                    }
                 }
                 cJSON_Delete(root);
             }
