@@ -158,28 +158,30 @@ module BattleGive
   end
 
   # Обработка ввода в состоянии выбора цели для передачи
-  def handle_give_targeting_input
-    return unless @give_targets.any?
-    if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_UP)
-      @give_target_index = (@give_target_index - 1) % @give_targets.size
-      @target_highlight = @give_targets[@give_target_index]
-      @audio.play_sfx("cursor") if @audio
-    elsif IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_DOWN)
-      @give_target_index = (@give_target_index + 1) % @give_targets.size
-      @target_highlight = @give_targets[@give_target_index]
-      @audio.play_sfx("cursor") if @audio
-    elsif IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-      execute_give_to(@give_targets[@give_target_index])
-    elsif IsKeyPressed(KEY_S)
-      @target_highlight = nil
-      @give_targets = []
-      @pending_give_item = nil
-      @highlight_tiles = @saved_highlight_tiles.dup
-      @battle_menu.open_item_menu
-      @battle_state = :item_select
-      @audio.play_sfx("cancel_menu") if @audio
-    end
+def handle_give_targeting_input
+  return unless @give_targets.any?
+  if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_UP)
+    @give_target_index = (@give_target_index - 1) % @give_targets.size
+    @target_highlight = @give_targets[@give_target_index]
+    @battle_player&.face_target(@target_highlight[:x], @target_highlight[:y])   # ← поворот
+    @audio.play_sfx("cursor") if @audio
+  elsif IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_DOWN)
+    @give_target_index = (@give_target_index + 1) % @give_targets.size
+    @target_highlight = @give_targets[@give_target_index]
+    @battle_player&.face_target(@target_highlight[:x], @target_highlight[:y])   # ← поворот
+    @audio.play_sfx("cursor") if @audio
+  elsif IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+    execute_give_to(@give_targets[@give_target_index])
+  elsif IsKeyPressed(KEY_S)
+    @target_highlight = nil
+    @give_targets = []
+    @pending_give_item = nil
+    @highlight_tiles = @saved_highlight_tiles.dup
+    @battle_menu.open_item_menu
+    @battle_state = :item_select
+    @audio.play_sfx("cancel_menu") if @audio
   end
+end
 
   # Начало сообщения с посимвольным выводом
   def start_give_message(id, params)

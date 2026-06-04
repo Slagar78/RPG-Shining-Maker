@@ -791,6 +791,7 @@ end
         # ВСЕГДА переходим в выбор цели (рамка + подсветка)
         @give_target_index = 0
         @target_highlight = @give_targets[0]
+		@battle_player&.face_target(@target_highlight[:x], @target_highlight[:y])
         @battle_state = :give_targeting
         neighbors = [
           [@current_unit[:x] + 1, @current_unit[:y]],
