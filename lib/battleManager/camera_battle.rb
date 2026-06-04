@@ -71,8 +71,8 @@ class BattleCamera
   private
 
   def clamp_target!
-    max_x = @map_width * 48 - @screen_width
-    max_y = @map_height * 48 - @screen_height
+    max_x = @map_width - @screen_width
+    max_y = @map_height - @screen_height
     @target_x = @target_x.clamp(0, max_x > 0 ? max_x : 0)
     @target_y = @target_y.clamp(0, max_y > 0 ? max_y : 0)
   end

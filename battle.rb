@@ -160,6 +160,10 @@ class BattleManager
     @info_target = nil
 	@death_anim = nil
 	@info_panel_unit = nil
+		
+	@info_cursor_repeat_timer = 0
+    @info_cursor_repeat_rate  = 7    # чем больше, тем медленнее автоповтор
+
 	@last_attacker = nil
     @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
 	@last_defender_hp_before = nil
@@ -647,23 +651,33 @@ end
      end
 
   when :info_mode
-  unless @info_panel_unit
-    if IsKeyPressed(KEY_LEFT)
-      @info_cursor_x = [@info_cursor_x - 1, 0].max
-    elsif IsKeyPressed(KEY_RIGHT)
-      @info_cursor_x = [@info_cursor_x + 1, @battle_w - 1].min
-    elsif IsKeyPressed(KEY_UP)
-      @info_cursor_y = [@info_cursor_y - 1, 0].max
-    elsif IsKeyPressed(KEY_DOWN)
-      @info_cursor_y = [@info_cursor_y + 1, @battle_h - 1].min
+    unless @info_panel_unit
+    dx = 0; dy = 0
+    if IsKeyDown(KEY_LEFT)
+      dx = -1
+    elsif IsKeyDown(KEY_RIGHT)
+      dx = 1
+    elsif IsKeyDown(KEY_UP)
+      dy = -1
+    elsif IsKeyDown(KEY_DOWN)
+      dy = 1
     end
-  end
 
-  if IsKeyPressed(KEY_D)
-    unit = (@allies + @enemies).find { |u| u[:x] == @info_cursor_x && u[:y] == @info_cursor_y }
-    if unit
-      @info_panel_unit = unit
-      @audio.play_sfx("confirm") if @audio
+    if dx != 0 || dy != 0
+      if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_DOWN)
+        @info_cursor_x = (@info_cursor_x + dx).clamp(0, @battle_w - 1)
+        @info_cursor_y = (@info_cursor_y + dy).clamp(0, @battle_h - 1)
+        @info_cursor_repeat_timer = 0
+      else
+        @info_cursor_repeat_timer += 1
+        if @info_cursor_repeat_timer >= @info_cursor_repeat_rate
+          @info_cursor_x = (@info_cursor_x + dx).clamp(0, @battle_w - 1)
+          @info_cursor_y = (@info_cursor_y + dy).clamp(0, @battle_h - 1)
+          @info_cursor_repeat_timer = 0
+        end
+      end
+    else
+      @info_cursor_repeat_timer = 0
     end
   end
 
@@ -680,6 +694,14 @@ end
         @battle_state = :enemy_profile
         @audio.play_sfx("confirm") if @audio
       end
+    end
+  end
+
+  if IsKeyPressed(KEY_D)
+    unit = (@allies + @enemies).find { |u| u[:x] == @info_cursor_x && u[:y] == @info_cursor_y }
+    if unit
+      @info_panel_unit = unit
+      @audio.play_sfx("confirm") if @audio
     end
   end
 
@@ -861,7 +883,7 @@ end
 
   def update
     @battle_menu.update
-    @cursor.update
+    @cursor.update		
     update_units_animation
     @highlight_timer += 1
     @camera.update
@@ -1088,7 +1110,11 @@ end
     end
 
     when :info_mode
-      @battle_player&.update_animation   # чтобы персонаж топтался на месте
+      @battle_player&.update_animation
+      @camera.follow_point(
+      @info_cursor_x * TILE_SIZE + TILE_SIZE / 2,
+      @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
+    )
     when :info_profile
       @battle_player&.update_animation
       @profile.update
