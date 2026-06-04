@@ -30,7 +30,7 @@ class EnemyProfile
     @right_panel_w = 346
     @right_panel_h = 448
     @sub_panel_w = 134
-    @sub_panel_h = 240
+    @sub_panel_h = 168
 
     @portrait_target_x = 48
     @portrait_target_y = 16
@@ -48,7 +48,7 @@ class EnemyProfile
 
   def load_textures
     @right_panel_tex = Raylib.LoadTexture("assets/ui/right_panel.png")
-    @sub_panel_tex   = Raylib.LoadTexture("assets/ui/sub_panel.png")
+    @sub_panel_tex   = Raylib.LoadTexture("assets/ui/sub_panel_enemy.png")
     @frame_tex       = Raylib.LoadTexture("assets/ui/portrait_frame.png")
     Raylib.SetTextureFilter(@right_panel_tex, 0) if @right_panel_tex
     Raylib.SetTextureFilter(@sub_panel_tex, 0)   if @sub_panel_tex
@@ -373,15 +373,6 @@ class EnemyProfile
     draw_text_custom("???", text_x + 70, text_y, 18, GREEN)
     draw_text_custom("DEFEAT", text_x, text_y + 25, 18, WHITE)
     draw_text_custom("???", text_x + 70, text_y + 25, 18, RED)
-
-    # GOLD – только заголовок, без числа
-    gold_y = text_y + 76
-    draw_text_custom("GOLD", text_x + 28, gold_y, 20, WHITE)
-    gold_header_width = Raylib.MeasureTextEx(@font, "GOLD", 18, 1).x
-    gold_center_x = (text_x + 28) + gold_header_width / 2
-    gold_val_width = Raylib.MeasureTextEx(@font, "???", 20, 1).x
-    val_x = gold_center_x - gold_val_width / 2
-    draw_text_custom("???", val_x, gold_y + 20, 20, YELLOW)
   end
 
   def draw_text_custom(text, x, y, size, color)
