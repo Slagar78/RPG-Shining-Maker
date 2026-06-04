@@ -366,8 +366,6 @@ module BattleGive
   def draw_item_cross(cx, cy, items, selected_slot, title,
                       main_tex, main_alpha,
                       swap_tex = nil, swap_alpha = 0)
-    tw = MeasureText(title, 14)
-    DrawText(title, cx - tw/2, cy - 120, 14, WHITE)
 
     positions = [
       { x: cx,        y: cy - 24 },
