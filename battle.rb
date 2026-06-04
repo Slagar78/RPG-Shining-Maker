@@ -37,7 +37,7 @@ class BattleManager
               :allies, :enemies, :battle_player, :cursor,
               :battle_scene, :target_highlight, :highlight_tex,
               :attack_target, :hp_mp_panel, :target_hp_panel,
-              :fade_alpha, :db, :battle_x, :battle_y
+              :fade_alpha, :db, :battle_x, :battle_y, :info_panel_unit			  
   attr_accessor :audio
   attr_accessor :battle_scene_font
 
@@ -159,6 +159,7 @@ class BattleManager
     @info_cursor_y = 0
     @info_target = nil
 	@death_anim = nil
+	@info_panel_unit = nil
 	@last_attacker = nil
     @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
 	@last_defender_hp_before = nil
@@ -645,38 +646,52 @@ end
        @audio.play_sfx("cancel_menu") if @audio
      end
 
-   when :info_mode
-     if IsKeyPressed(KEY_LEFT)
-       @info_cursor_x = [@info_cursor_x - 1, 0].max
-     elsif IsKeyPressed(KEY_RIGHT)
-       @info_cursor_x = [@info_cursor_x + 1, @battle_w - 1].min
-     elsif IsKeyPressed(KEY_UP)
-       @info_cursor_y = [@info_cursor_y - 1, 0].max
-     elsif IsKeyPressed(KEY_DOWN)
-       @info_cursor_y = [@info_cursor_y + 1, @battle_h - 1].min
-     end
+  when :info_mode
+  unless @info_panel_unit
+    if IsKeyPressed(KEY_LEFT)
+      @info_cursor_x = [@info_cursor_x - 1, 0].max
+    elsif IsKeyPressed(KEY_RIGHT)
+      @info_cursor_x = [@info_cursor_x + 1, @battle_w - 1].min
+    elsif IsKeyPressed(KEY_UP)
+      @info_cursor_y = [@info_cursor_y - 1, 0].max
+    elsif IsKeyPressed(KEY_DOWN)
+      @info_cursor_y = [@info_cursor_y + 1, @battle_h - 1].min
+    end
+  end
 
-     if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-       ally = @allies.find { |a| a[:x] == @info_cursor_x && a[:y] == @info_cursor_y }
-       if ally
-         open_profile_for_ally(ally)
-         @battle_state = :info_profile
-         @audio.play_sfx("confirm") if @audio
-       else
-         enemy = @enemies.find { |e| e[:x] == @info_cursor_x && e[:y] == @info_cursor_y }
-         if enemy
-           open_profile_for_enemy(enemy)
-           @battle_state = :enemy_profile
-           @audio.play_sfx("confirm") if @audio
-         end
-       end
-     end
+  if IsKeyPressed(KEY_D)
+    unit = (@allies + @enemies).find { |u| u[:x] == @info_cursor_x && u[:y] == @info_cursor_y }
+    if unit
+      @info_panel_unit = unit
+      @audio.play_sfx("confirm") if @audio
+    end
+  end
 
-     if IsKeyPressed(KEY_S)
-       @battle_state = :player_turn
-       @cursor.visible = true
-       sync_cursor_to_unit
-     end
+  if IsKeyPressed(KEY_A)
+    ally = @allies.find { |a| a[:x] == @info_cursor_x && a[:y] == @info_cursor_y }
+    if ally
+      open_profile_for_ally(ally)
+      @battle_state = :info_profile
+      @audio.play_sfx("confirm") if @audio
+    else
+      enemy = @enemies.find { |e| e[:x] == @info_cursor_x && e[:y] == @info_cursor_y }
+      if enemy
+        open_profile_for_enemy(enemy)
+        @battle_state = :enemy_profile
+        @audio.play_sfx("confirm") if @audio
+      end
+    end
+  end
+
+  if IsKeyPressed(KEY_S)
+    if @info_panel_unit
+      @info_panel_unit = nil
+    else
+      @battle_state = :player_turn
+      @cursor.visible = true
+      sync_cursor_to_unit
+    end
+  end
 
    when :info_profile
      # Только запускаем анимацию закрытия по S, состояние сменится в update

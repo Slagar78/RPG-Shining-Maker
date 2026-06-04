@@ -127,8 +127,12 @@ def draw
     Raylib::Vector2.create(0, 0), 0, Raylib::WHITE
   )
 
-  # --- панель HP/MP текущего юнита ---
-  @manager.hp_mp_panel.draw(@manager.current_unit, @manager.db) if @manager.current_unit
+  # --- панель HP/MP (текущего юнита или осматриваемого) ---
+  if @manager.battle_state == :info_mode && @manager.info_panel_unit
+    @manager.hp_mp_panel.draw(@manager.info_panel_unit, @manager.db)
+  elsif ![:info_mode, :info_profile, :enemy_profile].include?(@manager.battle_state)
+    @manager.hp_mp_panel.draw(@manager.current_unit, @manager.db) if @manager.current_unit
+  end
 
   # --- панель цели атаки ---
   if @manager.battle_state == :attack_targeting && @manager.attack_target
