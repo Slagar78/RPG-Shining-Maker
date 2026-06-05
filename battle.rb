@@ -42,7 +42,7 @@ class BattleManager
   attr_accessor :battle_scene_font
 
   TILE_SIZE = 48
-  CURSOR_SPEED = 6.0
+  CURSOR_SPEED = 8.0
   CURSOR_HIDE_DELAY = 12
 
   def initialize(db = nil, font = nil, game_text = {})
@@ -421,6 +421,20 @@ class BattleManager
     return unless @current_unit
     @cursor.move_to(@current_unit[:x], @current_unit[:y])	
   end
+  
+def start_cursor_return_from_info
+  # Перемещаем курсор в пиксельные координаты центра клетки, где он сейчас (info_cursor)
+  start_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2
+  start_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
+  @cursor.move_to_pixel(start_px, start_py)
+
+  # Цель – центр клетки текущего юнита
+  @cursor_target_x = @current_unit[:x] * TILE_SIZE + TILE_SIZE / 2
+  @cursor_target_y = @current_unit[:y] * TILE_SIZE + TILE_SIZE / 2
+
+  @cursor.visible = true
+  @battle_state = :cursor_returning
+end
 
   def next_unit
     next_index = (@current_unit_index + 1) % @turn_order.size
@@ -712,15 +726,14 @@ end
   end
 
   if IsKeyPressed(KEY_S)
-    if @info_panel_unit
-      @info_panel_unit = nil
-    else
-      @battle_state = :player_turn
-      @cursor.visible = true
-      sync_cursor_to_unit
-	  @battle_player.blinking = false if @battle_player
-    end
+  if @info_panel_unit
+    @info_panel_unit = nil
+  else
+    # Запускаем плавное возвращение, а потом уже player_turn
+    @battle_player.blinking = false if @battle_player
+    start_cursor_return_from_info
   end
+end
 
    when :info_profile
      # Только запускаем анимацию закрытия по S, состояние сменится в update
@@ -921,6 +934,30 @@ end
           @camera.follow_point(new_px.round, new_py.round)
         end
       end
+	  
+	when :cursor_returning
+      cur_px = @cursor.px
+      cur_py = @cursor.py
+      dx = @cursor_target_x - cur_px
+      dy = @cursor_target_y - cur_py
+      dist = Math.sqrt(dx*dx + dy*dy)
+
+    if dist <= CURSOR_SPEED
+      # Прибыли – синхронизируемся и переходим в player_turn
+      final_tile_x = (@cursor_target_x / TILE_SIZE).round
+      final_tile_y = (@cursor_target_y / TILE_SIZE).round
+      @cursor.move_to(final_tile_x, final_tile_y)
+	  @camera.follow_unit(@current_unit)   # <-- сразу наводим камеру на юнита
+      @battle_state = :player_turn
+      sync_cursor_to_unit   # на всякий случай подстрахует
+    else
+      step_x = dx / dist * CURSOR_SPEED
+      step_y = dy / dist * CURSOR_SPEED
+      new_px = cur_px + step_x
+      new_py = cur_py + step_y
+      @cursor.move_to_pixel(new_px, new_py)
+	  @camera.follow_point(new_px.round, new_py.round)   # <-- камера следует за курсором
+    end
 
     when :player_turn
       if @battle_player
