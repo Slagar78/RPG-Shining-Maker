@@ -16,9 +16,12 @@ class HpMpPanel
   LEFT_EDGE_W = 10
   RIGHT_EDGE_W = 10
   MID_TILE_W = 8
+  
+  attr_accessor :x_offset
 
   def initialize(font = nil)
     @font = font
+	@x_offset = 0
     @texture = load_texture("assets/ui/HpMpPanel.png")
     @stick_tex      = load_texture("assets/ui/Hp_Mp_Points.png")   # жёлтый
     @stick_tex_lvl1 = load_texture("assets/ui/Hp_Mp_Points_2.png") # зелёный (>100)
@@ -32,6 +35,44 @@ class HpMpPanel
       @tex_width = 0
       @tex_height = 0
     end
+  end
+  
+  # НОВЫЙ МЕТОД — вычисляет ширину панели для данного юнита
+  def panel_width(unit, db)
+    return 0 unless unit
+    if unit[:actor]
+      name = unit[:actor]["name"] || "???"
+      lvl  = unit[:actor]["level"] || 1
+    elsif unit[:enemy]
+      e = unit[:enemy]
+      name = e.respond_to?(:name) ? e.name : e["name"] || "???"
+      lvl  = e.respond_to?(:level) ? e.level : e["level"] || 1
+    else
+      return 0
+    end
+
+    max_hp = unit[:max_hp] || 0
+    max_mp = unit[:max_mp] || 0
+
+    label_w = [measure_text("HP"), measure_text("MP")].max
+    max_number_str_hp = "#{max_hp}/#{max_hp}"
+    max_number_str_mp = "#{max_mp}/#{max_mp}"
+    max_number_w = [measure_text(max_number_str_hp), measure_text(max_number_str_mp)].max
+
+    max_sticks = [[max_hp, max_mp].max, MAX_DISPLAY_STICKS].min
+    sticks_width = max_sticks * STICK_W
+
+    content_width = PADDING_LEFT + label_w + STICK_GAP + sticks_width + STICK_GAP + max_number_w + PADDING_LEFT
+
+    name_line = "#{name}  LV #{lvl}"
+    name_line_w = measure_text(name_line)
+    name_content_width = name_line_w + PADDING_LEFT * 2
+
+    raw_width = [BASE_W, content_width, name_content_width].max
+
+    mid_area = raw_width - LEFT_EDGE_W - RIGHT_EDGE_W
+    tiles = (mid_area.to_f / MID_TILE_W).ceil
+    LEFT_EDGE_W + RIGHT_EDGE_W + tiles * MID_TILE_W
   end
 
   def load_texture(path)
@@ -83,7 +124,7 @@ class HpMpPanel
     tiles = (mid_area.to_f / MID_TILE_W).ceil
     panel_width = LEFT_EDGE_W + RIGHT_EDGE_W + tiles * MID_TILE_W
 
-    x = 576 - panel_width - 8
+    x = 576 - panel_width - 8 + @x_offset
     y = 8
 
     # 2. Фон панели
@@ -158,7 +199,7 @@ class HpMpPanel
     panel_width = LEFT_EDGE_W + RIGHT_EDGE_W + tiles * MID_TILE_W
 
     # === ОТЛИЧИЕ: координаты для правого нижнего угла ===
-    x = 576 - panel_width - 8
+    x = 576 - panel_width - 8 + @x_offset
     y = 480 - BASE_H - 8
 
     # 2. Фон панели (рисуем точно так же)

@@ -185,6 +185,7 @@ class BattleManager
     @give_target_index = 0
     @pending_give_item = nil
 	@saved_item_menu_action = nil
+	@panel_slide_state = :visible
 	init_give_animation_vars
 	init_drop_vars
 
@@ -415,6 +416,11 @@ class BattleManager
     end
 	@battle_player.blinking = false if @battle_player
 	@camera.follow_unit(@current_unit)
+	
+	# Панель сразу помещаем за правый край и ставим состояние :hidden
+    w = @hp_mp_panel.panel_width(@current_unit, @db)
+    @hp_mp_panel.x_offset = w + 8
+    @panel_slide_state = :hidden	
   end
 
   def sync_cursor_to_unit
@@ -456,6 +462,13 @@ end
 
     @cursor_moving_to_target = true
   end
+  
+  def start_panel_slide_out
+    return unless @current_unit
+    w = @hp_mp_panel.panel_width(@current_unit, @db)
+    @hp_mp_panel.x_offset = w + 8   # сразу за экран
+    @panel_slide_state = :hidden
+  end
 
   def end_current_turn
   if @current_unit && @battle_player
@@ -473,6 +486,7 @@ end
       @audio.play_sfx("error") if @audio
     end
   end
+  start_panel_slide_out
   @battle_player = nil
   nxt = next_unit
   start_cursor_transition(@current_unit, nxt)
@@ -1015,17 +1029,27 @@ end
 
         @cursor_hide_timer += 1
         if @cursor_hide_timer >= CURSOR_HIDE_DELAY && @cursor.visible
-          @cursor.visible = false
+           @cursor.visible = false
+        if @panel_slide_state == :hidden
+          @hp_mp_panel.x_offset = 0
+          @panel_slide_state = :visible
         end
       end
+	end
 
     when :enemy_turn_wait
       sync_cursor_to_unit
       @cursor_hide_timer += 1
       if @cursor_hide_timer >= CURSOR_HIDE_DELAY && @cursor.visible
         @cursor.visible = false
-      end
+		if @panel_slide_state == :hidden
+          @hp_mp_panel.x_offset = 0
+          @panel_slide_state = :visible
+        end
+	  end
+		
 	  return if @cursor.visible   # ← враг ничего не делает, пока курсор на экране
+	  
       @enemy_action_timer -= 1
       if @enemy_action_timer <= 0
         @cursor.visible = false
@@ -1226,11 +1250,10 @@ end
       @current_unit_index = 0 if @current_unit_index >= @turn_order.size
       @current_unit = @turn_order[@current_unit_index]
       start_current_turn if @current_unit
-    end
-  end
-	  	  	  
-    end  # ← конец case
-  end    # ← конец метода update
+      end
+    end	  	  	  
+  end  # ← конец case  	
+end    # ← конец метода update
 
   def update_units_animation
     (@allies + @enemies).each do |unit|
