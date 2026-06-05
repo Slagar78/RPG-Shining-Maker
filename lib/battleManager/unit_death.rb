@@ -10,12 +10,10 @@ class UnitDeath
     @current_step = 0
     @max_steps = 8
     @finished = false
-
     @dir_index = 1
     @anim_frame = 0
     @anim_timer = 0
     @anim_speed = 5
-
     # Задержка после вращения (в секундах)
     @delay = 0.7
     @post_spin_timer = 0.0
@@ -24,7 +22,6 @@ class UnitDeath
 
   def update
     return if @finished
-
     if @spinning_completed
       # Ждём, пока пройдёт задержка
       @post_spin_timer += Raylib.GetFrameTime()
@@ -33,7 +30,6 @@ class UnitDeath
       end
       return
     end
-
     # Фаза вращения
     @timer += 1
     if @timer >= @switch_speed
@@ -45,7 +41,6 @@ class UnitDeath
       end
       @dir_index = (@dir_index + 1) % 4
     end
-
     @anim_timer += 1
     if @anim_timer >= @anim_speed
       @anim_timer = 0
@@ -55,9 +50,10 @@ class UnitDeath
 
   def draw(camera, highlight_tex = nil)
     return if @finished || @spinning_completed
-    tex = @unit[:tex]
-    return unless tex
+    return unless @unit && @unit[:tex]   # ← Добавил защиту (главный фикс)
 
+    tex = @unit[:tex]
+    
     row, flip = case @dir_index
                 when 0 then [2, false]
                 when 1 then [1, true]
@@ -77,6 +73,7 @@ class UnitDeath
 
     screen_x = @unit[:x] * @tile_size - camera.x + @tile_size / 2.0
     screen_y = @unit[:y] * @tile_size - camera.y + @tile_size / 2.0
+
     dest = Raylib::Rectangle.create(
       screen_x - @tile_size / 2.0,
       screen_y - @tile_size / 2.0,
