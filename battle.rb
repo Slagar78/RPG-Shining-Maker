@@ -66,19 +66,27 @@ class BattleManager
     map_id = @battle_entry["map_id"]
     @game_map = GameMap.new(map_id)
 
+    
     # === боевая зона ===
     bx = @battle_entry["battle_x"] || 0
     by = @battle_entry["battle_y"] || 0
     bw = @battle_entry["battle_width"]
     bh = @battle_entry["battle_height"]
-    if bw.nil? || bw == 0 || bh.nil? || bh == 0
-      bw = @game_map.width
-      bh = @game_map.height
-    end
+  if bw.nil? || bw == 0 || bh.nil? || bh == 0
+    bw = @game_map.width
+    bh = @game_map.height
+    # Если боевая зона = вся карта, то смещение не имеет смысла
+    bx = 0
+    by = 0
+  end
     @battle_x = bx
     @battle_y = by
     @battle_w = bw
     @battle_h = bh
+
+    @cursor = BattleCursor.new(TILE_SIZE)
+    @camera = BattleCamera.new(576, 480, @battle_w * TILE_SIZE, @battle_h * TILE_SIZE)
+    # @camera.set_zone_offset(@battle_x * TILE_SIZE, @battle_y * TILE_SIZE)
 
     @static_bg = @game_map.build_static_background
     SetTextureFilter(@static_bg.texture, TEXTURE_FILTER_POINT) if @static_bg
@@ -99,7 +107,6 @@ class BattleManager
     @battle_state = :cursor_moving
 
     @cursor = BattleCursor.new(TILE_SIZE)
-    @camera = BattleCamera.new(576, 480, @battle_w * TILE_SIZE, @battle_h * TILE_SIZE)
 
     @turn_order = []
     @current_unit_index = 0
@@ -190,6 +197,7 @@ class BattleManager
     end
 
     @current_unit = first_unit
+	@camera.snap_to(first_unit[:x], first_unit[:y]) if first_unit
     start_current_turn
   end
 
@@ -406,7 +414,7 @@ class BattleManager
       sync_cursor_to_unit
     end
 	@battle_player.blinking = false if @battle_player
-    @camera.follow_unit(@current_unit)
+	@camera.follow_unit(@current_unit)
   end
 
   def sync_cursor_to_unit
