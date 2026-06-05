@@ -997,14 +997,19 @@ end
 
     when :enemy_moving
       @battle_player.update
+	  
       if @battle_player.moving
         @camera.follow_point(
           @battle_player.visual_x + TILE_SIZE / 2,
           @battle_player.visual_y + TILE_SIZE / 2
         )
       else
+	  # Синхронизируем координаты текущего юнита с реальной позицией
+        @current_unit[:x] = @battle_player.x
+        @current_unit[:y] = @battle_player.y
         @camera.follow_unit(@current_unit)
       end
+	  
       unless @battle_player.moving
         if @enemy_move_index < @enemy_move_queue.size
           target = @enemy_move_queue[@enemy_move_index]

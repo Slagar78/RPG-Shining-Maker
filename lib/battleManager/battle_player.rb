@@ -160,8 +160,9 @@ end
 
   def draw
     return unless @tex
-    px = visual_x
-    py = (visual_y - 16)
+	
+    px = visual_x.round
+    py = (visual_y - 16).round
 
     row = case @direction
           when DIR_UP    then 0
