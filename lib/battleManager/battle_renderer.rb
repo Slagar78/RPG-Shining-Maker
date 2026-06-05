@@ -6,13 +6,19 @@ class BattleRenderer
   end
 
 def draw
-  cam_x = -@manager.camera.x
-  cam_y = -@manager.camera.y
+  # Плавная камера для фона (дробная)
+  cam_x = -@manager.camera.x.round
+  cam_y = -@manager.camera.y.round 
+
+  # Целая камера для спрайтов (pixel-perfect)
+  int_offset = @manager.camera.offset
+  int_cam_x = -int_offset.x
+  int_cam_y = -int_offset.y
 
   bg_offset_x = -@manager.battle_x * BattleManager::TILE_SIZE
   bg_offset_y = -@manager.battle_y * BattleManager::TILE_SIZE
 
-  # --- статичный фон ---
+  # --- статичный фон (плавная камера) ---
   Raylib.DrawTexturePro(
     @manager.static_bg.texture,
     Raylib::Rectangle.create(0, 0, @manager.static_bg.texture.width, -@manager.static_bg.texture.height),
@@ -21,7 +27,7 @@ def draw
     Raylib::Vector2.create(0, 0), 0, Raylib::WHITE
   )
 
-  # --- слой 2 (если есть) ---
+  # --- слой 2 (если есть) (плавная камера) ---
   if @manager.layer2
     Raylib.DrawTexturePro(
       @manager.layer2.texture,
@@ -32,7 +38,7 @@ def draw
     )
   end
 
-  # --- подсветка клеток ---
+  # --- подсветка клеток (целая камера) ---
   if @manager.highlight_tiles.any? && @manager.current_unit
     base_color = Raylib::Color.new
     base_color.r = 220
@@ -49,8 +55,8 @@ def draw
       color.a = alpha
 
       dst = Raylib::Rectangle.create(
-        tx * BattleManager::TILE_SIZE + cam_x,
-        ty * BattleManager::TILE_SIZE + cam_y,
+        tx * BattleManager::TILE_SIZE + int_cam_x,
+        ty * BattleManager::TILE_SIZE + int_cam_y,
         BattleManager::TILE_SIZE,
         BattleManager::TILE_SIZE
       )
@@ -58,22 +64,22 @@ def draw
     end
   end
 
-  # --- курсор ---
-  @manager.cursor.draw(cam_x, cam_y)
+  # --- курсор (целая камера) ---
+  @manager.cursor.draw(int_cam_x, int_cam_y)
 
-  # --- информационная рамка ---
-  draw_info_cursor
+  # --- информационная рамка (целая камера) ---
+  draw_info_cursor(int_cam_x, int_cam_y)
 
-  # === Рамка цели ===
+  # === Рамка цели (целая камера) ===
   if (@manager.battle_state == :attack_targeting || @manager.battle_state == :give_targeting) && @manager.target_highlight && @manager.highlight_tex
-    tx = @manager.target_highlight[:x] * BattleManager::TILE_SIZE + cam_x
-    ty = @manager.target_highlight[:y] * BattleManager::TILE_SIZE + cam_y
+    tx = @manager.target_highlight[:x] * BattleManager::TILE_SIZE + int_cam_x
+    ty = @manager.target_highlight[:y] * BattleManager::TILE_SIZE + int_cam_y
     src = Raylib::Rectangle.create(0, 0, @manager.highlight_tex.width, @manager.highlight_tex.height)
     dst = Raylib::Rectangle.create(tx, ty, BattleManager::TILE_SIZE, BattleManager::TILE_SIZE)
     Raylib.DrawTexturePro(@manager.highlight_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
   end
 
-  # --- союзники (кроме активного игрока) ---
+  # --- союзники (кроме активного игрока) (целая камера) ---
   @manager.allies.each do |ally|
     next if ally == @manager.current_unit && @manager.battle_player
     tex = ally[:tex]
@@ -85,15 +91,15 @@ def draw
       BattleManager::TILE_SIZE
     )
     dst = Raylib::Rectangle.create(
-      ally[:x] * BattleManager::TILE_SIZE + cam_x,
-      ally[:y] * BattleManager::TILE_SIZE + cam_y - 16,
+      ally[:x] * BattleManager::TILE_SIZE + int_cam_x,
+      ally[:y] * BattleManager::TILE_SIZE + int_cam_y - 16,
       BattleManager::TILE_SIZE,
       BattleManager::TILE_SIZE
     )
     Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
   end
 
-  # --- враги (кроме активного игрока) ---
+  # --- враги (кроме активного игрока) (целая камера) ---
   @manager.enemies.each do |enemy|
     next if enemy == @manager.current_unit && @manager.battle_player
     tex = enemy[:tex]
@@ -105,20 +111,20 @@ def draw
       BattleManager::TILE_SIZE
     )
     dst = Raylib::Rectangle.create(
-      enemy[:x] * BattleManager::TILE_SIZE + cam_x,
-      enemy[:y] * BattleManager::TILE_SIZE + cam_y - 16,
+      enemy[:x] * BattleManager::TILE_SIZE + int_cam_x,
+      enemy[:y] * BattleManager::TILE_SIZE + int_cam_y - 16,
       BattleManager::TILE_SIZE,
       BattleManager::TILE_SIZE
     )
     Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
   end
 
-  # --- активный юнит (если есть) ---
+  # --- активный юнит (целая камера) ---
   if @manager.battle_player
-    draw_active_unit(cam_x, cam_y)
+    draw_active_unit(int_cam_x, int_cam_y)
   end
 
-  # --- слой верхнего тайла ---
+  # --- слой верхнего тайла (плавная камера) ---
   Raylib.DrawTexturePro(
     @manager.top_layer.texture,
     Raylib::Rectangle.create(0, 0, @manager.top_layer.texture.width, -@manager.top_layer.texture.height),
@@ -153,13 +159,13 @@ end
 
   private
 
-def draw_info_cursor
+def draw_info_cursor(int_cam_x, int_cam_y)
   return unless @manager.instance_variable_get(:@info_cursor_tex)
   return unless [:info_mode, :info_profile].include?(@manager.battle_state)
 
   tex = @manager.instance_variable_get(:@info_cursor_tex)
-  x = @manager.instance_variable_get(:@info_cursor_x) * BattleManager::TILE_SIZE - @manager.camera.x
-  y = @manager.instance_variable_get(:@info_cursor_y) * BattleManager::TILE_SIZE - @manager.camera.y
+  x = @manager.instance_variable_get(:@info_cursor_x) * BattleManager::TILE_SIZE + int_cam_x
+  y = @manager.instance_variable_get(:@info_cursor_y) * BattleManager::TILE_SIZE + int_cam_y
 
   src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
   dst = Raylib::Rectangle.create(x, y, BattleManager::TILE_SIZE, BattleManager::TILE_SIZE)

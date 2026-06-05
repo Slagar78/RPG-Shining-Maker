@@ -559,16 +559,6 @@ end
     return
   end
 
-    if @battle_player.moving
-       @cursor.visible = false
-       @camera.follow_point(
-         @battle_player.visual_x + TILE_SIZE / 2,
-         @battle_player.visual_y + TILE_SIZE / 2
-       )
-     else
-       @camera.follow_unit(@current_unit)
-     end
-
    when :action_menu
      prev_index = @battle_menu.selected_index
      @battle_menu.handle_input
@@ -927,14 +917,34 @@ end
           new_px = cur_px + step_x
           new_py = cur_py + step_y
           @cursor.move_to_pixel(new_px, new_py)
-          @camera.follow_point(new_px, new_py)
+          @camera.follow_point(new_px.round, new_py.round)
         end
       end
 
     when :player_turn
       if @battle_player
-         @battle_player.update
-        
+        @battle_player.update
+
+        # Сначала синхронизируем координаты, если остановились
+        unless @battle_player.moving
+          if @current_unit[:x] != @battle_player.x || @current_unit[:y] != @battle_player.y
+            if cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+              @current_unit[:x] = @battle_player.x
+              @current_unit[:y] = @battle_player.y
+            end
+          end
+        end
+
+        # Камера следует за визуальной позицией (во время движения) или за клеткой (после остановки)
+        if @battle_player.moving
+          @camera.follow_point(
+            @battle_player.visual_x + TILE_SIZE / 2,
+            @battle_player.visual_y + TILE_SIZE / 2
+          )
+        else
+          @camera.follow_unit(@current_unit)
+        end
+
         # Меню открывается всегда, независимо от клетки
         if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
           if @battle_player.moving
@@ -947,24 +957,16 @@ end
 
         # Обновляем позицию и курсор
         unless @battle_player.moving
-          if @current_unit[:x] != @battle_player.x || @current_unit[:y] != @battle_player.y
-            if cell_free?(@battle_player.x, @battle_player.y, @current_unit)
-              @current_unit[:x] = @battle_player.x
-              @current_unit[:y] = @battle_player.y
-            end
-          end
           sync_cursor_to_unit
-		  if @pending_info
+          if @pending_info
             @info_cursor_x = @current_unit[:x]
             @info_cursor_y = @current_unit[:y]
             @battle_state = :info_mode
-			@battle_player.blinking = true if @battle_player
+            @battle_player.blinking = true if @battle_player
             @pending_info = false
           end
 
-          # Если меню было запрошено во время движения – открываем без проверки
           if @pending_menu
-		  # puts "[DEBUG pending_menu] moving=#{@battle_player.moving}"
             can_attack = adjacent_enemy?(@current_unit)
             open_battle_menu
             @pending_menu = false
@@ -1272,14 +1274,6 @@ def open_battle_menu
   @audio.play_sfx("confirm") if @audio
 end
 
-def draw_info_cursor
-  return unless @info_cursor_tex
-  x = @info_cursor_x * TILE_SIZE - @camera.x
-  y = @info_cursor_y * TILE_SIZE - @camera.y
-  dest = Rectangle.create(x, y, TILE_SIZE, TILE_SIZE)
-  src = Rectangle.create(0, 0, TILE_SIZE, TILE_SIZE)
-  DrawTexturePro(@info_cursor_tex, src, dest, Vector2.create(0,0), 0, WHITE)
-end
 
 def open_profile_for_ally(ally_unit)
   party = @allies.map { |a| a[:actor] }.compact
