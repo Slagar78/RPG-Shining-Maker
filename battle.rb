@@ -559,10 +559,15 @@ end
     return
   end
 
-     if @battle_player.moving
+    if @battle_player.moving
        @cursor.visible = false
+       @camera.follow_point(
+         @battle_player.visual_x + TILE_SIZE / 2,
+         @battle_player.visual_y + TILE_SIZE / 2
+       )
+     else
+       @camera.follow_unit(@current_unit)
      end
-     @camera.follow_unit(@current_unit)
 
    when :action_menu
      prev_index = @battle_menu.selected_index
@@ -992,6 +997,14 @@ end
 
     when :enemy_moving
       @battle_player.update
+      if @battle_player.moving
+        @camera.follow_point(
+          @battle_player.visual_x + TILE_SIZE / 2,
+          @battle_player.visual_y + TILE_SIZE / 2
+        )
+      else
+        @camera.follow_unit(@current_unit)
+      end
       unless @battle_player.moving
         if @enemy_move_index < @enemy_move_queue.size
           target = @enemy_move_queue[@enemy_move_index]
