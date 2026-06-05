@@ -419,7 +419,7 @@ class BattleManager
 
   def sync_cursor_to_unit
     return unless @current_unit
-    @cursor.move_to(@current_unit[:x], @current_unit[:y])
+    @cursor.move_to(@current_unit[:x], @current_unit[:y])	
   end
 
   def next_unit
@@ -545,6 +545,7 @@ end
      # ничего не делаем — движение обрабатывается в update
 
    when :player_turn
+    return if @cursor.visible   # ← ждём полного исчезновения курсора
     @battle_player.handle_input(self) if @battle_player
 
   if IsKeyPressed(KEY_S)
@@ -946,14 +947,16 @@ end
         end
 
         # Меню открывается всегда, независимо от клетки
-        if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-          if @battle_player.moving
-            @pending_menu = true
-          else
-            can_attack = adjacent_enemy?(@current_unit)
-            open_battle_menu
+	    unless @cursor.visible
+          if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+            if @battle_player.moving
+              @pending_menu = true
+            else
+              can_attack = adjacent_enemy?(@current_unit)
+              open_battle_menu
+            end
           end
-        end
+	    end
 
         # Обновляем позицию и курсор
         unless @battle_player.moving
@@ -985,6 +988,7 @@ end
       if @cursor_hide_timer >= CURSOR_HIDE_DELAY && @cursor.visible
         @cursor.visible = false
       end
+	  return if @cursor.visible   # ← враг ничего не делает, пока курсор на экране
       @enemy_action_timer -= 1
       if @enemy_action_timer <= 0
         @cursor.visible = false
