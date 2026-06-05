@@ -10,7 +10,7 @@ DIR_RIGHT = 6
 DIR_UP    = 8
 
 class BattlePlayer
-  attr_reader :direction, :moving, :remaining_moves
+  attr_reader :direction, :moving
   attr_accessor :blinking; attr_reader :blink_alpha
   attr_accessor :x, :y, :map_width, :map_height
 
@@ -27,19 +27,11 @@ class BattlePlayer
     @move_dir = DIR_DOWN
     @pixel_offset = 0
     @highlight_tiles = highlight_tiles
-    @remaining_moves = unit[:mov]
 	
 	@blinking = false
     @blink_timer = 0
     @blink_alpha = 255   # начальная непрозрачность
 	
-    init_render_objects
-  end
-
-  def init_render_objects
-    @src_rect    = Rectangle.create(0, 0, @tile_size, @tile_size)
-    @dst_rect    = Rectangle.create(0, 0, @tile_size, @tile_size)
-    @draw_origin = Vector2.create(0, 0)
   end
 
   # Новый метод: обновить разрешённые для хода клетки
@@ -156,38 +148,6 @@ end
     # Значение sin возвращает -1..1, преобразуем в диапазон 0..255
     raw = Math.sin(@blink_timer * 0.25)   # – скорость мерцания (меньше = медленнее)
     @blink_alpha = ((raw + 1) * 127.5).to_i.clamp(0, 255)
-  end
-
-  def draw
-    return unless @tex
-	
-    px = visual_x.round
-    py = (visual_y - 16).round
-
-    row = case @direction
-          when DIR_UP    then 0
-          when DIR_LEFT, DIR_RIGHT then 1
-          else 2
-          end
-
-    @src_rect.x = @pattern * @tile_size
-    @src_rect.y = row * @tile_size
-
-    flip = (@direction == DIR_RIGHT)
-    @src_rect.width = flip ? -@tile_size : @tile_size
-
-    @dst_rect.x = px
-    @dst_rect.y = py
-    # Определяем прозрачность: если мигание включено и фаза невидимая — делаем полупрозрачным
-    tint = if @blinking
-         Raylib::Fade(Raylib::WHITE, @blink_alpha / 255.0)
-       else
-         Raylib::WHITE
-       end
-
-    DrawTexturePro(@tex, @src_rect, @dst_rect, @draw_origin, 0, tint)
-
-    @src_rect.width = @tile_size
   end
 
   def visual_x
