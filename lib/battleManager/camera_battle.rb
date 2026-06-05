@@ -1,3 +1,5 @@
+# lib\battleManager\camera_battle.rb
+
 class BattleCamera
   attr_accessor :target_x, :target_y
   attr_reader   :x, :y

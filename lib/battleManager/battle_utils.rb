@@ -37,8 +37,10 @@ module BattleUtils
       [[0,1],[0,-1],[1,0],[-1,0]].each do |dx, dy|
         nx = x + dx
         ny = y + dy
-        next if visited[ny][nx]
+        # Сначала проверяем проходимость и границы (passable включает проверку границ)
         next unless passable.call(nx, ny)
+        # Теперь безопасно обращаемся к visited
+        next if visited[ny][nx]
         visited[ny][nx] = true
         queue.push([nx, ny, steps - 1])
       end
