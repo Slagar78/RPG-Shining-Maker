@@ -25,11 +25,13 @@ require_relative 'lib/battleManager/exp_calculator'
 require_relative 'lib/battleManager/battle_renderer'
 require_relative 'lib/battleManager/battle_give'
 require_relative 'lib/battleManager/battle_drop'
+require_relative 'lib/battleManager/battle_equip'
 require_relative 'lib/battleManager/battle_utils'
 
 class BattleManager
   include BattleGive
   include BattleDrop
+  include BattleEquip
   include BattleUtils
   attr_reader :game_map, :battle_entry, :battle_state, :battle_menu
   attr_reader :camera, :static_bg, :layer2, :top_layer,
@@ -185,6 +187,7 @@ class BattleManager
 	@panel_slide_state = :visible
 	init_give_animation_vars
 	init_drop_vars
+	init_equip_vars
 
     prepare_turn_order
 
@@ -813,7 +816,11 @@ end
            @cursor.visible = true
            sync_cursor_to_unit
            @audio.play_sfx("error") if @audio
-         end
+         end		 
+	    when 2  # Equip
+           @battle_menu.close_item_menu
+           start_equip_select
+           @audio.play_sfx("confirm") if @audio		 
        when 3  # Drop
          items = current_actor_items
          if items.any?
@@ -828,13 +835,7 @@ end
            sync_cursor_to_unit
            @audio.play_sfx("error") if @audio
          end
-       when 2  # Equip – пока просто закрываем меню
-         @battle_menu.close_item_menu
-         @battle_state = :player_turn
-         @cursor.visible = true
-         sync_cursor_to_unit
-         @audio.play_sfx("cancel_menu") if @audio
-       end
+	   end
      elsif IsKeyPressed(KEY_S)
        @saved_item_menu_action = nil
        @battle_menu.close_item_menu
@@ -915,6 +916,10 @@ end
      handle_drop_confirm_input
    when :drop_message
      handle_drop_message_input
+   when :equip_weapon
+     handle_equip_weapon_input
+   when :equip_ring
+     handle_equip_ring_input
 
    end
  end
@@ -1180,6 +1185,13 @@ end
 	when :item_select
       @battle_player&.update_animation
 	  
+	when :equip_weapon
+      update_equip
+      @battle_player&.update_animation
+    when :equip_ring
+      update_equip
+      @battle_player&.update_animation
+	  
 	when :give_targeting
       @battle_player&.update_animation  
 	  
@@ -1284,6 +1296,11 @@ def draw
     draw_drop_confirm
   elsif @battle_state == :drop_message
     draw_drop_message
+  end
+  if @battle_state == :equip_weapon
+    draw_equip_weapon
+  elsif @battle_state == :equip_ring
+    draw_equip_ring
   end
 end
 
