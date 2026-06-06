@@ -1,7 +1,7 @@
 # lib/battleManager/camera_battle.rb
 
 class BattleCamera
-  attr_accessor :target_x, :target_y
+  attr_accessor :target_x, :target_y, :smooth_factor
   attr_reader   :x, :y
 
   def initialize(screen_width, screen_height, map_width, map_height)

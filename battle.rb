@@ -379,6 +379,7 @@ class BattleManager
   end
 
   def start_current_turn
+    @camera.smooth_factor = 0.2
     @current_unit = @turn_order[@current_unit_index]
     return unless @current_unit
 
@@ -412,7 +413,7 @@ class BattleManager
       sync_cursor_to_unit
     end
 	@battle_player.blinking = false if @battle_player
-	@camera.follow_unit(@current_unit)
+	
 	
 	# Панель сразу помещаем за правый край и ставим состояние :hidden
     w = @hp_mp_panel.panel_width(@current_unit, @db)
@@ -437,6 +438,8 @@ def start_cursor_return_from_info
 
   @cursor.visible = true
   @battle_state = :cursor_returning
+  @camera.smooth_factor = 0.3
+  @camera.follow_point(start_px, start_py)
 end
 
   def next_unit
@@ -444,21 +447,25 @@ end
     @turn_order[next_index]
   end
 
-  def start_cursor_transition(from_unit, to_unit)
-    @cursor.visible = true
-    @battle_player = nil
-    @battle_menu.close
-    @battle_state = :cursor_moving
+def start_cursor_transition(from_unit, to_unit)
+  @cursor.visible = true
+  @battle_player = nil
+  @battle_menu.close
+  @battle_state = :cursor_moving
 
-    start_px = from_unit[:x] * TILE_SIZE + TILE_SIZE / 2
-    start_py = from_unit[:y] * TILE_SIZE + TILE_SIZE / 2
-    @cursor.move_to_pixel(start_px, start_py)
+  start_px = from_unit[:x] * TILE_SIZE + TILE_SIZE / 2
+  start_py = from_unit[:y] * TILE_SIZE + TILE_SIZE / 2
+  @cursor.move_to_pixel(start_px, start_py)
 
-    @cursor_target_x = to_unit[:x] * TILE_SIZE + TILE_SIZE / 2
-    @cursor_target_y = to_unit[:y] * TILE_SIZE + TILE_SIZE / 2
+  @cursor_target_x = to_unit[:x] * TILE_SIZE + TILE_SIZE / 2
+  @cursor_target_y = to_unit[:y] * TILE_SIZE + TILE_SIZE / 2
 
-    @cursor_moving_to_target = true
-  end
+  @cursor_moving_to_target = true
+
+  # Переключаем камеру на быстрый, но плавный скролл перед началом движения
+  @camera.smooth_factor = 0.3
+  @camera.follow_point(start_px, start_py)
+end
   
   def start_panel_slide_out
     return unless @current_unit
@@ -957,7 +964,7 @@ end
       final_tile_x = (@cursor_target_x / TILE_SIZE).round
       final_tile_y = (@cursor_target_y / TILE_SIZE).round
       @cursor.move_to(final_tile_x, final_tile_y)
-	  @camera.follow_unit(@current_unit)   # <-- сразу наводим камеру на юнита
+	  
       @battle_state = :player_turn
       sync_cursor_to_unit   # на всякий случай подстрахует
     else
@@ -1039,7 +1046,8 @@ end
           @panel_slide_state = :visible
         end
 	  end
-		
+	  
+	  @battle_player&.update_animation
 	  return if @cursor.visible   # ← враг ничего не делает, пока курсор на экране
 	  
       @enemy_action_timer -= 1
