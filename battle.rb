@@ -581,26 +581,31 @@ end
      # ничего не делаем — движение обрабатывается в update
 
    when :player_turn
-          
+
      if IsKeyPressed(KEY_S)
        if @battle_player.moving
          @pending_info = true
-        else
+       else
+         # Проверяем, не стоит ли текущий юнит на другом союзнике
+         unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+           @audio.play_sfx("block") if @audio
+           return
+         end
          @info_cursor_x = @current_unit[:x]
          @info_cursor_y = @current_unit[:y]
          @info_cursor_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2
          @info_cursor_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
          @info_cursor_vx = 0
          @info_cursor_vy = 0
-		 @battle_player.face_down
+         @battle_player.face_down
          @battle_state = :info_mode
          @battle_player.blinking = true if @battle_player
        end
        return
      end
-	 
-	 return if @cursor.visible   # ← ждём полного исчезновения курсора
-	 @battle_player.handle_input(self) if @battle_player
+
+     return if @cursor.visible
+     @battle_player.handle_input(self) if @battle_player
 
    when :action_menu
      prev_index = @battle_menu.selected_index
@@ -1006,20 +1011,36 @@ end
 
         # Обновляем позицию и курсор
         unless @battle_player.moving
-          sync_cursor_to_unit
+          # 1. Сначала обрабатываем отложенный вход в просмотр
           if @pending_info
-             @info_cursor_x = @current_unit[:x]
-             @info_cursor_y = @current_unit[:y]
-             @info_cursor_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2
-             @info_cursor_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
-             @info_cursor_vx = 0
-             @info_cursor_vy = 0
-			 @battle_player.face_down
-             @battle_state = :info_mode
-             @battle_player.blinking = true if @battle_player
-             @pending_info = false
+            @info_cursor_x = @current_unit[:x]
+            @info_cursor_y = @current_unit[:y]
+            @info_cursor_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2
+            @info_cursor_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
+            @info_cursor_vx = 0
+            @info_cursor_vy = 0
+            unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+              @audio.play_sfx("block") if @audio
+              @pending_info = false
+              return   # не входим в просмотр и не показываем курсор
+            end
+            @battle_player.face_down
+            @battle_state = :info_mode
+            @battle_player.blinking = true if @battle_player
+            @pending_info = false
+            return   # вход выполнен, курсор не нужен
           end
 
+          # 2. Синхронизируем координаты и показываем курсор только если не было pending_info
+          if @current_unit[:x] != @battle_player.x || @current_unit[:y] != @battle_player.y
+            if cell_free?(@battle_player.x, @battle_player.y, @current_unit)
+              @current_unit[:x] = @battle_player.x
+              @current_unit[:y] = @battle_player.y
+            end
+          end
+          sync_cursor_to_unit
+
+          # 3. Обработка меню
           if @pending_menu
             can_attack = adjacent_enemy?(@current_unit)
             open_battle_menu
@@ -1438,6 +1459,7 @@ end
   audio.load_sfx("cursor",      "assets/sounds/buttons/Cursor.ogg")
   audio.load_sfx("error",       "assets/sounds/buttons/Error.ogg")
   audio.load_sfx("attack", "assets/sounds/sounds_BattleScenes/Attack.mp3")
+  audio.load_sfx("block",  "assets/sounds/buttons/block_button.ogg")
   
 if battle.music_file && !battle.music_file.empty?
   audio.play(battle.music_file, battle.music_volume)
