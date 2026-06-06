@@ -17,35 +17,32 @@ class BattleCamera
     @smooth_factor = 0.1
   end
 
-  def snap_to(x, y)
-    @target_x = x * 48 + 24 - @screen_width / 2.0
-    @target_y = y * 48 + 24 - @screen_height / 2.0
-    @x = @target_x
-    @y = @target_y
-    clamp_target!
-  end
+def snap_to(x, y)
+  @target_x = (x * 48 + 24 - @screen_width / 2.0).round
+  @target_y = (y * 48 + 24 - @screen_height / 2.0).round
+  @x = @target_x
+  @y = @target_y
+  clamp_target!
+end
 
-  def follow_unit(unit)
-    # мгновенно берём центр тайла, без дополнительного lerp
-    desired_x = unit[:x] * 48 + 24 - @screen_width / 2.0
-    desired_y = unit[:y] * 48 + 24 - @screen_height / 2.0
-    @target_x = desired_x
-    @target_y = desired_y
-    clamp_target!
-  end
+def follow_unit(unit)
+  desired_x = unit[:x] * 48 + 24 - @screen_width / 2.0
+  desired_y = unit[:y] * 48 + 24 - @screen_height / 2.0
+  @target_x = desired_x.round
+  @target_y = desired_y.round
+  clamp_target!
+end
 
-  def follow_point(px, py)
-    desired_x = px - @screen_width / 2.0
-    desired_y = py - @screen_height / 2.0
-    @target_x = desired_x
-    @target_y = desired_y
-    clamp_target!
-  end
+def follow_point(px, py)
+  @target_x = (px - @screen_width / 2.0).round
+  @target_y = (py - @screen_height / 2.0).round
+  clamp_target!
+end
 
-  def update
-    @x += (@target_x - @x) * @smooth_factor
-    @y += (@target_y - @y) * @smooth_factor
-  end
+def update
+  @x += (@target_x - @x) * @smooth_factor
+  @y += (@target_y - @y) * @smooth_factor
+end
 
   # Для рендеринга – только целые пиксели, чтобы убрать субпиксельное дрожание
   def integer_offset
@@ -53,7 +50,7 @@ class BattleCamera
   end
 
   def offset
-    Raylib::Vector2.create(@x, @y)
+    Raylib::Vector2.create(@x.round, @y.round)
   end
 
   def to_camera2d

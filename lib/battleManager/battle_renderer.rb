@@ -6,36 +6,36 @@ class BattleRenderer
   end
 
 def draw
-  # Плавная камера для фона (дробная)
-  cam_x = -@manager.camera.x.round
-  cam_y = -@manager.camera.y.round 
+  # Плавная камера для фона
+  cam_x = -@manager.camera.x
+  cam_y = -@manager.camera.y
 
   # Целая камера для спрайтов (pixel-perfect)
-  int_offset = @manager.camera.offset
+  int_offset = @manager.camera.integer_offset
   int_cam_x = -int_offset.x
   int_cam_y = -int_offset.y
 
   bg_offset_x = -@manager.battle_x * BattleManager::TILE_SIZE
   bg_offset_y = -@manager.battle_y * BattleManager::TILE_SIZE
 
-  # --- статичный фон (плавная камера) ---
+  # --- статичный фон  ---
   Raylib.DrawTexturePro(
-    @manager.static_bg.texture,
-    Raylib::Rectangle.create(0, 0, @manager.static_bg.texture.width, -@manager.static_bg.texture.height),
-    Raylib::Rectangle.create(cam_x + bg_offset_x, cam_y + bg_offset_y,
-                             @manager.static_bg.texture.width, @manager.static_bg.texture.height),
-    Raylib::Vector2.create(0, 0), 0, Raylib::WHITE
+  @manager.static_bg.texture,
+  Raylib::Rectangle.create(0, 0, @manager.static_bg.texture.width, -@manager.static_bg.texture.height),
+  Raylib::Rectangle.create(int_cam_x + bg_offset_x, int_cam_y + bg_offset_y,
+                           @manager.static_bg.texture.width, @manager.static_bg.texture.height),
+  Raylib::Vector2.create(0, 0), 0, Raylib::WHITE
   )
 
-  # --- слой 2 (если есть) (плавная камера) ---
+  # --- слой 2 (если есть)---
   if @manager.layer2
-    Raylib.DrawTexturePro(
-      @manager.layer2.texture,
-      Raylib::Rectangle.create(0, 0, @manager.layer2.texture.width, -@manager.layer2.texture.height),
-      Raylib::Rectangle.create(cam_x + bg_offset_x, cam_y + bg_offset_y,
-                               @manager.layer2.texture.width, @manager.layer2.texture.height),
-      Raylib::Vector2.create(0, 0), 0, Raylib::WHITE
-    )
+  Raylib.DrawTexturePro(
+  @manager.layer2.texture,
+  Raylib::Rectangle.create(0, 0, @manager.layer2.texture.width, -@manager.layer2.texture.height),
+  Raylib::Rectangle.create(int_cam_x + bg_offset_x, int_cam_y + bg_offset_y,
+                           @manager.layer2.texture.width, @manager.layer2.texture.height),
+  Raylib::Vector2.create(0, 0), 0, Raylib::WHITE
+  )
   end
 
   # --- подсветка клеток (целая камера) ---
@@ -124,13 +124,13 @@ def draw
     draw_active_unit(int_cam_x, int_cam_y)
   end
 
-  # --- слой верхнего тайла (плавная камера) ---
+  # --- слой верхнего тайла---
   Raylib.DrawTexturePro(
-    @manager.top_layer.texture,
-    Raylib::Rectangle.create(0, 0, @manager.top_layer.texture.width, -@manager.top_layer.texture.height),
-    Raylib::Rectangle.create(cam_x + bg_offset_x, cam_y + bg_offset_y,
-                             @manager.top_layer.texture.width, @manager.top_layer.texture.height),
-    Raylib::Vector2.create(0, 0), 0, Raylib::WHITE
+  @manager.top_layer.texture,
+  Raylib::Rectangle.create(0, 0, @manager.top_layer.texture.width, -@manager.top_layer.texture.height),
+  Raylib::Rectangle.create(int_cam_x + bg_offset_x, int_cam_y + bg_offset_y,
+                           @manager.top_layer.texture.width, @manager.top_layer.texture.height),
+  Raylib::Vector2.create(0, 0), 0, Raylib::WHITE
   )
 
   # --- панель HP/MP (текущего юнита или осматриваемого) ---
@@ -184,7 +184,7 @@ end
           end
 
     px = bp.visual_x + cam_x
-    py = (bp.visual_y - 16) + cam_y
+    py = bp.visual_y - 16 + cam_y
     src = Raylib::Rectangle.create(
       bp.instance_variable_get(:@pattern) * BattleManager::TILE_SIZE,
       row * BattleManager::TILE_SIZE,

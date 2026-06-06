@@ -917,7 +917,6 @@ end
     @cursor.update		
     update_units_animation
     @highlight_timer += 1
-    @camera.update
 
     case @battle_state
     when :cursor_moving
@@ -984,15 +983,11 @@ end
           end
         end
 
-        # Камера следует за визуальной позицией (во время движения) или за клеткой (после остановки)
-        if @battle_player.moving
-          @camera.follow_point(
-            @battle_player.visual_x + TILE_SIZE / 2,
-            @battle_player.visual_y + TILE_SIZE / 2
-          )
-        else
-          @camera.follow_unit(@current_unit)
-        end
+        # Камера всегда привязана к визуальному центру юнита (и при движении, и после остановки)
+        @camera.follow_point(
+          @battle_player.visual_x + TILE_SIZE / 2,
+          @battle_player.visual_y + TILE_SIZE / 2
+        )
 
         # Меню открывается всегда, независимо от клетки
 	    unless @cursor.visible
@@ -1061,20 +1056,18 @@ end
 
     when :enemy_moving
       @battle_player.update
-	  
-      if @battle_player.moving
-        @camera.follow_point(
-          @battle_player.visual_x + TILE_SIZE / 2,
-          @battle_player.visual_y + TILE_SIZE / 2
-        )
-      else
-	  # Синхронизируем координаты текущего юнита с реальной позицией
+
+      # Камера всегда привязана к визуальному центру (и при движении, и после остановки)
+      @camera.follow_point(
+        @battle_player.visual_x + TILE_SIZE / 2,
+        @battle_player.visual_y + TILE_SIZE / 2
+      )
+
+      unless @battle_player.moving
+        # Синхронизируем координаты текущего юнита с реальной позицией
         @current_unit[:x] = @battle_player.x
         @current_unit[:y] = @battle_player.y
-        @camera.follow_unit(@current_unit)
-      end
-	  
-      unless @battle_player.moving
+
         if @enemy_move_index < @enemy_move_queue.size
           target = @enemy_move_queue[@enemy_move_index]
           # Если клетка занята другим врагом – пропускаем её, не пытаемся встать
@@ -1248,8 +1241,9 @@ end
       @current_unit = @turn_order[@current_unit_index]
       start_current_turn if @current_unit
       end
-    end	  	  	  
-  end  # ← конец case  	
+    end
+  end  # ← конец case
+  @camera.update
 end    # ← конец метода update
 
   def update_units_animation
