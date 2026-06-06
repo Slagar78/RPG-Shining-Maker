@@ -63,24 +63,20 @@ module BattleEquip
 
     has_weapon = !weapons.empty?
     has_ring = !rings.empty?
+    
+  @battle_menu.close   # скрываем главное меню
 
-    if !has_weapon && !has_ring
-      @audio.play_sfx("error") if @audio
-      return_to_item_menu
-      return
-    end
-
-    @battle_menu.close   # скрываем главное меню
-    @highlight_tiles = []
-    @target_highlight = nil
-
-    if has_weapon
-      start_weapon_select
-      @equip_pending_ring = has_ring   # если есть кольца, после оружия перейдём к ним
-    else
-      start_ring_select
-    end
+  if has_weapon
+    start_weapon_select
+    @equip_pending_ring = has_ring
+  elsif has_ring
+    start_ring_select
+  else
+    # Нет ни оружия, ни колец – всё равно открываем меню (Unarmed/No Ring)
+    start_weapon_select   # или start_ring_select – на ваш выбор
+    @equip_pending_ring = false
   end
+end
 
   def start_weapon_select
     # Индексы слотов с оружием (0..3) + 4 для Unarmed
