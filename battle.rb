@@ -46,6 +46,53 @@ class BattleManager
   TILE_SIZE = 48
   CURSOR_SPEED = 8.0
   CURSOR_HIDE_DELAY = 12
+  
+  def apply_equipment_bonuses(unit, inventory_items)
+    return unless inventory_items
+
+    inventory_items.each do |item_data|
+      next unless item_data["equipped"]
+      item_name = item_data["item"]
+      next if item_name == "NOTHING" || item_name == "Nothing" || item_name.nil?
+
+      item = @db.find_by_name(item_name)   # ищем предмет в базе (по полю "name")
+      next unless item
+
+      unit[:atk] += item["attack"].to_i    # бонус атаки
+      unit[:def] += item["defense"].to_i   # бонус защиты
+    end
+  end
+  
+def recalc_current_unit_stats
+  unit = @current_unit
+  return unless unit
+
+  # Сбрасываем до базовых значений (как при загрузке)
+  if unit[:actor]
+    actor = unit[:actor]
+    klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
+    if klass
+      lv = actor["level"] || 1
+      unit[:atk] = @db.stat_at_level(klass["attack_growth"], lv)
+      unit[:def] = @db.stat_at_level(klass["defense_growth"], lv)
+    end
+  elsif unit[:enemy]
+    enemy = unit[:enemy]
+    unit[:atk] = enemy["stats"]["base_att"]
+    unit[:def] = enemy["stats"]["base_def"]
+  end
+
+  # Определяем инвентарь и применяем бонусы от надетого
+  inventory_items = nil
+  if unit[:actor]
+    entry = @start_inventory.find { |e| e["actor_id"] == unit[:actor]["id"] }
+    inventory_items = entry["items"] if entry
+  elsif unit[:enemy]
+    inventory_items = unit[:enemy]["items"]
+  end
+
+  apply_equipment_bonuses(unit, inventory_items)
+end
 
   def initialize(db = nil, font = nil, game_text = {})
     @db = db
@@ -97,6 +144,13 @@ class BattleManager
 
     @layer2 = @game_map.build_layer2
     SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
+	
+	# Загружаем start_inventory ДО load_spriteset
+    @start_inventory = []
+    if File.exist?("data/actors/start_inventory.json")
+      data = JSON.parse(File.read("data/actors/start_inventory.json"))
+      @start_inventory = data["start_inventory"] || []
+    end
 
     load_spriteset
     load_terrain
@@ -127,12 +181,6 @@ class BattleManager
     @pending_info = false
     @battle_scene = BattleScene.new(self, @game_text)
 
-    # Загружаем start_inventory (общий, как в game.rb)
-    @start_inventory = []
-    if File.exist?("data/actors/start_inventory.json")
-      data = JSON.parse(File.read("data/actors/start_inventory.json"))
-      @start_inventory = data["start_inventory"] || []
-    end
     @profile = Profile.new(@font, @db, @start_inventory)
     @enemy_profile = EnemyProfile.new(@font, @db)
     @portrait_cache = {}
@@ -247,18 +295,25 @@ class BattleManager
         end
       end
 
-      @allies << {
+        ally = {
         x: pos[0], y: pos[1],
         actor: actor, tex: tex,
         battle_anim: ally_battle_anim,
         sprite_frame: 0, sprite_timer: 0, sprite_speed: 14,
         hp: max_hp, max_hp: max_hp,
         mp: max_mp, max_mp: max_mp,
-
         atk: (klass ? @db.stat_at_level(klass["attack_growth"], lv) : 4),
         def: (klass ? @db.stat_at_level(klass["defense_growth"], lv) : 5),
         movetype: klass ? (klass["movetype"] || "regular") : "regular"
       }
+
+      # Находим инвентарь этого актора в start_inventory
+      if actor
+        actor_inv_entry = @start_inventory.find { |e| e["actor_id"] == actor["id"] }
+        apply_equipment_bonuses(ally, actor_inv_entry["items"]) if actor_inv_entry
+      end
+
+      @allies << ally
     end
 
     # ========== Враги ==========
@@ -286,7 +341,7 @@ class BattleManager
       battle_anim = (battle_sprite_path && !battle_sprite_path.empty?) ?
               BattleSpriteAnimation.new(battle_sprite_path) : nil
 
-      @enemies << {
+        enemy_unit = {
         x: pos[0], y: pos[1],
         enemy: enemy, tex: tex,
         sprite_frame: 0, sprite_timer: 0, sprite_speed: 14,
@@ -294,11 +349,14 @@ class BattleManager
         battle_anim: battle_anim,
         hp: base_hp, max_hp: base_hp,
         mp: base_mp, max_mp: base_mp,
-
         atk: enemy ? enemy["stats"]["base_att"] : 0,
         def: enemy ? enemy["stats"]["base_def"] : 0,
         movetype: enemy ? (enemy["movetype"] || "regular") : "regular"
       }
+
+      apply_equipment_bonuses(enemy_unit, enemy["items"]) if enemy && enemy["items"]
+
+      @enemies << enemy_unit
     end
   end
 
@@ -573,6 +631,8 @@ def level_up(actor, unit)
   # Обновляем данные актора для сохранения (опционально)
   actor["hp"] = new_max_hp
   actor["mp"] = new_max_mp
+  
+  recalc_current_unit_stats   # ← чтобы бонусы экипировки снова применились
 end
 
  def handle_input

@@ -176,6 +176,7 @@ end
       next unless data && data["category"] == category
       item_entry["equipped"] = false
     end
+    recalc_current_unit_stats    # ← один раз после всех изменений
   end
 
   def equip_in_slot(slot_index, category)
@@ -195,6 +196,7 @@ end
     # Надеваем выбранный
     if items[slot_index] && items[slot_index]["item"] != "NOTHING"
       items[slot_index]["equipped"] = true
+	  recalc_current_unit_stats
     end
   end
 
