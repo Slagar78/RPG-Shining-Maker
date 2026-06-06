@@ -581,9 +581,7 @@ end
      # ничего не делаем — движение обрабатывается в update
 
    when :player_turn
-     return if @cursor.visible   # ← ждём полного исчезновения курсора
-     @battle_player.handle_input(self) if @battle_player
-
+          
      if IsKeyPressed(KEY_S)
        if @battle_player.moving
          @pending_info = true
@@ -594,12 +592,15 @@ end
          @info_cursor_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
          @info_cursor_vx = 0
          @info_cursor_vy = 0
-		 @battle_player.face_target(@current_unit[:x], @current_unit[:y] + 1)  # поворот вниз
+		 @battle_player.face_down
          @battle_state = :info_mode
          @battle_player.blinking = true if @battle_player
        end
        return
      end
+	 
+	 return if @cursor.visible   # ← ждём полного исчезновения курсора
+	 @battle_player.handle_input(self) if @battle_player
 
    when :action_menu
      prev_index = @battle_menu.selected_index
@@ -1013,6 +1014,7 @@ end
              @info_cursor_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
              @info_cursor_vx = 0
              @info_cursor_vy = 0
+			 @battle_player.face_down
              @battle_state = :info_mode
              @battle_player.blinking = true if @battle_player
              @pending_info = false

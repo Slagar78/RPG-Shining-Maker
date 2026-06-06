@@ -167,4 +167,11 @@ end
     else base
     end
   end
+  
+  def face_down
+    @direction = DIR_DOWN
+    @move_dir = DIR_DOWN
+    @pattern = 0
+    @anim_frame = 0
+ end
 end
