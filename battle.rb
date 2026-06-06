@@ -50,7 +50,7 @@ class BattleManager
   def initialize(db = nil, font = nil, game_text = {})
     @db = db
     @font = font
-	@game_text = game_text
+    @game_text = game_text
     @audio = nil
 
     entries_path = "data/battles/entries.json"
@@ -68,19 +68,18 @@ class BattleManager
     map_id = @battle_entry["map_id"]
     @game_map = GameMap.new(map_id)
 
-    
     # === боевая зона ===
     bx = @battle_entry["battle_x"] || 0
     by = @battle_entry["battle_y"] || 0
     bw = @battle_entry["battle_width"]
     bh = @battle_entry["battle_height"]
-  if bw.nil? || bw == 0 || bh.nil? || bh == 0
-    bw = @game_map.width
-    bh = @game_map.height
-    # Если боевая зона = вся карта, то смещение не имеет смысла
-    bx = 0
-    by = 0
-  end
+    if bw.nil? || bw == 0 || bh.nil? || bh == 0
+      bw = @game_map.width
+      bh = @game_map.height
+      # Если боевая зона = вся карта, то смещение не имеет смысла
+      bx = 0
+      by = 0
+    end
     @battle_x = bx
     @battle_y = by
     @battle_w = bw
@@ -103,7 +102,7 @@ class BattleManager
     load_terrain
 
     @battle_menu = BattleMenu.new
-	@battle_menu.font = @font
+    @battle_menu.font = @font
     @hp_mp_panel = HpMpPanel.new(@font)
     @target_hp_panel = HpMpPanel.new(@font)
     @battle_state = :cursor_moving
@@ -113,7 +112,7 @@ class BattleManager
     @current_unit = nil
     @highlight_tiles = []
     @highlight_timer = 0
-	@saved_highlight_tiles = []
+    @saved_highlight_tiles = []
     @battle_player = nil
     @enemy_action_timer = 0
     @enemy_move_queue = []
@@ -125,18 +124,18 @@ class BattleManager
 
     @cursor_hide_timer = 0
     @pending_menu = false
-	@pending_info = false
+    @pending_info = false
     @battle_scene = BattleScene.new(self, @game_text)
 
     # Загружаем start_inventory (общий, как в game.rb)
     @start_inventory = []
-  if File.exist?("data/actors/start_inventory.json")
-    data = JSON.parse(File.read("data/actors/start_inventory.json"))
-    @start_inventory = data["start_inventory"] || []
-  end
+    if File.exist?("data/actors/start_inventory.json")
+      data = JSON.parse(File.read("data/actors/start_inventory.json"))
+      @start_inventory = data["start_inventory"] || []
+    end
     @profile = Profile.new(@font, @db, @start_inventory)
-	@enemy_profile = EnemyProfile.new(@font, @db)
-	@portrait_cache = {}
+    @enemy_profile = EnemyProfile.new(@font, @db)
+    @portrait_cache = {}
 
     @renderer = BattleRenderer.new(self)
     @start_x = 0
@@ -147,12 +146,12 @@ class BattleManager
     @attack_targets = []
     @attack_target_index = 0
     @highlight_tex = load_highlight_texture
-	
-	@message_panel_tex = Raylib.LoadTexture("assets/ui/message_panel.png")
+
+    @message_panel_tex = Raylib.LoadTexture("assets/ui/message_panel.png")
     Raylib.SetTextureFilter(@message_panel_tex, Raylib::TEXTURE_FILTER_POINT)
 
     @give_message_timer = 0
-	@give_msg_full_lines = []
+    @give_msg_full_lines = []
     @give_msg_char_index = 0
     @give_msg_char_timer = 0
     @give_msg_char_speed = 3
@@ -160,36 +159,36 @@ class BattleManager
 
     @give_message_id = nil
     @give_message_params = {}
-	
-	@info_cursor_tex = load_highlight_texture   # текстура рамки
+
+    @info_cursor_tex = load_highlight_texture   # текстура рамки
     @info_cursor_x = 0
     @info_cursor_y = 0
-	@death_anim = nil
-	@info_panel_unit = nil
-		
-	@info_cursor_vx = 0
+    @death_anim = nil
+    @info_panel_unit = nil
+
+    @info_cursor_vx = 0
     @info_cursor_vy = 0
     @info_cursor_px = 0
     @info_cursor_py = 0
 
-	@last_attacker = nil
+    @last_attacker = nil
     @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
-	@last_defender_hp_before = nil
-	
-	@fade_alpha = 0
+    @last_defender_hp_before = nil
+
+    @fade_alpha = 0
     @pending_attacker = nil
     @pending_defender = nil
     @pending_damage = 0
-	@pending_exp_amount = 0
-	@give_swap_target_unit = nil
-	@give_targets = []
+    @pending_exp_amount = 0
+    @give_swap_target_unit = nil
+    @give_targets = []
     @give_target_index = 0
     @pending_give_item = nil
-	@saved_item_menu_action = nil
-	@panel_slide_state = :visible
-	init_give_animation_vars
-	init_drop_vars
-	init_equip_vars
+    @saved_item_menu_action = nil
+    @panel_slide_state = :visible
+    init_give_animation_vars
+    init_drop_vars
+    init_equip_vars
 
     prepare_turn_order
 
@@ -200,7 +199,7 @@ class BattleManager
     end
 
     @current_unit = first_unit
-	@camera.snap_to(first_unit[:x], first_unit[:y]) if first_unit
+    @camera.snap_to(first_unit[:x], first_unit[:y]) if first_unit
     start_current_turn
   end
 
