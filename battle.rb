@@ -167,8 +167,10 @@ class BattleManager
 	@death_anim = nil
 	@info_panel_unit = nil
 		
-	@info_cursor_repeat_timer = 0
-    @info_cursor_repeat_rate  = 7    # чем больше, тем медленнее автоповтор
+	@info_cursor_vx = 0
+    @info_cursor_vy = 0
+    @info_cursor_px = 0
+    @info_cursor_py = 0
 
 	@last_attacker = nil
     @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
@@ -586,11 +588,16 @@ end
      if IsKeyPressed(KEY_S)
        if @battle_player.moving
          @pending_info = true
-       else
+        else
          @info_cursor_x = @current_unit[:x]
          @info_cursor_y = @current_unit[:y]
+         @info_cursor_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2
+         @info_cursor_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
+         @info_cursor_vx = 0
+         @info_cursor_vy = 0
+		 @battle_player.face_target(@current_unit[:x], @current_unit[:y] + 1)  # поворот вниз
          @battle_state = :info_mode
-         @battle_player.blinking = true if @battle_player  # <-- ВКЛЮЧАЕМ
+         @battle_player.blinking = true if @battle_player
        end
        return
      end
@@ -691,34 +698,18 @@ end
        @audio.play_sfx("cancel_menu") if @audio
      end
 
-   when :info_mode
+    when :info_mode
      unless @info_panel_unit
-       dx = 0; dy = 0
+       @info_cursor_vx = 0
+       @info_cursor_vy = 0
        if IsKeyDown(KEY_LEFT)
-         dx = -1
+         @info_cursor_vx = -8
        elsif IsKeyDown(KEY_RIGHT)
-         dx = 1
+         @info_cursor_vx = 8
        elsif IsKeyDown(KEY_UP)
-         dy = -1
+         @info_cursor_vy = -8
        elsif IsKeyDown(KEY_DOWN)
-         dy = 1
-       end
-
-       if dx != 0 || dy != 0
-         if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_DOWN)
-           @info_cursor_x = (@info_cursor_x + dx).clamp(0, @battle_w - 1)
-           @info_cursor_y = (@info_cursor_y + dy).clamp(0, @battle_h - 1)
-           @info_cursor_repeat_timer = 0
-         else
-           @info_cursor_repeat_timer += 1
-           if @info_cursor_repeat_timer >= @info_cursor_repeat_rate
-             @info_cursor_x = (@info_cursor_x + dx).clamp(0, @battle_w - 1)
-             @info_cursor_y = (@info_cursor_y + dy).clamp(0, @battle_h - 1)
-             @info_cursor_repeat_timer = 0
-           end
-         end
-       else
-         @info_cursor_repeat_timer = 0
+         @info_cursor_vy = 8
        end
      end
 
@@ -1017,11 +1008,15 @@ end
         unless @battle_player.moving
           sync_cursor_to_unit
           if @pending_info
-            @info_cursor_x = @current_unit[:x]
-            @info_cursor_y = @current_unit[:y]
-            @battle_state = :info_mode
-            @battle_player.blinking = true if @battle_player
-            @pending_info = false
+             @info_cursor_x = @current_unit[:x]
+             @info_cursor_y = @current_unit[:y]
+             @info_cursor_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2
+             @info_cursor_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
+             @info_cursor_vx = 0
+             @info_cursor_vy = 0
+             @battle_state = :info_mode
+             @battle_player.blinking = true if @battle_player
+             @pending_info = false
           end
 
           if @pending_menu
@@ -1216,12 +1211,22 @@ end
       @battle_state = :battle_scene
     end
 
+    
     when :info_mode
+      if @info_cursor_vx != 0 || @info_cursor_vy != 0
+        @info_cursor_px += @info_cursor_vx
+        @info_cursor_py += @info_cursor_vy
+        max_px = (@battle_w * TILE_SIZE) - 1
+        max_py = (@battle_h * TILE_SIZE) - 1
+        @info_cursor_px = @info_cursor_px.clamp(0, max_px)
+        @info_cursor_py = @info_cursor_py.clamp(0, max_py)
+        @info_cursor_x = (@info_cursor_px / TILE_SIZE).floor
+        @info_cursor_y = (@info_cursor_py / TILE_SIZE).floor
+      end
+      @camera.follow_point(@info_cursor_px, @info_cursor_py)
       @battle_player&.update
-      @camera.follow_point(
-      @info_cursor_x * TILE_SIZE + TILE_SIZE / 2,
-      @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
-    )
+	  @battle_player&.update_animation
+	  
     when :info_profile
       @battle_player&.update
       @profile.update
