@@ -72,7 +72,7 @@ class UnitDeath
     )
 
     screen_x = @unit[:x] * @tile_size - camera.x + @tile_size / 2.0
-    screen_y = @unit[:y] * @tile_size - camera.y + @tile_size / 2.0
+    screen_y = @unit[:y] * @tile_size - camera.y - 16 + @tile_size / 2.0
 
     dest = Raylib::Rectangle.create(
       screen_x - @tile_size / 2.0,
