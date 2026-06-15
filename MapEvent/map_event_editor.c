@@ -343,6 +343,19 @@ void render_map(Editor *ed) {
                 for (int dy = -1; dy <= 1; dy++)
                     SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){odst.x+dx, odst.y+dy, odst.w, odst.h});
         }
+		
+		    if (tc->close_x >= 0 && tc->close_y >= 0 && tc->close_x < map->width && tc->close_y < map->height) {
+            SDL_FRect cdst = {
+                MAP_X + (tc->close_x * TILE_SIZE - ed->cam_x) * zoom,
+                MAP_Y + (tc->close_y * TILE_SIZE - ed->cam_y) * zoom,
+                scaled_tile, scaled_tile
+            };
+            SDL_SetRenderDrawColor(ed->renderer, 0, 200, 255, 255);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
+                    SDL_RenderDrawRectF(ed->renderer, &(SDL_FRect){cdst.x+dx, cdst.y+dy, cdst.w, cdst.h});
+        }
+		
     }
 
     // ── Выбранная лестница (Stairs) ───────────
@@ -433,6 +446,16 @@ void render_map(Editor *ed) {
                 SDL_SetRenderDrawColor(ed->renderer, 255, 255, 0, 80);
                 SDL_RenderDrawRectF(ed->renderer, &t);
             }
+			
+            if (tc->close_x >= 0 && tc->close_y >= 0) {
+                SDL_FRect c = {
+                    MAP_X + (tc->close_x * TILE_SIZE - ed->cam_x) * zoom,
+                    MAP_Y + (tc->close_y * TILE_SIZE - ed->cam_y) * zoom,
+                    scaled_tile, scaled_tile
+                };
+                SDL_SetRenderDrawColor(ed->renderer, 0, 200, 255, 80);
+                SDL_RenderDrawRectF(ed->renderer, &c);
+            }			
         }
     }
 
@@ -692,6 +715,8 @@ static void draw_tc_field(Editor *ed, const char *label, int field_idx, int line
             snprintf(buf, sizeof(buf), "%d,%d", te->trigger_x, te->trigger_y);
         else if (field_idx == 1)
             snprintf(buf, sizeof(buf), "%d", te->new_tile_id);
+		else if (field_idx == 2)
+        snprintf(buf, sizeof(buf), "%d,%d", te->close_x, te->close_y);
     }
     if (active && ed->tc_input_buf[0])
         snprintf(buf, sizeof(buf), "%s", ed->tc_input_buf);
@@ -709,6 +734,8 @@ static void check_tc_click(Editor *ed, int field_idx, int line_y, int mx, int my
                 snprintf(ed->tc_input_buf, sizeof(ed->tc_input_buf), "%d,%d", te->trigger_x, te->trigger_y);
             else if (field_idx == 1)
                 snprintf(ed->tc_input_buf, sizeof(ed->tc_input_buf), "%d", te->new_tile_id);
+			else if (field_idx == 2)
+            snprintf(ed->tc_input_buf, sizeof(ed->tc_input_buf), "%d,%d", te->close_x, te->close_y);
         }
         SDL_StartTextInput();
     }
@@ -1218,12 +1245,12 @@ void render_left_panel(Editor *ed) {
 
         if (ed->selected_tile_change >= 0 && ed->selected_tile_change < ed->tile_change_count) {
             int edit_y = y;
-            draw_tc_field(ed, "Trigger", 0, edit_y);
-            edit_y += 22;
-            draw_tc_field(ed, "New Tile", 1, edit_y);
-            edit_y += 22;
+            draw_tc_field(ed, "Trigger",   0, edit_y); edit_y += 22;
+            draw_tc_field(ed, "New Tile",  1, edit_y); edit_y += 22;
+            draw_tc_field(ed, "Close Pos", 2, edit_y); edit_y += 22;
 
             SDL_Rect del_btn = {10, edit_y, LEFT_PANEL_W - 20, 24};
+			
             SDL_SetRenderDrawColor(ed->renderer, 180, 80, 80, 255);
             SDL_RenderFillRect(ed->renderer, &del_btn);
             draw_text_centered(ed->renderer, ed->font, "Delete",
@@ -1588,7 +1615,15 @@ void handle_input(Editor *ed, bool *running) {
                         } else if (ed->tc_edit_field == 1) {
                             tc->new_tile_id = atoi(ed->tc_input_buf);
                         }
+						
+				    else if (ed->tc_edit_field == 2) {
+                    int x, y;
+                    if (sscanf(ed->tc_input_buf, "%d,%d", &x, &y) == 2) {
+                        tc->close_x = x;
+                        tc->close_y = y;
                     }
+                }						
+             }
                     ed->tc_edit_field = -1;
                     ed->tc_input_buf[0] = '\0';
                     SDL_StopTextInput();
@@ -1949,6 +1984,8 @@ void handle_input(Editor *ed, bool *running) {
                             tc->trigger_x = tc->trigger_y = -1;
                             tc->new_tile_id = 0;
                             tc->sample_x = tc->sample_y = -1;
+							tc->close_x = -1;
+                            tc->close_y = -1;
                             ed->selected_tile_change = ed->tile_change_count - 1;
                             ed->tc_edit_field = -1;
                             ed->tc_input_buf[0] = '\0';
@@ -1970,9 +2007,10 @@ void handle_input(Editor *ed, bool *running) {
                     }
                     tc_y = tc_list_start_y + tc_list_h + 5 + 5;
                     if (ed->selected_tile_change >= 0 && ed->selected_tile_change < ed->tile_change_count) {
-                        check_tc_click(ed, 0, tc_y, mx, my);
-                        check_tc_click(ed, 1, tc_y + 22, mx, my);
-                        SDL_Rect del_btn = {10, tc_y + 44, LEFT_PANEL_W-20, 24};
+                        check_tc_click(ed, 0, tc_y, mx, my);          // Trigger
+                        check_tc_click(ed, 1, tc_y + 22, mx, my);     // New Tile
+                        check_tc_click(ed, 2, tc_y + 44, mx, my);     // Close Pos
+                        SDL_Rect del_btn = {10, tc_y + 66, LEFT_PANEL_W-20, 24};
                         if (mx >= del_btn.x && mx < del_btn.x+del_btn.w && my >= del_btn.y && my < del_btn.y+del_btn.h) {
                             for (int i = ed->selected_tile_change; i < ed->tile_change_count-1; i++)
                                 ed->tile_changes[i] = ed->tile_changes[i+1];
@@ -2206,12 +2244,21 @@ void handle_input(Editor *ed, bool *running) {
                             if (ed->tc_edit_field == 0) {
                                 tc->trigger_x = tx;
                                 tc->trigger_y = ty;
+                                /* Автоматически ставим закрытие на клетку ПОД триггером */
+                                if (tc->close_x == -1 && tc->close_y == -1) {
+                                    tc->close_x = tx;
+                                    tc->close_y = ty + 1;
+                                }
                                 ed->tc_edit_field = -1; ed->tc_input_buf[0] = '\0'; SDL_StopTextInput();
                             } else if (ed->tc_edit_field == 1) {
                                 int tid = map->tiles[tx * map->height + ty];
                                 tc->new_tile_id = tid;
                                 tc->sample_x = tx;   // запоминаем координаты образца
                                 tc->sample_y = ty;
+                                ed->tc_edit_field = -1; ed->tc_input_buf[0] = '\0'; SDL_StopTextInput();
+                            } else if (ed->tc_edit_field == 2) {
+                                tc->close_x = tx;
+                                tc->close_y = ty;
                                 ed->tc_edit_field = -1; ed->tc_input_buf[0] = '\0'; SDL_StopTextInput();
                             }
                         }

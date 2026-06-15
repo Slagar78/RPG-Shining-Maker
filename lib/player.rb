@@ -14,7 +14,7 @@ PIXEL_SPEED = 4         # пикселей за кадр (целое число)
 ANIM_SPEED  = 12
 
 class Player
-  attr_accessor :x, :y, :direction, :pattern
+  attr_accessor :x, :y, :direction, :pattern, :last_x, :last_y
   attr_accessor :moving, :move_dir, :pixel_offset
   attr_accessor :anim_frame
   attr_accessor :can_move
@@ -39,9 +39,12 @@ class Player
     @anim_frame    = 0
     @can_move      = true
     @just_turned   = false
-
     @sliding       = false
     @slide_dir     = DIR_DOWN
+	
+	# поля для предыдущей позиции
+    @last_x = @x
+    @last_y = @y
 	
 	@stairs_event  = nil
     @stairs_dx     = 0
@@ -180,70 +183,77 @@ end
     end
 end
 
-def update_movement
-  # === Движение по лестнице ===
-  if @stairs_event
+  def update_movement
+    # === Движение по лестнице ===
+    if @stairs_event
+      @pixel_offset += PIXEL_SPEED
+      if @pixel_offset >= TILE_SIZE
+        @pixel_offset = 0
+        @x += @stairs_dx
+        @y += @stairs_dy
+        @last_x = @x - @stairs_dx   # предыдущая позиция
+        @last_y = @y - @stairs_dy
+        if @x == @target_x && @y == @target_y
+          @moving = false
+          @stairs_event = nil
+        end
+      end
+      return
+    end
+
+    return unless @moving
+
     @pixel_offset += PIXEL_SPEED
     if @pixel_offset >= TILE_SIZE
-      @pixel_offset = 0
-      @x += @stairs_dx
-      @y += @stairs_dy
-      if @x == @target_x && @y == @target_y
-        @moving = false
-        @stairs_event = nil
-      end
-    end
-    return
-  end
+      old_x = @x
+      old_y = @y
 
-  return unless @moving
-
-  @pixel_offset += PIXEL_SPEED
-  if @pixel_offset >= TILE_SIZE
-    case @move_dir
-    when DIR_RIGHT then @x += 1
-    when DIR_LEFT  then @x -= 1
-    when DIR_DOWN  then @y += 1
-    when DIR_UP    then @y -= 1
-    end
-
-    # Снимаем резервирование, т.к. шаг выполнен
-    @reserved_x = nil
-    @reserved_y = nil
-
-    # Проверка на вход в лестницу после каждого шага
-    maybe_start_stairs
-
-    # Обработка льда
-    if @map && @map.tile_type_at(@x, @y) == 2
-      next_x = @x
-      next_y = @y
       case @move_dir
-      when DIR_RIGHT then next_x += 1
-      when DIR_LEFT  then next_x -= 1
-      when DIR_DOWN  then next_y += 1
-      when DIR_UP    then next_y -= 1
+      when DIR_RIGHT then @x += 1
+      when DIR_LEFT  then @x -= 1
+      when DIR_DOWN  then @y += 1
+      when DIR_UP    then @y -= 1
       end
 
-      if next_x >= 0 && next_x < @map.width &&
-         next_y >= 0 && next_y < @map.height &&
-         @map.passable?(next_x, next_y, @x, @y)
-        @sliding = true
-        @moving  = true
-        @pixel_offset = 0
-        # на льду резервирование остаётся сброшенным (или можно заново зарезервировать следующую клетку)
+      @last_x = old_x
+      @last_y = old_y
+
+      # Снимаем резервирование, т.к. шаг выполнен
+      @reserved_x = nil
+      @reserved_y = nil
+
+      # Проверка на вход в лестницу после каждого шага
+      maybe_start_stairs
+
+      # Обработка льда
+      if @map && @map.tile_type_at(@x, @y) == 2
+        next_x = @x
+        next_y = @y
+        case @move_dir
+        when DIR_RIGHT then next_x += 1
+        when DIR_LEFT  then next_x -= 1
+        when DIR_DOWN  then next_y += 1
+        when DIR_UP    then next_y -= 1
+        end
+
+        if next_x >= 0 && next_x < @map.width &&
+           next_y >= 0 && next_y < @map.height &&
+           @map.passable?(next_x, next_y, @x, @y)
+          @sliding = true
+          @moving  = true
+          @pixel_offset = 0
+        else
+          @sliding = false
+          @moving  = false
+          @pixel_offset = 0
+        end
       else
         @sliding = false
         @moving  = false
         @pixel_offset = 0
       end
-    else
-      @sliding = false
-      @moving  = false
-      @pixel_offset = 0
     end
   end
-end
 
 def maybe_start_stairs
   return unless @map

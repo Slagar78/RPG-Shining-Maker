@@ -25,6 +25,7 @@ typedef struct {
     int trigger_x, trigger_y;
     int new_tile_id;
     int sample_x, sample_y; // клетка-образец
+    int close_x, close_y;   // клетка закрытия двери
 } TileChangeEvent;
 
 typedef struct {

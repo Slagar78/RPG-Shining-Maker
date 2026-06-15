@@ -67,42 +67,54 @@
 		"trigger_y":	8,
 		"new_tile_id":	11,
 		"sample_x":	62,
-		"sample_y":	0
+		"sample_y":	0,
+		"close_x":	4,
+		"close_y":	9
 	}, {
 		"type":	"tile_change",
 		"trigger_x":	12,
 		"trigger_y":	12,
 		"new_tile_id":	11,
 		"sample_x":	62,
-		"sample_y":	0
+		"sample_y":	0,
+		"close_x":	12,
+		"close_y":	13
 	}, {
 		"type":	"tile_change",
 		"trigger_x":	19,
 		"trigger_y":	12,
 		"new_tile_id":	11,
 		"sample_x":	62,
-		"sample_y":	0
+		"sample_y":	0,
+		"close_x":	19,
+		"close_y":	13
 	}, {
 		"type":	"tile_change",
 		"trigger_x":	32,
 		"trigger_y":	15,
 		"new_tile_id":	11,
 		"sample_x":	62,
-		"sample_y":	0
+		"sample_y":	0,
+		"close_x":	32,
+		"close_y":	16
 	}, {
 		"type":	"tile_change",
 		"trigger_x":	41,
 		"trigger_y":	13,
 		"new_tile_id":	11,
 		"sample_x":	62,
-		"sample_y":	0
+		"sample_y":	0,
+		"close_x":	41,
+		"close_y":	14
 	}, {
 		"type":	"tile_change",
 		"trigger_x":	38,
 		"trigger_y":	24,
 		"new_tile_id":	11,
 		"sample_x":	62,
-		"sample_y":	0
+		"sample_y":	0,
+		"close_x":	38,
+		"close_y":	25
 	}, {
 		"type":	"stairs",
 		"start_x":	3,

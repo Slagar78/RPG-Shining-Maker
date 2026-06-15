@@ -155,6 +155,10 @@ void load_events_from_json(Editor *ed, const char *folder) {
                     cJSON *sy = cJSON_GetObjectItem(ev, "sample_y");
                     tc->sample_x = (sx && cJSON_IsNumber(sx)) ? sx->valueint : -1;
                     tc->sample_y = (sy && cJSON_IsNumber(sy)) ? sy->valueint : -1;
+                    cJSON *closex = cJSON_GetObjectItem(ev, "close_x");
+                    cJSON *closey = cJSON_GetObjectItem(ev, "close_y");
+                    tc->close_x = (closex && cJSON_IsNumber(closex)) ? closex->valueint : -1;
+                    tc->close_y = (closey && cJSON_IsNumber(closey)) ? closey->valueint : -1;
                 }
             }
         }
@@ -270,6 +274,8 @@ void save_events_to_json(Editor *ed, const char *folder) {
         cJSON_AddNumberToObject(ev, "new_tile_id", tc->new_tile_id);
         cJSON_AddNumberToObject(ev, "sample_x", tc->sample_x);
         cJSON_AddNumberToObject(ev, "sample_y", tc->sample_y);
+        cJSON_AddNumberToObject(ev, "close_x", tc->close_x);
+        cJSON_AddNumberToObject(ev, "close_y", tc->close_y);
         cJSON_AddItemToArray(root, ev);
     }
 

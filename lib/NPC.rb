@@ -1,7 +1,7 @@
 # lib/NPC.rb
 
 class NPC
-  attr_reader :x, :y, :id
+  attr_reader :x, :y, :id, :last_x, :last_y
 
   TILE_SIZE = 48
   PIXEL_SPEED = 3
@@ -18,6 +18,8 @@ class NPC
     @id = data['id']
     @x = data['x']
     @y = data['y']
+    @last_x = @x
+    @last_y = @y
     @sprite_name = data['sprite']
     @behavior = data['behavior'] || 'static'
     @direction = data['direction'] || 'down'
@@ -81,12 +83,19 @@ class NPC
   def update_movement
     @pixel_offset += PIXEL_SPEED
     if @pixel_offset >= TILE_SIZE
+      old_x = @x
+      old_y = @y
+
       case @move_dir
       when :right then @x += 1
       when :left  then @x -= 1
       when :down  then @y += 1
       when :up    then @y -= 1
       end
+
+      @last_x = old_x
+      @last_y = old_y
+
       @pixel_offset = 0
       @moving = false
       @move_dir = nil

@@ -271,8 +271,44 @@ class Game
     @player.update_animation
     @player.update_movement if @game_state == :playing
 	
-	if @game_state == :playing && @game_map
-    @game_map.npcs.each { |npc| npc.update(@game_map, @player) }
+    if @game_state == :playing && @game_map
+      @game_map.npcs.each { |npc| npc.update(@game_map, @player) }
+
+      # Проверка tile_events для всех персонажей (игрок + NPC)
+      if @game_map.tile_events.any?
+        characters = [@player] + @game_map.npcs
+        characters.each do |char|
+          @game_map.tile_events.each do |ev|
+            tx = ev['trigger_x']
+            ty = ev['trigger_y']
+            next unless tx && ty
+
+            cx = ev['close_x']
+            cy = ev['close_y']
+
+            # Открытие
+            if char.x == tx && char.y == ty
+              unless @game_map.open_doors.key?([tx, ty])
+                @game_map.open_doors[[tx, ty]] = {
+                  original_tile: @game_map.tile_at(tx, ty),
+                  event: ev
+                }
+                @game_map.replace_tile(tx, ty, ev['new_tile_id'])
+              end
+            end
+
+            # Закрытие
+            if cx && cy && char.x == cx && char.y == cy
+              door_key = [tx, ty]
+              if @game_map.open_doors.key?(door_key) &&
+                 char.last_x == tx && char.last_y == ty
+                original = @game_map.open_doors.delete(door_key)[:original_tile]
+                @game_map.replace_tile(tx, ty, original)
+              end
+            end
+          end
+        end
+      end
     end
 	
 	# Fade-логика для варпа (стиль Sega RPG)
@@ -302,6 +338,8 @@ class Game
         @player.map = @game_map
         @player.x = pending[:target_x]
         @player.y = pending[:target_y]
+        @player.last_x = @player.x
+        @player.last_y = @player.y		
         @player.direction = pending[:facing] if pending[:facing]
         @player.moving = false
         @player.pattern = 0
@@ -351,9 +389,32 @@ end
       @game_map.tile_events.each do |ev|
         tx = ev['trigger_x']
         ty = ev['trigger_y']
-        if tx && ty && @player.x == tx && @player.y == ty
-          new_id = ev['new_tile_id']
-          @game_map.replace_tile(tx, ty, new_id)
+        next unless tx && ty
+
+        cx = ev['close_x']
+        cy = ev['close_y']
+
+        # --- Открытие двери (игрок на триггере) ---
+        if @player.x == tx && @player.y == ty
+          unless @game_map.open_doors.key?([tx, ty])
+            original_tile = @game_map.tile_at(tx, ty)
+            new_id = ev['new_tile_id']
+            @game_map.open_doors[[tx, ty]] = { original_tile: original_tile, event: ev }
+            @game_map.replace_tile(tx, ty, new_id)
+          end
+        end
+
+        # --- Закрытие двери (игрок на клетке закрытия) ---
+        if cx && cy && @player.x == cx && @player.y == cy
+          door_key = [tx, ty]
+          if @game_map.open_doors.key?(door_key)
+            # Проверяем, что предыдущая клетка была клеткой триггера
+            if @player.last_x == tx && @player.last_y == ty
+              original_tile = @game_map.open_doors[door_key][:original_tile]
+              @game_map.replace_tile(tx, ty, original_tile)
+              @game_map.open_doors.delete(door_key)
+            end
+          end
         end
       end
     end

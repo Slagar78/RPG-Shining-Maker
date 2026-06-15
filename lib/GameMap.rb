@@ -6,7 +6,7 @@ include Raylib
 
 class GameMap
   attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas,
-              :roof_events, :tile_events, :stair_events, :roof_offsets, :warp_events
+              :roof_events, :tile_events, :stair_events, :roof_offsets, :warp_events, :open_doors
   attr_reader :tileset_path
   attr_reader :roof_layers
   attr_reader :layer2, :top_layer, :static_bg
@@ -15,7 +15,7 @@ class GameMap
   def initialize(map_id = "Granseal")
     @src_rect_cache = {}
 	@animated_indices = []
-
+    @open_doors = {}
     entries_path = "data/maps/entries.json"
     unless File.exist?(entries_path)
       puts "entries.json not found, creating empty map"
@@ -185,6 +185,7 @@ class GameMap
 	@warp_events = []
 	@roof_offsets = []
 	@npcs = []
+	@open_doors = {}   # { [x,y] => { original_tile: id, event: event_hash } }
   end
 
   def tile_src_rect(tile_id)
@@ -246,6 +247,11 @@ end
     return 1 if x < 0 || x >= @width || y < 0 || y >= @height
     tile_id = @tiles[x][y]
     @tile_types[tile_id] || 0
+  end
+
+  def tile_at(x, y)
+    return nil if x.nil? || y.nil? || x < 0 || x >= @width || y < 0 || y >= @height
+    @tiles[x][y]
   end
 
   def in_roof_zone?(x, y)
