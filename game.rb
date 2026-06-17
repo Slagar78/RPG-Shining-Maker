@@ -271,11 +271,15 @@ class Game
     @player.update_animation
     @player.update_movement if @game_state == :playing
 	
-    if @game_state == :playing && @game_map
-      @game_map.npcs.each { |npc| npc.update(@game_map, @player) }
+if @game_map
+  # NPC обновляются и во время игры, и когда открыто меню
+  if @game_state == :playing || @game_state == :menu
+    @game_map.npcs.each { |npc| npc.update(@game_map, @player) }
+  end
 
-      # Проверка tile_events для всех персонажей (игрок + NPC)
-      if @game_map.tile_events.any?
+  if @game_state == :playing
+    # Проверка tile_events для всех персонажей (игрок + NPC)
+    if @game_map.tile_events.any?
         characters = [@player] + @game_map.npcs
         characters.each do |char|
           @game_map.tile_events.each do |ev|
@@ -309,7 +313,8 @@ class Game
           end
         end
       end
-    end
+    end # ← закрывает if @game_state == :playing
+  end
 	
 	# Fade-логика для варпа (стиль Sega RPG)
     if @game_state == :warping
