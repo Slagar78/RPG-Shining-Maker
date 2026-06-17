@@ -1925,7 +1925,43 @@ static void save_terrain(BattleEditor* ed) {
     free(jsonStr);
 }
 
+static void save_entries(BattleEditor* ed) {
+    const char* path = "../data/battles/entries.json";
+    
+    // Создаём массив JSON
+    cJSON* root = cJSON_CreateArray();
+    
+    for (int i = 0; i < ed->entryCount; i++) {
+        BattleEntry* be = &ed->entries[i];
+        cJSON* item = cJSON_CreateObject();
+        cJSON_AddStringToObject(item, "folder", be->folder);
+        cJSON_AddStringToObject(item, "name", be->name);
+        cJSON_AddStringToObject(item, "map_id", be->map_id);
+        cJSON_AddStringToObject(item, "music", be->music);
+        cJSON_AddNumberToObject(item, "music_volume", be->music_volume);
+        cJSON_AddNumberToObject(item, "battle_x", be->battle_x);
+        cJSON_AddNumberToObject(item, "battle_y", be->battle_y);
+        cJSON_AddNumberToObject(item, "battle_width", be->battle_width);
+        cJSON_AddNumberToObject(item, "battle_height", be->battle_height);
+        cJSON_AddItemToArray(root, item);
+    }
+    
+    char* jsonStr = cJSON_Print(root);
+    cJSON_Delete(root);
+    
+    FILE* f = fopen(path, "wb");
+    if (f) {
+        fputs(jsonStr, f);
+        fclose(f);
+        printf("Entries saved: %s\n", path);
+    } else {
+        printf("ERROR: Could not save entries.json\n");
+    }
+    free(jsonStr);
+}
+
 void save_current_battle(BattleEditor* ed) {
+    save_entries(ed);        // <-- сохраняем координаты зоны и прочее
     save_spriteset(ed);
     save_terrain(ed);
     printf("Battle saved.\n");
