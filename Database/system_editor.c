@@ -29,14 +29,41 @@ static const char* gs(cJSON *o, const char *k, const char *d) {
 }
 
 int system_init(void) {
-    // Создаём объект вручную, без чтения файла
-    root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "start_map", "Granseal");
-    cJSON_AddNumberToObject(root, "start_x", 12);
-    cJSON_AddNumberToObject(root, "start_y", 14);
-    cJSON_AddNumberToObject(root, "gold", 500);
+    FILE *fp = fopen("../data/global.json", "r");
+    if (fp) {
+        // Читаем содержимое файла
+        fseek(fp, 0, SEEK_END);
+        long len = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+        char *buf = malloc(len + 1);
+        fread(buf, 1, len, fp);
+        buf[len] = '\0';
+        fclose(fp);
+
+        // Пробуем распарсить JSON
+        root = cJSON_Parse(buf);
+        free(buf);
+
+        // Если файл повреждён – создаём новый объект
+        if (!root) root = cJSON_CreateObject();
+    } else {
+        // Файла нет – создаём с умолчаниями
+        root = cJSON_CreateObject();
+    }
+
+    // Убеждаемся, что все нужные ключи существуют (добавляем отсутствующие)
+    if (!cJSON_HasObjectItem(root, "start_map"))
+        cJSON_AddStringToObject(root, "start_map", "Granseal");
+    if (!cJSON_HasObjectItem(root, "start_x"))
+        cJSON_AddNumberToObject(root, "start_x", 12);
+    if (!cJSON_HasObjectItem(root, "start_y"))
+        cJSON_AddNumberToObject(root, "start_y", 14);
+    if (!cJSON_HasObjectItem(root, "gold"))
+        cJSON_AddNumberToObject(root, "gold", 500);
+
     obj = root;
 
+    // Дальше всё без изменений
     snprintf(f[0].t, 64, "%s", gs(obj, "start_map", ""));
     f[0].c = strlen(f[0].t);
     f[0].a = 0;

@@ -355,7 +355,7 @@ int main(int argc, char *argv[]) {
         { {140,35, 48, 48}, MODE_BATTLE_EDITOR, icons[2], 0.0f, "Maker/BattleEditor.exe" },
         { {200,35, 48, 48}, MODE_BATTLE_SCENES, icons[3], 0.0f, "Maker/BattleScenes.exe" },
         { {260,35, 48, 48}, MODE_TEXT_EDITOR,   icons[4], 0.0f, "Maker/text_editor.exe" },
-        { {320,35, 48, 48}, MODE_DATABASE,      icons[5], 0.0f, "Database.exe" },
+        { {320,35, 48, 48}, MODE_DATABASE,      icons[5], 0.0f, "Maker/Database.exe" },
         { {380,35, 48,48}, MODE_PLAYTEST,       icons[6], 0.0f, NULL },
         { {440,35, 48,48}, MODE_BATTLE_TEST,    icons[7], 0.0f, NULL },
         { {500,35, 48,48},  MODE_TILESET_ANIM,   icons[8], 0.0f, "Maker/TilesetAnimation.exe" },
