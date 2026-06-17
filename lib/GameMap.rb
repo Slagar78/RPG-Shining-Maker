@@ -489,7 +489,7 @@ end
     endp  = area['mainLayerEnd']
     {
       left:   start[0] * @tile_size,
-      top:    start[1] * @tile_size,
+      top:    start[1] * @tile_size - 16,
       right:  (endp[0] + 1) * @tile_size,
       bottom: (endp[1] + 1) * @tile_size
     }

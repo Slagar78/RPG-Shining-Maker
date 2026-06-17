@@ -513,6 +513,8 @@ end
     BeginDrawing()
     ClearBackground(RAYWHITE)
     BeginMode2D(@camera.render_camera)
+	  # ЧЁРНАЯ ПОЛОСА НАД КАРТОЙ (16 ПИКСЕЛЕЙ)
+      DrawRectangle(0, -16, @game_map.width * @game_map.tile_size, 16, BLACK)  
       # 1. ОСНОВНОЙ СЛОЙ
       DrawTexturePro(
         @game_map.static_bg.texture,

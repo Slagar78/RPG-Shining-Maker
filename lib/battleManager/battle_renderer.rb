@@ -18,6 +18,14 @@ def draw
   bg_offset_x = -@manager.battle_x * BattleManager::TILE_SIZE
   bg_offset_y = -@manager.battle_y * BattleManager::TILE_SIZE
 
+Raylib.DrawRectangle(
+  int_cam_x,
+  -16 + int_cam_y,
+  @manager.game_map.width * BattleManager::TILE_SIZE,
+  16,
+  Raylib::BLACK
+)
+
   # --- статичный фон  ---
   Raylib.DrawTexturePro(
   @manager.static_bg.texture,

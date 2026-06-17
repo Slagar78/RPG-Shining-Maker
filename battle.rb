@@ -34,12 +34,13 @@ class BattleManager
   include BattleEquip
   include BattleUtils
   attr_reader :game_map, :battle_entry, :battle_state, :battle_menu
-  attr_reader :camera, :static_bg, :layer2, :top_layer,
-              :highlight_tiles, :highlight_timer, :current_unit,
-              :allies, :enemies, :battle_player, :cursor,
-              :battle_scene, :target_highlight, :highlight_tex,
-              :attack_target, :hp_mp_panel, :target_hp_panel,
-              :fade_alpha, :db, :battle_x, :battle_y, :info_panel_unit			  
+attr_reader :camera, :static_bg, :layer2, :top_layer,
+            :highlight_tiles, :highlight_timer, :current_unit,
+            :allies, :enemies, :battle_player, :cursor,
+            :battle_scene, :target_highlight, :highlight_tex,
+            :attack_target, :hp_mp_panel, :target_hp_panel,
+            :fade_alpha, :db, :battle_x, :battle_y, :info_panel_unit,
+            :battle_w, :battle_h			  
   attr_accessor :audio
   attr_accessor :battle_scene_font
 

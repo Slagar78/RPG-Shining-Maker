@@ -63,10 +63,11 @@ end
 
   private
 
-  def clamp_target!
-    max_x = @map_width - @screen_width
-    max_y = @map_height - @screen_height
-    @target_x = @target_x.clamp(0, max_x > 0 ? max_x : 0)
-    @target_y = @target_y.clamp(0, max_y > 0 ? max_y : 0)
-  end
+	def clamp_target!
+	  max_x = @map_width - @screen_width
+	  max_y = @map_height - @screen_height
+	  min_y = -16
+	  @target_x = @target_x.clamp(0, max_x > 0 ? max_x : 0)
+	  @target_y = @target_y.clamp(min_y, max_y > min_y ? max_y : min_y)
+	end
 end
