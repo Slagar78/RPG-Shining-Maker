@@ -1339,6 +1339,7 @@ end
       @battle_player&.update_animation
   
   if @death_anim&.finished
+    @death_anim.unload
     @death_anim = nil
     # Юнит уже удалён из массивов, завершаем ход
     if @current_unit && @current_unit[:hp] > 0
