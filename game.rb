@@ -50,6 +50,7 @@ class Game
     @audio.set_sfx_volume(:confirm, 1.0)
     @audio.set_sfx_volume(:cancel,  1.0)
     @audio.load_sfx(:block, "assets/sounds/buttons/block_button.ogg")
+	@audio.load_sfx(:door, "assets/sounds/opening-closing-door.ogg")
     @audio.set_sfx_volume(:block, 1.0)
     $audio = @audio
 
@@ -298,6 +299,7 @@ if @game_map
                   event: ev
                 }
                 @game_map.replace_tile(tx, ty, ev['new_tile_id'])
+				@audio.play_sfx(:door)
               end
             end
 
@@ -308,6 +310,7 @@ if @game_map
                  char.last_x == tx && char.last_y == ty
                 original = @game_map.open_doors.delete(door_key)[:original_tile]
                 @game_map.replace_tile(tx, ty, original)
+				@audio.play_sfx(:door)
               end
             end
           end
@@ -390,39 +393,6 @@ if @game_map
   end
 end
 
-    if @game_map && @game_map.tile_events.any?
-      @game_map.tile_events.each do |ev|
-        tx = ev['trigger_x']
-        ty = ev['trigger_y']
-        next unless tx && ty
-
-        cx = ev['close_x']
-        cy = ev['close_y']
-
-        # --- Открытие двери (игрок на триггере) ---
-        if @player.x == tx && @player.y == ty
-          unless @game_map.open_doors.key?([tx, ty])
-            original_tile = @game_map.tile_at(tx, ty)
-            new_id = ev['new_tile_id']
-            @game_map.open_doors[[tx, ty]] = { original_tile: original_tile, event: ev }
-            @game_map.replace_tile(tx, ty, new_id)
-          end
-        end
-
-        # --- Закрытие двери (игрок на клетке закрытия) ---
-        if cx && cy && @player.x == cx && @player.y == cy
-          door_key = [tx, ty]
-          if @game_map.open_doors.key?(door_key)
-            # Проверяем, что предыдущая клетка была клеткой триггера
-            if @player.last_x == tx && @player.last_y == ty
-              original_tile = @game_map.open_doors[door_key][:original_tile]
-              @game_map.replace_tile(tx, ty, original_tile)
-              @game_map.open_doors.delete(door_key)
-            end
-          end
-        end
-      end
-    end
 
    # Проверка варпов (телепортов)
    if @game_state == :playing && @game_map && @game_map.warp_events.any? && !@player.moving
