@@ -795,6 +795,10 @@ class GiveMenu < ItemSubMenuBase
     @result_message_id = nil
     @result_params = {}
     @result_message_timer = 0
+	@reveal_index = 0
+    @reveal_timer = 0
+    @reveal_speed = 2          # скорость (символ за 2 кадра)
+    @full_text_shown = false
     load_give_textures
   end
 
@@ -892,7 +896,26 @@ class GiveMenu < ItemSubMenuBase
         reopen_for_selection
       end
     end
-  end
+	
+	if @give_state == :show_message || @give_state == :result_message
+	  full = prepare_message_text
+	  unless @full_text_shown
+		if @reveal_index < full.length
+		  @reveal_timer += 1
+		  if @reveal_timer >= @reveal_speed
+			@reveal_timer = 0
+			@reveal_index += 1
+			# Пропускаем целиком {N}
+			while full[@reveal_index, 3] == "{N}"
+			  @reveal_index += 3
+			end
+		  end
+		else
+		  @full_text_shown = true
+		end
+	  end
+	end
+  end # ← закрытие метода update
 
   def open_target_selection
     @visible = true
@@ -944,58 +967,73 @@ class GiveMenu < ItemSubMenuBase
     end
   end
 
-  def draw_message_only
-    template = @game_text["0000"] || "Pass the {ITEM}{N}to whom?"
-    item_name = @selected_give_item ? @selected_give_item["item"] : "???"
-    lines = template.gsub('{ITEM}', item_name).split('{N}')
+def draw_message_only
+  full = prepare_message_text
+  display_text = full[0, @reveal_index]
+  display_lines = display_text.split("{N}", -1)
 
-    panel_w = 480
-    panel_h = 128
-    panel_x = (576 - panel_w) / 2
-    panel_y = 480 - panel_h - 24
+  panel_w = 480
+  panel_h = 128
+  panel_x = (576 - panel_w) / 2
+  panel_y = 480 - panel_h - 24
 
-    if @message_panel_tex
-      dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
-      src = Raylib::Rectangle.create(0, 0, @message_panel_tex.width, @message_panel_tex.height)
-      Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
-    else
-      Raylib.DrawRectangle(panel_x, panel_y, panel_w, panel_h, Raylib::GRAY)
-      Raylib.DrawRectangleLines(panel_x, panel_y, panel_w, panel_h, Raylib::DARKGRAY)
-    end
-
-    y_offset = panel_y + 10
-    lines.each do |line_text|
-      Raylib.DrawTextEx(@large_font, line_text, Raylib::Vector2.create(panel_x + 40, y_offset), 30, 1, Raylib::WHITE)
-      y_offset += 38
-    end
+  if @message_panel_tex
+    dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
+    src = Raylib::Rectangle.create(0, 0, @message_panel_tex.width, @message_panel_tex.height)
+    Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+  else
+    Raylib.DrawRectangle(panel_x, panel_y, panel_w, panel_h, Raylib::GRAY)
+    Raylib.DrawRectangleLines(panel_x, panel_y, panel_w, panel_h, Raylib::DARKGRAY)
   end
 
-  def draw_result_message
+  y_offset = panel_y + 10
+  display_lines.each do |line|
+    Raylib.DrawTextEx(@large_font, line, Raylib::Vector2.create(panel_x + 20, y_offset), 30, 1, Raylib::WHITE)
+    y_offset += 38
+  end
+end
+
+def draw_result_message
+  full = prepare_message_text
+  display_text = full[0, @reveal_index]
+  display_lines = display_text.split("{N}", -1)
+
+  panel_w = 480
+  panel_h = 128
+  panel_x = (576 - panel_w) / 2
+  panel_y = 480 - panel_h - 24
+
+  if @message_panel_tex
+    dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
+    src = Raylib::Rectangle.create(0, 0, @message_panel_tex.width, @message_panel_tex.height)
+    Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+  else
+    Raylib.DrawRectangle(panel_x, panel_y, panel_w, panel_h, Raylib::GRAY)
+    Raylib.DrawRectangleLines(panel_x, panel_y, panel_w, panel_h, Raylib::DARKGRAY)
+  end
+
+  y_offset = panel_y + 10
+  display_lines.each do |line|
+    Raylib.DrawTextEx(@large_font, line, Raylib::Vector2.create(panel_x + 20, y_offset), 30, 1, Raylib::WHITE)
+    y_offset += 38
+  end
+end
+
+def prepare_message_text
+  case @give_state
+  when :show_message
+    template = @game_text["0000"] || "Pass the {ITEM}{N}to whom?"
+    item_name = @selected_give_item ? @selected_give_item["item"] : "???"
+    template.gsub('{ITEM}', item_name)
+  when :result_message
     template = @game_text[@result_message_id] || "Transfer complete."
     text = template.dup
     @result_params.each { |key, val| text.gsub!(key, val.to_s) }
-    lines = text.split('{N}')
-
-    panel_w = 480
-    panel_h = 128
-    panel_x = (576 - panel_w) / 2
-    panel_y = 480 - panel_h - 24
-
-    if @message_panel_tex
-      dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
-      src = Raylib::Rectangle.create(0, 0, @message_panel_tex.width, @message_panel_tex.height)
-      Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
-    else
-      Raylib.DrawRectangle(panel_x, panel_y, panel_w, panel_h, Raylib::GRAY)
-      Raylib.DrawRectangleLines(panel_x, panel_y, panel_w, panel_h, Raylib::DARKGRAY)
-    end
-
-    y_offset = panel_y + 10
-    lines.each do |line_text|
-      Raylib.DrawTextEx(@large_font, line_text, Raylib::Vector2.create(panel_x + 40, y_offset), 30, 1, Raylib::WHITE)
-      y_offset += 38
-    end
+    text
+  else
+    ""
   end
+end
 
   def item_affects_attack_defense?
     return false unless @selected_give_item
@@ -1058,6 +1096,9 @@ class GiveMenu < ItemSubMenuBase
     end
 
     @give_state = :result_message
+	@reveal_index = 0
+    @reveal_timer = 0
+    @full_text_shown = false
     @result_message_timer = 0
   end
 
@@ -1154,6 +1195,9 @@ end
     @donor_actor = actor
     @donor_items = fill_to_four(find_actor_items(actor["name"]))
     @give_state = :show_message
+	@reveal_index = 0
+    @reveal_timer = 0
+    @full_text_shown = false
     force_close
   end
 
