@@ -1,85 +1,41 @@
 import sys, os, json
-from typing import List, Optional
+from typing import Optional
 
-from PySide6.QtCore import Qt, QRectF, QPointF, QLineF, QEvent
+from PySide6.QtCore import Qt, QRectF, QPointF, QLineF, QEvent, QRegularExpression
 from PySide6.QtGui import (
-    QPixmap, QPainter, QPen, QColor, QMouseEvent, QWheelEvent, QTransform
+    QPixmap, QPainter, QPen, QColor, QMouseEvent, QWheelEvent, QTransform,
+    QRegularExpressionValidator
 )
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QSplitter, QScrollArea, QListWidget, QListWidgetItem,
-    QPushButton, QLineEdit, QLabel, QCheckBox, QFileDialog, QMessageBox,
+    QPushButton, QLineEdit, QLabel, QCheckBox, QMessageBox,
     QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
     QGraphicsRectItem, QFrame, QFormLayout
 )
 
-# ----------------------------------------------------------------------
-# Константы
-# ----------------------------------------------------------------------
+from events_data import (
+    RoofEvent, TileChangeEvent, StairEvent, WarpEvent, MapEvents,
+    load_events, save_events
+)
+
 TILE_SIZE = 48
 
-COLOR_ROOF_ZONE         = QColor(0, 255, 0, 80)
-COLOR_ROOF_TRIGGER      = QColor(255, 0, 0)
-COLOR_ROOF_EXIT         = QColor(0, 150, 255)
-COLOR_TILE_CHANGE_TRIG  = QColor(255, 255, 0)
-COLOR_TILE_CHANGE_CLOSE = QColor(0, 200, 255)
-COLOR_STAIRS            = QColor(0, 120, 255)
-COLOR_WARP              = QColor(200, 0, 200, 80)
-COLOR_WARP_ARROW        = QColor(255, 255, 0)
-
-
-# ----------------------------------------------------------------------
-# Модели данных
-# ----------------------------------------------------------------------
-class RoofEvent:
-    def __init__(self, tile_id=0, start_x=0, start_y=0, end_x=1, end_y=1,
-                 trigger_x=-1, trigger_y=-1, trigger2_x=-1, trigger2_y=-1,
-                 exit_x=-1, exit_y=-1, exit2_x=-1, exit2_y=-1):
-        self.tile_id = tile_id
-        self.start_x, self.start_y = start_x, start_y
-        self.end_x, self.end_y = end_x, end_y
-        self.trigger_x, self.trigger_y = trigger_x, trigger_y
-        self.trigger2_x, self.trigger2_y = trigger2_x, trigger2_y
-        self.exit_x, self.exit_y = exit_x, exit_y
-        self.exit2_x, self.exit2_y = exit2_x, exit2_y
-
-class TileChangeEvent:
-    def __init__(self, trigger_x=-1, trigger_y=-1, new_tile_id=0,
-                 sample_x=-1, sample_y=-1, close_x=-1, close_y=-1):
-        self.trigger_x, self.trigger_y = trigger_x, trigger_y
-        self.new_tile_id = new_tile_id
-        self.sample_x, self.sample_y = sample_x, sample_y
-        self.close_x, self.close_y = close_x, close_y
-
-class StairEvent:
-    def __init__(self, start_x=0, start_y=0, end_x=1, end_y=1, direction=0):
-        self.start_x, self.start_y = start_x, start_y
-        self.end_x, self.end_y = end_x, end_y
-        self.direction = direction  # 0='\', 1='/'
-
-class WarpEvent:
-    def __init__(self, trigger_x=-1, trigger_y=-1, target_map="",
-                 target_x=0, target_y=0, facing=0):
-        self.trigger_x, self.trigger_y = trigger_x, trigger_y
-        self.target_map = target_map
-        self.target_x, self.target_y = target_x, target_y
-        self.facing = facing  # 0=Down,1=Left,2=Right,3=Up
-
+# ─── УТОЛЩЁННЫЕ ПЕРА ─────────────────────────────────
+PEN_W            = 4    # рамки зон/триггеров/выходов
+STAIR_PEN_W      = 5    # линии лестниц
+WARP_ARROW_PEN_W = 3    # стрелки варпов
 
 class MapData:
     def __init__(self):
-        self.name, self.folder = "", ""
-        self.width, self.height = 0, 0
+        self.name = self.folder = ""
+        self.width = self.height = 0
         self.tileset_path = ""
-        self.tiles = []
-        self.rot, self.mirror_x, self.mirror_y = [], [], []
+        self.tiles, self.rot, self.mirror_x, self.mirror_y = [], [], [], []
         self.tiles2, self.rot2, self.mirror_x2, self.mirror_y2 = [], [], [], []
         self.cell_type = []
 
 
-# ----------------------------------------------------------------------
-# Загрузка и сохранение JSON
-# ----------------------------------------------------------------------
 def load_map(filename: str) -> Optional[MapData]:
     try:
         with open(filename, 'r', encoding='utf-8') as f:
@@ -139,121 +95,6 @@ def load_map(filename: str) -> Optional[MapData]:
     return m
 
 
-def load_events(folder: str) -> dict:
-    path = os.path.join("..", "data", "maps", folder, "events.json")
-    result = {"roofs": [], "tile_changes": [], "stairs": [], "warps": []}
-    if not os.path.exists(path):
-        return result
-    with open(path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-
-    for item in data:
-        t = item.get("type", "")
-        if t == "roof":
-            re = RoofEvent(
-                tile_id=item.get("tile_id", 0),
-                start_x=item.get("start_x", 0), start_y=item.get("start_y", 0),
-                end_x=item.get("end_x", 1), end_y=item.get("end_y", 1)
-            )
-            triggers = item.get("triggers", [])
-            if len(triggers) > 0: re.trigger_x, re.trigger_y = triggers[0]
-            if len(triggers) > 1: re.trigger2_x, re.trigger2_y = triggers[1]
-            exits = item.get("exits", [])
-            if len(exits) > 0: re.exit_x, re.exit_y = exits[0]
-            if len(exits) > 1: re.exit2_x, re.exit2_y = exits[1]
-            result["roofs"].append(re)
-
-        elif t == "tile_change":
-            tc = TileChangeEvent(
-                trigger_x=item.get("trigger_x", -1), trigger_y=item.get("trigger_y", -1),
-                new_tile_id=item.get("new_tile_id", 0),
-                sample_x=item.get("sample_x", -1), sample_y=item.get("sample_y", -1),
-                close_x=item.get("close_x", -1), close_y=item.get("close_y", -1)
-            )
-            result["tile_changes"].append(tc)
-
-        elif t == "stairs":
-            st = StairEvent(
-                start_x=item.get("start_x", 0), start_y=item.get("start_y", 0),
-                end_x=item.get("end_x", 1), end_y=item.get("end_y", 1),
-                direction=item.get("direction", 0)
-            )
-            result["stairs"].append(st)
-
-        elif t == "warp":
-            facing = item.get("facing", 0)
-            if facing == 2: facing = 0
-            elif facing == 4: facing = 1
-            elif facing == 6: facing = 2
-            elif facing == 8: facing = 3
-            wp = WarpEvent(
-                trigger_x=item.get("trigger_x", -1), trigger_y=item.get("trigger_y", -1),
-                target_map=item.get("target_map", ""),
-                target_x=item.get("target_x", 0), target_y=item.get("target_y", 0),
-                facing=facing
-            )
-            result["warps"].append(wp)
-
-    return result
-
-
-def save_events(folder: str, events: dict):
-    dir_path = os.path.join("..", "data", "maps", folder)
-    os.makedirs(dir_path, exist_ok=True)
-
-    result = []
-    for re in events.get("roofs", []):
-        d = {
-            "type": "roof",
-            "tile_id": re.tile_id,
-            "start_x": re.start_x, "start_y": re.start_y,
-            "end_x": re.end_x, "end_y": re.end_y,
-            "triggers": [],
-            "exits": []
-        }
-        if re.trigger_x != -1 or re.trigger_y != -1:
-            d["triggers"].append([re.trigger_x, re.trigger_y])
-        if re.trigger2_x != -1 or re.trigger2_y != -1:
-            d["triggers"].append([re.trigger2_x, re.trigger2_y])
-        if re.exit_x != -1 or re.exit_y != -1:
-            d["exits"].append([re.exit_x, re.exit_y])
-        if re.exit2_x != -1 or re.exit2_y != -1:
-            d["exits"].append([re.exit2_x, re.exit2_y])
-        result.append(d)
-
-    for tc in events.get("tile_changes", []):
-        result.append({
-            "type": "tile_change",
-            "trigger_x": tc.trigger_x, "trigger_y": tc.trigger_y,
-            "new_tile_id": tc.new_tile_id,
-            "sample_x": tc.sample_x, "sample_y": tc.sample_y,
-            "close_x": tc.close_x, "close_y": tc.close_y
-        })
-
-    for st in events.get("stairs", []):
-        result.append({
-            "type": "stairs",
-            "start_x": st.start_x, "start_y": st.start_y,
-            "end_x": st.end_x, "end_y": st.end_y,
-            "direction": st.direction
-        })
-
-    for wp in events.get("warps", []):
-        result.append({
-            "type": "warp",
-            "trigger_x": wp.trigger_x, "trigger_y": wp.trigger_y,
-            "target_map": wp.target_map,
-            "target_x": wp.target_x, "target_y": wp.target_y,
-            "facing": wp.facing
-        })
-
-    with open(os.path.join(dir_path, "events.json"), 'w', encoding='utf-8') as f:
-        json.dump(result, f, indent=2)
-
-
-# ----------------------------------------------------------------------
-# Основное окно
-# ----------------------------------------------------------------------
 class EditorWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -261,65 +102,75 @@ class EditorWindow(QMainWindow):
         self.resize(1280, 720)
 
         self.current_map: Optional[MapData] = None
-        self.tile_pixmaps: List[QPixmap] = []
+        self.tile_pixmaps = []
         self.zoom = 1.0
         self.panning = False
         self.last_pan_pos = QPointF()
 
-        self.events = {
-            "roof": [], "tile_change": [], "stair": [], "warp": []
-        }
+        self.events = MapEvents()
         self.selected_idx = {"roof": -1, "tile_change": -1, "stair": -1, "warp": -1}
 
         self.edit_widget = None
         self.show_all = {"roof": False, "tile_change": False, "stair": False, "warp": False}
-        self.highlight_items: List[QGraphicsRectItem] = []
+        self.highlight_items = []
+
+        self.show_layer1 = True
+        self.show_layer2 = True
 
         self._build_ui()
         self._load_initial_data()
 
-    # ---------- Интерфейс ----------
+    # ── ПОСТРОЕНИЕ ИНТЕРФЕЙСА ──────────────────────────
     def _build_ui(self):
         central = QWidget()
         self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
 
         # Верхняя панель
-        top_layout = QHBoxLayout()
-        top_layout.addWidget(QLabel("Folder (../data/maps/):"))
+        top = QHBoxLayout()
+        top.addWidget(QLabel("Folder (../data/maps/):"))
         self.folder_edit = QLineEdit("map1")
-        top_layout.addWidget(self.folder_edit)
+        top.addWidget(self.folder_edit)
         btn_load = QPushButton("Load Map && Events")
         btn_load.clicked.connect(self._load_folder)
-        top_layout.addWidget(btn_load)
+        top.addWidget(btn_load)
         btn_save = QPushButton("Save Events")
         btn_save.clicked.connect(self._save_current_events)
-        top_layout.addWidget(btn_save)
-        main_layout.addLayout(top_layout)
+        top.addWidget(btn_save)
+
+        self.cb_layer1 = QCheckBox("Layer 1")
+        self.cb_layer1.setChecked(True)
+        self.cb_layer1.toggled.connect(lambda v: self._toggle_layer(1, v))
+        top.addWidget(self.cb_layer1)
+        self.cb_layer2 = QCheckBox("Layer 2")
+        self.cb_layer2.setChecked(True)
+        self.cb_layer2.toggled.connect(lambda v: self._toggle_layer(2, v))
+        top.addWidget(self.cb_layer2)
+
+        main_layout.addLayout(top)
 
         splitter = QSplitter(Qt.Horizontal)
 
-        # Левая панель
+        # Левая панель (компактнее)
         left_scroll = QScrollArea()
         left_scroll.setWidgetResizable(True)
         left_widget = QWidget()
-        left_layout = QVBoxLayout(left_widget)
-        left_layout.setContentsMargins(4, 4, 4, 4)
-        left_layout.setSpacing(4)
+        left = QVBoxLayout(left_widget)
+        left.setContentsMargins(2, 2, 2, 2)
+        left.setSpacing(0)
 
-        self._create_event_section(left_layout, "Roof Events", "roof",
-                                   ["Tile ID", "Start X,Y", "End X,Y",
-                                    "Trig1 X,Y", "Trig2 X,Y", "Exit1 X,Y", "Exit2 X,Y"])
-        self._create_event_section(left_layout, "Tile Changes", "tile_change",
-                                   ["Trigger X,Y", "New Tile", "Close X,Y"])
-        self._create_event_section(left_layout, "Stairs", "stair",
-                                   ["Start X,Y", "End X,Y", "Direction (0/1)"])
-        self._create_event_section(left_layout, "Warps", "warp",
-                                   ["Trigger X,Y", "Target Map", "Target X,Y", "Facing (0-3)"])
+        self._create_event_section(left, "Roof Events", "roof",
+            ["Tile ID", "Start X,Y", "End X,Y", "Trig1 X,Y", "Trig2 X,Y", "Exit1 X,Y", "Exit2 X,Y"])
+        self._create_event_section(left, "Tile Changes", "tile_change",
+            ["Trigger X,Y", "New Tile", "Close X,Y"])
+        self._create_event_section(left, "Stairs", "stair",
+            ["Start X,Y", "End X,Y", "Direction (0/1)"])
+        self._create_event_section(left, "Warps", "warp",
+            ["Trigger X,Y", "Target Map", "Target X,Y", "Facing (0-3)"])
 
         left_scroll.setWidget(left_widget)
 
-        # Сцена карты
+        # Карта
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene)
         self.view.setRenderHint(QPainter.Antialiasing, False)
@@ -329,87 +180,95 @@ class EditorWindow(QMainWindow):
 
         # Правая панель
         right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
-        right_layout.addWidget(QLabel("Maps (from entries.json):"))
+        right = QVBoxLayout(right_panel)
+        right.addWidget(QLabel("Maps (entries.json):"))
         self.map_list_widget = QListWidget()
         self.map_list_widget.itemClicked.connect(self._on_map_selected)
-        right_layout.addWidget(self.map_list_widget)
+        right.addWidget(self.map_list_widget)
 
         splitter.addWidget(left_scroll)
         splitter.addWidget(self.view)
         splitter.addWidget(right_panel)
-        splitter.setSizes([280, 750, 200])
+        splitter.setSizes([240, 790, 200])
         main_layout.addWidget(splitter)
 
     def _create_event_section(self, parent_layout, title, etype, field_labels):
-        section_widget = QWidget()
-        section_layout = QVBoxLayout(section_widget)
-        section_layout.setContentsMargins(0, 0, 0, 0)
-        section_layout.setSpacing(2)
+        section = QWidget()
+        layout = QVBoxLayout(section)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(1)
 
         header = QWidget()
-        header_layout = QHBoxLayout(header)
-        header_layout.setContentsMargins(0, 0, 0, 0)
+        hl = QHBoxLayout(header)
+        hl.setContentsMargins(2, 0, 2, 0)
+
         toggle_btn = QPushButton("+")
-        toggle_btn.setFixedSize(20, 20)
-        toggle_btn.setStyleSheet("font-weight: bold;")
-        header_layout.addWidget(toggle_btn)
-        lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("font-weight: bold;")
-        header_layout.addWidget(lbl_title)
-        header_layout.addStretch()
-        cb_show = QCheckBox("Show All")
+        toggle_btn.setFixedSize(18, 18)
+        toggle_btn.setStyleSheet("font-weight: bold; padding: 0px;")
+        hl.addWidget(toggle_btn)
+
+        lbl = QLabel(title)
+        lbl.setStyleSheet("font-weight: bold;")
+        hl.addWidget(lbl)
+        hl.addStretch()
+
+        cb_show = QCheckBox("All")
+        cb_show.setFixedWidth(40)
         cb_show.toggled.connect(lambda checked, et=etype: self._toggle_show_all(et, checked))
-        header_layout.addWidget(cb_show)
-        section_layout.addWidget(header)
+        hl.addWidget(cb_show)
+
+        layout.addWidget(header)
 
         collapsible = QWidget()
-        collapsible_layout = QVBoxLayout(collapsible)
-        collapsible_layout.setContentsMargins(12, 2, 2, 2)
-        collapsible_layout.setSpacing(2)
+        cl = QVBoxLayout(collapsible)
+        cl.setContentsMargins(12, 1, 1, 1)
+        cl.setSpacing(1)
 
         lst = QListWidget()
-        lst.setMaximumHeight(80)
+        lst.setMaximumHeight(60)
         lst.currentRowChanged.connect(lambda idx, et=etype: self._on_event_selected(et, idx))
-        collapsible_layout.addWidget(lst)
+        cl.addWidget(lst)
 
         fields_widget = QWidget()
-        fields_layout = QFormLayout(fields_widget)
-        fields_layout.setContentsMargins(0, 2, 0, 2)
-        fields_layout.setSpacing(2)
+        fl = QFormLayout(fields_widget)
+        fl.setContentsMargins(0, 1, 0, 1)
+        fl.setSpacing(1)
         edits = []
-        for lbl in field_labels:
+        for i, lbl_text in enumerate(field_labels):
             le = QLineEdit()
-            le.setMaximumWidth(140)
+            le.setMaximumWidth(120)
+            # ── ВАЛИДАТОР: только цифры, запятая, минус ──
+            validator = QRegularExpressionValidator(QRegularExpression(r"[\d,\-]*"))
+            le.setValidator(validator)
+            # ── ЖИВОЕ ОБНОВЛЕНИЕ ПРИ ВВОДЕ ──
+            le.textChanged.connect(lambda text, et=etype, fi=i: self._on_field_text_changed(et, fi, text))
             le.installEventFilter(self)
-            fields_layout.addRow(QLabel(lbl + ":"), le)
+            fl.addRow(QLabel(lbl_text + ":"), le)
             edits.append(le)
         fields_widget.setVisible(False)
-        collapsible_layout.addWidget(fields_widget)
+        cl.addWidget(fields_widget)
 
         btn_layout = QHBoxLayout()
         btn_add = QPushButton("+")
-        btn_add.setFixedWidth(28)
-        btn_add.setToolTip("Add new event")
+        btn_add.setFixedWidth(24)
         btn_add.clicked.connect(lambda: self._add_event(etype))
         btn_del = QPushButton("-")
-        btn_del.setFixedWidth(28)
-        btn_del.setToolTip("Delete selected event")
+        btn_del.setFixedWidth(24)
         btn_del.clicked.connect(lambda: self._delete_event(etype))
         btn_layout.addWidget(btn_add)
         btn_layout.addWidget(btn_del)
         btn_layout.addStretch()
-        collapsible_layout.addLayout(btn_layout)
+        cl.addLayout(btn_layout)
 
         collapsible.setVisible(False)
-        section_layout.addWidget(collapsible)
+        layout.addWidget(collapsible)
 
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Sunken)
-        section_layout.addWidget(line)
+        layout.addWidget(line)
 
-        parent_layout.addWidget(section_widget)
+        parent_layout.addWidget(section)
 
         if not hasattr(self, 'section_widgets'):
             self.section_widgets = {}
@@ -418,8 +277,7 @@ class EditorWindow(QMainWindow):
             'list': lst,
             'fields': edits,
             'fields_widget': fields_widget,
-            'toggle_btn': toggle_btn,
-            'cb_show': cb_show
+            'toggle_btn': toggle_btn
         }
 
         def toggle():
@@ -428,7 +286,7 @@ class EditorWindow(QMainWindow):
             toggle_btn.setText("-" if state else "+")
         toggle_btn.clicked.connect(toggle)
 
-    # ---------- Данные ----------
+    # ── ЗАГРУЗКА ДАННЫХ ───────────────────────────────
     def _load_folder(self):
         folder = self.folder_edit.text().strip()
         if not folder:
@@ -447,14 +305,12 @@ class EditorWindow(QMainWindow):
             return
         self.current_map.folder = folder
 
-        ev = load_events(folder)
-        self.events["roof"] = ev["roofs"]
-        self.events["tile_change"] = ev["tile_changes"]
-        self.events["stair"] = ev["stairs"]
-        self.events["warp"] = ev["warps"]
-
+        self.events = load_events(folder)
         for key in self.selected_idx:
             self.selected_idx[key] = -1
+        # ← СБРОС ЧЕКБОКСОВ «SHOW ALL»
+        for key in self.show_all:
+            self.show_all[key] = False
 
         self._load_tileset(self.current_map.tileset_path)
         self._refresh_event_lists()
@@ -486,11 +342,18 @@ class EditorWindow(QMainWindow):
                     self.tile_pixmaps.append(pix.copy(rect.toRect()))
 
     def _refresh_event_lists(self):
+        mapping = {
+            "roof": "roofs",
+            "tile_change": "tile_changes",
+            "stair": "stairs",
+            "warp": "warps"
+        }
         for etype, data in self.section_widgets.items():
             lst = data['list']
             lst.blockSignals(True)
             lst.clear()
-            for ev in self.events[etype]:
+            event_list = getattr(self.events, mapping[etype])
+            for ev in event_list:
                 lst.addItem(self._event_summary(etype, ev))
             lst.blockSignals(False)
             data['fields_widget'].setVisible(False)
@@ -512,21 +375,29 @@ class EditorWindow(QMainWindow):
         if idx < 0:
             data['fields_widget'].setVisible(False)
         else:
-            ev = self.events[etype][idx]
+            mapping = {
+                "roof": "roofs",
+                "tile_change": "tile_changes",
+                "stair": "stairs",
+                "warp": "warps"
+            }
+            event_list = getattr(self.events, mapping[etype])
+            ev = event_list[idx]
             fields = data['fields']
             data['fields_widget'].setVisible(True)
+
             if etype == "roof":
                 fields[0].setText(str(ev.tile_id))
                 fields[1].setText(f"{ev.start_x},{ev.start_y}")
                 fields[2].setText(f"{ev.end_x},{ev.end_y}")
-                fields[3].setText(f"{ev.trigger_x},{ev.trigger_y}" if ev.trigger_x != -1 else "-")
-                fields[4].setText(f"{ev.trigger2_x},{ev.trigger2_y}" if ev.trigger2_x != -1 else "-")
-                fields[5].setText(f"{ev.exit_x},{ev.exit_y}" if ev.exit_x != -1 else "-")
-                fields[6].setText(f"{ev.exit2_x},{ev.exit2_y}" if ev.exit2_x != -1 else "-")
+                fields[3].setText(f"{ev.trigger_x},{ev.trigger_y}" if ev.trigger_x!=-1 else "-")
+                fields[4].setText(f"{ev.trigger2_x},{ev.trigger2_y}" if ev.trigger2_x!=-1 else "-")
+                fields[5].setText(f"{ev.exit_x},{ev.exit_y}" if ev.exit_x!=-1 else "-")
+                fields[6].setText(f"{ev.exit2_x},{ev.exit2_y}" if ev.exit2_x!=-1 else "-")
             elif etype == "tile_change":
                 fields[0].setText(f"{ev.trigger_x},{ev.trigger_y}")
                 fields[1].setText(str(ev.new_tile_id))
-                fields[2].setText(f"{ev.close_x},{ev.close_y}" if ev.close_x != -1 else "-")
+                fields[2].setText(f"{ev.close_x},{ev.close_y}" if ev.close_x!=-1 else "-")
             elif etype == "stair":
                 fields[0].setText(f"{ev.start_x},{ev.start_y}")
                 fields[1].setText(f"{ev.end_x},{ev.end_y}")
@@ -539,16 +410,30 @@ class EditorWindow(QMainWindow):
         self._update_highlights()
 
     def _add_event(self, etype):
+        mapping = {
+            "roof": "roofs",
+            "tile_change": "tile_changes",
+            "stair": "stairs",
+            "warp": "warps"
+        }
+        event_list = getattr(self.events, mapping[etype])
         cls_map = {"roof": RoofEvent, "tile_change": TileChangeEvent,
                    "stair": StairEvent, "warp": WarpEvent}
-        self.events[etype].append(cls_map[etype]())
+        event_list.append(cls_map[etype]())
         self._refresh_event_lists()
-        self.section_widgets[etype]['list'].setCurrentRow(len(self.events[etype])-1)
+        self.section_widgets[etype]['list'].setCurrentRow(len(event_list)-1)
 
     def _delete_event(self, etype):
         idx = self.selected_idx[etype]
-        if 0 <= idx < len(self.events[etype]):
-            del self.events[etype][idx]
+        mapping = {
+            "roof": "roofs",
+            "tile_change": "tile_changes",
+            "stair": "stairs",
+            "warp": "warps"
+        }
+        event_list = getattr(self.events, mapping[etype])
+        if 0 <= idx < len(event_list):
+            del event_list[idx]
             self.selected_idx[etype] = -1
             self._refresh_event_lists()
             self._update_highlights()
@@ -557,19 +442,120 @@ class EditorWindow(QMainWindow):
         self.show_all[etype] = checked
         self._update_highlights()
 
+    def _toggle_layer(self, layer, visible):
+        if layer == 1:
+            self.show_layer1 = visible
+        else:
+            self.show_layer2 = visible
+        self._redraw_map()
+
     def _save_current_events(self):
         if not self.current_map:
             QMessageBox.warning(self, "Error", "No map loaded")
             return
-        save_events(self.current_map.folder, {
-            "roofs": self.events["roof"],
-            "tile_changes": self.events["tile_change"],
-            "stairs": self.events["stair"],
-            "warps": self.events["warp"]
-        })
+        save_events(self.current_map.folder, self.events)
         QMessageBox.information(self, "Saved", "Events saved.")
 
-    # ---------- Карта ----------
+    # ── ЖИВОЕ ОБНОВЛЕНИЕ ПОЛЕЙ ────────────────────────
+    def _on_field_text_changed(self, etype, field_idx, text):
+        if not self.current_map:
+            return
+
+        mapping = {
+            "roof": "roofs",
+            "tile_change": "tile_changes",
+            "stair": "stairs",
+            "warp": "warps"
+        }
+        event_list = getattr(self.events, mapping[etype], None)
+        idx = self.selected_idx.get(etype, -1)
+        if not event_list or idx < 0 or idx >= len(event_list):
+            return
+
+        ev = event_list[idx]
+
+        def parse_int(s):
+            try:
+                return int(s)
+            except ValueError:
+                return None
+
+        def parse_pair(s):
+            if not s:
+                return None
+            parts = s.split(',')
+            if len(parts) == 2:
+                x = parse_int(parts[0])
+                y = parse_int(parts[1])
+                if x is not None and y is not None:
+                    return x, y
+            return None
+
+        try:
+            if etype == "roof":
+                if field_idx == 0:
+                    v = parse_int(text)
+                    if v is not None: ev.tile_id = v
+                elif field_idx == 1:
+                    pair = parse_pair(text)
+                    if pair: ev.start_x, ev.start_y = pair
+                elif field_idx == 2:
+                    pair = parse_pair(text)
+                    if pair: ev.end_x, ev.end_y = pair
+                elif field_idx == 3:
+                    pair = parse_pair(text)
+                    if pair: ev.trigger_x, ev.trigger_y = pair
+                elif field_idx == 4:
+                    if text.strip() == "-": ev.trigger2_x = ev.trigger2_y = -1
+                    else:
+                        pair = parse_pair(text)
+                        if pair: ev.trigger2_x, ev.trigger2_y = pair
+                elif field_idx == 5:
+                    pair = parse_pair(text)
+                    if pair: ev.exit_x, ev.exit_y = pair
+                elif field_idx == 6:
+                    if text.strip() == "-": ev.exit2_x = ev.exit2_y = -1
+                    else:
+                        pair = parse_pair(text)
+                        if pair: ev.exit2_x, ev.exit2_y = pair
+            elif etype == "tile_change":
+                if field_idx == 0:
+                    pair = parse_pair(text)
+                    if pair: ev.trigger_x, ev.trigger_y = pair
+                elif field_idx == 1:
+                    v = parse_int(text)
+                    if v is not None: ev.new_tile_id = v
+                elif field_idx == 2:
+                    pair = parse_pair(text)
+                    if pair: ev.close_x, ev.close_y = pair
+            elif etype == "stair":
+                if field_idx == 0:
+                    pair = parse_pair(text)
+                    if pair: ev.start_x, ev.start_y = pair
+                elif field_idx == 1:
+                    pair = parse_pair(text)
+                    if pair: ev.end_x, ev.end_y = pair
+                elif field_idx == 2:
+                    v = parse_int(text)
+                    if v is not None and v in (0, 1): ev.direction = v
+            elif etype == "warp":
+                if field_idx == 0:
+                    pair = parse_pair(text)
+                    if pair: ev.trigger_x, ev.trigger_y = pair
+                elif field_idx == 1:
+                    ev.target_map = text.strip()
+                elif field_idx == 2:
+                    pair = parse_pair(text)
+                    if pair: ev.target_x, ev.target_y = pair
+                elif field_idx == 3:
+                    v = parse_int(text)
+                    if v is not None and 0 <= v <= 3: ev.facing = v
+        except:
+            pass
+
+        self._update_highlights()
+
+    # ── ОТРИСОВКА КАРТЫ ───────────────────────────────
     def _redraw_map(self):
         self.scene.clear()
         self.highlight_items.clear()
@@ -578,25 +564,25 @@ class EditorWindow(QMainWindow):
 
         m = self.current_map
         w, h = m.width, m.height
-        # Слой 1
-        for x in range(w):
-            for y in range(h):
-                idx = x * h + y
-                tile_id = m.tiles[idx]
-                if 0 <= tile_id < len(self.tile_pixmaps):
-                    item = QGraphicsPixmapItem(self.tile_pixmaps[tile_id])
-                    item.setPos(x * TILE_SIZE, y * TILE_SIZE)
-                    t = QTransform()
-                    if m.mirror_x[idx]: t = t.scale(-1, 1)
-                    if m.mirror_y[idx]: t = t.scale(1, -1)
-                    if m.rot[idx] != 0: t = t.rotate(m.rot[idx] * 90)
-                    if not t.isIdentity():
-                        item.setTransform(t)
-                        item.setTransformOriginPoint(TILE_SIZE/2, TILE_SIZE/2)
-                    self.scene.addItem(item)
 
-        # Слой 2
-        if any(tid >= 0 for tid in m.tiles2):
+        if self.show_layer1:
+            for x in range(w):
+                for y in range(h):
+                    idx = x * h + y
+                    tile_id = m.tiles[idx]
+                    if 0 <= tile_id < len(self.tile_pixmaps):
+                        item = QGraphicsPixmapItem(self.tile_pixmaps[tile_id])
+                        item.setPos(x * TILE_SIZE, y * TILE_SIZE)
+                        t = QTransform()
+                        if m.mirror_x[idx]: t = t.scale(-1, 1)
+                        if m.mirror_y[idx]: t = t.scale(1, -1)
+                        if m.rot[idx] != 0: t = t.rotate(m.rot[idx] * 90)
+                        if not t.isIdentity():
+                            item.setTransform(t)
+                            item.setTransformOriginPoint(TILE_SIZE/2, TILE_SIZE/2)
+                        self.scene.addItem(item)
+
+        if self.show_layer2 and any(tid >= 0 for tid in m.tiles2):
             for x in range(w):
                 for y in range(h):
                     idx = x * h + y
@@ -611,7 +597,8 @@ class EditorWindow(QMainWindow):
                         if not t.isIdentity():
                             item.setTransform(t)
                             item.setTransformOriginPoint(TILE_SIZE/2, TILE_SIZE/2)
-                        item.setOpacity(0.5)
+                        if self.show_layer1:
+                            item.setOpacity(0.5)
                         self.scene.addItem(item)
 
         self.scene.setSceneRect(0, 0, w * TILE_SIZE, h * TILE_SIZE)
@@ -625,39 +612,45 @@ class EditorWindow(QMainWindow):
         if not self.current_map:
             return
 
+        mapping = {
+            "roof": "roofs",
+            "tile_change": "tile_changes",
+            "stair": "stairs",
+            "warp": "warps"
+        }
         for etype, sel_idx in self.selected_idx.items():
-            events = self.events[etype]
+            event_list = getattr(self.events, mapping[etype])
             show_all = self.show_all[etype]
-            for i, ev in enumerate(events):
+            for i, ev in enumerate(event_list):
                 if i == sel_idx or (show_all and i != sel_idx):
                     self._draw_event_highlight(etype, ev, selected=(i == sel_idx))
 
     def _draw_event_highlight(self, etype, ev, selected):
-        alpha = 255 if selected else 80
+        alpha = 255 if selected else 120
         if etype == "roof":
             x1 = min(ev.start_x, ev.end_x)
             y1 = min(ev.start_y, ev.end_y)
             x2 = max(ev.start_x, ev.end_x)
             y2 = max(ev.start_y, ev.end_y)
             rect = QRectF(x1*TILE_SIZE, y1*TILE_SIZE, (x2-x1+1)*TILE_SIZE, (y2-y1+1)*TILE_SIZE)
-            pen = QPen(QColor(0,255,0,alpha), 2)
+            pen = QPen(QColor(0,255,0,alpha), PEN_W)
             brush = QColor(0,255,0,40) if selected else Qt.NoBrush
             self.highlight_items.append(self.scene.addRect(rect, pen, brush))
             for tx, ty in [(ev.trigger_x, ev.trigger_y), (ev.trigger2_x, ev.trigger2_y)]:
                 if tx >= 0 and ty >= 0:
                     r = QRectF(tx*TILE_SIZE, ty*TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                    self.highlight_items.append(self.scene.addRect(r, QPen(QColor(255,0,0,alpha), 2)))
+                    self.highlight_items.append(self.scene.addRect(r, QPen(QColor(255,0,0,alpha), PEN_W)))
             for ex, ey in [(ev.exit_x, ev.exit_y), (ev.exit2_x, ev.exit2_y)]:
                 if ex >= 0 and ey >= 0:
                     r = QRectF(ex*TILE_SIZE, ey*TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                    self.highlight_items.append(self.scene.addRect(r, QPen(QColor(0,150,255,alpha), 2)))
+                    self.highlight_items.append(self.scene.addRect(r, QPen(QColor(0,150,255,alpha), PEN_W)))
         elif etype == "tile_change":
             if ev.trigger_x >= 0 and ev.trigger_y >= 0:
                 r = QRectF(ev.trigger_x*TILE_SIZE, ev.trigger_y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                self.highlight_items.append(self.scene.addRect(r, QPen(QColor(255,255,0,alpha), 2)))
+                self.highlight_items.append(self.scene.addRect(r, QPen(QColor(255,255,0,alpha), PEN_W)))
             if ev.close_x >= 0 and ev.close_y >= 0:
                 r = QRectF(ev.close_x*TILE_SIZE, ev.close_y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                self.highlight_items.append(self.scene.addRect(r, QPen(QColor(0,200,255,alpha), 2)))
+                self.highlight_items.append(self.scene.addRect(r, QPen(QColor(0,200,255,alpha), PEN_W)))
         elif etype == "stair":
             dx = (ev.end_x > ev.start_x) - (ev.end_x < ev.start_x)
             dy = (ev.end_y > ev.start_y) - (ev.end_y < ev.start_y)
@@ -671,11 +664,11 @@ class EditorWindow(QMainWindow):
                     line = QLineF(center.x()-half, center.y()+half, center.x()+half, center.y()-half)
                 else:
                     line = QLineF(center.x()-half, center.y()-half, center.x()+half, center.y()+half)
-                self.highlight_items.append(self.scene.addLine(line, QPen(QColor(0,120,255,alpha), 3)))
+                self.highlight_items.append(self.scene.addLine(line, QPen(QColor(0,120,255,alpha), STAIR_PEN_W)))
         elif etype == "warp":
             if ev.trigger_x >= 0 and ev.trigger_y >= 0:
                 r = QRectF(ev.trigger_x*TILE_SIZE, ev.trigger_y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                self.highlight_items.append(self.scene.addRect(r, QPen(QColor(200,0,200,alpha), 2)))
+                self.highlight_items.append(self.scene.addRect(r, QPen(QColor(200,0,200,alpha), PEN_W)))
                 cx = r.x() + r.width()/2
                 cy = r.y() + r.height()/2
                 sz = TILE_SIZE*0.3
@@ -685,11 +678,11 @@ class EditorWindow(QMainWindow):
                     pts = [QPointF(cx-sz, cy), QPointF(cx+sz/2, cy-sz), QPointF(cx+sz/2, cy+sz)]
                 elif ev.facing == 2:
                     pts = [QPointF(cx+sz, cy), QPointF(cx-sz/2, cy-sz), QPointF(cx-sz/2, cy+sz)]
-                else:  # Up
+                else:
                     pts = [QPointF(cx, cy-sz), QPointF(cx-sz, cy+sz/2), QPointF(cx+sz, cy+sz/2)]
-                self.highlight_items.append(self.scene.addPolygon(pts, QPen(COLOR_WARP_ARROW, 2), QColor(255,255,0,100)))
+                self.highlight_items.append(self.scene.addPolygon(pts, QPen(QColor(255,255,0,alpha), WARP_ARROW_PEN_W), QColor(255,255,0,100)))
 
-    # ---------- Мышь и клавиши ----------
+    # ── МЫШЬ И КЛАВИШИ ────────────────────────────────
     def eventFilter(self, obj, event):
         if event.type() == QEvent.MouseButtonPress and obj is self.view.viewport():
             return self._map_press(event)
@@ -755,7 +748,6 @@ class EditorWindow(QMainWindow):
         if self.map_list_widget.count() > 0:
             self.map_list_widget.setCurrentRow(0)
             self._on_map_selected(self.map_list_widget.item(0))
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
