@@ -11,20 +11,45 @@ from PySide6.QtWidgets import (
     QSplitter, QScrollArea, QListWidget, QListWidgetItem,
     QPushButton, QLineEdit, QLabel, QCheckBox, QMessageBox,
     QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
-    QGraphicsRectItem, QFrame, QFormLayout
+    QGraphicsRectItem, QFrame, QFormLayout, QComboBox
 )
 
 from events_data import (
-    RoofEvent, TileChangeEvent, StairEvent, WarpEvent, MapEvents,
+    RoofEvent, TileChangeEvent, StairEvent, WarpEvent, NpcEvent, MapEvents,
     load_events, save_events
 )
 
 TILE_SIZE = 48
+NPC_SPRITES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "mapsprites_NPC")
 
 # ─── УТОЛЩЁННЫЕ ПЕРА ─────────────────────────────────
-PEN_W            = 4    # рамки зон/триггеров/выходов
-STAIR_PEN_W      = 5    # линии лестниц
-WARP_ARROW_PEN_W = 3    # стрелки варпов
+PEN_W            = 4
+STAIR_PEN_W      = 5
+WARP_ARROW_PEN_W = 3
+NPC_PEN_W        = 2
+
+MAIN_STYLE = """
+QMainWindow { background-color: #2b2b2b; }
+QWidget { background-color: #2b2b2b; color: #dcdcdc; font-family: "Segoe UI", sans-serif; font-size: 12px; }
+QLabel { background: transparent; color: #dcdcdc; }
+QPushButton { background-color: #3c3c3c; border: 1px solid #555; padding: 4px 8px; border-radius: 3px; color: #dcdcdc; }
+QPushButton:hover { background-color: #4e4e4e; }
+QPushButton:pressed { background-color: #2e2e2e; }
+QLineEdit { background-color: #3c3c3c; border: 1px solid #555; padding: 2px 4px; border-radius: 3px; color: #dcdcdc; }
+QListWidget { background-color: #323232; border: 1px solid #555; color: #dcdcdc; }
+QListWidget::item:selected { background-color: #4a6a9b; }
+QComboBox { background-color: #3c3c3c; border: 1px solid #555; padding: 2px 4px; border-radius: 3px; color: #dcdcdc; }
+QComboBox::drop-down { background-color: #3c3c3c; }
+QComboBox QAbstractItemView { background-color: #3c3c3c; selection-background-color: #4a6a9b; color: #dcdcdc; }
+QScrollArea { background-color: #2b2b2b; border: none; }
+QScrollBar:vertical { background: #323232; width: 10px; margin: 0; }
+QScrollBar::handle:vertical { background: #555; min-height: 20px; border-radius: 5px; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+QScrollBar:horizontal { background: #323232; height: 10px; margin: 0; }
+QScrollBar::handle:horizontal { background: #555; min-width: 20px; border-radius: 5px; }
+QSplitter::handle { background: #555; }
+QFrame[HLine="true"] { border: 1px solid #555; }
+"""
 
 class MapData:
     def __init__(self):
@@ -34,7 +59,6 @@ class MapData:
         self.tiles, self.rot, self.mirror_x, self.mirror_y = [], [], [], []
         self.tiles2, self.rot2, self.mirror_x2, self.mirror_y2 = [], [], [], []
         self.cell_type = []
-
 
 def load_map(filename: str) -> Optional[MapData]:
     try:
@@ -100,6 +124,7 @@ class EditorWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Map Event Editor")
         self.resize(1280, 720)
+        self.setStyleSheet(MAIN_STYLE)
 
         self.current_map: Optional[MapData] = None
         self.tile_pixmaps = []
@@ -108,17 +133,55 @@ class EditorWindow(QMainWindow):
         self.last_pan_pos = QPointF()
 
         self.events = MapEvents()
-        self.selected_idx = {"roof": -1, "tile_change": -1, "stair": -1, "warp": -1}
+        self.selected_idx = {"roof": -1, "tile_change": -1, "stair": -1, "warp": -1, "npc": -1}
+        self.show_all = {"roof": False, "tile_change": False, "stair": False, "warp": False, "npc": False}
 
         self.edit_widget = None
-        self.show_all = {"roof": False, "tile_change": False, "stair": False, "warp": False}
         self.highlight_items = []
 
         self.show_layer1 = True
         self.show_layer2 = True
 
+        self.npc_sprite_names = []          # имена файлов без расширения
+        self.npc_sprites_cache = {}         # sprite_name -> QPixmap (нижний левый кадр)
+        self.npc_sprite_preview_label = None  # QLabel для предпросмотра в левой панели
+
         self._build_ui()
         self._load_initial_data()
+        self._load_npc_sprites()
+
+    def _load_npc_sprites(self):
+        self.npc_sprite_names.clear()
+        if os.path.exists(NPC_SPRITES_DIR):
+            for f in os.listdir(NPC_SPRITES_DIR):
+                if f.lower().endswith('.png'):
+                    self.npc_sprite_names.append(os.path.splitext(f)[0])
+            self.npc_sprite_names.sort()
+
+    def _get_npc_pixmap(self, sprite_name):
+        """Возвращает QPixmap 48x48 — нижний левый кадр спрайта NPC."""
+        if sprite_name in self.npc_sprites_cache:
+            return self.npc_sprites_cache[sprite_name]
+        path = os.path.join(NPC_SPRITES_DIR, sprite_name + ".png")
+        if not os.path.exists(path):
+            return None
+        full = QPixmap(path)
+        if full.isNull():
+            return None
+        # Лист 96x144 = 2×3 клетки, берём левую нижнюю (0, 96)
+        pix = full.copy(0, 96, 48, 48)
+        self.npc_sprites_cache[sprite_name] = pix
+        return pix
+
+    def _update_npc_preview(self, sprite_name):
+        """Обновляет QLabel с предпросмотром спрайта в левой панели."""
+        if self.npc_sprite_preview_label is None:
+            return
+        pix = self._get_npc_pixmap(sprite_name)
+        if pix:
+            self.npc_sprite_preview_label.setPixmap(pix.scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        else:
+            self.npc_sprite_preview_label.clear()
 
     # ── ПОСТРОЕНИЕ ИНТЕРФЕЙСА ──────────────────────────
     def _build_ui(self):
@@ -151,13 +214,13 @@ class EditorWindow(QMainWindow):
 
         splitter = QSplitter(Qt.Horizontal)
 
-        # Левая панель (компактнее)
+        # Левая панель
         left_scroll = QScrollArea()
         left_scroll.setWidgetResizable(True)
         left_widget = QWidget()
         left = QVBoxLayout(left_widget)
-        left.setContentsMargins(2, 2, 2, 2)
-        left.setSpacing(0)
+        left.setContentsMargins(4, 4, 4, 4)
+        left.setSpacing(2)
 
         self._create_event_section(left, "Roof Events", "roof",
             ["Tile ID", "Start X,Y", "End X,Y", "Trig1 X,Y", "Trig2 X,Y", "Exit1 X,Y", "Exit2 X,Y"])
@@ -167,6 +230,8 @@ class EditorWindow(QMainWindow):
             ["Start X,Y", "End X,Y", "Direction (0/1)"])
         self._create_event_section(left, "Warps", "warp",
             ["Trigger X,Y", "Target Map", "Target X,Y", "Facing (0-3)"])
+        self._create_event_section(left, "NPC Events", "npc",
+            ["ID", "X,Y", "Sprite", "Behavior", "Direction", "Home X,Y (if wander)", "Radius"])
 
         left_scroll.setWidget(left_widget)
 
@@ -189,7 +254,7 @@ class EditorWindow(QMainWindow):
         splitter.addWidget(left_scroll)
         splitter.addWidget(self.view)
         splitter.addWidget(right_panel)
-        splitter.setSizes([240, 790, 200])
+        splitter.setSizes([260, 770, 200])
         main_layout.addWidget(splitter)
 
     def _create_event_section(self, parent_layout, title, etype, field_labels):
@@ -200,15 +265,15 @@ class EditorWindow(QMainWindow):
 
         header = QWidget()
         hl = QHBoxLayout(header)
-        hl.setContentsMargins(2, 0, 2, 0)
+        hl.setContentsMargins(2, 2, 2, 2)
 
-        toggle_btn = QPushButton("+")
-        toggle_btn.setFixedSize(18, 18)
-        toggle_btn.setStyleSheet("font-weight: bold; padding: 0px;")
+        toggle_btn = QPushButton("▾")
+        toggle_btn.setFixedSize(20, 20)
+        toggle_btn.setStyleSheet("font-weight: bold; background: transparent; border: none; color: #dcdcdc;")
         hl.addWidget(toggle_btn)
 
         lbl = QLabel(title)
-        lbl.setStyleSheet("font-weight: bold;")
+        lbl.setStyleSheet("font-weight: bold; background: transparent;")
         hl.addWidget(lbl)
         hl.addStretch()
 
@@ -221,8 +286,8 @@ class EditorWindow(QMainWindow):
 
         collapsible = QWidget()
         cl = QVBoxLayout(collapsible)
-        cl.setContentsMargins(12, 1, 1, 1)
-        cl.setSpacing(1)
+        cl.setContentsMargins(12, 2, 2, 2)
+        cl.setSpacing(2)
 
         lst = QListWidget()
         lst.setMaximumHeight(60)
@@ -231,29 +296,87 @@ class EditorWindow(QMainWindow):
 
         fields_widget = QWidget()
         fl = QFormLayout(fields_widget)
-        fl.setContentsMargins(0, 1, 0, 1)
-        fl.setSpacing(1)
+        fl.setContentsMargins(0, 2, 0, 2)
+        fl.setSpacing(3)
         edits = []
         for i, lbl_text in enumerate(field_labels):
-            le = QLineEdit()
-            le.setMaximumWidth(120)
-            # ── ВАЛИДАТОР: только цифры, запятая, минус ──
-            validator = QRegularExpressionValidator(QRegularExpression(r"[\d,\-]*"))
-            le.setValidator(validator)
-            # ── ЖИВОЕ ОБНОВЛЕНИЕ ПРИ ВВОДЕ ──
-            le.textChanged.connect(lambda text, et=etype, fi=i: self._on_field_text_changed(et, fi, text))
-            le.installEventFilter(self)
-            fl.addRow(QLabel(lbl_text + ":"), le)
-            edits.append(le)
+            if etype == "npc" and lbl_text in ("Behavior", "Direction"):
+                combo = QComboBox()
+                if lbl_text == "Behavior":
+                    combo.addItems(["static", "wander"])
+                else:
+                    combo.addItems(["down", "left", "right", "up"])
+                combo.currentTextChanged.connect(lambda text, et=etype, fi=i: self._on_field_text_changed(et, fi, text))
+                fl.addRow(QLabel(lbl_text + ":"), combo)
+                edits.append(combo)
+            elif etype == "npc" and lbl_text == "Sprite":
+                # Составной виджет: [предпросмотр] [текст] [<] [>]
+                sprite_widget = QWidget()
+                h = QHBoxLayout(sprite_widget)
+                h.setContentsMargins(0,0,0,0)
+                h.setSpacing(2)
+
+                # Миниатюра 32x32
+                preview_lbl = QLabel()
+                preview_lbl.setFixedSize(32, 32)
+                preview_lbl.setStyleSheet("border: 1px solid #555; background-color: #323232;")
+                self.npc_sprite_preview_label = preview_lbl   # сохраняем ссылку
+
+                le = QLineEdit()
+                le.setMaximumWidth(70)
+                le.textChanged.connect(lambda text, et=etype, fi=i: self._on_field_text_changed(et, fi, text))
+                le.installEventFilter(self)
+
+                btn_prev = QPushButton("<")
+                btn_prev.setFixedWidth(24)
+                btn_next = QPushButton(">")
+                btn_next.setFixedWidth(24)
+
+                def make_step(delta, line_edit=le):
+                    def handler():
+                        idx = self.selected_idx.get("npc", -1)
+                        if idx < 0 or not self.npc_sprite_names:
+                            return
+                        ev = self.events.npcs[idx]
+                        try:
+                            cur = self.npc_sprite_names.index(ev.sprite)
+                        except ValueError:
+                            cur = 0
+                        new_idx = (cur + delta) % len(self.npc_sprite_names)
+                        line_edit.setText(self.npc_sprite_names[new_idx])
+                        self._update_npc_preview(self.npc_sprite_names[new_idx])
+                    return handler
+
+                btn_prev.clicked.connect(make_step(-1))
+                btn_next.clicked.connect(make_step(1))
+
+                h.addWidget(preview_lbl)
+                h.addWidget(le)
+                h.addWidget(btn_prev)
+                h.addWidget(btn_next)
+                h.addStretch()
+
+                fl.addRow(QLabel(lbl_text + ":"), sprite_widget)
+                edits.append(le)   # в списке fields сохраняем QLineEdit
+            else:
+                le = QLineEdit()
+                le.setMaximumWidth(120)
+                if lbl_text not in ("ID", "Sprite"):
+                    le.setValidator(QRegularExpressionValidator(QRegularExpression(r"[\d,\-]*")))
+                le.textChanged.connect(lambda text, et=etype, fi=i: self._on_field_text_changed(et, fi, text))
+                le.installEventFilter(self)
+                fl.addRow(QLabel(lbl_text + ":"), le)
+                edits.append(le)
+
         fields_widget.setVisible(False)
         cl.addWidget(fields_widget)
 
         btn_layout = QHBoxLayout()
         btn_add = QPushButton("+")
-        btn_add.setFixedWidth(24)
+        btn_add.setFixedWidth(28)
         btn_add.clicked.connect(lambda: self._add_event(etype))
-        btn_del = QPushButton("-")
-        btn_del.setFixedWidth(24)
+        btn_del = QPushButton("−")
+        btn_del.setFixedWidth(28)
         btn_del.clicked.connect(lambda: self._delete_event(etype))
         btn_layout.addWidget(btn_add)
         btn_layout.addWidget(btn_del)
@@ -283,7 +406,7 @@ class EditorWindow(QMainWindow):
         def toggle():
             state = not collapsible.isVisible()
             collapsible.setVisible(state)
-            toggle_btn.setText("-" if state else "+")
+            toggle_btn.setText("▾" if state else "▸")
         toggle_btn.clicked.connect(toggle)
 
     # ── ЗАГРУЗКА ДАННЫХ ───────────────────────────────
@@ -308,13 +431,13 @@ class EditorWindow(QMainWindow):
         self.events = load_events(folder)
         for key in self.selected_idx:
             self.selected_idx[key] = -1
-        # ← СБРОС ЧЕКБОКСОВ «SHOW ALL»
         for key in self.show_all:
             self.show_all[key] = False
 
         self._load_tileset(self.current_map.tileset_path)
         self._refresh_event_lists()
         self._redraw_map()
+        self._load_npc_sprites()   # обновим список спрайтов
 
     def _load_tileset(self, tileset_path):
         paths = [tileset_path, f"../{tileset_path}"]
@@ -346,7 +469,8 @@ class EditorWindow(QMainWindow):
             "roof": "roofs",
             "tile_change": "tile_changes",
             "stair": "stairs",
-            "warp": "warps"
+            "warp": "warps",
+            "npc": "npcs"
         }
         for etype, data in self.section_widgets.items():
             lst = data['list']
@@ -362,11 +486,13 @@ class EditorWindow(QMainWindow):
         if etype == "roof":
             return f"Tile {ev.tile_id} ({ev.start_x},{ev.start_y})-({ev.end_x},{ev.end_y})"
         elif etype == "tile_change":
-            return f"({ev.trigger_x},{ev.trigger_y}) -> {ev.new_tile_id}"
+            return f"({ev.trigger_x},{ev.trigger_y}) → {ev.new_tile_id}"
         elif etype == "stair":
-            return f"({ev.start_x},{ev.start_y})->({ev.end_x},{ev.end_y}) dir={ev.direction}"
+            return f"({ev.start_x},{ev.start_y})→({ev.end_x},{ev.end_y}) dir={ev.direction}"
         elif etype == "warp":
-            return f"({ev.trigger_x},{ev.trigger_y}) -> {ev.target_map}"
+            return f"({ev.trigger_x},{ev.trigger_y}) → {ev.target_map}"
+        elif etype == "npc":
+            return f"{ev.id} ({ev.x},{ev.y}) {ev.behavior}"
         return "???"
 
     def _on_event_selected(self, etype, idx):
@@ -379,7 +505,8 @@ class EditorWindow(QMainWindow):
                 "roof": "roofs",
                 "tile_change": "tile_changes",
                 "stair": "stairs",
-                "warp": "warps"
+                "warp": "warps",
+                "npc": "npcs"
             }
             event_list = getattr(self.events, mapping[etype])
             ev = event_list[idx]
@@ -407,6 +534,20 @@ class EditorWindow(QMainWindow):
                 fields[1].setText(ev.target_map)
                 fields[2].setText(f"{ev.target_x},{ev.target_y}")
                 fields[3].setText(str(ev.facing))
+            elif etype == "npc":
+                fields[0].setText(ev.id)
+                fields[1].setText(f"{ev.x},{ev.y}")
+                fields[2].setText(ev.sprite)          # QLineEdit
+                fields[3].setCurrentText(ev.behavior) # QComboBox
+                fields[4].setCurrentText(ev.direction)# QComboBox
+                if ev.behavior == "wander":
+                    fields[5].setText(f"{ev.home_x},{ev.home_y}")
+                    fields[6].setText(str(ev.radius))
+                else:
+                    fields[5].setText("-")
+                    fields[6].setText("-")
+                # Обновим предпросмотр спрайта
+                self._update_npc_preview(ev.sprite)
         self._update_highlights()
 
     def _add_event(self, etype):
@@ -414,11 +555,17 @@ class EditorWindow(QMainWindow):
             "roof": "roofs",
             "tile_change": "tile_changes",
             "stair": "stairs",
-            "warp": "warps"
+            "warp": "warps",
+            "npc": "npcs"
         }
         event_list = getattr(self.events, mapping[etype])
-        cls_map = {"roof": RoofEvent, "tile_change": TileChangeEvent,
-                   "stair": StairEvent, "warp": WarpEvent}
+        cls_map = {
+            "roof": RoofEvent,
+            "tile_change": TileChangeEvent,
+            "stair": StairEvent,
+            "warp": WarpEvent,
+            "npc": NpcEvent
+        }
         event_list.append(cls_map[etype]())
         self._refresh_event_lists()
         self.section_widgets[etype]['list'].setCurrentRow(len(event_list)-1)
@@ -429,7 +576,8 @@ class EditorWindow(QMainWindow):
             "roof": "roofs",
             "tile_change": "tile_changes",
             "stair": "stairs",
-            "warp": "warps"
+            "warp": "warps",
+            "npc": "npcs"
         }
         event_list = getattr(self.events, mapping[etype])
         if 0 <= idx < len(event_list):
@@ -454,7 +602,7 @@ class EditorWindow(QMainWindow):
             QMessageBox.warning(self, "Error", "No map loaded")
             return
         save_events(self.current_map.folder, self.events)
-        QMessageBox.information(self, "Saved", "Events saved.")
+        QMessageBox.information(self, "Saved", "Events saved (including NPC_events.json).")
 
     # ── ЖИВОЕ ОБНОВЛЕНИЕ ПОЛЕЙ ────────────────────────
     def _on_field_text_changed(self, etype, field_idx, text):
@@ -465,7 +613,8 @@ class EditorWindow(QMainWindow):
             "roof": "roofs",
             "tile_change": "tile_changes",
             "stair": "stairs",
-            "warp": "warps"
+            "warp": "warps",
+            "npc": "npcs"
         }
         event_list = getattr(self.events, mapping[etype], None)
         idx = self.selected_idx.get(etype, -1)
@@ -518,6 +667,7 @@ class EditorWindow(QMainWindow):
                     else:
                         pair = parse_pair(text)
                         if pair: ev.exit2_x, ev.exit2_y = pair
+
             elif etype == "tile_change":
                 if field_idx == 0:
                     pair = parse_pair(text)
@@ -528,6 +678,7 @@ class EditorWindow(QMainWindow):
                 elif field_idx == 2:
                     pair = parse_pair(text)
                     if pair: ev.close_x, ev.close_y = pair
+
             elif etype == "stair":
                 if field_idx == 0:
                     pair = parse_pair(text)
@@ -538,6 +689,7 @@ class EditorWindow(QMainWindow):
                 elif field_idx == 2:
                     v = parse_int(text)
                     if v is not None and v in (0, 1): ev.direction = v
+
             elif etype == "warp":
                 if field_idx == 0:
                     pair = parse_pair(text)
@@ -550,10 +702,49 @@ class EditorWindow(QMainWindow):
                 elif field_idx == 3:
                     v = parse_int(text)
                     if v is not None and 0 <= v <= 3: ev.facing = v
+
+            elif etype == "npc":
+                if field_idx == 0:
+                    ev.id = text.strip()
+                elif field_idx == 1:
+                    pair = parse_pair(text)
+                    if pair: ev.x, ev.y = pair
+                elif field_idx == 2:
+                    ev.sprite = text.strip()
+                    self._update_npc_preview(text.strip())
+                elif field_idx == 3:
+                    ev.behavior = text
+                    self._refresh_event_fields("npc", idx)
+                elif field_idx == 4:
+                    ev.direction = text
+                elif field_idx == 5:
+                    if text.strip() == "-": ev.home_x = ev.home_y = 0
+                    else:
+                        pair = parse_pair(text)
+                        if pair: ev.home_x, ev.home_y = pair
+                elif field_idx == 6:
+                    if text.strip() == "-": ev.radius = 3
+                    else:
+                        v = parse_int(text)
+                        if v is not None: ev.radius = v
         except:
             pass
 
         self._update_highlights()
+
+    def _refresh_event_fields(self, etype, idx):
+        if etype != "npc": return
+        data = self.section_widgets["npc"]
+        event_list = self.events.npcs
+        if 0 <= idx < len(event_list):
+            ev = event_list[idx]
+            fields = data['fields']
+            if ev.behavior == "wander":
+                fields[5].setText(f"{ev.home_x},{ev.home_y}")
+                fields[6].setText(str(ev.radius))
+            else:
+                fields[5].setText("-")
+                fields[6].setText("-")
 
     # ── ОТРИСОВКА КАРТЫ ───────────────────────────────
     def _redraw_map(self):
@@ -616,7 +807,8 @@ class EditorWindow(QMainWindow):
             "roof": "roofs",
             "tile_change": "tile_changes",
             "stair": "stairs",
-            "warp": "warps"
+            "warp": "warps",
+            "npc": "npcs"
         }
         for etype, sel_idx in self.selected_idx.items():
             event_list = getattr(self.events, mapping[etype])
@@ -627,6 +819,20 @@ class EditorWindow(QMainWindow):
 
     def _draw_event_highlight(self, etype, ev, selected):
         alpha = 255 if selected else 120
+        if etype == "npc":
+            pix = self._get_npc_pixmap(ev.sprite)
+            if pix:
+                item = QGraphicsPixmapItem(pix)
+                item.setPos(ev.x * TILE_SIZE, ev.y * TILE_SIZE)
+                if self.show_layer2 and self.show_layer1:
+                    item.setOpacity(0.8)
+                self.highlight_items.append(item)
+            else:
+                r = QRectF(ev.x * TILE_SIZE, ev.y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                pen = QPen(QColor(255, 165, 0, alpha), NPC_PEN_W, Qt.DashLine)
+                self.highlight_items.append(self.scene.addRect(r, pen))
+            return
+
         if etype == "roof":
             x1 = min(ev.start_x, ev.end_x)
             y1 = min(ev.start_y, ev.end_y)
