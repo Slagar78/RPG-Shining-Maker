@@ -19,6 +19,8 @@ from events_data import (
     load_events, save_events
 )
 
+from PySide6.QtWidgets import QToolButton
+
 TILE_SIZE = 48
 NPC_SPRITES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "mapsprites_NPC")
 
@@ -43,10 +45,10 @@ QComboBox::drop-down { background-color: #3c3c3c; }
 QComboBox QAbstractItemView { background-color: #3c3c3c; selection-background-color: #4a6a9b; color: #dcdcdc; }
 QScrollArea { background-color: #2b2b2b; border: none; }
 QScrollBar:vertical { background: #323232; width: 10px; margin: 0; }
-QScrollBar::handle:vertical { background: #555; min-height: 20px; border-radius: 5px; }
+QScrollBar::handle:vertical { background: #4a6a9b; min-height: 20px; border-radius: 5px; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
 QScrollBar:horizontal { background: #323232; height: 10px; margin: 0; }
-QScrollBar::handle:horizontal { background: #555; min-width: 20px; border-radius: 5px; }
+QScrollBar::handle:horizontal { background: #4a6a9b; min-width: 20px; border-radius: 5px; }
 QSplitter::handle { background: #555; }
 QFrame[HLine="true"] { border: 1px solid #555; }
 """
@@ -267,9 +269,14 @@ class EditorWindow(QMainWindow):
         hl = QHBoxLayout(header)
         hl.setContentsMargins(2, 2, 2, 2)
 
-        toggle_btn = QPushButton("▾")
-        toggle_btn.setFixedSize(20, 20)
-        toggle_btn.setStyleSheet("font-weight: bold; background: transparent; border: none; color: #dcdcdc;")
+        toggle_btn = QToolButton()
+        toggle_btn.setArrowType(Qt.RightArrow)          # начальное состояние – вправо (свёрнуто)
+        toggle_btn.setFixedSize(28, 28)
+        toggle_btn.setStyleSheet("""
+            background: transparent;
+            border: none;
+            color: #dcdcdc;
+        """)
         hl.addWidget(toggle_btn)
 
         lbl = QLabel(title)
@@ -406,7 +413,7 @@ class EditorWindow(QMainWindow):
         def toggle():
             state = not collapsible.isVisible()
             collapsible.setVisible(state)
-            toggle_btn.setText("▾" if state else "▸")
+            toggle_btn.setArrowType(Qt.DownArrow if state else Qt.RightArrow)
         toggle_btn.clicked.connect(toggle)
 
     # ── ЗАГРУЗКА ДАННЫХ ───────────────────────────────
@@ -826,6 +833,7 @@ class EditorWindow(QMainWindow):
                 item.setPos(ev.x * TILE_SIZE, ev.y * TILE_SIZE)
                 if self.show_layer2 and self.show_layer1:
                     item.setOpacity(0.8)
+                self.scene.addItem(item)
                 self.highlight_items.append(item)
             else:
                 r = QRectF(ev.x * TILE_SIZE, ev.y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
