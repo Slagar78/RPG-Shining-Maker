@@ -10,6 +10,7 @@ require_relative 'lib/ui'
 require_relative 'lib/AudioManager'
 require_relative 'lib/item_actions_ui'
 require_relative 'lib/GameMap'
+require_relative 'lib/dialog_manager'
 require 'json'
 
 shared_lib_path = Gem::Specification.find_by_name('raylib-bindings').full_gem_path + '/lib/'
@@ -90,6 +91,13 @@ class Game
     large_cp_ptr.write_array_of_int(large_codepoints)
     @large_font = LoadFontEx("assets/ui/fonts/main.ttf", 30, large_cp_ptr, large_codepoints.size)
     Raylib.SetTextureFilter(@large_font.texture, TEXTURE_FILTER_POINT)
+	
+	@message_panel_tex = nil
+    path = "assets/ui/message_panel.png"
+    if File.exist?(path)
+      @message_panel_tex = LoadTexture(path)
+      SetTextureFilter(@message_panel_tex, TEXTURE_FILTER_POINT)
+    end
 
     @party = @db.actors
     @classes_data = @db.classes
@@ -110,6 +118,7 @@ class Game
     @magic_overlay = MagicOverlay.new(@font, @db, @start_inventory, @party, @classes_data, @class_names)
     @profile = Profile.new(@font, @db, @start_inventory)
     @search_overlay = SearchOverlay.new(@large_font, @game_text, @party)
+	@dialog_manager = nil
 
     @anim_timer = 0.0
     @anim_delay = 0.33
@@ -167,18 +176,43 @@ class Game
       # во время варпа управление отключено
       return
 	
-    when :playing
-      if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
-        if @player.moving
-          @pending_menu_request = true
-        else
-          @game_state = :menu
-          @audio.play_sfx(:confirm)
-          @menu.open
-        end
-      else
-        @player.handle_input
-      end
+	when :playing
+	  if IsKeyPressed(KEY_A)
+		# Меню по A (как было)
+		if @player.moving
+		  @pending_menu_request = true
+		else
+		  @game_state = :menu
+		  @audio.play_sfx(:confirm)
+		  @menu.open
+		end
+	  elsif IsKeyPressed(KEY_D)
+		# Сначала проверяем, есть ли рядом NPC
+		npc = @game_map.npcs.find { |n| (n.x - @player.x).abs <= 1 && (n.y - @player.y).abs <= 1 }
+		if npc
+		  # Есть NPC – запускаем диалог
+		  try_start_interaction
+		else
+		  # Нет NPC – меню (как раньше)
+		  if @player.moving
+			@pending_menu_request = true
+		  else
+			@game_state = :menu
+			@audio.play_sfx(:confirm)
+			@menu.open
+		  end
+		end
+	  else
+		@player.handle_input
+	  end
+
+	when :dialog
+	  # Во время диалога можно закрыть его клавишей S (опционально)
+	  if IsKeyPressed(KEY_S)
+		@dialog_manager = nil
+		@game_state = :playing
+	  end
+  
     when :menu
       if IsKeyPressed(KEY_S)
         @game_state = :playing
@@ -471,6 +505,14 @@ end
     end
 
     @camera.update(@player, @game_map) if @game_state == :playing
+	
+	if @game_state == :dialog && @dialog_manager
+	  @dialog_manager.update
+	  if @dialog_manager.finished?
+		@dialog_manager = nil
+		@game_state = :playing
+	  end
+	end
 
     if @pending_items_close && @active_item_action && !@active_item_action.visible
       @game_state = :items
@@ -535,6 +577,10 @@ end
      end
   end
     EndMode2D()
+	
+	if @game_state == :dialog && @dialog_manager
+	  @dialog_manager.draw
+	end
 
     case @game_state
     when :menu then @menu.draw
@@ -563,6 +609,36 @@ def change_map(map_id, target_x, target_y, facing = nil)
   }
   @game_state = :warping
   @warp_delay = 10        # ждём 10 кадров (≈ 0.16 сек при 60 FPS)
+end
+
+def try_start_interaction
+  npc = @game_map.npcs.find do |n|
+    (n.x - @player.x).abs <= 1 && (n.y - @player.y).abs <= 1
+  end
+  return unless npc
+
+  script_entry = @game_map.npc_scripts.find do |s|
+    s["npc_id"] == npc.id || (s["x"] == npc.x && s["y"] == npc.y)
+  end
+  return unless script_entry
+
+  local_text = @game_map.local_text || {}
+
+  # Определяем имя лидера (первого персонажа в партии)
+  leader_name = @party && @party[0] ? @party[0]["name"] : ""
+
+  @dialog_manager = DialogManager.new(
+    script_entry["script"],
+    npc,
+    @player,
+    @game_map,
+    local_text,
+    @game_text,
+    @message_panel_tex,
+    @large_font,
+    leader_name   # ← теперь определена
+  )
+  @game_state = :dialog
 end
 
   private

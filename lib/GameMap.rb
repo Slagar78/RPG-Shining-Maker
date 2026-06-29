@@ -5,12 +5,13 @@ require_relative 'NPC'
 include Raylib
 
 class GameMap
-  attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas,
-              :roof_events, :tile_events, :stair_events, :roof_offsets, :warp_events, :open_doors
-  attr_reader :tileset_path
-  attr_reader :roof_layers
-  attr_reader :layer2, :top_layer, :static_bg
-  attr_reader :npcs
+	attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas,
+				:roof_events, :tile_events, :stair_events, :roof_offsets, :warp_events, :open_doors,
+				:npc_scripts, :local_text
+	attr_reader :tileset_path
+	attr_reader :roof_layers
+	attr_reader :layer2, :top_layer, :static_bg
+	attr_reader :npcs
 
   def initialize(map_id = "Granseal")
     @src_rect_cache = {}
@@ -138,6 +139,25 @@ class GameMap
     if File.exist?(npc_file)
       npc_data = JSON.parse(File.read(npc_file))
       npc_data.each { |npc_def| @npcs << NPC.new(npc_def) }
+    end
+
+    # Загрузка NPC_script.json (всегда)
+    @npc_scripts = []
+    script_path = "data/maps/#{entry['folder']}/NPC_script.json"
+    if File.exist?(script_path)
+      @npc_scripts = JSON.parse(File.read(script_path))
+    end
+
+    # Загрузка локального text.txt (всегда)
+    @local_text = {}
+    text_path = "data/maps/#{entry['folder']}/text.txt"
+    if File.exist?(text_path)
+      File.readlines(text_path).each do |line|
+        line.chomp!
+        next if line.empty?
+        id_part, text_part = line.split('=', 2)
+        @local_text[id_part] = text_part if id_part && text_part
+      end
     end
 	
 	@roof_layers = []

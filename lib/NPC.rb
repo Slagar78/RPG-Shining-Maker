@@ -2,6 +2,7 @@
 
 class NPC
   attr_reader :x, :y, :id, :last_x, :last_y
+  attr_accessor :direction
 
   TILE_SIZE = 48
   PIXEL_SPEED = 3
