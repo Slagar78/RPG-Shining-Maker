@@ -5,8 +5,8 @@ class NPC
   attr_accessor :direction
 
   TILE_SIZE = 48
-  PIXEL_SPEED = 3
-  ANIM_SPEED = 12
+  PIXEL_SPEED = 2
+  ANIM_SPEED = 14
 
   DIR_MAP = {
     'up'    => 0,
