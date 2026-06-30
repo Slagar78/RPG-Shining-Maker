@@ -624,7 +624,6 @@ def try_start_interaction
 
   local_text = @game_map.local_text || {}
 
-  # Определяем имя лидера (первого персонажа в партии)
   leader_name = @party && @party[0] ? @party[0]["name"] : ""
 
   @dialog_manager = DialogManager.new(
@@ -636,7 +635,8 @@ def try_start_interaction
     @game_text,
     @message_panel_tex,
     @large_font,
-    leader_name   # ← теперь определена
+    leader_name,
+    npc.direction   # <-- передаём текущее направление NPC (оно и будет исходным)
   )
   @game_state = :dialog
 end

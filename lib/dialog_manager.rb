@@ -19,7 +19,8 @@ class DialogManager
   # @param message_panel_tex [Texture] текстура панели сообщений
   # @param font [Font] шрифт для отрисовки текста
   # @param leader_name [String] имя лидера (первого персонажа в партии)
-  def initialize(script, npc, player, game_map, local_text, global_text, message_panel_tex, font, leader_name)
+  # @param original_npc_direction [String] исходное направление NPC (до диалога) – добавили
+  def initialize(script, npc, player, game_map, local_text, global_text, message_panel_tex, font, leader_name, original_npc_direction)
     @script = script
     @npc = npc
     @player = player
@@ -29,6 +30,7 @@ class DialogManager
     @message_panel_tex = message_panel_tex
     @font = font
     @leader_name = leader_name || ''
+    @original_npc_direction = original_npc_direction   # запоминаем исходное направление
 
     @index = 0                     # текущая команда в скрипте
     @finished = false
@@ -78,6 +80,11 @@ class DialogManager
     # Если команды закончились и не ждём ввода, завершаем диалог
     if @index >= @script.length && !@waiting_for_input
       @finished = true
+    end
+
+    # ---- ВОССТАНОВЛЕНИЕ НАПРАВЛЕНИЯ NPC ----
+    if @finished && @npc.direction != @original_npc_direction
+      @npc.direction = @original_npc_direction
     end
   end
 
