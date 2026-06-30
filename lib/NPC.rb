@@ -73,6 +73,10 @@ class NPC
     update_movement if @moving
   end
 
+  def update_animation_only
+	update_animation
+  end
+
   def update_animation
     @anim_timer += 1
     if @anim_timer >= ANIM_SPEED

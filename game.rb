@@ -306,11 +306,14 @@ class Game
     @player.update_animation
     @player.update_movement if @game_state == :playing
 	
-if @game_map
-  # NPC обновляются и во время игры, и когда открыто меню
-  if @game_state == :playing || @game_state == :menu
-    @game_map.npcs.each { |npc| npc.update(@game_map, @player) }
-  end
+	if @game_map
+	  # NPC обновляются и во время игры, и когда открыто меню
+	  if @game_state == :playing || @game_state == :menu
+		@game_map.npcs.each { |npc| npc.update(@game_map, @player) }
+	  elsif @game_state == :dialog
+		# Во время диалога – только анимация (без движения)
+		@game_map.npcs.each { |npc| npc.update_animation_only }
+	  end
 
   if @game_state == :playing
     # Проверка tile_events для всех персонажей (игрок + NPC)
