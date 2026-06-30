@@ -611,29 +611,15 @@ def change_map(map_id, target_x, target_y, facing = nil)
 end
 
 def try_start_interaction
-  puts "try_start_interaction called"
-  npc = @game_map.npcs.find do |n|
-    (n.x - @player.x).abs <= 1 && (n.y - @player.y).abs <= 1
-  end
-  if npc.nil?
-    puts "No NPC nearby"
-    return
-  end
-  puts "NPC found: #{npc.id} at #{npc.x},#{npc.y}"
+  npc = @game_map.npcs.find { |n| (n.x - @player.x).abs <= 1 && (n.y - @player.y).abs <= 1 }
+  return if npc.nil?
 
-  script_entry = @game_map.npc_scripts.find do |s|
-    s["npc_id"] == npc.id || (s["x"] == npc.x && s["y"] == npc.y)
-  end
-  if script_entry.nil?
-    puts "No script found for NPC #{npc.id}"
-    return
-  end
-  puts "Script found: #{script_entry}"
+  script_entry = @game_map.npc_scripts.find { |s| s["npc_id"] == npc.id || (s["x"] == npc.x && s["y"] == npc.y) }
+  return if script_entry.nil?
 
   local_text = @game_map.local_text || {}
   leader_name = @party && @party[0] ? @party[0]["name"] : ""
 
-  puts "Creating DialogManager"
   @dialog_manager = DialogManager.new(
     script_entry["script"],
     npc,
@@ -644,10 +630,9 @@ def try_start_interaction
     @message_panel_tex,
     @large_font,
     leader_name,
-    npc.direction   # ← 10-й аргумент
+    npc.direction
   )
   @game_state = :dialog
-  puts "Dialog started"
 end
 
   private
