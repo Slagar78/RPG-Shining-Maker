@@ -233,7 +233,7 @@ class EditorWindow(QMainWindow):
         self._create_event_section(left, "Warps", "warp",
             ["Trigger X,Y", "Target Map", "Target X,Y", "Facing (0-3)"])
         self._create_event_section(left, "NPC Events", "npc",
-            ["ID", "X,Y", "Sprite", "Behavior", "Direction", "Home X,Y (if wander)", "Radius"])
+            ["ID", "X,Y", "Sprite", "Behavior", "Direction", "Text ID", "Home X,Y (if wander)", "Radius"])
 
         left_scroll.setWidget(left_widget)
 
@@ -499,7 +499,7 @@ class EditorWindow(QMainWindow):
         elif etype == "warp":
             return f"({ev.trigger_x},{ev.trigger_y}) → {ev.target_map}"
         elif etype == "npc":
-            return f"{ev.id} ({ev.x},{ev.y}) {ev.behavior}"
+            return f"{ev.id} ({ev.x},{ev.y}) {ev.behavior} [text:{ev.text_id}]"
         return "???"
 
     def _on_event_selected(self, etype, idx):
@@ -544,16 +544,16 @@ class EditorWindow(QMainWindow):
             elif etype == "npc":
                 fields[0].setText(ev.id)
                 fields[1].setText(f"{ev.x},{ev.y}")
-                fields[2].setText(ev.sprite)          # QLineEdit
-                fields[3].setCurrentText(ev.behavior) # QComboBox
-                fields[4].setCurrentText(ev.direction)# QComboBox
+                fields[2].setText(ev.sprite)
+                fields[3].setCurrentText(ev.behavior)
+                fields[4].setCurrentText(ev.direction)
+                fields[5].setText(ev.text_id)
                 if ev.behavior == "wander":
-                    fields[5].setText(f"{ev.home_x},{ev.home_y}")
-                    fields[6].setText(str(ev.radius))
+                    fields[6].setText(f"{ev.home_x},{ev.home_y}")
+                    fields[7].setText(str(ev.radius))
                 else:
-                    fields[5].setText("-")
                     fields[6].setText("-")
-                # Обновим предпросмотр спрайта
+                    fields[7].setText("-")
                 self._update_npc_preview(ev.sprite)
         self._update_highlights()
 
@@ -724,12 +724,14 @@ class EditorWindow(QMainWindow):
                     self._refresh_event_fields("npc", idx)
                 elif field_idx == 4:
                     ev.direction = text
-                elif field_idx == 5:
+                elif field_idx == 5:          # Новое поле Text ID
+                    ev.text_id = text.strip()
+                elif field_idx == 6:          # Home X,Y (раньше было 5)
                     if text.strip() == "-": ev.home_x = ev.home_y = 0
                     else:
                         pair = parse_pair(text)
                         if pair: ev.home_x, ev.home_y = pair
-                elif field_idx == 6:
+                elif field_idx == 7:          # Radius (раньше было 6)
                     if text.strip() == "-": ev.radius = 3
                     else:
                         v = parse_int(text)
@@ -746,12 +748,13 @@ class EditorWindow(QMainWindow):
         if 0 <= idx < len(event_list):
             ev = event_list[idx]
             fields = data['fields']
+            # Индексы: 0-ID,1-XY,2-Sprite,3-Behavior,4-Direction,5-TextID,6-HomeXY,7-Radius
             if ev.behavior == "wander":
-                fields[5].setText(f"{ev.home_x},{ev.home_y}")
-                fields[6].setText(str(ev.radius))
+                fields[6].setText(f"{ev.home_x},{ev.home_y}")
+                fields[7].setText(str(ev.radius))
             else:
-                fields[5].setText("-")
                 fields[6].setText("-")
+                fields[7].setText("-")
 
     # ── ОТРИСОВКА КАРТЫ ───────────────────────────────
     def _redraw_map(self):
