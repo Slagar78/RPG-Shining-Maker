@@ -1,141 +1,244 @@
-[{
-		"type":	"roof",
-		"tile_id":	136,
-		"start_x":	17,
-		"start_y":	7,
-		"end_x":	22,
-		"end_y":	11,
-		"triggers":	[[19, 12]],
-		"exits":	[[19, 13]]
-	}, {
-		"type":	"roof",
-		"tile_id":	136,
-		"start_x":	10,
-		"start_y":	6,
-		"end_x":	15,
-		"end_y":	11,
-		"triggers":	[[12, 12]],
-		"exits":	[[12, 13]]
-	}, {
-		"type":	"roof",
-		"tile_id":	136,
-		"start_x":	30,
-		"start_y":	9,
-		"end_x":	34,
-		"end_y":	14,
-		"triggers":	[[32, 15]],
-		"exits":	[[32, 16]]
-	}, {
-		"type":	"roof",
-		"tile_id":	136,
-		"start_x":	39,
-		"start_y":	5,
-		"end_x":	47,
-		"end_y":	12,
-		"triggers":	[[41, 13]],
-		"exits":	[[41, 14]]
-	}, {
-		"type":	"roof",
-		"tile_id":	136,
-		"start_x":	36,
-		"start_y":	19,
-		"end_x":	40,
-		"end_y":	23,
-		"triggers":	[[38, 24]],
-		"exits":	[[38, 25]]
-	}, {
-		"type":	"roof",
-		"tile_id":	358,
-		"start_x":	22,
-		"start_y":	19,
-		"end_x":	30,
-		"end_y":	25,
-		"triggers":	[[24, 26], [25, 26]],
-		"exits":	[[24, 27], [25, 27]]
-	}, {
-		"type":	"roof",
-		"tile_id":	313,
-		"start_x":	5,
-		"start_y":	16,
-		"end_x":	10,
-		"end_y":	21,
-		"triggers":	[[7, 22], [8, 22]],
-		"exits":	[[7, 23], [8, 23]]
-	}, {
-		"type":	"tile_change",
-		"trigger_x":	4,
-		"trigger_y":	8,
-		"new_tile_id":	11,
-		"sample_x":	62,
-		"sample_y":	0,
-		"close_x":	4,
-		"close_y":	9
-	}, {
-		"type":	"tile_change",
-		"trigger_x":	12,
-		"trigger_y":	12,
-		"new_tile_id":	11,
-		"sample_x":	62,
-		"sample_y":	0,
-		"close_x":	12,
-		"close_y":	13
-	}, {
-		"type":	"tile_change",
-		"trigger_x":	19,
-		"trigger_y":	12,
-		"new_tile_id":	11,
-		"sample_x":	62,
-		"sample_y":	0,
-		"close_x":	19,
-		"close_y":	13
-	}, {
-		"type":	"tile_change",
-		"trigger_x":	32,
-		"trigger_y":	15,
-		"new_tile_id":	11,
-		"sample_x":	62,
-		"sample_y":	0,
-		"close_x":	32,
-		"close_y":	16
-	}, {
-		"type":	"tile_change",
-		"trigger_x":	41,
-		"trigger_y":	13,
-		"new_tile_id":	11,
-		"sample_x":	62,
-		"sample_y":	0,
-		"close_x":	41,
-		"close_y":	14
-	}, {
-		"type":	"tile_change",
-		"trigger_x":	38,
-		"trigger_y":	24,
-		"new_tile_id":	11,
-		"sample_x":	62,
-		"sample_y":	0,
-		"close_x":	38,
-		"close_y":	25
-	}, {
-		"type":	"stairs",
-		"start_x":	3,
-		"start_y":	3,
-		"end_x":	4,
-		"end_y":	4,
-		"direction":	0
-	}, {
-		"type":	"warp",
-		"trigger_x":	0,
-		"trigger_y":	27,
-		"target_map":	"map00",
-		"target_x":	4,
-		"target_y":	8,
-		"facing":	3
-	}, {
-		"type":	"warp",
-		"trigger_x":	0,
-		"trigger_y":	26,
-		"target_map":	"map00",
-		"target_x":	4,
-		"target_y":	8,
-		"facing":	1
-	}]
+[
+  {
+    "type": "roof",
+    "tile_id": 136,
+    "start_x": 17,
+    "start_y": 7,
+    "end_x": 22,
+    "end_y": 11,
+    "triggers": [
+      [
+        19,
+        12
+      ]
+    ],
+    "exits": [
+      [
+        19,
+        13
+      ]
+    ]
+  },
+  {
+    "type": "roof",
+    "tile_id": 136,
+    "start_x": 10,
+    "start_y": 6,
+    "end_x": 15,
+    "end_y": 11,
+    "triggers": [
+      [
+        12,
+        12
+      ]
+    ],
+    "exits": [
+      [
+        12,
+        13
+      ]
+    ]
+  },
+  {
+    "type": "roof",
+    "tile_id": 136,
+    "start_x": 30,
+    "start_y": 9,
+    "end_x": 34,
+    "end_y": 14,
+    "triggers": [
+      [
+        32,
+        15
+      ]
+    ],
+    "exits": [
+      [
+        32,
+        16
+      ]
+    ]
+  },
+  {
+    "type": "roof",
+    "tile_id": 136,
+    "start_x": 39,
+    "start_y": 5,
+    "end_x": 47,
+    "end_y": 12,
+    "triggers": [
+      [
+        41,
+        13
+      ]
+    ],
+    "exits": [
+      [
+        41,
+        14
+      ]
+    ]
+  },
+  {
+    "type": "roof",
+    "tile_id": 136,
+    "start_x": 36,
+    "start_y": 19,
+    "end_x": 40,
+    "end_y": 23,
+    "triggers": [
+      [
+        38,
+        24
+      ]
+    ],
+    "exits": [
+      [
+        38,
+        25
+      ]
+    ]
+  },
+  {
+    "type": "roof",
+    "tile_id": 358,
+    "start_x": 22,
+    "start_y": 19,
+    "end_x": 30,
+    "end_y": 25,
+    "triggers": [
+      [
+        24,
+        26
+      ],
+      [
+        25,
+        26
+      ]
+    ],
+    "exits": [
+      [
+        24,
+        27
+      ],
+      [
+        25,
+        27
+      ]
+    ]
+  },
+  {
+    "type": "roof",
+    "tile_id": 313,
+    "start_x": 5,
+    "start_y": 16,
+    "end_x": 10,
+    "end_y": 21,
+    "triggers": [
+      [
+        7,
+        22
+      ],
+      [
+        8,
+        22
+      ]
+    ],
+    "exits": [
+      [
+        7,
+        23
+      ],
+      [
+        8,
+        23
+      ]
+    ]
+  },
+  {
+    "type": "tile_change",
+    "trigger_x": 4,
+    "trigger_y": 8,
+    "new_tile_id": 11,
+    "sample_x": 62,
+    "sample_y": 0,
+    "close_x": 4,
+    "close_y": 9
+  },
+  {
+    "type": "tile_change",
+    "trigger_x": 12,
+    "trigger_y": 12,
+    "new_tile_id": 11,
+    "sample_x": 62,
+    "sample_y": 0,
+    "close_x": 12,
+    "close_y": 13
+  },
+  {
+    "type": "tile_change",
+    "trigger_x": 19,
+    "trigger_y": 12,
+    "new_tile_id": 11,
+    "sample_x": 62,
+    "sample_y": 0,
+    "close_x": 19,
+    "close_y": 13
+  },
+  {
+    "type": "tile_change",
+    "trigger_x": 32,
+    "trigger_y": 15,
+    "new_tile_id": 11,
+    "sample_x": 62,
+    "sample_y": 0,
+    "close_x": 32,
+    "close_y": 16
+  },
+  {
+    "type": "tile_change",
+    "trigger_x": 41,
+    "trigger_y": 13,
+    "new_tile_id": 11,
+    "sample_x": 62,
+    "sample_y": 0,
+    "close_x": 41,
+    "close_y": 14
+  },
+  {
+    "type": "tile_change",
+    "trigger_x": 38,
+    "trigger_y": 24,
+    "new_tile_id": 11,
+    "sample_x": 62,
+    "sample_y": 0,
+    "close_x": 38,
+    "close_y": 25
+  },
+  {
+    "type": "stairs",
+    "start_x": 3,
+    "start_y": 3,
+    "end_x": 4,
+    "end_y": 4,
+    "direction": 0
+  },
+  {
+    "type": "warp",
+    "trigger_x": 0,
+    "trigger_y": 27,
+    "target_map": "map00",
+    "target_x": 4,
+    "target_y": 8,
+    "facing": 3
+  },
+  {
+    "type": "warp",
+    "trigger_x": 0,
+    "trigger_y": 26,
+    "target_map": "map00",
+    "target_x": 4,
+    "target_y": 8,
+    "facing": 1
+  }
+]

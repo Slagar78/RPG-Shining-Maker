@@ -117,7 +117,7 @@ class NpcEvent:
             "sprite": self.sprite,
             "behavior": self.behavior,
             "direction": self.direction,
-            "text_id": self.text_id
+            # text_id не сохраняется в NPC_events.json
         }
         if self.behavior == "wander":
             d["home_x"] = self.home_x
@@ -194,7 +194,7 @@ def load_events(folder: str) -> MapEvents:
                 )
                 events.warps.append(wp)
 
-    # NPC
+    # NPC – загружаем из NPC_events.json (без text_id)
     npc_path = os.path.join("..", "data", "maps", folder, "NPC_events.json")
     if os.path.exists(npc_path):
         with open(npc_path, "r", encoding="utf-8") as f:
@@ -210,11 +210,11 @@ def load_events(folder: str) -> MapEvents:
                 home_x=nd.get("home_x", 0),
                 home_y=nd.get("home_y", 0),
                 radius=nd.get("radius", 3),
-                text_id=nd.get("text_id", "")
+                text_id=""   # оставляем пустым, заполним из скрипта
             )
             events.npcs.append(npc)
 
-    # Чтение NPC_script.json и объединение нескольких say в text_id
+    # Чтение NPC_script.json – заполняем text_id для всех NPC
     script_path = os.path.join("..", "data", "maps", folder, "NPC_script.json")
     if os.path.exists(script_path):
         with open(script_path, "r", encoding="utf-8") as f:
@@ -225,56 +225,12 @@ def load_events(folder: str) -> MapEvents:
                 continue
             npc = next((n for n in events.npcs if n.id == npc_id), None)
             if npc:
-                # Собираем все text_id из команд say
                 say_ids = []
                 for cmd in script_entry.get("script", []):
                     if cmd.get("type") == "say" and "text_id" in cmd:
                         say_ids.append(cmd["text_id"])
-                # Заполняем только если у NPC ещё нет text_id (иначе не перезаписываем)
-                if say_ids and not npc.text_id:
+                if say_ids:
                     npc.text_id = ",".join(say_ids)
-
-    return events
-
-    # NPC
-    npc_path = os.path.join("..", "data", "maps", folder, "NPC_events.json")
-    if os.path.exists(npc_path):
-        with open(npc_path, "r", encoding="utf-8") as f:
-            npc_data = json.load(f)
-        for nd in npc_data:
-            npc = NpcEvent(
-                id=nd.get("id", ""),
-                x=nd.get("x", 0),
-                y=nd.get("y", 0),
-                sprite=nd.get("sprite", ""),
-                behavior=nd.get("behavior", "static"),
-                direction=nd.get("direction", "down"),
-                home_x=nd.get("home_x", 0),
-                home_y=nd.get("home_y", 0),
-                radius=nd.get("radius", 3),
-                text_id=nd.get("text_id", "")
-            )
-            events.npcs.append(npc)
-
-    # === ДОБАВЛЯЕМ ЧТЕНИЕ NPC_script.json ===
-    script_path = os.path.join("..", "data", "maps", folder, "NPC_script.json")
-    if os.path.exists(script_path):
-        with open(script_path, "r", encoding="utf-8") as f:
-            scripts = json.load(f)
-        for script_entry in scripts:
-            npc_id = script_entry.get("npc_id")
-            if not npc_id:
-                continue
-            # Находим NPC с таким id
-            npc = next((n for n in events.npcs if n.id == npc_id), None)
-            if npc:
-                # Если у NPC ещё нет text_id (или мы хотим всегда брать из скрипта),
-                # то ищем первую команду say с text_id
-                if not npc.text_id:   # если уже есть в NPC_events.json, не перезаписываем
-                    for cmd in script_entry.get("script", []):
-                        if cmd.get("type") == "say" and "text_id" in cmd:
-                            npc.text_id = cmd["text_id"]
-                            break
 
     return events
 
@@ -298,17 +254,16 @@ def save_events(folder: str, events: MapEvents):
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2)
 
-    # NPC_events.json
+    # NPC_events.json – без text_id
     npc_list = [npc.to_dict() for npc in events.npcs]
     npc_filepath = os.path.join(dir_path, "NPC_events.json")
     with open(npc_filepath, "w", encoding="utf-8") as f:
         json.dump(npc_list, f, indent=2)
 
-    # NPC_script.json – генерируем из NPC_events.json с поддержкой нескольких text_id
+    # NPC_script.json – генерируем из text_id, с поддержкой нескольких ID через запятую
     scripts = []
     for npc in events.npcs:
         if npc.text_id and npc.text_id.strip():
-            # Разбиваем строку по запятым, удаляем пробелы, отбрасываем пустые
             ids = [tid.strip() for tid in npc.text_id.split(',') if tid.strip()]
             if ids:
                 script = {
@@ -318,7 +273,6 @@ def save_events(folder: str, events: MapEvents):
                         {"type": "turn_player_to_npc"}
                     ]
                 }
-                # Добавляем команду say для каждого ID
                 for tid in ids:
                     script["script"].append({"type": "say", "text_id": tid})
                 script["script"].append({"type": "end", "wait_for_input": True})
