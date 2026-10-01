@@ -508,7 +508,7 @@ end
     @camera.update(@player, @game_map) if @game_state == :playing
 	
 	if @game_state == :dialog && @dialog_manager
-	  @dialog_manager.update
+	  @dialog_manager.update(dt)
 	  if @dialog_manager.finished?
 		@dialog_manager = nil
 		@game_state = :playing

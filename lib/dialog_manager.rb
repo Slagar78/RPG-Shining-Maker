@@ -4,6 +4,8 @@ include Raylib
 
 class DialogManager
   attr_reader :finished
+  
+  REVEAL_SPEED = 1.0 / 30.0   # секунд на символ (было 2 кадра при 60 FPS)
 
   def initialize(script, npc, player, game_map, local_text, global_text, message_panel_tex, font, leader_name, original_npc_direction)
     @script = script
@@ -33,7 +35,7 @@ class DialogManager
     @panel_y = 480 - @panel_h - 24
   end
 
-  def update
+  def update(dt = 1.0 / 60.0)
     return if @finished
 
     while @index < @script.length && !@waiting_for_input
@@ -57,7 +59,7 @@ class DialogManager
       end
     end
 
-    handle_input if @waiting_for_input
+    handle_input(dt) if @waiting_for_input
 
     if @index >= @script.length && !@waiting_for_input
       @finished = true
@@ -131,7 +133,7 @@ class DialogManager
     @waiting_for_input = true
   end
 
-  def handle_input
+  def handle_input(dt = 1.0 / 60.0)
     if @current_text && !@choices
       # Режим say – посимвольный вывод с пропуском тегов
       unless @full_text_shown
@@ -147,9 +149,9 @@ class DialogManager
               @reveal_index += 1
             end
           else
-            @reveal_timer += 1
-            if @reveal_timer >= 2  # скорость вывода
-              @reveal_timer = 0
+            @reveal_timer += dt
+            if @reveal_timer >= REVEAL_SPEED
+              @reveal_timer -= REVEAL_SPEED
               @reveal_index += 1
             end
           end
