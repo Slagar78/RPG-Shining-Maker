@@ -515,7 +515,9 @@ when :dying_wait
   end
 end
 
-def draw
+# Рендер в собственный холст 1152×960.
+# Вызывается СНАРУЖИ $canvas, до BeginTextureMode($canvas).
+def render_to_internal_rt
   return unless @active && @render_texture
 
   Raylib.BeginTextureMode(@render_texture)
@@ -625,10 +627,20 @@ end
   end
 
   Raylib.EndTextureMode()
+end
+
+# Вывод готового холста в текущий target (обычно $canvas 576×480).
+def draw_to_target
+  return unless @active && @render_texture
 
   src = Raylib::Rectangle.create(0, 0, 1152, -960)
   dst = Raylib::Rectangle.create(0, 0, 576, 480)
   Raylib.DrawTexturePro(@render_texture.texture, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+end
+
+# Проверка активности сцены.
+def active?
+  @active == true
 end
 
   private

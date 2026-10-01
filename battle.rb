@@ -1467,8 +1467,10 @@ end
 end
 
 if __FILE__ == $0
+  SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE)
   InitWindow(576, 480, "Battle")
-  SetTargetFPS(60)
+  $canvas = LoadRenderTexture(576, 480)
+  SetTextureFilter($canvas.texture, TEXTURE_FILTER_POINT)
   InitAudioDevice()
 
   db = Database.new
@@ -1531,10 +1533,40 @@ end
     battle.handle_input
     battle.update
     audio.update
-    BeginDrawing()
-      ClearBackground(BLACK)
-      battle.draw
-    EndDrawing()
+
+    # ШАГ 1: Рендерим боевую сцену в ЕЁ СОБСТВЕННЫЙ холст.
+    # Это делается СНАРУЖИ $canvas — никакой вложенности.
+    if battle.battle_scene && battle.battle_scene.active?
+      battle.battle_scene.render_to_internal_rt
+    end
+
+    # ШАГ 2: Всё рисуем в $canvas (576×480).
+    # battle.draw → BattleRenderer#draw → BattleScene#draw_to_target
+    # (просто выводит готовый холст, ничего не рендерит заново)
+	BeginTextureMode($canvas)
+	  ClearBackground(BLACK)
+	  battle.draw
+	EndTextureMode()
+
+	BeginDrawing()
+	  ClearBackground(BLACK)
+	  sw = GetScreenWidth()
+	  sh = GetScreenHeight()
+	  scale = [sw / 576, sh / 480].min
+	  scale = 1 if scale < 1
+	  dw = 576 * scale
+	  dh = 480 * scale
+	  dx = (sw - dw) / 2
+	  dy = (sh - dh) / 2
+	  BeginBlendMode(BLEND_ALPHA)
+	  DrawTexturePro(
+		$canvas.texture,
+		Rectangle.create(0, 0, 576, -480),
+		Rectangle.create(dx, dy, dw, dh),
+		Vector2.create(0, 0), 0, WHITE
+	  )
+	  EndBlendMode()
+	EndDrawing()
   end
 
   battle.unload
@@ -1543,5 +1575,6 @@ end
   UnloadFont(menu_font) if menu_font    # выгружаем и этот шрифт
   audio.stop
   CloseAudioDevice()
+  UnloadRenderTexture($canvas) if $canvas
   CloseWindow()
 end

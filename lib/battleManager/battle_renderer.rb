@@ -157,7 +157,7 @@ Raylib.DrawRectangle(
   @manager.battle_menu.draw
 
   # --- боевая сцена ---
-  @manager.battle_scene.draw
+  @manager.battle_scene.draw_to_target
 
   # --- затемнение при переходе в боевую сцену ---
   if @manager.battle_state == :fade_to_battle
