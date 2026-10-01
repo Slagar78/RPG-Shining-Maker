@@ -304,7 +304,7 @@ class Game
     dt = GetFrameTime()
     @audio.update
     @player.update_animation(dt)
-    @player.update_movement if @game_state == :playing
+    @player.update_movement(dt) if @game_state == :playing
 	
 	if @game_map
 	  if @game_state == :playing || @game_state == :menu

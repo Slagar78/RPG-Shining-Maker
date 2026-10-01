@@ -10,8 +10,9 @@ DIR_LEFT  = 4
 DIR_RIGHT = 6
 DIR_UP    = 8
 
-PIXEL_SPEED = 4         # пикселей за кадр (целое число)
-ANIM_SPEED  = 12
+PIXEL_SPEED  = 4                # пикселей за 1/60 секунды (целое!)
+FIXED_DT     = 1.0 / 60.0       # логический шаг
+ANIM_SPEED   = 12
 
 class Player
   attr_accessor :x, :y, :direction, :pattern, :last_x, :last_y
@@ -52,9 +53,9 @@ class Player
     @target_x      = 0
     @target_y      = 0
 			
-	@reserved_x = nil
+    @reserved_x = nil
     @reserved_y = nil
-
+    @move_accum = 0.0        # аккумулятор для fixed timestep
     init_render_objects
     load_textures
 
@@ -183,15 +184,26 @@ end
     end
 end
 
-  def update_movement
-    # === Движение по лестнице ===
-    if @stairs_event
-      @pixel_offset += PIXEL_SPEED
-      if @pixel_offset >= TILE_SIZE
+	def update_movement(dt = 1.0 / 60.0)
+	  @move_accum += dt
+	  @move_accum = FIXED_DT * 5 if @move_accum > FIXED_DT * 5
+
+	  while @move_accum >= FIXED_DT
+		@move_accum -= FIXED_DT
+		step_movement
+		break unless @moving || @stairs_event
+	  end
+	end
+
+	def step_movement
+	  # === Движение по лестнице ===
+	  if @stairs_event
+		@pixel_offset += PIXEL_SPEED
+		if @pixel_offset >= TILE_SIZE
         @pixel_offset = 0
         @x += @stairs_dx
         @y += @stairs_dy
-        @last_x = @x - @stairs_dx   # предыдущая позиция
+        @last_x = @x - @stairs_dx
         @last_y = @y - @stairs_dy
         if @x == @target_x && @y == @target_y
           @moving = false
@@ -218,14 +230,11 @@ end
       @last_x = old_x
       @last_y = old_y
 
-      # Снимаем резервирование, т.к. шаг выполнен
       @reserved_x = nil
       @reserved_y = nil
 
-      # Проверка на вход в лестницу после каждого шага
       maybe_start_stairs
 
-      # Обработка льда
       if @map && @map.tile_type_at(@x, @y) == 2
         next_x = @x
         next_y = @y
@@ -285,10 +294,10 @@ def maybe_start_stairs
   @pixel_offset = 0
 end
 
-  def update(dt = 1.0 / 60.0)
-    update_animation(dt)
-    update_movement
-  end
+	def update(dt = 1.0 / 60.0)
+	  update_animation(dt)
+	  update_movement(dt)
+	end
 
   # ====================== DRAW ======================
   def draw
