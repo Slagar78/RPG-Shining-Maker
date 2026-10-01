@@ -174,10 +174,10 @@ end
   end
 
   # ====================== UPDATE ======================
-  def update_animation
+  def update_animation(dt = 1.0 / 60.0)
     return if @sliding               # на льду не меняем кадр анимации
-    @anim_frame += 1
-    if @anim_frame >= ANIM_SPEED
+    @anim_frame += dt
+    if @anim_frame >= ANIM_SPEED / 60.0
       @anim_frame = 0
       @pattern = (@pattern + 1) % 2
     end
@@ -285,8 +285,8 @@ def maybe_start_stairs
   @pixel_offset = 0
 end
 
-  def update
-    update_animation
+  def update(dt = 1.0 / 60.0)
+    update_animation(dt)
     update_movement
   end
 

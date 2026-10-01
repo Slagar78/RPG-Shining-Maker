@@ -160,6 +160,7 @@ class Game
   end
 
   def handle_input
+    dt = GetFrameTime()
     # === Пересчёт координат мыши под canvas 576×480 (целочисленный масштаб) ===
     sw = GetScreenWidth()
     sh = GetScreenHeight()
@@ -245,14 +246,14 @@ class Game
         @status_overlay.close
         @pending_profile_open = true
       else
-        @status_overlay.handle_input
+        @status_overlay.handle_input(dt)
       end
     when :magic
       if IsKeyPressed(KEY_S)
         @magic_overlay.close
         @pending_menu_open = true
       else
-        @magic_overlay.handle_input
+        @magic_overlay.handle_input(dt)
       end
     when :items
       if IsKeyPressed(KEY_S)
@@ -300,17 +301,16 @@ class Game
   end
 
   def update
+    dt = GetFrameTime()
     @audio.update
-    @player.update_animation
+    @player.update_animation(dt)
     @player.update_movement if @game_state == :playing
 	
 	if @game_map
-	  # NPC обновляются и во время игры, и когда открыто меню
 	  if @game_state == :playing || @game_state == :menu
-		@game_map.npcs.each { |npc| npc.update(@game_map, @player) }
+		@game_map.npcs.each { |npc| npc.update(@game_map, @player, dt) }
 	  elsif @game_state == :dialog
-		# Во время диалога – только анимация (без движения)
-		@game_map.npcs.each { |npc| npc.update_animation_only }
+		@game_map.npcs.each { |npc| npc.update_animation_only(dt) }
 	  end
 
   if @game_state == :playing
@@ -357,14 +357,14 @@ class Game
 	# Fade-логика для варпа (стиль Sega RPG)
     if @game_state == :warping
       if @warp_delay > 0
-        @warp_delay -= 1
+        @warp_delay -= dt * 60.0
       elsif @fade_state.nil?
         @fade_state = :out
         @fade_alpha = 0
       end
 
       if @fade_state == :out
-        @fade_alpha += 8
+        @fade_alpha += 8 * dt * 60.0
         if @fade_alpha >= 255
           @fade_alpha = 255
           @fade_state = :hold
@@ -390,7 +390,7 @@ class Game
         @audio.play(@game_map.music_file, @game_map.music_volume)
         @fade_state = :in
       elsif @fade_state == :in
-        @fade_alpha -= 8
+        @fade_alpha -= 8 * dt * 60.0
         if @fade_alpha <= 0
           @fade_alpha = 0
           @fade_state = nil
@@ -455,8 +455,8 @@ end
 
     if @pending_menu_request
       if !@player.moving
-        @menu_delay += 1
-        if @menu_delay >= 3
+        @menu_delay += dt
+        if @menu_delay >= 3.0 / 60.0
           @pending_menu_request = false
           @menu_delay = 0
           @game_state = :menu
@@ -467,10 +467,10 @@ end
       end
     end
 
-    @menu.update if @game_state == :menu
-    @items_submenu.update if @game_state == :items
-    @status_overlay.update if @game_state == :status
-    @magic_overlay.update if @game_state == :magic
+    @menu.update(dt) if @game_state == :menu
+    @items_submenu.update(dt) if @game_state == :items
+    @status_overlay.update(dt) if @game_state == :status
+    @magic_overlay.update(dt) if @game_state == :magic
     @active_item_action&.update if @game_state == :item_action
 
     if @pending_menu_open
@@ -496,8 +496,8 @@ end
       @pending_profile_open = false
       @game_state = :profile
     end
-    @profile.update if @game_state == :profile
-    @search_overlay.update if @game_state == :search
+    @profile.update(dt) if @game_state == :profile
+    @search_overlay.update(dt) if @game_state == :search
 
     if @pending_status_open && !@profile.instance_variable_get(:@visible)
       @status_overlay.open
@@ -520,7 +520,7 @@ end
       @pending_items_close = false
     end
 
-    @anim_timer += @fixed_dt
+    @anim_timer += dt
     if @anim_timer >= @anim_delay
       @anim_timer -= @anim_delay
       @show_anim = !@show_anim
@@ -628,7 +628,7 @@ def change_map(map_id, target_x, target_y, facing = nil)
     facing: facing
   }
   @game_state = :warping
-  @warp_delay = 10        # ждём 10 кадров (≈ 0.16 сек при 60 FPS)
+  @warp_delay = 10        # ждём ~10 кадров (0.16 сек при 60 FPS, через dt * 60)
 end
 
 def try_start_interaction

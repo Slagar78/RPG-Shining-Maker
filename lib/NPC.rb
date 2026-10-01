@@ -65,21 +65,21 @@ class NPC
     UnloadImage(img_mirror)
   end
 
-  def update(map, player)
+  def update(map, player, dt = 1.0 / 60.0)
     case @behavior
-    when 'wander' then update_wander(map, player)
+    when 'wander' then update_wander(map, player, dt)
     end
-    update_animation
+    update_animation(dt)
     update_movement if @moving
   end
 
-  def update_animation_only
-	update_animation
+  def update_animation_only(dt = 1.0 / 60.0)
+	update_animation(dt)
   end
 
-  def update_animation
-    @anim_timer += 1
-    if @anim_timer >= ANIM_SPEED
+  def update_animation(dt = 1.0 / 60.0)
+    @anim_timer += dt
+    if @anim_timer >= ANIM_SPEED / 60.0
       @anim_timer = 0
       @pattern = (@pattern + 1) % 2
     end
@@ -157,11 +157,11 @@ class NPC
 
   private
 
-  def update_wander(map, player)
+  def update_wander(map, player, dt = 1.0 / 60.0)
     return if @moving
 
     if @wait_timer > 0
-      @wait_timer -= 1
+      @wait_timer -= dt * 60.0
       return
     end
 

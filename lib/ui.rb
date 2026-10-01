@@ -68,9 +68,9 @@ class BottomMenu
     end
   end
   
-  def update
+  def update(dt = 1.0 / 60.0)
     return unless @visible
-    @anim_timer += 1
+    @anim_timer += dt * 60.0
   end
   
   def draw
@@ -409,7 +409,7 @@ end
     @anim_phase = 0
   end
 
-  def handle_input
+  def handle_input(dt = 1.0 / 60.0)
     return unless @visible && @anim_phase == 2
     if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
       close
@@ -419,16 +419,20 @@ end
       @status_view_mode = 1 - @status_view_mode
     end
     if Raylib.IsKeyDown(Raylib::KEY_UP)
-      @input_timer_up += 1
-      if @input_timer_up == 1 || (@input_timer_up > 20 && (@input_timer_up - 20) % 5 == 0)
+      @input_timer_up += dt * 60.0
+      if @input_timer_up >= 1 && @input_timer_up < 1.5
+        change_selected_actor(-1)
+      elsif @input_timer_up > 20 && ((@input_timer_up - 20) % 5) < 1
         change_selected_actor(-1)
       end
     else
       @input_timer_up = 0
     end
     if Raylib.IsKeyDown(Raylib::KEY_DOWN)
-      @input_timer_down += 1
-      if @input_timer_down == 1 || (@input_timer_down > 20 && (@input_timer_down - 20) % 5 == 0)
+      @input_timer_down += dt * 60.0
+      if @input_timer_down >= 1 && @input_timer_down < 1.5
+        change_selected_actor(1)
+      elsif @input_timer_down > 20 && ((@input_timer_down - 20) % 5) < 1
         change_selected_actor(1)
       end
     else
@@ -436,9 +440,9 @@ end
     end
   end
 
-  def update
+  def update(dt = 1.0 / 60.0)
     return unless @visible
-    speed = 38
+    speed = 38 * dt * 60.0
     case @anim_phase
     when 1
       @portrait_x += speed; @portrait_x = @portrait_target_x if @portrait_x > @portrait_target_x
@@ -460,15 +464,15 @@ end
       end
     end
     if @anim_phase == 2
-      @blink_timer += 1
+      @blink_timer += dt * 60.0
       if @blink_duration > 0
-        @blink_duration -= 1
+        @blink_duration -= dt * 60.0
       elsif @blink_timer >= @blink_interval
         @blink_duration = 8
         @blink_timer = 0
         @blink_interval = 100 + rand(50)
       end
-      @selection_blink_timer += 1
+      @selection_blink_timer += dt * 60.0
     end
   end
 
@@ -783,9 +787,9 @@ class Profile
   end
 
   # ---------- обновление ----------
-  def update
+  def update(dt = 1.0 / 60.0)
     return unless @visible
-    speed = 38
+    speed = 38 * dt * 60.0
 
     case @anim_phase
     when 1  # сборка
@@ -828,15 +832,15 @@ class Profile
 
     # Моргание и анимация спрайта
     if @anim_phase == 2
-      @blink_timer += 1
+      @blink_timer += dt * 60.0
       if @blink_duration > 0
-        @blink_duration -= 1
+        @blink_duration -= dt * 60.0
       elsif @blink_timer >= @blink_interval
         @blink_duration = 8
         @blink_timer = 0
         @blink_interval = 100 + rand(50)
       end
-      @sprite_timer += 1
+      @sprite_timer += dt * 60.0
       if @sprite_timer >= @sprite_speed
         @sprite_timer = 0
         @sprite_frame = (@sprite_frame + 1) % 2
@@ -1415,7 +1419,7 @@ end
     @anim_phase = 0
   end
 
-  def handle_input
+  def handle_input(dt = 1.0 / 60.0)
     return unless @visible && @anim_phase == 2
 
     if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
@@ -1426,16 +1430,20 @@ end
       @status_view_mode = 1 - @status_view_mode
     end
     if Raylib.IsKeyDown(Raylib::KEY_UP)
-      @input_timer_up += 1
-      if @input_timer_up == 1 || (@input_timer_up > 20 && (@input_timer_up - 20) % 5 == 0)
+      @input_timer_up += dt * 60.0
+      if @input_timer_up >= 1 && @input_timer_up < 1.5
+        change_selected_actor(-1)
+      elsif @input_timer_up > 20 && ((@input_timer_up - 20) % 5) < 1
         change_selected_actor(-1)
       end
     else
       @input_timer_up = 0
     end
     if Raylib.IsKeyDown(Raylib::KEY_DOWN)
-      @input_timer_down += 1
-      if @input_timer_down == 1 || (@input_timer_down > 20 && (@input_timer_down - 20) % 5 == 0)
+      @input_timer_down += dt * 60.0
+      if @input_timer_down >= 1 && @input_timer_down < 1.5
+        change_selected_actor(1)
+      elsif @input_timer_down > 20 && ((@input_timer_down - 20) % 5) < 1
         change_selected_actor(1)
       end
     else
@@ -1443,9 +1451,9 @@ end
     end
   end
 
-  def update
+  def update(dt = 1.0 / 60.0)
     return unless @visible
-    speed = 38
+    speed = 38 * dt * 60.0
 
     case @anim_phase
     when 1
@@ -1469,15 +1477,15 @@ end
     end
 
     if @anim_phase == 2
-      @blink_timer += 1
+      @blink_timer += dt * 60.0
       if @blink_duration > 0
-        @blink_duration -= 1
+        @blink_duration -= dt * 60.0
       elsif @blink_timer >= @blink_interval
         @blink_duration = 8
         @blink_timer = 0
         @blink_interval = 100 + rand(50)
       end
-      @selection_blink_timer += 1
+      @selection_blink_timer += dt * 60.0
     end
   end
 
@@ -1768,13 +1776,13 @@ class SearchOverlay
     end
   end
 
-  def update
+  def update(dt = 1.0 / 60.0)
     return unless @visible
     return if @full_text_shown
 
   full = prepare_text
   if @reveal_index < full.length
-    @reveal_timer += 1
+    @reveal_timer += dt * 60.0
     if @reveal_timer >= @reveal_speed
       @reveal_timer = 0
       @reveal_index += 1
