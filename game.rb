@@ -160,12 +160,13 @@ class Game
   end
 
   def handle_input
-    # === Пересчёт координат мыши под canvas 576×480 ===
+    # === Пересчёт координат мыши под canvas 576×480 (целочисленный масштаб) ===
     sw = GetScreenWidth()
     sh = GetScreenHeight()
-    scale = [sw / 576.0, sh / 480.0].min
-    dw = (576 * scale).to_i
-    dh = (480 * scale).to_i
+    scale = [sw / 576, sh / 480].min
+    scale = 1 if scale < 1
+    dw = 576 * scale
+    dh = 480 * scale
     dx = (sw - dw) / 2
     dy = (sh - dh) / 2
     SetMouseScale(1.0 / scale, 1.0 / scale)
@@ -598,15 +599,16 @@ end
 
     DrawText("FPS: #{GetFPS()}", 576 - 100, 10, 20, DARKGRAY)
 	
-	EndTextureMode()
-    # === Рисуем canvas на экран с масштабированием ===
+    EndTextureMode()
+    # === Рисуем canvas на экран с ЦЕЛОЧИСЛЕННЫМ масштабированием ===
     BeginDrawing()
     ClearBackground(BLACK)
     sw = GetScreenWidth()
     sh = GetScreenHeight()
-    scale = [sw / 576.0, sh / 480.0].min
-    dw = (576 * scale).to_i
-    dh = (480 * scale).to_i
+    scale = [sw / 576, sh / 480].min
+    scale = 1 if scale < 1
+    dw = 576 * scale
+    dh = 480 * scale
     dx = (sw - dw) / 2
     dy = (sh - dh) / 2
     DrawTexturePro(
