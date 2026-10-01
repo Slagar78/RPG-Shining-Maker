@@ -19,9 +19,11 @@ include Raylib
 
 class Game
   def initialize
-    SetConfigFlags(FLAG_VSYNC_HINT)
+    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE)
     InitWindow(576, 480, "RPG Shinzo")
     SetTargetFPS(60)
+	@canvas = LoadRenderTexture(576, 480)
+	SetTextureFilter(@canvas.texture, TEXTURE_FILTER_POINT)
 
     @db = Database.new
     @game_map = GameMap.new(@db.globals["start_map"] || "Granseal")
@@ -165,10 +167,21 @@ class Game
     UnloadRenderTexture(@top_layer) if @top_layer
     UnloadRenderTexture(@layer2) if @layer2
     @game_map.roof_layers.each { |l| UnloadRenderTexture(l) if l }
+	UnloadRenderTexture(@canvas) if @canvas
     CloseWindow()
   end
 
   def handle_input
+    # === Пересчёт координат мыши под canvas 576×480 ===
+    sw = GetScreenWidth()
+    sh = GetScreenHeight()
+    scale = [sw / 576.0, sh / 480.0].min
+    dw = (576 * scale).to_i
+    dh = (480 * scale).to_i
+    dx = (sw - dw) / 2
+    dy = (sh - dh) / 2
+    SetMouseScale(1.0 / scale, 1.0 / scale)
+    SetMouseOffset(-dx, -dy)
     play_ui_sounds
     case @game_state
 	
@@ -526,7 +539,7 @@ end
   end
 
   def draw
-    BeginDrawing()
+    BeginTextureMode(@canvas)
     ClearBackground(RAYWHITE)
     BeginMode2D(@camera.render_camera)
 	  # ЧЁРНАЯ ПОЛОСА НАД КАРТОЙ (16 ПИКСЕЛЕЙ)
@@ -592,10 +605,28 @@ end
     end
 
     if @game_state == :warping
-      DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, @fade_alpha))
+    DrawRectangle(0, 0, 576, 480, Fade(BLACK, @fade_alpha))
     end
 
     DrawText("FPS: #{GetFPS()}", 576 - 100, 10, 20, DARKGRAY)
+	
+	EndTextureMode()
+    # === Рисуем canvas на экран с масштабированием ===
+    BeginDrawing()
+    ClearBackground(BLACK)
+    sw = GetScreenWidth()
+    sh = GetScreenHeight()
+    scale = [sw / 576.0, sh / 480.0].min
+    dw = (576 * scale).to_i
+    dh = (480 * scale).to_i
+    dx = (sw - dw) / 2
+    dy = (sh - dh) / 2
+    DrawTexturePro(
+      @canvas.texture,
+      Rectangle.create(0, 0, 576, -480),
+      Rectangle.create(dx, dy, dw, dh),
+      Vector2.create(0, 0), 0, WHITE
+    )
     EndDrawing()
   end
 
