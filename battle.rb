@@ -1320,7 +1320,7 @@ end
 
     when :enemy_profile
       @battle_player&.update
-      @enemy_profile.update
+      @enemy_profile.update(dt)
     if @enemy_profile.instance_variable_get(:@ready_to_close)
       @enemy_profile.force_close
       @battle_state = :info_mode

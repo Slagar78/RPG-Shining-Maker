@@ -169,9 +169,9 @@ class EnemyProfile
     spell ? spell["icon"] : nil
   end
 
-  def update
+  def update(dt = 1.0 / 60.0)
     return unless @visible
-    speed = 38
+    speed = 38 * dt * 60.0
 
     case @anim_phase
     when 1  # открытие
@@ -199,15 +199,15 @@ class EnemyProfile
     end
 
     if @anim_phase == 2
-      @blink_timer += 1
+      @blink_timer += dt * 60.0
       if @blink_duration > 0
-        @blink_duration -= 1
+        @blink_duration -= dt * 60.0
       elsif @blink_timer >= @blink_interval
         @blink_duration = 8
         @blink_timer = 0
         @blink_interval = 100 + rand(50)
       end
-      @sprite_timer += 1
+      @sprite_timer += dt * 60.0
       if @sprite_timer >= @sprite_speed
         @sprite_timer = 0
         @sprite_frame = (@sprite_frame + 1) % 2
