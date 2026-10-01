@@ -7,6 +7,7 @@ class NPC
   TILE_SIZE = 48
   PIXEL_SPEED = 2
   ANIM_SPEED = 14
+  FIXED_DT = 1.0 / 60.0
 
   DIR_MAP = {
     'up'    => 0,
@@ -35,6 +36,7 @@ class NPC
     @wait_timer = rand(40..120)
     @pattern = 0
     @anim_timer = 0
+	@move_accum = 0.0
 
     # Текстуры: левая (обычная) и правая (зеркальная)
     @tex_left = nil
@@ -70,7 +72,7 @@ class NPC
     when 'wander' then update_wander(map, player, dt)
     end
     update_animation(dt)
-    update_movement if @moving
+    update_movement(dt)
   end
 
   def update_animation_only(dt = 1.0 / 60.0)
@@ -85,7 +87,22 @@ class NPC
     end
   end
 
-  def update_movement
+  def update_movement(dt = 1.0 / 60.0)
+    unless @moving
+      @move_accum = 0.0
+      return
+    end
+
+    @move_accum += dt
+    @move_accum = FIXED_DT * 5 if @move_accum > FIXED_DT * 5
+
+    while @move_accum >= FIXED_DT && @moving
+      @move_accum -= FIXED_DT
+      step_movement
+    end
+  end
+
+  def step_movement
     @pixel_offset += PIXEL_SPEED
     if @pixel_offset >= TILE_SIZE
       old_x = @x
@@ -104,7 +121,6 @@ class NPC
       @pixel_offset = 0
       @moving = false
       @move_dir = nil
-      # Цель достигнута – сбрасываем резервирование
       @target_x = nil
       @target_y = nil
     end
