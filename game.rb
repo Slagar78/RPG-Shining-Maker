@@ -21,7 +21,6 @@ class Game
   def initialize
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE)
     InitWindow(576, 480, "RPG Shinzo")
-    SetTargetFPS(60)
 	@canvas = LoadRenderTexture(576, 480)
 	SetTextureFilter(@canvas.texture, TEXTURE_FILTER_POINT)
 
@@ -67,7 +66,6 @@ class Game
     @player.y = start_y
 
     @camera = Camera.new
-    @accumulator = 0.0
     @fixed_dt = 1.0 / 60.0
 
     @menu = BottomMenu.new
@@ -144,23 +142,13 @@ class Game
   end
 
   def run
-    previous_time = GetTime()
     until WindowShouldClose()
-      current_time = GetTime()
-      frame_time = current_time - previous_time
-      previous_time = current_time
-      frame_time = 0.2 if frame_time > 0.2
-      @accumulator += frame_time
-
-      while @accumulator >= @fixed_dt
-        handle_input
-        update
-        @accumulator -= @fixed_dt
-      end
-
+      handle_input
+      update
       draw
     end
     @audio.stop
+	
     Raylib.CloseAudioDevice()
     Raylib.UnloadFont(@font) if @font
     UnloadRenderTexture(@game_map.static_bg) if @game_map.static_bg
