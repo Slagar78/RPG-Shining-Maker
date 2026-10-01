@@ -295,7 +295,7 @@ class Game
         @menu.open
       end
     when :item_action
-      @active_item_action.handle_input
+      @active_item_action.handle_input(dt)
       @pending_items_close = true if @active_item_action.anim_phase == 3
     end
   end
@@ -471,7 +471,7 @@ end
     @items_submenu.update(dt) if @game_state == :items
     @status_overlay.update(dt) if @game_state == :status
     @magic_overlay.update(dt) if @game_state == :magic
-    @active_item_action&.update if @game_state == :item_action
+    @active_item_action&.update(dt) if @game_state == :item_action
 
     if @pending_menu_open
       if @game_state == :magic && !@magic_overlay.instance_variable_get(:@visible)

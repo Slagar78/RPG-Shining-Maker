@@ -316,9 +316,9 @@ end
   # ----------------------------------------------------------
   # Обновление (движение панелей, моргание)
   # ----------------------------------------------------------
-  def update
+  def update(dt = 1.0 / 60.0)
     return unless @visible
-    speed = 38
+    speed = 38 * dt * 60.0
 
     case @anim_phase
     when 1
@@ -355,22 +355,22 @@ end
     end
 
     if @anim_phase == 2
-      @blink_timer += 1
+      @blink_timer += dt * 60.0
       if @blink_duration > 0
-        @blink_duration -= 1
+        @blink_duration -= dt * 60.0
       elsif @blink_timer >= @blink_interval
         @blink_duration = 8
         @blink_timer = 0
         @blink_interval = 100 + rand(50)
       end
-      @selection_blink_timer += 1
+      @selection_blink_timer += dt * 60.0
     end
   end
 
   # ----------------------------------------------------------
   # Обработка ввода
   # ----------------------------------------------------------
-  def handle_input
+  def handle_input(dt = 1.0 / 60.0)
     return unless @visible && @anim_phase == 2
 
     case @focus
@@ -382,8 +382,10 @@ end
       end
 
       if Raylib.IsKeyDown(Raylib::KEY_UP)
-        @input_timer_up += 1
-        if @input_timer_up == 1 || (@input_timer_up > 20 && (@input_timer_up - 20) % 5 == 0)
+        @input_timer_up += dt * 60.0
+        if @input_timer_up >= 1 && @input_timer_up < 1.5
+          change_selected_actor(-1)
+        elsif @input_timer_up > 20 && ((@input_timer_up - 20) % 5) < 1
           change_selected_actor(-1)
         end
       else
@@ -391,8 +393,10 @@ end
       end
 
       if Raylib.IsKeyDown(Raylib::KEY_DOWN)
-        @input_timer_down += 1
-        if @input_timer_down == 1 || (@input_timer_down > 20 && (@input_timer_down - 20) % 5 == 0)
+        @input_timer_down += dt * 60.0
+        if @input_timer_down >= 1 && @input_timer_down < 1.5
+          change_selected_actor(1)
+        elsif @input_timer_down > 20 && ((@input_timer_down - 20) % 5) < 1
           change_selected_actor(1)
         end
       else
@@ -826,10 +830,10 @@ class GiveMenu < ItemSubMenuBase
     fill_to_four(items)
   end
 
-  def handle_input
+  def handle_input(dt = 1.0 / 60.0)
     case @give_state
     when :select_item
-      super
+      super(dt)
     when :show_message, :result_message
       # ничего не делаем
     when :select_target
@@ -840,16 +844,20 @@ class GiveMenu < ItemSubMenuBase
         return
       end
       if Raylib.IsKeyDown(Raylib::KEY_UP)
-        @input_timer_up += 1
-        if @input_timer_up == 1 || (@input_timer_up > 20 && (@input_timer_up - 20) % 5 == 0)
+        @input_timer_up += dt * 60.0
+        if @input_timer_up >= 1 && @input_timer_up < 1.5
+          change_selected_actor(-1)
+        elsif @input_timer_up > 20 && ((@input_timer_up - 20) % 5) < 1
           change_selected_actor(-1)
         end
       else
         @input_timer_up = 0
       end
       if Raylib.IsKeyDown(Raylib::KEY_DOWN)
-        @input_timer_down += 1
-        if @input_timer_down == 1 || (@input_timer_down > 20 && (@input_timer_down - 20) % 5 == 0)
+        @input_timer_down += dt * 60.0
+        if @input_timer_down >= 1 && @input_timer_down < 1.5
+          change_selected_actor(1)
+        elsif @input_timer_down > 20 && ((@input_timer_down - 20) % 5) < 1
           change_selected_actor(1)
         end
       else
@@ -865,12 +873,12 @@ class GiveMenu < ItemSubMenuBase
     end
   end
 
-  def update
-    super
+  def update(dt = 1.0 / 60.0)
+    super(dt)
     case @give_state
     when :show_message
       if @visible == false && @anim_phase == 0
-        @give_message_timer += 1
+        @give_message_timer += dt * 60.0
         if @give_message_timer >= GIVE_MESSAGE_DURATION
           @give_state = :select_target
           @give_message_timer = 0
@@ -878,7 +886,7 @@ class GiveMenu < ItemSubMenuBase
         end
       end
     when :result_message
-      @result_message_timer += 1
+      @result_message_timer += dt * 60.0
       if @result_message_timer >= RESULT_MESSAGE_DURATION
         @give_state = :select_item
         donor_index = @party.index { |a| a["id"] == @donor_actor["id"] } || 0
@@ -901,7 +909,7 @@ class GiveMenu < ItemSubMenuBase
 	  full = prepare_message_text
 	  unless @full_text_shown
 		if @reveal_index < full.length
-		  @reveal_timer += 1
+		  @reveal_timer += dt * 60.0
 		  if @reveal_timer >= @reveal_speed
 			@reveal_timer = 0
 			@reveal_index += 1
@@ -1355,7 +1363,7 @@ class EquipMenu < ItemSubMenuBase
     end
   end
 
-  def handle_input
+  def handle_input(dt = 1.0 / 60.0)
     return unless @visible && @anim_phase == 2
     return if @panel_swap_active
 
@@ -1381,7 +1389,7 @@ class EquipMenu < ItemSubMenuBase
         end
         return
       end
-      super
+      super(dt)
 
     when :select_slot
       if Raylib.IsKeyPressed(Raylib::KEY_S)
@@ -1546,12 +1554,13 @@ class EquipMenu < ItemSubMenuBase
     end
   end
 
-  def update
-    super
+  def update(dt = 1.0 / 60.0)
+    super(dt)
     if @panel_swap_active
+      swap_speed = @swap_speed * dt * 60.0
       case @panel_swap_phase
       when 1
-        @upper_x += @swap_speed
+        @upper_x += swap_speed
         if @upper_x >= @upper_start_x
           @upper_x = @upper_start_x
           @equip_state = @swap_target_state
@@ -1560,7 +1569,7 @@ class EquipMenu < ItemSubMenuBase
           @panel_swap_phase = 2
         end
       when 2
-        @upper_x -= @swap_speed
+        @upper_x -= swap_speed
         if @upper_x <= @upper_target_x
           @upper_x = @upper_target_x
           @panel_swap_active = false
@@ -1930,10 +1939,10 @@ class DropMenu < ItemSubMenuBase
     @focus = :party
   end
 
-  def handle_input
+  def handle_input(dt = 1.0 / 60.0)
     case @drop_state
     when :select_item
-      super
+      super(dt)
     when :show_message
       if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
         @confirm_index = 1 - @confirm_index
@@ -1961,13 +1970,13 @@ class DropMenu < ItemSubMenuBase
     end
   end
 
-  def update
-    super
+  def update(dt = 1.0 / 60.0)
+    super(dt)
     case @drop_state
     when :show_message
-      @confirm_anim_timer += 1
+      @confirm_anim_timer += dt * 60.0
     when :result_message
-      @message_timer += 1
+      @message_timer += dt * 60.0
       if @message_timer >= RESULT_DURATION
         @drop_state = :select_item
         @selected_drop_item = nil
