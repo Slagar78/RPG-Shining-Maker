@@ -1336,7 +1336,7 @@ end
       update_drop_message
 	  
     when :death_animation
-      @death_anim&.update
+      @death_anim&.update(dt)
       @battle_player&.update_animation(dt)
   
   if @death_anim&.finished

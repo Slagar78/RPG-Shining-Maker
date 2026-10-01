@@ -27,7 +27,7 @@ class UnitDeath
     @playing_explosion = false
   end
 
-  def update
+  def update(dt = 1.0 / 60.0)
     return if @finished
 
     if @spinning_completed
@@ -38,7 +38,7 @@ class UnitDeath
         @explosion_timer = 0.0
       end
 
-      @explosion_timer += Raylib.GetFrameTime()
+      @explosion_timer += dt
       if @explosion_timer >= @explosion_speed
         @explosion_timer = 0.0
         @explosion_frame += 1
@@ -50,7 +50,7 @@ class UnitDeath
     end
 
     # Фаза вращения
-    @timer += 1
+    @timer += dt * 60.0
     if @timer >= @switch_speed
       @timer = 0
       @current_step += 1
@@ -61,7 +61,7 @@ class UnitDeath
       @dir_index = (@dir_index + 1) % 4
     end
 
-    @anim_timer += 1
+    @anim_timer += dt * 60.0
     if @anim_timer >= @anim_speed
       @anim_timer = 0
       @anim_frame = (@anim_frame + 1) % 2
