@@ -1353,7 +1353,7 @@ end
       end
     end
   end  # ← конец case
-  @camera.update
+  @camera.update(dt)
 end    # ← конец метода update
 
   def update_units_animation

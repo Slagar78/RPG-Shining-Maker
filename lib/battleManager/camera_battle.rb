@@ -39,9 +39,12 @@ def follow_point(px, py)
   clamp_target!
 end
 
-def update
-  @x += (@target_x - @x) * @smooth_factor
-  @y += (@target_y - @y) * @smooth_factor
+def update(dt = 1.0 / 60.0)
+  # frame-rate independent exp-smoothing
+  # при smooth_factor = 0.1 и 60fps даёт ту же плавность, что и раньше
+  t = 1.0 - (1.0 - @smooth_factor) ** (dt * 60.0)
+  @x += (@target_x - @x) * t
+  @y += (@target_y - @y) * t
 end
 
   # Для рендеринга – только целые пиксели, чтобы убрать субпиксельное дрожание
