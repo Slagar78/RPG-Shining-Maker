@@ -425,7 +425,7 @@ end
         @selected_item_index = 3
       end
 
-      if Raylib.IsKeyPressed(Raylib::KEY_A)
+      if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
         if @current_items && @selected_item_index < @current_items.length
           item_entry = @current_items[@selected_item_index]
           actor = @party[@selected_actor_index]
