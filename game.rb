@@ -161,6 +161,9 @@ class Game
 
   def handle_input
     dt = GetFrameTime()
+    # dt — реальное время кадра в секундах.
+    # Умножать на dt нужно движение, анимации и таймеры.
+    # Обработка нажатий (IsKeyPressed) — без dt, она мгновенная.
     # === Пересчёт координат мыши под canvas 576×480 (целочисленный масштаб) ===
     sw = GetScreenWidth()
     sh = GetScreenHeight()
@@ -305,6 +308,8 @@ class Game
     @audio.update
     @player.update_animation(dt)
     @player.update_movement(dt) if @game_state == :playing
+	# dt передаётся. Внутри player.rb он копится в fixed-timestep аккумулятор,
+    # а шаг делается целыми пикселями (PIXEL_SPEED). Скорость одна на любом мониторе.
 	
 	if @game_map
 	  if @game_state == :playing || @game_state == :menu
@@ -509,6 +514,9 @@ end
 	
 	if @game_state == :dialog && @dialog_manager
 	  @dialog_manager.update(dt)
+	  # dt передаётся. Внутри dialog_manager.rb посимвольный вывод текста
+	  # теперь идёт со скоростью REVEAL_SPEED = 1/30 сек на символ
+	  # (было 2 кадра при 60fps). Скорость печати одна на любом мониторе.	  
 	  if @dialog_manager.finished?
 		@dialog_manager = nil
 		@game_state = :playing
@@ -629,6 +637,8 @@ def change_map(map_id, target_x, target_y, facing = nil)
   }
   @game_state = :warping
   @warp_delay = 10        # ждём ~10 кадров (0.16 сек при 60 FPS, через dt * 60)
+  # ^ 10 "кадров при 60fps" = ~0.16 сек. Ниже в update() вычитается через dt * 60.0.
+  #   Если переписывать в секунды: @warp_delay = 0.16 и @warp_delay -= dt.
 end
 
 def try_start_interaction
