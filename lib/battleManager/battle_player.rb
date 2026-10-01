@@ -2,6 +2,7 @@
 
 TILE_SIZE = 48
 PIXEL_SPEED = 4
+FIXED_DT = 1.0 / 60.0
 ANIM_SPEED  = 12
 
 DIR_DOWN  = 2
@@ -31,6 +32,7 @@ class BattlePlayer
 	@blinking = false
     @blink_timer = 0
     @blink_alpha = 255   # начальная непрозрачность
+	@move_accum = 0.0
 	
   end
 
@@ -111,16 +113,29 @@ end
     try_move(dir, battle_manager)
   end
 
-  def update
-    update_movement
-    update_animation
-	update_blinking
+  def update(dt = 1.0 / 60.0)
+    update_movement(dt)
+    update_animation(dt)
+    update_blinking(dt)
   end
 
-  def update_movement
-    return unless @moving
-    @pixel_offset += PIXEL_SPEED
+  def update_movement(dt = 1.0 / 60.0)
+    unless @moving
+      @move_accum = 0.0
+      return
+    end
 
+    @move_accum += dt
+    @move_accum = FIXED_DT * 5 if @move_accum > FIXED_DT * 5
+
+    while @move_accum >= FIXED_DT && @moving
+      @move_accum -= FIXED_DT
+      step_movement
+    end
+  end
+
+  def step_movement
+    @pixel_offset += PIXEL_SPEED
     if @pixel_offset >= @tile_size
       case @move_dir
       when DIR_RIGHT then @x += 1
@@ -133,20 +148,18 @@ end
     end
   end
 
-  def update_animation
-    @anim_frame += 1
-    if @anim_frame >= ANIM_SPEED
+  def update_animation(dt = 1.0 / 60.0)
+    @anim_frame += dt
+    if @anim_frame >= ANIM_SPEED / 60.0
       @anim_frame = 0
       @pattern = (@pattern + 1) % 2
     end
   end
 
-  def update_blinking
+  def update_blinking(dt = 1.0 / 60.0)
     return unless @blinking
-    @blink_timer += 1
-    # Плавное изменение альфы от 0 до 255, период – примерно 40 кадров (0.67 сек при 60 FPS)
-    # Значение sin возвращает -1..1, преобразуем в диапазон 0..255
-    raw = Math.sin(@blink_timer * 0.25)   # – скорость мерцания (меньше = медленнее)
+    @blink_timer += dt * 60.0
+    raw = Math.sin(@blink_timer * 0.25)
     @blink_alpha = ((raw + 1) * 127.5).to_i.clamp(0, 255)
   end
 

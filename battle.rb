@@ -902,7 +902,7 @@ end
 
    when :item_grid_select
      @battle_menu.handle_input
-     @battle_player&.update_animation
+     @battle_player&.update_animation(dt)
      if (result = @battle_menu.fetch_pending_grid_item)
        item, mode = result
        case mode
@@ -982,6 +982,7 @@ end
  end
 
   def update
+    dt = GetFrameTime()
     @battle_menu.update
     @cursor.update		
     update_units_animation
@@ -1040,7 +1041,7 @@ end
 
     when :player_turn
       if @battle_player
-        @battle_player.update
+        @battle_player.update(dt)
 
         # Сначала синхронизируем координаты, если остановились
         unless @battle_player.moving
@@ -1130,7 +1131,7 @@ end
         end
 	  end
 	  
-	  @battle_player&.update_animation
+	  @battle_player&.update_animation(dt)
 	  return if @cursor.visible   # ← враг ничего не делает, пока курсор на экране
 	  
       @enemy_action_timer -= 1
@@ -1146,7 +1147,7 @@ end
       end
 
     when :enemy_moving
-      @battle_player.update
+      @battle_player.update(dt)
 
       # Камера всегда привязана к визуальному центру (и при движении, и после остановки)
       @camera.follow_point(
@@ -1178,13 +1179,13 @@ end
       end
 
     when :action_menu
-      @battle_player&.update_animation
+      @battle_player&.update_animation(dt)
 	  
 	when :item_grid_select
-      @battle_player&.update_animation  
+      @battle_player&.update_animation(dt)  
 
   when :attack_targeting
-  @battle_player&.update_animation  # только анимация, без движения
+  @battle_player&.update_animation(dt)  # только анимация, без движения
   if @attack_targets.any?
     # Переключение цели стрелками
     if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_UP)
@@ -1258,23 +1259,23 @@ end
   end
 
     when :magic_select
-      @battle_player&.update_animation 
+      @battle_player&.update_animation(dt) 
 	
 	when :item_select
-      @battle_player&.update_animation
+      @battle_player&.update_animation(dt)
 	  
 	when :equip_weapon
       update_equip
-      @battle_player&.update_animation
+      @battle_player&.update_animation(dt)
     when :equip_ring
       update_equip
-      @battle_player&.update_animation
+      @battle_player&.update_animation(dt)
 	  
 	when :give_targeting
-      @battle_player&.update_animation  
+      @battle_player&.update_animation(dt)  
 	  
 	when :give_animation
-      @battle_player&.update_animation
+      @battle_player&.update_animation(dt)
       update_give_animation  
 
     when :battle_scene
@@ -1307,11 +1308,11 @@ end
         @info_cursor_y = (@info_cursor_py / TILE_SIZE).floor
       end
       @camera.follow_point(@info_cursor_px, @info_cursor_py)
-      @battle_player&.update
-	  @battle_player&.update_animation
+      @battle_player&.update(dt)
+	  @battle_player&.update_animation(dt)
 	  
     when :info_profile
-      @battle_player&.update
+      @battle_player&.update(dt)
       @profile.update
       if @profile.instance_variable_get(:@ready_to_close)
         @profile.force_close
@@ -1319,7 +1320,7 @@ end
       end
 
     when :enemy_profile
-      @battle_player&.update
+      @battle_player&.update(dt)
       @enemy_profile.update(dt)
     if @enemy_profile.instance_variable_get(:@ready_to_close)
       @enemy_profile.force_close
@@ -1331,12 +1332,12 @@ end
 	when :drop_confirm
       update_drop_confirm
     when :drop_message
-      @battle_player&.update_animation
+      @battle_player&.update_animation(dt)
       update_drop_message
 	  
     when :death_animation
       @death_anim&.update
-      @battle_player&.update_animation
+      @battle_player&.update_animation(dt)
   
   if @death_anim&.finished
     @death_anim.unload
