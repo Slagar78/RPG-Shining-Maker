@@ -381,27 +381,29 @@ end
         return
       end
 
-      if Raylib.IsKeyDown(Raylib::KEY_UP)
-        @input_timer_up += dt * 60.0
-        if @input_timer_up >= 1 && @input_timer_up < 1.5
-          change_selected_actor(-1)
-        elsif @input_timer_up > 20 && ((@input_timer_up - 20) % 5) < 1
-          change_selected_actor(-1)
-        end
-      else
-        @input_timer_up = 0
-      end
+		if Raylib.IsKeyPressed(Raylib::KEY_UP)
+		  change_selected_actor(-1)
+		  @input_timer_up = 0
+		elsif Raylib.IsKeyDown(Raylib::KEY_UP)
+		  @input_timer_up += dt * 60.0
+		  if @input_timer_up > 20 && ((@input_timer_up - 20) % 5) < 1
+			change_selected_actor(-1)
+		  end
+		else
+		  @input_timer_up = 0
+		end
 
-      if Raylib.IsKeyDown(Raylib::KEY_DOWN)
-        @input_timer_down += dt * 60.0
-        if @input_timer_down >= 1 && @input_timer_down < 1.5
-          change_selected_actor(1)
-        elsif @input_timer_down > 20 && ((@input_timer_down - 20) % 5) < 1
-          change_selected_actor(1)
-        end
-      else
-        @input_timer_down = 0
-      end
+		if Raylib.IsKeyPressed(Raylib::KEY_DOWN)
+		  change_selected_actor(1)
+		  @input_timer_down = 0
+		elsif Raylib.IsKeyDown(Raylib::KEY_DOWN)
+		  @input_timer_down += dt * 60.0
+		  if @input_timer_down > 20 && ((@input_timer_down - 20) % 5) < 1
+			change_selected_actor(1)
+		  end
+		else
+		  @input_timer_down = 0
+		end
 
       if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
         @status_view_mode = 1 - @status_view_mode
@@ -843,26 +845,28 @@ class GiveMenu < ItemSubMenuBase
         @focus = :party
         return
       end
-      if Raylib.IsKeyDown(Raylib::KEY_UP)
-        @input_timer_up += dt * 60.0
-        if @input_timer_up >= 1 && @input_timer_up < 1.5
-          change_selected_actor(-1)
-        elsif @input_timer_up > 20 && ((@input_timer_up - 20) % 5) < 1
-          change_selected_actor(-1)
-        end
-      else
-        @input_timer_up = 0
-      end
-      if Raylib.IsKeyDown(Raylib::KEY_DOWN)
-        @input_timer_down += dt * 60.0
-        if @input_timer_down >= 1 && @input_timer_down < 1.5
-          change_selected_actor(1)
-        elsif @input_timer_down > 20 && ((@input_timer_down - 20) % 5) < 1
-          change_selected_actor(1)
-        end
-      else
-        @input_timer_down = 0
-      end
+		if Raylib.IsKeyPressed(Raylib::KEY_UP)
+		  change_selected_actor(-1)
+		  @input_timer_up = 0
+		elsif Raylib.IsKeyDown(Raylib::KEY_UP)
+		  @input_timer_up += dt * 60.0
+		  if @input_timer_up > 20 && ((@input_timer_up - 20) % 5) < 1
+			change_selected_actor(-1)
+		  end
+		else
+		  @input_timer_up = 0
+		end
+		if Raylib.IsKeyPressed(Raylib::KEY_DOWN)
+		  change_selected_actor(1)
+		  @input_timer_down = 0
+		elsif Raylib.IsKeyDown(Raylib::KEY_DOWN)
+		  @input_timer_down += dt * 60.0
+		  if @input_timer_down > 20 && ((@input_timer_down - 20) % 5) < 1
+			change_selected_actor(1)
+		  end
+		else
+		  @input_timer_down = 0
+		end
       if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
         max_modes = item_affects_attack_defense? ? 3 : 2
         @status_view_mode = (@status_view_mode + 1) % max_modes
