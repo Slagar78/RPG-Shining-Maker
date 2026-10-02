@@ -168,7 +168,7 @@ end
 
     @slide_dir = dir
     @move_dir  = dir
-	@reserved_x = new_x
+    @reserved_x = new_x
     @reserved_y = new_y
     @moving    = true
     @pixel_offset = 0
@@ -185,7 +185,8 @@ end
 end
 
 	def update_movement(dt = 1.0 / 60.0)
-	  @move_accum += dt
+	snapped_dt = (dt * 60.0).round / 60.0
+	  @move_accum += snapped_dt
 	  @move_accum = FIXED_DT * 5 if @move_accum > FIXED_DT * 5
 
 	  while @move_accum >= FIXED_DT
