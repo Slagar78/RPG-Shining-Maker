@@ -1414,7 +1414,7 @@ class EquipMenu < ItemSubMenuBase
         end
       end
 
-      if Raylib.IsKeyPressed(Raylib::KEY_A)
+      if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
         actor = @party[@selected_actor_index]
         items = fill_to_four(find_actor_items(@current_actor))
 
@@ -1478,7 +1478,7 @@ class EquipMenu < ItemSubMenuBase
         end
       end
 
-      if Raylib.IsKeyPressed(Raylib::KEY_A)
+      if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
         actor = @party[@selected_actor_index]
         if @selected_ring_index == 4   # No Ring
           items = find_actor_items(@current_actor)
@@ -1530,7 +1530,7 @@ class EquipMenu < ItemSubMenuBase
       elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
         @selected_item_index = 3
       end
-      if Raylib.IsKeyPressed(Raylib::KEY_A)
+      if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
         if @available_equipment && @selected_item_index < @available_equipment.length
           item_entry = @available_equipment[@selected_item_index]
           if item_entry && item_entry["item"] != "NOTHING"
