@@ -285,9 +285,9 @@ class BattleMenu
     end
   end
 
-  def update
+  def update(dt = 1.0 / 60.0)
     return unless @visible
-    @anim_timer += 1
+    @anim_timer += dt * 60.0
   end
 
   def draw

@@ -983,7 +983,7 @@ end
 
   def update
     dt = GetFrameTime()
-    @battle_menu.update
+    @battle_menu.update(dt)
     @cursor.update		
     update_units_animation(dt)
     @highlight_timer += dt * 60.0
