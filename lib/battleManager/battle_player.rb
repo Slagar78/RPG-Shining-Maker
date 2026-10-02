@@ -1,7 +1,7 @@
 # lib/battleManager/battle_player.rb
 
 TILE_SIZE = 48
-PIXEL_SPEED = 4
+FRAMES_PER_TILE = 14
 FIXED_DT = 1.0 / 60.0
 ANIM_SPEED  = 12
 
@@ -27,6 +27,7 @@ class BattlePlayer
     @moving = false
     @move_dir = DIR_DOWN
     @pixel_offset = 0
+	@step_progress = 0
     @highlight_tiles = highlight_tiles
 	
 	@blinking = false
@@ -66,6 +67,7 @@ def try_move(dir, battle_manager = nil)
   @move_dir = dir
   @moving = true
   @pixel_offset = 0
+  @step_progress = 0
 end
 
   def move_towards(target_x, target_y, battle_manager = nil)
@@ -84,8 +86,9 @@ end
     @x = new_x
     @y = new_y
     @pixel_offset = 0
+    @step_progress = 0
     @moving = false
-    @move_dir = DIR_DOWN   # значение по умолчанию
+    @move_dir = DIR_DOWN
   end
 
   def face_target(target_x, target_y)
@@ -135,8 +138,9 @@ end
   end
 
   def step_movement
-    @pixel_offset += PIXEL_SPEED
-    if @pixel_offset >= @tile_size
+    @step_progress += 1
+    if @step_progress >= FRAMES_PER_TILE
+      # Завершаем тайл
       case @move_dir
       when DIR_RIGHT then @x += 1
       when DIR_LEFT  then @x -= 1
@@ -144,7 +148,11 @@ end
       when DIR_UP    then @y -= 1
       end
       @pixel_offset = 0
+      @step_progress = 0
       @moving = false
+    else
+      # Промежуточный кадр — целое смещение
+      @pixel_offset = (@tile_size * @step_progress / FRAMES_PER_TILE.to_f).round
     end
   end
 
