@@ -128,7 +128,9 @@ end
       return
     end
 
-    @move_accum += dt
+    # Приводим dt к ближайшему кратному 1/60 — убирает дрожание vsync
+    snapped_dt = (dt * 60.0).round / 60.0
+    @move_accum += snapped_dt
     @move_accum = FIXED_DT * 5 if @move_accum > FIXED_DT * 5
 
     while @move_accum >= FIXED_DT && @moving
