@@ -1278,7 +1278,7 @@ end
 	  
 	when :give_animation
       @battle_player&.update_animation(dt)
-      update_give_animation  
+      update_give_animation(dt)
 
     when :battle_scene
       @battle_scene.update
@@ -1330,12 +1330,12 @@ end
     end
 	
 	when :give_message
-      update_give_message
+      update_give_message(dt)
 	when :drop_confirm
-      update_drop_confirm
+      update_drop_confirm(dt)
     when :drop_message
       @battle_player&.update_animation(dt)
-      update_drop_message
+      update_drop_message(dt)
 	  
     when :death_animation
       @death_anim&.update(dt)

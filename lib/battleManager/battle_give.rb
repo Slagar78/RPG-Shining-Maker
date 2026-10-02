@@ -203,9 +203,9 @@ end
   end
 
   # Обновление анимации печати символов
-  def update_give_message
+  def update_give_message(dt = 1.0 / 60.0)
     return if @give_msg_finished
-    @give_msg_char_timer += 1
+    @give_msg_char_timer += dt * 60.0
     if @give_msg_char_timer >= @give_msg_char_speed
       @give_msg_char_timer = 0
       total_chars = @give_msg_full_lines.sum(&:length)
@@ -321,8 +321,8 @@ end
     @target_highlight = nil
   end
 
-  def update_give_animation
-    @give_anim_timer += 1
+  def update_give_animation(dt = 1.0 / 60.0)
+    @give_anim_timer += dt * 60.0
     if @give_anim_timer >= 150
       @give_anim_active = false
       start_give_message(@give_anim_message_id, @give_anim_message_params)

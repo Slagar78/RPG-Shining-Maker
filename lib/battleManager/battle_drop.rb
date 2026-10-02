@@ -100,12 +100,12 @@ module BattleDrop
     end
   end
 
-  def update_drop_confirm
-    @battle_player&.update_animation
+def update_drop_confirm(dt = 1.0 / 60.0)
+    @battle_player&.update_animation(dt)
 
     # анимация печати текста
     unless @drop_confirm_text_finished
-      @drop_confirm_char_timer += 1
+      @drop_confirm_char_timer += dt * 60.0
       if @drop_confirm_char_timer >= @drop_confirm_char_speed
         @drop_confirm_char_timer = 0
         total = @drop_confirm_full_lines.sum(&:length)
@@ -119,7 +119,7 @@ module BattleDrop
 
     # мигание иконок (когда текст уже напечатан)
     if @drop_confirm_text_finished
-      @drop_confirm_anim_timer += 1
+      @drop_confirm_anim_timer += dt * 60.0
     end
   end
 
@@ -154,9 +154,9 @@ end
     @drop_confirm_item = nil
   end
 
-  def update_drop_message
+def update_drop_message(dt = 1.0 / 60.0)
     return if @drop_msg_finished
-    @drop_msg_char_timer += 1
+    @drop_msg_char_timer += dt * 60.0
     if @drop_msg_char_timer >= @drop_msg_char_speed
       @drop_msg_char_timer = 0
       total_chars = @drop_msg_full_lines.sum(&:length)
