@@ -6,6 +6,7 @@ class AudioManager
     @current_bgm = nil
     @current_file = nil
     @sfx = {}
+	@base_sfx_volumes = {}
     @saved_music_volume = 0.8
   end
 
@@ -70,9 +71,12 @@ class AudioManager
     @sfx[name] = Raylib.LoadSound(path)
   end
 
-  def play_sfx(name)
+  def play_sfx(name, volume_scale = 1.0)
     sound = @sfx[name]
-    Raylib.PlaySound(sound) if sound
+    return unless sound
+    base = @base_sfx_volumes[name] || 1.0
+    Raylib.SetSoundVolume(sound, (base * volume_scale).clamp(0.0, 1.0))
+    Raylib.PlaySound(sound)
   end
 
   def stop_sfx(name)
@@ -81,9 +85,9 @@ class AudioManager
   end
 
   def set_sfx_volume(name, volume)
+    @base_sfx_volumes[name] = volume.clamp(0.0, 1.0)
     sound = @sfx[name]
-    return unless sound
-    Raylib.SetSoundVolume(sound, volume.clamp(0.0, 1.0))
+    Raylib.SetSoundVolume(sound, @base_sfx_volumes[name]) if sound
   end
 
   # ── Очистка ──

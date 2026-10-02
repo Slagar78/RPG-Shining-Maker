@@ -339,7 +339,8 @@ class Game
                   event: ev
                 }
                 @game_map.replace_tile(tx, ty, ev['new_tile_id'])
-				@audio.play_sfx(:door)
+                door_volume = (char == @player) ? 1.0 : 0.5
+                @audio.play_sfx(:door, door_volume)
               end
             end
 
@@ -350,7 +351,8 @@ class Game
                  char.last_x == tx && char.last_y == ty
                 original = @game_map.open_doors.delete(door_key)[:original_tile]
                 @game_map.replace_tile(tx, ty, original)
-				@audio.play_sfx(:door)
+                door_volume = (char == @player) ? 1.0 : 0.5
+                @audio.play_sfx(:door, door_volume)
               end
             end
           end
