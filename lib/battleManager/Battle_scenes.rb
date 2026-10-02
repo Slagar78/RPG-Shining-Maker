@@ -32,6 +32,7 @@ class BattleScene
   IDLE_AFTER_DURATION  = 1.5
   PRE_ATTACK_DURATION = 0.5
   RUN_IN_DURATION      = 0.35   # длительность выезда персонажа
+  MESSAGE_REVEAL_SPEED = 2.0 / 60.0   # секунд на символ (было 2 кадра при 60 FPS)
   
   BLINK_COUNT     = 3
   BLINK_INTERVAL  = 0.12
@@ -107,7 +108,7 @@ class BattleScene
     @current_message = ""
     @message_reveal_index = 0
     @message_timer = 0
-    @message_reveal_speed = 2   # кадров на символ
+    @message_reveal_speed = MESSAGE_REVEAL_SPEED
     @full_message_shown = false
 	@message_done_timer = 0.0 
 
@@ -337,9 +338,9 @@ def update
       update_animation(dt)
 
       unless @full_message_shown
-        @message_timer += 1
+        @message_timer += dt
         if @message_timer >= @message_reveal_speed
-          @message_timer = 0
+          @message_timer -= @message_reveal_speed
           @message_reveal_index += 1
           # Пропускаем управляющий символ {N} целиком
           if @current_message[@message_reveal_index, 3] == "{N}"
@@ -398,9 +399,9 @@ def update
       @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :idle, @attacker_current_frame, @attacker_anim_timer, dt)
       # Печать текста
       unless @full_message_shown
-        @message_timer += 1
+        @message_timer += dt
         if @message_timer >= @message_reveal_speed
-          @message_timer = 0
+          @message_timer -= @message_reveal_speed
           @message_reveal_index += 1
           # Пропускаем управляющий символ {N} целиком
           if @current_message[@message_reveal_index, 3] == "{N}"
@@ -424,9 +425,9 @@ def update
     when :exp_message
       @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :idle, @attacker_current_frame, @attacker_anim_timer, dt)
       unless @full_message_shown
-        @message_timer += 1
+        @message_timer += dt
         if @message_timer >= @message_reveal_speed
-          @message_timer = 0
+          @message_timer -= @message_reveal_speed
           @message_reveal_index += 1
           if @current_message[@message_reveal_index, 3] == "{N}"
             @message_reveal_index += 3
