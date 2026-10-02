@@ -45,7 +45,7 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
   attr_accessor :battle_scene_font
 
   TILE_SIZE = 48
-  CURSOR_SPEED = 8.0
+  CURSOR_SPEED = 480.0     # пикс/сек (было 8 за кадр × 60)
   CURSOR_HIDE_DELAY = 12
   
   def apply_equipment_bonuses(unit, inventory_items)
@@ -769,13 +769,13 @@ end
        @info_cursor_vx = 0
        @info_cursor_vy = 0
        if IsKeyDown(KEY_LEFT)
-         @info_cursor_vx = -8
+         @info_cursor_vx = -480.0
        elsif IsKeyDown(KEY_RIGHT)
-         @info_cursor_vx = 8
+         @info_cursor_vx = 480.0
        elsif IsKeyDown(KEY_UP)
-         @info_cursor_vy = -8
+         @info_cursor_vy = -480.0
        elsif IsKeyDown(KEY_DOWN)
-         @info_cursor_vy = 8
+         @info_cursor_vy = 480.0
        end
      end
 
@@ -985,8 +985,8 @@ end
     dt = GetFrameTime()
     @battle_menu.update
     @cursor.update		
-    update_units_animation
-    @highlight_timer += 1
+    update_units_animation(dt)
+    @highlight_timer += dt * 60.0
 
     case @battle_state
     when :cursor_moving
@@ -996,7 +996,8 @@ end
         dx = @cursor_target_x - cur_px
         dy = @cursor_target_y - cur_py
         dist = Math.sqrt(dx*dx + dy*dy)
-        if dist <= CURSOR_SPEED
+        step_dist = CURSOR_SPEED * dt
+        if dist <= step_dist
           final_tile_x = (@cursor_target_x / TILE_SIZE).round
           final_tile_y = (@cursor_target_y / TILE_SIZE).round
           @cursor.move_to(final_tile_x, final_tile_y)
@@ -1006,8 +1007,8 @@ end
           @current_unit = @turn_order[@current_unit_index]
           start_current_turn
         else
-          step_x = dx / dist * CURSOR_SPEED
-          step_y = dy / dist * CURSOR_SPEED
+          step_x = dx / dist * step_dist
+          step_y = dy / dist * step_dist
           new_px = cur_px + step_x
           new_py = cur_py + step_y
           @cursor.move_to_pixel(new_px, new_py)
@@ -1015,14 +1016,15 @@ end
         end
       end
 	  
-	when :cursor_returning
+    when :cursor_returning
       cur_px = @cursor.px
       cur_py = @cursor.py
       dx = @cursor_target_x - cur_px
       dy = @cursor_target_y - cur_py
       dist = Math.sqrt(dx*dx + dy*dy)
 
-    if dist <= CURSOR_SPEED
+    step_dist = CURSOR_SPEED * dt
+    if dist <= step_dist
       # Прибыли – синхронизируемся и переходим в player_turn
       final_tile_x = (@cursor_target_x / TILE_SIZE).round
       final_tile_y = (@cursor_target_y / TILE_SIZE).round
@@ -1031,12 +1033,12 @@ end
       @battle_state = :player_turn
       sync_cursor_to_unit   # на всякий случай подстрахует
     else
-      step_x = dx / dist * CURSOR_SPEED
-      step_y = dy / dist * CURSOR_SPEED
+      step_x = dx / dist * step_dist
+      step_y = dy / dist * step_dist
       new_px = cur_px + step_x
       new_py = cur_py + step_y
       @cursor.move_to_pixel(new_px, new_py)
-	  @camera.follow_point(new_px.round, new_py.round)   # <-- камера следует за курсором
+      @camera.follow_point(new_px.round, new_py.round)   # <-- камера следует за курсором
     end
 
     when :player_turn
@@ -1110,7 +1112,7 @@ end
           end
         end
 
-        @cursor_hide_timer += 1
+        @cursor_hide_timer += dt * 60.0
         if @cursor_hide_timer >= CURSOR_HIDE_DELAY && @cursor.visible
            @cursor.visible = false
         if @panel_slide_state == :hidden
@@ -1122,7 +1124,7 @@ end
 
     when :enemy_turn_wait
       sync_cursor_to_unit
-      @cursor_hide_timer += 1
+      @cursor_hide_timer += dt * 60.0
       if @cursor_hide_timer >= CURSOR_HIDE_DELAY && @cursor.visible
         @cursor.visible = false
 		if @panel_slide_state == :hidden
@@ -1134,7 +1136,7 @@ end
 	  @battle_player&.update_animation(dt)
 	  return if @cursor.visible   # ← враг ничего не делает, пока курсор на экране
 	  
-      @enemy_action_timer -= 1
+      @enemy_action_timer -= dt * 60.0
       if @enemy_action_timer <= 0
         @cursor.visible = false
         @enemy_move_queue = EnemyAI.decide_moves(@current_unit, @allies, @enemies, @highlight_tiles)
@@ -1298,8 +1300,8 @@ end
     
     when :info_mode
       if @info_cursor_vx != 0 || @info_cursor_vy != 0
-        @info_cursor_px += @info_cursor_vx
-        @info_cursor_py += @info_cursor_vy
+        @info_cursor_px += @info_cursor_vx * dt
+        @info_cursor_py += @info_cursor_vy * dt
         max_px = (@battle_w * TILE_SIZE) - 1
         max_py = (@battle_h * TILE_SIZE) - 1
         @info_cursor_px = @info_cursor_px.clamp(0, max_px)
@@ -1356,10 +1358,10 @@ end
   @camera.update(dt)
 end    # ← конец метода update
 
-  def update_units_animation
+  def update_units_animation(dt = 1.0 / 60.0)
     (@allies + @enemies).each do |unit|
       next if unit == @current_unit && @battle_player
-      unit[:sprite_timer] += 1
+      unit[:sprite_timer] += dt * 60.0
       if unit[:sprite_timer] >= unit[:sprite_speed]
         unit[:sprite_timer] = 0
         unit[:sprite_frame] = (unit[:sprite_frame] + 1) % 2
