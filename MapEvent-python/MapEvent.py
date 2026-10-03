@@ -23,7 +23,16 @@ from events_data import (
 from PySide6.QtWidgets import QToolButton
 
 TILE_SIZE = 48
-NPC_SPRITES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "mapsprites_NPC")
+
+def _project_root():
+    if getattr(sys, 'frozen', False):
+        # exe в Constructor/Maker → корень репо на 2 уровня выше
+        return os.path.abspath(os.path.join(os.path.dirname(sys.executable), "..", ".."))
+    else:
+        # запуск из MapEvent-python → корень репо на 1 уровень выше
+        return os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+
+NPC_SPRITES_DIR = os.path.join(_project_root(), "assets", "mapsprites_NPC")
 
 # ─── УТОЛЩЁННЫЕ ПЕРА ─────────────────────────────────
 PEN_W            = 4
@@ -525,7 +534,7 @@ class EditorWindow(QMainWindow):
         self._load_map(folder)
 
     def _load_map(self, folder):
-        path = os.path.join("..", "data", "maps", folder, "layout.json")
+        path = os.path.join(_project_root(), "data", "maps", folder, "layout.json")
         if not os.path.exists(path):
             QMessageBox.warning(self, "Error", f"layout.json not found in {folder}")
             return
@@ -547,7 +556,7 @@ class EditorWindow(QMainWindow):
         self._load_npc_sprites()   # обновим список спрайтов
 
     def _load_tileset(self, tileset_path):
-        paths = [tileset_path, f"../{tileset_path}"]
+        paths = [tileset_path, os.path.join(_project_root(), tileset_path)]
         pix = None
         for p in paths:
             if os.path.exists(p):
@@ -1064,7 +1073,7 @@ class EditorWindow(QMainWindow):
     def _load_initial_data(self):
         self.map_entries = []
         self.current_map_idx = 0
-        entries_path = os.path.join("..", "data", "maps", "entries.json")
+        entries_path = os.path.join(_project_root(), "data", "maps", "entries.json")
         if os.path.exists(entries_path):
             with open(entries_path, "r", encoding="utf-8") as f:
                 self.map_entries = json.load(f)

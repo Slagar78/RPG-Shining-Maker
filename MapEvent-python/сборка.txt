@@ -1,0 +1,24 @@
+pyinstaller --onedir --windowed --clean --noconfirm ^
+    --name "map_event_editor" ^
+    --paths=. ^
+    --hidden-import events_data ^
+    MapEvent.py
+
+Перемещение exe — шпаргалка
+Откуда взять:
+C:\SHINZO\RPG-Shining-Maker\MapEvent-python\dist\map_event_editor\
+
+Что взять (2 элемента):
+map_event_editor.exe
+_internal\ (целиком)
+
+Куда положить:
+C:\SHINZO\RPG-Shining-Maker\Constructor\Maker\
+
+Constructor\Maker\
+├── MapEditor.exe
+├── Database.exe
+├── BattleEditor.exe
+├── ...
+├── map_event_editor.exe   ← сюда
+└── _internal\             ← и сюда

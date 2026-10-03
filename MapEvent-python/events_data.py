@@ -3,6 +3,14 @@ import os
 from dataclasses import dataclass, field
 from typing import List
 
+import sys
+
+def _project_root():
+    if getattr(sys, 'frozen', False):
+        return os.path.abspath(os.path.join(os.path.dirname(sys.executable), "..", ".."))
+    else:
+        return os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+
 # ---------- Модели событий ----------
 
 @dataclass
@@ -138,7 +146,7 @@ class MapEvents:
 # ---------- Загрузка / Сохранение ----------
 
 def load_events(folder: str) -> MapEvents:
-    path = os.path.join("..", "data", "maps", folder, "events.json")
+    path = os.path.join(_project_root(), "data", "maps", folder, "events.json")
     events = MapEvents()
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
@@ -195,7 +203,7 @@ def load_events(folder: str) -> MapEvents:
                 events.warps.append(wp)
 
     # NPC – загружаем из NPC_events.json (без text_id)
-    npc_path = os.path.join("..", "data", "maps", folder, "NPC_events.json")
+    npc_path = os.path.join(_project_root(), "data", "maps", folder, "NPC_events.json")
     if os.path.exists(npc_path):
         with open(npc_path, "r", encoding="utf-8") as f:
             npc_data = json.load(f)
@@ -215,7 +223,7 @@ def load_events(folder: str) -> MapEvents:
             events.npcs.append(npc)
 
     # Чтение NPC_script.json – заполняем text_id для всех NPC
-    script_path = os.path.join("..", "data", "maps", folder, "NPC_script.json")
+    script_path = os.path.join(_project_root(), "data", "maps", folder, "NPC_script.json")
     if os.path.exists(script_path):
         with open(script_path, "r", encoding="utf-8") as f:
             scripts = json.load(f)
@@ -236,7 +244,7 @@ def load_events(folder: str) -> MapEvents:
 
 
 def save_events(folder: str, events: MapEvents):
-    dir_path = os.path.join("..", "data", "maps", folder)
+    dir_path = os.path.join(_project_root(), "data", "maps", folder)
     os.makedirs(dir_path, exist_ok=True)
 
     # events.json (без NPC)
