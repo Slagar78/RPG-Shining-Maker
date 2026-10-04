@@ -44,10 +44,10 @@ public class TileItem : INotifyPropertyChanged
 
     public IBrush TileColor => TileType switch
     {
-        0 => new SolidColorBrush(Color.Parse("#4CAF50")), // зелёный — проходимый
-        1 => new SolidColorBrush(Color.Parse("#E74C3C")), // красный — блок
-        2 => new SolidColorBrush(Color.Parse("#3498DB")), // синий — медленный
-        3 => new SolidColorBrush(Color.Parse("#E67E22")), // оранжевый — под
+        0 => new SolidColorBrush(Color.Parse("#4CAF50")),
+        1 => new SolidColorBrush(Color.Parse("#E74C3C")),
+        2 => new SolidColorBrush(Color.Parse("#3498DB")),
+        3 => new SolidColorBrush(Color.Parse("#E67E22")),
         _ => Brushes.Gray
     };
 
@@ -58,8 +58,13 @@ public class TileItem : INotifyPropertyChanged
 
 public partial class MainWindow : Window
 {
+    private const int PaletteCols = 8;
+    private const int TileSize    = 48;
+
     private Bitmap? _sourceTileset;
-    private readonly List<TileItem> _tiles = new();
+
+    // ВАЖНО: не readonly — будем пересоздавать список при каждой загрузке
+    private List<TileItem> _tiles = new();
     private int[] _tileTypes = Array.Empty<int>();
 
     private bool _gridMode;
@@ -115,33 +120,46 @@ public partial class MainWindow : Window
             _sourceTileset?.Dispose();
             _sourceTileset = new Bitmap(path);
 
-            const int tileSize = 48;
-            int cols = _sourceTileset.PixelSize.Width / tileSize;
-            int rows = _sourceTileset.PixelSize.Height / tileSize;
+            int cols = _sourceTileset.PixelSize.Width / TileSize;
+            int rows = _sourceTileset.PixelSize.Height / TileSize;
 
-            _tiles.Clear();
-            int total = cols * rows;
-            _tileTypes = new int[total];
+            int strips = cols / PaletteCols;
 
-            for (int y = 0; y < rows; y++)
+            // ─── Создаём НОВЫЙ список, а не чистим старый ───
+            var newTiles = new List<TileItem>();
+
+            int idx = 0;
+            for (int strip = 0; strip < strips; strip++)
             {
-                for (int x = 0; x < cols; x++)
-                {
-                    int idx = y * cols + x;
-                    var crop = new CroppedBitmap(
-                        _sourceTileset,
-                        new PixelRect(x * tileSize, y * tileSize, tileSize, tileSize));
+                int startCol = strip * PaletteCols;
+                int endCol   = startCol + PaletteCols;
 
-                    _tiles.Add(new TileItem
+                for (int r = 0; r < rows; r++)
+                {
+                    for (int c = startCol; c < endCol; c++)
                     {
-                        Image = crop,
-                        Index = idx,
-                        TileType = 0,
-                        ShowType = _isModeB
-                    });
+                        var crop = new CroppedBitmap(
+                            _sourceTileset,
+                            new PixelRect(c * TileSize, r * TileSize, TileSize, TileSize));
+
+                        newTiles.Add(new TileItem
+                        {
+                            Image    = crop,
+                            Index    = idx,
+                            TileType = 0,
+                            ShowType = _isModeB
+                        });
+                        idx++;
+                    }
                 }
             }
 
+            // ─── Заменяем старый список новым ───
+            _tiles = newTiles;
+            _tileTypes = new int[_tiles.Count];
+
+            // Отсоединяем → присоединяем, чтобы Avalonia гарантированно обновила палитру
+            PaletteList.ItemsSource = null;
             PaletteList.ItemsSource = _tiles;
 
             const int expectedTiles = 1024;
@@ -150,6 +168,8 @@ public partial class MainWindow : Window
             PaletteStatus.Text = isValid ? "✓" : "✗";
             PaletteStatus.Foreground = isValid ? Brushes.LightGreen : Brushes.IndianRed;
             PaletteInfo.Text = $"Тайлов: {_tiles.Count}";
+
+            Debug.WriteLine($"Загружено {_tiles.Count} тайлов (strip-based, {strips} полос по {PaletteCols} столбцов)");
         }
         catch (Exception ex)
         {
@@ -218,9 +238,9 @@ public partial class MainWindow : Window
         if (!_isModeB) return;
         if (PaletteList.SelectedItem is not TileItem tile) return;
 
-        // Назначаем выбранный тип этому тайлу
+        if (tile.Index >= 0 && tile.Index < _tileTypes.Length)
+            _tileTypes[tile.Index] = _currentTileType;
         tile.TileType = _currentTileType;
-        _tileTypes[tile.Index] = _currentTileType;
 
         Debug.WriteLine($"Тайл #{tile.Index} → тип {_currentTileType}");
     }
