@@ -1,3 +1,0 @@
-[TEST] root = C:\SHINZO\RPG-Shining-Maker
-[TEST] entries: 3
-[TEST] ✅ Проект загружен

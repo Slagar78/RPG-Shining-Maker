@@ -1,9 +1,0 @@
-[TEST] CurrentDirectory = C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop
-[TEST] basePath = C:\SHINZO\RPG-Shining-Maker
-[TEST] layout: C:\SHINZO\RPG-Shining-Maker\data\maps\Granseal\layout.json, exists=True
-[TEST] map = 64×64
-[TEST] map.TilesetPath = 'assets/tilesets/tileset01.png'
-[TEST] resolved tileset: C:\SHINZO\RPG-Shining-Maker\assets\tilesets\tileset01.png
-[TEST] tileset exists: True
-[TEST] LoadTileset вызван, _tiles.Count = 1024
-[TEST] ✅ Всё загружено
