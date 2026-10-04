@@ -401,15 +401,9 @@
 
             <Grid Grid.Column="2" RowDefinitions="*,Auto">
                 <TabControl Grid.Row="0">
-                    <TabItem Header="Карты">
-                        <Border Background="#1E1E1E">
-                            <TextBlock Text="Холст карты"
-                                       Foreground="Gray"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       FontSize="20"/>
-                        </Border>
-                    </TabItem>
+				<TabItem Header="Карты">
+					<views:MapCanvas x:Name="MapCanvasControl"/>
+				</TabItem>
                     <TabItem Header="Эвенты">
                         <Border Background="#1E1E1E">
                             <TextBlock Text="Редактор событий"

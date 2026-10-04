@@ -15,6 +15,7 @@
           "AvaloniaUI.DiagnosticsSupport": "2.2.3",
           "CommunityToolkit.Mvvm": "8.4.2",
           "Material.Avalonia": "3.21.0",
+          "RpgShinzoMaker.Core": "1.0.0",
           "Semi.Avalonia": "12.1.0.1"
         },
         "runtime": {
@@ -583,6 +584,14 @@
             "fileVersion": "0.94.1.0"
           }
         }
+      },
+      "RpgShinzoMaker.Core/1.0.0": {
+        "runtime": {
+          "RpgShinzoMaker.Core.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
       }
     }
   },
@@ -808,6 +817,11 @@
       "sha512": "sha512-11YMr7FnAbL83bQmVxlhbIKHvSLxjO81D12Ej0QMSGXMDTxNA9MTOa4MQxx43nv5el/efuPHwzyrj6a5ha2gug==",
       "path": "tmds.dbus.protocol/0.94.1",
       "hashPath": "tmds.dbus.protocol.0.94.1.nupkg.sha512"
+    },
+    "RpgShinzoMaker.Core/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     }
   }
 }

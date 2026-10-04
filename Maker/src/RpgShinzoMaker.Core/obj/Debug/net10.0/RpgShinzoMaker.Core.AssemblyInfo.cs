@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RpgShinzoMaker.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+32785a6beadde61c6492b5a00ddd9542b3a6898d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bfa504d0c8c068cc49661bf332da461c3d74f052")]
 [assembly: System.Reflection.AssemblyProductAttribute("RpgShinzoMaker.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RpgShinzoMaker.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

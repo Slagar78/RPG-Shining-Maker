@@ -91,7 +91,110 @@ public partial class MainWindow : Window
 
         _gridMode = false;
         GridModeToggle.Content = "OFF";
-        GridModeToggle.IsEnabled = false;
+
+        LoadGransealForTest();
+    }
+
+private void LoadGransealForTest()
+{
+    var logPath = Path.Combine(Environment.CurrentDirectory, "startup_log.txt");
+    var log = new System.Text.StringBuilder();
+
+    void L(string s)
+    {
+        log.AppendLine(s);
+        Debug.WriteLine(s);
+    }
+
+    try
+    {
+        L($"[TEST] CurrentDirectory = {Environment.CurrentDirectory}");
+
+        var basePath = FindProjectRoot();
+        L($"[TEST] basePath = {basePath ?? "NULL"}");
+
+        if (basePath == null) { L("[TEST] ❌ Корень проекта не найден"); File.WriteAllText(logPath, log.ToString()); return; }
+
+        var layoutPath = Path.Combine(basePath, "data", "maps", "Granseal", "layout.json");
+        L($"[TEST] layout: {layoutPath}, exists={File.Exists(layoutPath)}");
+
+        if (!File.Exists(layoutPath)) { File.WriteAllText(logPath, log.ToString()); return; }
+
+        // 1. Читаем карту
+        var map = RpgShinzoMaker.Core.Services.MapJsonService.Load(layoutPath);
+        L($"[TEST] map = {(map == null ? "NULL" : $"{map.Width}×{map.Height}")}");
+        if (map == null) { File.WriteAllText(logPath, log.ToString()); return; }
+
+        // 2. Путь к тайлсету — берём ИЗ КАРТЫ
+        L($"[TEST] map.TilesetPath = '{map.TilesetPath}'");
+
+        // map.TilesetPath обычно вида "assets/tilesets/xxx.png"
+        var tilesetPath = Path.Combine(basePath, map.TilesetPath.Replace('/', Path.DirectorySeparatorChar));
+        L($"[TEST] resolved tileset: {tilesetPath}");
+        L($"[TEST] tileset exists: {File.Exists(tilesetPath)}");
+
+        if (!File.Exists(tilesetPath))
+        {
+            // Попробуем как альтернативу — ищем любой PNG в assets/tilesets
+            var tdir = Path.Combine(basePath, "assets", "tilesets");
+            if (Directory.Exists(tdir))
+            {
+                var pngs = Directory.GetFiles(tdir, "*.png");
+                L($"[TEST] Доступные PNG в assets/tilesets ({pngs.Length}):");
+                foreach (var p in pngs) L($"  - {Path.GetFileName(p)}");
+
+                if (pngs.Length > 0)
+                {
+                    tilesetPath = pngs[0];
+                    L($"[TEST] Возьму первый: {tilesetPath}");
+                }
+                else
+                {
+                    L("[TEST] ❌ PNG вообще нет");
+                    File.WriteAllText(logPath, log.ToString());
+                    return;
+                }
+            }
+            else
+            {
+                L($"[TEST] ❌ Папки нет: {tdir}");
+                File.WriteAllText(logPath, log.ToString());
+                return;
+            }
+        }
+
+        // 3. Загрузка тайлсета в палитру
+        LoadTileset(tilesetPath);
+        L($"[TEST] LoadTileset вызван, _tiles.Count = {_tiles.Count}");
+
+        // 4. Отдать карту в холст
+        var tilesetBmp = new Bitmap(tilesetPath);
+        MapCanvasControl.SetMap(map, tilesetBmp);
+        L("[TEST] ✅ Всё загружено");
+    }
+    catch (Exception ex)
+    {
+        L($"[TEST] ❌ Exception: {ex.Message}");
+        L($"[TEST] Stack: {ex.StackTrace}");
+    }
+
+    File.WriteAllText(logPath, log.ToString());
+}
+
+    private static string? FindProjectRoot()
+    {
+        var dir = new DirectoryInfo(Environment.CurrentDirectory);
+
+        for (int i = 0; i < 10 && dir != null; i++)
+        {
+            var test = Path.Combine(dir.FullName, "data", "maps");
+            if (Directory.Exists(test))
+                return dir.FullName;
+
+            dir = dir.Parent;
+        }
+
+        return null;
     }
 
     // ─── Загрузка тайлсета ──────────────────

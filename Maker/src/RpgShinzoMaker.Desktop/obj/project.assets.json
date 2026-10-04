@@ -735,6 +735,16 @@
             "related": ".xml"
           }
         }
+      },
+      "RpgShinzoMaker.Core/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "compile": {
+          "bin/placeholder/RpgShinzoMaker.Core.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/RpgShinzoMaker.Core.dll": {}
+        }
       }
     }
   },
@@ -1752,6 +1762,11 @@
         "tmds.dbus.protocol.0.94.1.nupkg.sha512",
         "tmds.dbus.protocol.nuspec"
       ]
+    },
+    "RpgShinzoMaker.Core/1.0.0": {
+      "type": "project",
+      "path": "../RpgShinzoMaker.Core/RpgShinzoMaker.Core.csproj",
+      "msbuildProject": "../RpgShinzoMaker.Core/RpgShinzoMaker.Core.csproj"
     }
   },
   "projectFileDependencyGroups": {
@@ -1763,6 +1778,7 @@
       "AvaloniaUI.DiagnosticsSupport >= 2.2.3",
       "CommunityToolkit.Mvvm >= 8.4.2",
       "Material.Avalonia >= 3.21.0",
+      "RpgShinzoMaker.Core >= 1.0.0",
       "Semi.Avalonia >= 12.1.0.1"
     ]
   },
@@ -1791,7 +1807,11 @@
         "net10.0": {
           "framework": "net10.0",
           "targetAlias": "net10.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\SHINZO\\RPG-Shining-Maker\\Maker\\src\\RpgShinzoMaker.Core\\RpgShinzoMaker.Core.csproj": {
+              "projectPath": "C:\\SHINZO\\RPG-Shining-Maker\\Maker\\src\\RpgShinzoMaker.Core\\RpgShinzoMaker.Core.csproj"
+            }
+          }
         }
       },
       "warningProperties": {

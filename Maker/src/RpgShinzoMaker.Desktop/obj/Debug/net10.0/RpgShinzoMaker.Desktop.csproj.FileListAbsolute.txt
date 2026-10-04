@@ -97,3 +97,5 @@ C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\M
 C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\Material.Colors.dll
 C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\Material.Ripple.dll
 C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\Material.Styles.dll
+C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\RpgShinzoMaker.Core.dll
+C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\RpgShinzoMaker.Core.pdb
