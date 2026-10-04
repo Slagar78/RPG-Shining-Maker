@@ -4,3 +4,45 @@
 
 # Игнорировать исполняемые файлы редактора
 Database/ShinzoDatabase.exe
+
+# ============================================================
+#  .NET / C# / Visual Studio / Rider
+# ============================================================
+
+# Артефакты сборки
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.dll
+*.exe
+*.pdb
+*.lib
+*.exp
+*.ilk
+*.so
+*.dylib
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+!packages/build/
+
+# Пользовательские настройки IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+# Временные файлы
+*.log
+*.tmp
+startup_log.txt
+
+# Кэш
+project.lock.json
+project.fragment.lock.json
+artifacts/

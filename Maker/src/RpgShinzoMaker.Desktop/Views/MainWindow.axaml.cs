@@ -186,6 +186,11 @@ private void LoadMapByEntry(RpgShinzoMaker.Core.Models.MapEntry entry)
         // 6. Подписи
         MapSizeText.Text    = $"{map.Width}×{map.Height}";
         MapTilesetText.Text = tilesetName;
+        // Музыка (берётся из entries.json)
+        var musicName = string.IsNullOrEmpty(entry.Music)
+            ? "—"
+            : Path.GetFileName(entry.Music);
+        MapMusicText.Text = musicName;
 
         Debug.WriteLine($"[MAP] ✅ Загружено: {entry.Name}");
     }
