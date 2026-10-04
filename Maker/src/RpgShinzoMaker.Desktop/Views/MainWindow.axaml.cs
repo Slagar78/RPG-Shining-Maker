@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -92,10 +93,14 @@ public partial class MainWindow : Window
         _gridMode = false;
         GridModeToggle.Content = "OFF";
 
-        LoadGransealForTest();
+        LoadProject();
     }
 
-private void LoadGransealForTest()
+// ─── Хранилище карт проекта ─────
+private List<RpgShinzoMaker.Core.Models.MapEntry> _mapEntries = new();
+
+// ─── Загрузка проекта (вызывается из конструктора) ─────
+private void LoadProject()
 {
     var logPath = Path.Combine(Environment.CurrentDirectory, "startup_log.txt");
     var log = new System.Text.StringBuilder();
@@ -103,58 +108,29 @@ private void LoadGransealForTest()
 
     try
     {
-        var basePath = FindProjectRoot();
-        L($"[TEST] basePath = {basePath ?? "NULL"}");
-        if (basePath == null) { L("❌ Корень не найден"); File.WriteAllText(logPath, log.ToString()); return; }
+        // 1. Корень
+        var root = FindProjectRoot();
+        L($"[TEST] root = {root ?? "NULL"}");
+        if (root == null) { L("❌ Корень не найден"); File.WriteAllText(logPath, log.ToString()); return; }
 
-        // 1. Читаем entries.json
-        var entriesPath = Path.Combine(basePath, "data", "maps", "entries.json");
-        var entries = RpgShinzoMaker.Core.Services.EntriesService.Load(entriesPath);
-        L($"[TEST] entries: {entries.Count} записей");
-        if (entries.Count == 0) { L("❌ entries.json пуст"); File.WriteAllText(logPath, log.ToString()); return; }
+        RpgShinzoMaker.Core.Services.ProjectPaths.Root = root;
 
-        // 2. Берём ПЕРВУЮ карту из entries (или ту, что нужна)
-        var entry = entries[0];
-        L($"[TEST] entry: folder='{entry.Folder}', name='{entry.Name}'");
+        // 2. Читаем entries.json
+        _mapEntries = RpgShinzoMaker.Core.Services.EntriesService.Load(
+            RpgShinzoMaker.Core.Services.ProjectPaths.EntriesFile);
+        L($"[TEST] entries: {_mapEntries.Count}");
+        if (_mapEntries.Count == 0) { L("❌ entries пуст"); File.WriteAllText(logPath, log.ToString()); return; }
 
-        // 3. Путь к layout.json — по folder из entries
-        var layoutPath = Path.Combine(basePath, "data", "maps", entry.Folder, "layout.json");
-        L($"[TEST] layout: {layoutPath}, exists={File.Exists(layoutPath)}");
-        if (!File.Exists(layoutPath)) { File.WriteAllText(logPath, log.ToString()); return; }
+        // 3. Заполняем ComboBox именами карт
+        MapSelector.ItemsSource = null;
+        MapSelector.ItemsSource = _mapEntries
+            .Select(e => e.Name)
+            .ToList();
 
-        // 4. Читаем карту
-        var map = RpgShinzoMaker.Core.Services.MapJsonService.Load(layoutPath);
-        if (map == null) { L("❌ map = NULL"); File.WriteAllText(logPath, log.ToString()); return; }
+        // 4. Грузим первую карту
+        MapSelector.SelectedIndex = 0;   // вызовет OnMapSelectorChanged → загрузка
 
-        // 5. Заполняем метаданные ИЗ entries (как в C-версии)
-        map.Name         = entry.Name;
-        map.Folder       = entry.Folder;
-        map.MusicFile    = entry.Music;
-        map.MusicVolume  = entry.MusicVolume;
-        map.AreasPath    = entry.Areas;
-
-        L($"[TEST] map: {map.Width}×{map.Height}, name='{map.Name}', tileset='{map.TilesetPath}'");
-
-        // 6. Путь к тайлсету — из map.TilesetPath
-        var tilesetPath = ResolveTilesetPath(basePath, map.TilesetPath);
-        L($"[TEST] tileset: {tilesetPath}, exists={tilesetPath != null && File.Exists(tilesetPath)}");
-        if (tilesetPath == null || !File.Exists(tilesetPath))
-        {
-            File.WriteAllText(logPath, log.ToString());
-            return;
-        }
-
-        // 7. Грузим тайлсет в палитру и отдаём карту в холст
-        LoadTileset(tilesetPath);
-        var tilesetBmp = new Bitmap(tilesetPath);
-        MapCanvasControl.SetMap(map, tilesetBmp);
-
-        // 8. Обновляем подписи — ВСЁ из объекта map, БЕЗ хардкода
-        MapNameText.Text    = map.Name;
-        MapSizeText.Text    = $"{map.Width}×{map.Height}";
-        MapTilesetText.Text = Path.GetFileName(map.TilesetPath);
-
-        L("[TEST] ✅ Всё загружено");
+        L("[TEST] ✅ Проект загружен");
     }
     catch (Exception ex)
     {
@@ -162,6 +138,71 @@ private void LoadGransealForTest()
     }
 
     File.WriteAllText(logPath, log.ToString());
+}
+
+// ─── Загрузка конкретной карты по её entry ─────
+private void LoadMapByEntry(RpgShinzoMaker.Core.Models.MapEntry entry)
+{
+    try
+    {
+        Debug.WriteLine($"[MAP] Загрузка: {entry.Name} (folder={entry.Folder})");
+
+        // 1. layout.json
+        var layoutPath = RpgShinzoMaker.Core.Services.ProjectPaths.LayoutFile(entry.Folder);
+        if (!File.Exists(layoutPath))
+        {
+            Debug.WriteLine($"[MAP] ❌ layout.json не найден: {layoutPath}");
+            return;
+        }
+
+        // 2. Читаем карту
+        var map = RpgShinzoMaker.Core.Services.MapJsonService.Load(layoutPath);
+        if (map == null) { Debug.WriteLine("[MAP] ❌ map = NULL"); return; }
+
+        // 3. Метаданные из entries
+        map.Name        = entry.Name;
+        map.Folder      = entry.Folder;
+        map.MusicFile   = entry.Music;
+        map.MusicVolume = entry.MusicVolume;
+        map.AreasPath   = entry.Areas;
+
+        // 4. Тайлсет
+        var tilesetName = Path.GetFileName(map.TilesetPath);
+        var tilesetPath = Path.Combine(
+            RpgShinzoMaker.Core.Services.ProjectPaths.TilesetsDir,
+            tilesetName);
+
+        if (!File.Exists(tilesetPath))
+        {
+            Debug.WriteLine($"[MAP] ❌ тайлсет не найден: {tilesetPath}");
+            return;
+        }
+
+        // 5. Грузим в UI
+        LoadTileset(tilesetPath);
+        var tilesetBmp = new Bitmap(tilesetPath);
+        MapCanvasControl.SetMap(map, tilesetBmp);
+
+        // 6. Подписи
+        MapSizeText.Text    = $"{map.Width}×{map.Height}";
+        MapTilesetText.Text = tilesetName;
+
+        Debug.WriteLine($"[MAP] ✅ Загружено: {entry.Name}");
+    }
+    catch (Exception ex)
+    {
+        Debug.WriteLine($"[MAP] ❌ {ex.Message}\n{ex.StackTrace}");
+    }
+}
+
+// ─── Обработчик ComboBox ─────
+private void OnMapSelectorChanged(object? sender, SelectionChangedEventArgs e)
+{
+    int idx = MapSelector.SelectedIndex;
+    if (idx < 0 || idx >= _mapEntries.Count) return;
+
+    var entry = _mapEntries[idx];
+    LoadMapByEntry(entry);
 }
 
 private static string? ResolveTilesetPath(string basePath, string rawPath)
