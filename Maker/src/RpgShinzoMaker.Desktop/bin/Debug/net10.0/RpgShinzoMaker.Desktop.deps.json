@@ -13,7 +13,9 @@
           "Avalonia.Fonts.Inter": "12.1.3",
           "Avalonia.Themes.Fluent": "12.1.3",
           "AvaloniaUI.DiagnosticsSupport": "2.2.3",
-          "CommunityToolkit.Mvvm": "8.4.2"
+          "CommunityToolkit.Mvvm": "8.4.2",
+          "Material.Avalonia": "3.21.0",
+          "Semi.Avalonia": "12.1.0.1"
         },
         "runtime": {
           "RpgShinzoMaker.Desktop.dll": {}
@@ -369,6 +371,40 @@
           }
         }
       },
+      "Irihi.Avalonia.Shared/0.5.0": {
+        "dependencies": {
+          "Avalonia": "12.1.3"
+        },
+        "runtime": {
+          "lib/net10.0/Irihi.Avalonia.Shared.dll": {
+            "assemblyVersion": "0.5.0.0",
+            "fileVersion": "0.5.0.0"
+          }
+        }
+      },
+      "Material.Avalonia/3.21.0": {
+        "dependencies": {
+          "Avalonia": "12.1.3"
+        },
+        "runtime": {
+          "lib/net8.0/Material.Avalonia.dll": {
+            "assemblyVersion": "3.21.0.0",
+            "fileVersion": "3.21.0.0"
+          },
+          "lib/net8.0/Material.Colors.dll": {
+            "assemblyVersion": "3.21.0.0",
+            "fileVersion": "3.21.0.0"
+          },
+          "lib/net8.0/Material.Ripple.dll": {
+            "assemblyVersion": "3.21.0.0",
+            "fileVersion": "3.21.0.0"
+          },
+          "lib/net8.0/Material.Styles.dll": {
+            "assemblyVersion": "3.21.0.0",
+            "fileVersion": "3.21.0.0"
+          }
+        }
+      },
       "MicroCom.Runtime/0.11.6": {
         "runtime": {
           "lib/net8.0/MicroCom.Runtime.dll": {
@@ -401,6 +437,18 @@
           "lib/net6.0/Microsoft.IO.RecyclableMemoryStream.dll": {
             "assemblyVersion": "3.0.1.0",
             "fileVersion": "3.0.1.0"
+          }
+        }
+      },
+      "Semi.Avalonia/12.1.0.1": {
+        "dependencies": {
+          "Avalonia": "12.1.3",
+          "Irihi.Avalonia.Shared": "0.5.0"
+        },
+        "runtime": {
+          "lib/net10.0/Semi.Avalonia.dll": {
+            "assemblyVersion": "12.1.0.1",
+            "fileVersion": "12.1.0.1"
           }
         }
       },
@@ -677,6 +725,20 @@
       "path": "harfbuzzsharp.nativeassets.win32/8.3.1.3",
       "hashPath": "harfbuzzsharp.nativeassets.win32.8.3.1.3.nupkg.sha512"
     },
+    "Irihi.Avalonia.Shared/0.5.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-UiUCCdP2xBuKWByLUvc+eMIZypBPESGC9PKUA3vF2v7F8bkzWQ6m0ung4gZtIhzH+RU2xclvcDBge0E368M58g==",
+      "path": "irihi.avalonia.shared/0.5.0",
+      "hashPath": "irihi.avalonia.shared.0.5.0.nupkg.sha512"
+    },
+    "Material.Avalonia/3.21.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-MYVBy3EkmB7Vlr25d2WbMyw8hziUra6KOcbDtL2KP3qQxUBRSmVPRogSdvzGS26MDN4dlocxT+Jyxkq886SqfQ==",
+      "path": "material.avalonia/3.21.0",
+      "hashPath": "material.avalonia.3.21.0.nupkg.sha512"
+    },
     "MicroCom.Runtime/0.11.6": {
       "type": "package",
       "serviceable": true,
@@ -704,6 +766,13 @@
       "sha512": "sha512-s/s20YTVY9r9TPfTrN5g8zPF1YhwxyqO6PxUkrYTGI2B+OGPe9AdajWZrLhFqXIvqIW23fnUE4+ztrUWNU1+9g==",
       "path": "microsoft.io.recyclablememorystream/3.0.1",
       "hashPath": "microsoft.io.recyclablememorystream.3.0.1.nupkg.sha512"
+    },
+    "Semi.Avalonia/12.1.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-8wSI5jaGOpnWRurYGyaPjccnimVUa2xAsuKqYjJBLXSMbAiYB3QkCtJ/zrWnOVh/wXY4nSKQA1sWqZpcF7pE3g==",
+      "path": "semi.avalonia/12.1.0.1",
+      "hashPath": "semi.avalonia.12.1.0.1.nupkg.sha512"
     },
     "SkiaSharp/3.119.4": {
       "type": "package",

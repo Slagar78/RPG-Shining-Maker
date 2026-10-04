@@ -91,3 +91,9 @@ C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\obj\Debug\net10.0\r
 C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\obj\Debug\net10.0\RpgShinzoMaker.Desktop.pdb
 C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\obj\Debug\net10.0\RpgShinzoMaker.Desktop.genruntimeconfig.cache
 C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\obj\Debug\net10.0\ref\RpgShinzoMaker.Desktop.dll
+C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\Irihi.Avalonia.Shared.dll
+C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\Semi.Avalonia.dll
+C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\Material.Avalonia.dll
+C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\Material.Colors.dll
+C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\Material.Ripple.dll
+C:\SHINZO\RPG-Shining-Maker\Maker\src\RpgShinzoMaker.Desktop\bin\Debug\net10.0\Material.Styles.dll

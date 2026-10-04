@@ -1,22 +1,189 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:RpgShinzoMaker.Desktop.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="RpgShinzoMaker.Desktop.Views.MainWindow"
-        x:DataType="vm:MainViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="RpgShinzoMaker.Desktop">
+        Title="RpgShinzoMaker"
+        Width="1400" Height="900"
+        MinWidth="1280" MinHeight="720"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen">
 
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainViewModel />
-    </Design.DataContext>
+    <DockPanel>
 
-    <TextBox Text="{Binding Greeting}"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
+        <!-- ═══════════ СТРОКА МЕНЮ ═══════════ -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_Файл">
+                <MenuItem Header="_Новый проект" InputGesture="Ctrl+N"/>
+                <MenuItem Header="_Открыть..." InputGesture="Ctrl+O"/>
+                <MenuItem Header="_Сохранить" InputGesture="Ctrl+S"/>
+                <Separator/>
+                <MenuItem Header="_Выход"/>
+            </MenuItem>
+            <MenuItem Header="_Правка">
+                <MenuItem Header="_Отменить" InputGesture="Ctrl+Z"/>
+                <MenuItem Header="_Повторить" InputGesture="Ctrl+Y"/>
+                <Separator/>
+                <MenuItem Header="_Копировать" InputGesture="Ctrl+C"/>
+                <MenuItem Header="_Вставить" InputGesture="Ctrl+V"/>
+            </MenuItem>
+        </Menu>
 
+        <!-- ═══════════ ТУЛБАР ═══════════ -->
+        <Border DockPanel.Dock="Top" Background="#2D2D30" Padding="8,6">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Content="💾" ToolTip.Tip="Сохранить"/>
+                <Button Content="📂" ToolTip.Tip="Открыть"/>
+                <Separator Width="1" Margin="6,2"/>
+                <Button Content="▶ Запустить игру" ToolTip.Tip="F5"/>
+                <Button Content="⚔ Запустить битву" ToolTip.Tip="F6"/>
+                <Separator Width="1" Margin="6,2"/>
+                <Button Content="↩" ToolTip.Tip="Отменить"/>
+                <Button Content="↪" ToolTip.Tip="Повторить"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ═══════════ СТАТУС-БАР ═══════════ -->
+        <Border DockPanel.Dock="Bottom" Background="#007ACC" Padding="8,4">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Column="0" Text="Готово" Foreground="White"/>
+                <TextBlock Grid.Column="1" Text="Позиция: X:0 Y:0    Зум: 100%" 
+                           Foreground="White" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="RPG-Shinzo" Foreground="White"/>
+            </Grid>
+        </Border>
+
+        <!-- ═══════════ ОСНОВНАЯ ОБЛАСТЬ ═══════════ -->
+        <Grid ColumnDefinitions="220,4,*,4,320">
+
+            <!-- ЛЕВАЯ КОЛОНКА: БЛОКСЕТ -->
+            <Border Grid.Column="0" Background="#252526" Padding="8">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="БЛОКСЕТ" 
+                               Foreground="White" FontWeight="Bold" 
+                               Margin="0,0,0,8"/>
+
+                    <Border DockPanel.Dock="Top" Background="#1E1E1E" 
+                            Height="400" Margin="0,0,0,8">
+                        <TextBlock Text="Палитра тайлов" 
+                                   Foreground="Gray" 
+                                   HorizontalAlignment="Center" 
+                                   VerticalAlignment="Center"/>
+                    </Border>
+
+                    <StackPanel DockPanel.Dock="Bottom" Spacing="6">
+                        <ComboBox HorizontalAlignment="Stretch" SelectedIndex="0">
+                            <ComboBoxItem>town.png</ComboBoxItem>
+                        </ComboBox>
+                        <ComboBox HorizontalAlignment="Stretch" SelectedIndex="0">
+                            <ComboBoxItem>Земля</ComboBoxItem>
+                            <ComboBoxItem>Объекты</ComboBoxItem>
+                            <ComboBoxItem>Крыша</ComboBoxItem>
+                        </ComboBox>
+                        <CheckBox Content="Проходимость" Foreground="White"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Background="#3E3E42" 
+                          ResizeDirection="Columns" Width="4"/>
+
+            <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА -->
+            <Grid Grid.Column="2" RowDefinitions="*,Auto">
+                <TabControl Grid.Row="0">
+                    <TabItem Header="Карты">
+                        <Border Background="#1E1E1E">
+                            <TextBlock Text="Холст карты" 
+                                       Foreground="Gray"
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center"
+                                       FontSize="20"/>
+                        </Border>
+                    </TabItem>
+                    <TabItem Header="Эвенты">
+                        <Border Background="#1E1E1E">
+                            <TextBlock Text="Редактор событий" 
+                                       Foreground="Gray"
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center"
+                                       FontSize="20"/>
+                        </Border>
+                    </TabItem>
+                </TabControl>
+
+                <Border Grid.Row="1" Background="#252526" Padding="8,6">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="Карта:" Foreground="White" VerticalAlignment="Center"/>
+                        <ComboBox SelectedIndex="0" MinWidth="150">
+                            <ComboBoxItem>Город</ComboBoxItem>
+                            <ComboBoxItem>Лес</ComboBoxItem>
+                            <ComboBoxItem>Пещера</ComboBoxItem>
+                        </ComboBox>
+                        <TextBlock Text="Ширина:" Foreground="White" VerticalAlignment="Center"/>
+                        <TextBox Text="32" Width="60"/>
+                        <TextBlock Text="Высота:" Foreground="White" VerticalAlignment="Center"/>
+                        <TextBox Text="32" Width="60"/>
+                        <TextBlock Text="Тайлсет:" Foreground="White" VerticalAlignment="Center"/>
+                        <ComboBox SelectedIndex="0" MinWidth="120">
+                            <ComboBoxItem>town.png</ComboBoxItem>
+                        </ComboBox>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <GridSplitter Grid.Column="3" Background="#3E3E42" 
+                          ResizeDirection="Columns" Width="4"/>
+
+            <!-- ПРАВАЯ КОЛОНКА -->
+            <Grid Grid.Column="4" RowDefinitions="*,4,280">
+                <Border Grid.Row="0" Background="#252526" Padding="8">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="ДЕРЕВО ПРОЕКТА" 
+                                   Foreground="White" FontWeight="Bold" 
+                                   Margin="0,0,0,8"/>
+                        <TreeView Background="Transparent">
+                            <TreeViewItem Header="📁 Проект" IsExpanded="True">
+                                <TreeViewItem Header="⚔ Бои">
+                                    <TreeViewItem Header="Бой 1"/>
+                                    <TreeViewItem Header="Бой 2"/>
+                                </TreeViewItem>
+                                <TreeViewItem Header="🎬 Боевые сцены">
+                                    <TreeViewItem Header="Атака"/>
+                                    <TreeViewItem Header="Защита"/>
+                                </TreeViewItem>
+                                <TreeViewItem Header="📜 Тексты">
+                                    <TreeViewItem Header="0001"/>
+                                    <TreeViewItem Header="0002"/>
+                                </TreeViewItem>
+                                <TreeViewItem Header="📁 assets">
+                                    <TreeViewItem Header="tilesets"/>
+                                    <TreeViewItem Header="sprites"/>
+                                </TreeViewItem>
+                            </TreeViewItem>
+                        </TreeView>
+                    </DockPanel>
+                </Border>
+
+                <GridSplitter Grid.Row="1" Background="#3E3E42" 
+                              ResizeDirection="Rows" Height="4"/>
+
+                <Border Grid.Row="2" Background="#252526" Padding="8">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="СВОЙСТВА" 
+                                   Foreground="White" FontWeight="Bold" 
+                                   Margin="0,0,0,8"/>
+                        <ScrollViewer>
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Ничего не выбрано" 
+                                           Foreground="Gray" 
+                                           FontStyle="Italic"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </DockPanel>
 </Window>

@@ -482,6 +482,36 @@
           }
         }
       },
+      "Irihi.Avalonia.Shared/0.5.0": {
+        "type": "package",
+        "dependencies": {
+          "Avalonia": "12.0.0"
+        },
+        "compile": {
+          "lib/net10.0/Irihi.Avalonia.Shared.dll": {}
+        },
+        "runtime": {
+          "lib/net10.0/Irihi.Avalonia.Shared.dll": {}
+        }
+      },
+      "Material.Avalonia/3.21.0": {
+        "type": "package",
+        "dependencies": {
+          "Avalonia": "12.1.1"
+        },
+        "compile": {
+          "lib/net8.0/Material.Avalonia.dll": {},
+          "lib/net8.0/Material.Colors.dll": {},
+          "lib/net8.0/Material.Ripple.dll": {},
+          "lib/net8.0/Material.Styles.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/Material.Avalonia.dll": {},
+          "lib/net8.0/Material.Colors.dll": {},
+          "lib/net8.0/Material.Ripple.dll": {},
+          "lib/net8.0/Material.Styles.dll": {}
+        }
+      },
       "MicroCom.Runtime/0.11.6": {
         "type": "package",
         "compile": {
@@ -537,6 +567,19 @@
           "lib/net6.0/Microsoft.IO.RecyclableMemoryStream.dll": {
             "related": ".xml"
           }
+        }
+      },
+      "Semi.Avalonia/12.1.0.1": {
+        "type": "package",
+        "dependencies": {
+          "Avalonia": "12.1.0",
+          "Irihi.Avalonia.Shared": "0.5.0"
+        },
+        "compile": {
+          "lib/net10.0/Semi.Avalonia.dll": {}
+        },
+        "runtime": {
+          "lib/net10.0/Semi.Avalonia.dll": {}
         }
       },
       "SkiaSharp/3.119.4": {
@@ -1276,6 +1319,39 @@
         "runtimes/win-x86/native/libHarfBuzzSharp.pdb"
       ]
     },
+    "Irihi.Avalonia.Shared/0.5.0": {
+      "sha512": "UiUCCdP2xBuKWByLUvc+eMIZypBPESGC9PKUA3vF2v7F8bkzWQ6m0ung4gZtIhzH+RU2xclvcDBge0E368M58g==",
+      "type": "package",
+      "path": "irihi.avalonia.shared/0.5.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "README.md",
+        "irihi.avalonia.shared.0.5.0.nupkg.sha512",
+        "irihi.avalonia.shared.nuspec",
+        "irihi.png",
+        "lib/net10.0/Irihi.Avalonia.Shared.dll",
+        "lib/net8.0/Irihi.Avalonia.Shared.dll"
+      ]
+    },
+    "Material.Avalonia/3.21.0": {
+      "sha512": "MYVBy3EkmB7Vlr25d2WbMyw8hziUra6KOcbDtL2KP3qQxUBRSmVPRogSdvzGS26MDN4dlocxT+Jyxkq886SqfQ==",
+      "type": "package",
+      "path": "material.avalonia/3.21.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "FavIcon.png",
+        "README.md",
+        "lib/net8.0/Material.Avalonia.dll",
+        "lib/net8.0/Material.Colors.dll",
+        "lib/net8.0/Material.Ripple.dll",
+        "lib/net8.0/Material.Styles.dll",
+        "material.avalonia.3.21.0.nupkg.sha512",
+        "material.avalonia.nuspec"
+      ]
+    },
     "MicroCom.Runtime/0.11.6": {
       "sha512": "NdNWGDiZ6eS/Mf/9+QHR91cj1K7Hy+PX9yrHI/zM7xFYuj9IWT2uxtB6sCHjrnxAeLV9fut1R6zHDUGKX6f9lQ==",
       "type": "package",
@@ -1411,6 +1487,22 @@
         "lib/netstandard2.1/Microsoft.IO.RecyclableMemoryStream.xml",
         "microsoft.io.recyclablememorystream.3.0.1.nupkg.sha512",
         "microsoft.io.recyclablememorystream.nuspec"
+      ]
+    },
+    "Semi.Avalonia/12.1.0.1": {
+      "sha512": "8wSI5jaGOpnWRurYGyaPjccnimVUa2xAsuKqYjJBLXSMbAiYB3QkCtJ/zrWnOVh/wXY4nSKQA1sWqZpcF7pE3g==",
+      "type": "package",
+      "path": "semi.avalonia/12.1.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "README.md",
+        "irihi.png",
+        "lib/net10.0/Semi.Avalonia.dll",
+        "lib/net8.0/Semi.Avalonia.dll",
+        "semi.avalonia.12.1.0.1.nupkg.sha512",
+        "semi.avalonia.nuspec"
       ]
     },
     "SkiaSharp/3.119.4": {
@@ -1669,7 +1761,9 @@
       "Avalonia.Fonts.Inter >= 12.1.3",
       "Avalonia.Themes.Fluent >= 12.1.3",
       "AvaloniaUI.DiagnosticsSupport >= 2.2.3",
-      "CommunityToolkit.Mvvm >= 8.4.2"
+      "CommunityToolkit.Mvvm >= 8.4.2",
+      "Material.Avalonia >= 3.21.0",
+      "Semi.Avalonia >= 12.1.0.1"
     ]
   },
   "packageFolders": {
@@ -1740,6 +1834,14 @@
           "CommunityToolkit.Mvvm": {
             "target": "Package",
             "version": "[8.4.2, )"
+          },
+          "Material.Avalonia": {
+            "target": "Package",
+            "version": "[3.21.0, )"
+          },
+          "Semi.Avalonia": {
+            "target": "Package",
+            "version": "[12.1.0.1, )"
           }
         },
         "imports": [
