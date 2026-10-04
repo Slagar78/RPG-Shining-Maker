@@ -35,11 +35,21 @@ public class TileItem : INotifyPropertyChanged
     public bool ShowType
     {
         get => _showType;
-        set
-        {
-            _showType = value;
-            OnPropertyChanged(nameof(ShowType));
-        }
+        set { _showType = value; OnPropertyChanged(nameof(ShowType)); }
+    }
+
+    private bool _leftSelected;
+    public bool LeftSelected
+    {
+        get => _leftSelected;
+        set { _leftSelected = value; OnPropertyChanged(nameof(LeftSelected)); }
+    }
+
+    private bool _rightSelected;
+    public bool RightSelected
+    {
+        get => _rightSelected;
+        set { _rightSelected = value; OnPropertyChanged(nameof(RightSelected)); }
     }
 
     public IBrush TileColor => TileType switch
@@ -62,14 +72,15 @@ public partial class MainWindow : Window
     private const int TileSize    = 48;
 
     private Bitmap? _sourceTileset;
-
-    // ВАЖНО: не readonly — будем пересоздавать список при каждой загрузке
     private List<TileItem> _tiles = new();
     private int[] _tileTypes = Array.Empty<int>();
 
     private bool _gridMode;
     private bool _isModeB;
     private int _currentTileType = 0;
+
+    private int _leftSelectedIndex  = -1;
+    private int _rightSelectedIndex = -1;
 
     public MainWindow()
     {
@@ -125,7 +136,6 @@ public partial class MainWindow : Window
 
             int strips = cols / PaletteCols;
 
-            // ─── Создаём НОВЫЙ список, а не чистим старый ───
             var newTiles = new List<TileItem>();
 
             int idx = 0;
@@ -154,11 +164,17 @@ public partial class MainWindow : Window
                 }
             }
 
-            // ─── Заменяем старый список новым ───
             _tiles = newTiles;
             _tileTypes = new int[_tiles.Count];
 
-            // Отсоединяем → присоединяем, чтобы Avalonia гарантированно обновила палитру
+            // Сброс выделений при новой загрузке
+            _leftSelectedIndex  = -1;
+            _rightSelectedIndex = -1;
+            LeftClickPreview.Source = null;
+            RightClickPreview.Source = null;
+            LeftClickLabel.Text  = "—";
+            RightClickLabel.Text = "—";
+
             PaletteList.ItemsSource = null;
             PaletteList.ItemsSource = _tiles;
 
@@ -169,7 +185,7 @@ public partial class MainWindow : Window
             PaletteStatus.Foreground = isValid ? Brushes.LightGreen : Brushes.IndianRed;
             PaletteInfo.Text = $"Тайлов: {_tiles.Count}";
 
-            Debug.WriteLine($"Загружено {_tiles.Count} тайлов (strip-based, {strips} полос по {PaletteCols} столбцов)");
+            Debug.WriteLine($"Загружено {_tiles.Count} тайлов (strip-based, {strips} полос)");
         }
         catch (Exception ex)
         {
@@ -197,8 +213,6 @@ public partial class MainWindow : Window
         _isModeB = isB;
         foreach (var tile in _tiles)
             tile.ShowType = isB;
-
-        Debug.WriteLine(isB ? "Режим B (типы тайлов)" : "Режим A (рисование)");
     }
 
     // ─── Grid Mode ──────────────────────────
@@ -206,10 +220,9 @@ public partial class MainWindow : Window
     {
         _gridMode = !_gridMode;
         GridModeToggle.Content = _gridMode ? "ON" : "OFF";
-        Debug.WriteLine($"Grid Mode: {_gridMode}");
     }
 
-    // ─── Выбор типа тайла (кружки внизу) ────
+    // ─── Клик по кружку типа (внизу палитры) ────
     private void OnTileTypeClick(object? sender, PointerPressedEventArgs e)
     {
         if (sender is not Border border || border.Tag is not string tagStr) return;
@@ -217,7 +230,6 @@ public partial class MainWindow : Window
 
         _currentTileType = type;
         UpdateTypeIconSelection();
-        Debug.WriteLine($"Активный тип: {type}");
     }
 
     private void UpdateTypeIconSelection()
@@ -227,12 +239,43 @@ public partial class MainWindow : Window
         {
             bool selected = i == _currentTileType;
             icons[i].BorderBrush = selected ? Brushes.White : new SolidColorBrush(Color.Parse("#555555"));
-            icons[i].BorderThickness = selected ? new Thickness(2) : new Thickness(2);
+            icons[i].BorderThickness = new Thickness(2);
             icons[i].Classes.Set("selected", selected);
         }
     }
 
-    // ─── Клик по тайлу в палитре (режим B) ──
+    // ─── Клик ЛКМ/ПКМ по тайлу в палитре ────
+    private void OnPaletteItemPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Grid grid || grid.Tag is not TileItem tile) return;
+
+        var props = e.GetCurrentPoint(grid).Properties;
+
+        if (props.IsLeftButtonPressed)
+        {
+            _leftSelectedIndex = tile.Index;
+            foreach (var t in _tiles)
+                t.LeftSelected = (t.Index == tile.Index);
+
+            LeftClickPreview.Source = tile.Image;
+            LeftClickLabel.Text = $"Tile #{tile.Index}";
+
+            Debug.WriteLine($"ЛКМ выбран тайл #{tile.Index}");
+        }
+        else if (props.IsRightButtonPressed)
+        {
+            _rightSelectedIndex = tile.Index;
+            foreach (var t in _tiles)
+                t.RightSelected = (t.Index == tile.Index);
+
+            RightClickPreview.Source = tile.Image;
+            RightClickLabel.Text = $"Tile #{tile.Index}";
+
+            Debug.WriteLine($"ПКМ выбран тайл #{tile.Index}");
+        }
+    }
+
+    // ─── Обычное выделение ListBox (для назначения типа в режиме B) ──
     private void OnPaletteSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (!_isModeB) return;

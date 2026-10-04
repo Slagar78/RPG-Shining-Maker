@@ -86,7 +86,6 @@
             </Grid>
         </Border>
 
-        <!-- ЛЕВАЯ КОЛОНКА 305px (было 360, −36) -->
         <Grid ColumnDefinitions="305,0,*,4,320">
 
             <Border Grid.Column="0" Background="#252526" Padding="8">
@@ -94,7 +93,7 @@
                         BorderBrush="#3E3E42"
                         BorderThickness="1"
                         CornerRadius="4">
-                    <Grid Margin="8" RowDefinitions="Auto,Auto,Auto,*,Auto">
+                    <Grid Margin="8" RowDefinitions="Auto,Auto,Auto,384,Auto,Auto">
 
                         <TextBlock Grid.Row="0"
                                    Text="БЛОКСЕТ"
@@ -126,9 +125,12 @@
                                           Click="OnModeBClick"/>
                         </Grid>
 
+                        <!-- ПАЛИТРА -->
                         <ListBox x:Name="PaletteList"
                                  Grid.Row="3"
+                                 Height="384"
                                  HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Top"
                                  Background="#1E1E1E"
                                  BorderThickness="0"
                                  Padding="0"
@@ -167,29 +169,105 @@
                             </ListBox.ItemsPanel>
                             <ListBox.ItemTemplate>
                                 <DataTemplate DataType="views:TileItem">
-                                    <Border BorderBrush="#3E3E42"
-                                            BorderThickness="0,0,1,1"
-                                            Width="32" Height="32"
-                                            Background="#1E1E1E">
-                                        <Grid ClipToBounds="True">
-                                            <Image Source="{Binding Image}"
-                                                   Stretch="Fill"
-                                                   RenderOptions.BitmapInterpolationMode="None"
-                                                   RenderOptions.EdgeMode="Aliased"/>
-                                            <Border Width="8" Height="8"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Bottom"
-                                                    Margin="0,0,1,1"
-                                                    CornerRadius="4"
-                                                    Background="{Binding TileColor}"
-                                                    IsVisible="{Binding ShowType}"/>
-                                        </Grid>
-                                    </Border>
+                                    <Grid Width="32" Height="32"
+                                          Background="#1E1E1E"
+                                          ClipToBounds="True"
+                                          Tag="{Binding}"
+                                          PointerPressed="OnPaletteItemPointerPressed">
+                                        <!-- Сам тайл -->
+                                        <Image Source="{Binding Image}"
+                                               Stretch="Fill"
+                                               RenderOptions.BitmapInterpolationMode="None"
+                                               RenderOptions.EdgeMode="Aliased"
+                                               IsHitTestVisible="False"/>
+                                        <!-- Сетка: правый+нижний бордер -->
+                                        <Border BorderBrush="#3E3E42"
+                                                BorderThickness="0,0,1,1"
+                                                IsHitTestVisible="False"/>
+                                        <!-- Кружок типа в режиме B -->
+                                        <Border Width="8" Height="8"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Bottom"
+                                                Margin="0,0,1,1"
+                                                CornerRadius="4"
+                                                Background="{Binding TileColor}"
+                                                IsVisible="{Binding ShowType}"
+                                                IsHitTestVisible="False"/>
+                                        <!-- Обводка ЛКМ (жёлтая) -->
+                                        <Border BorderBrush="#FFD700"
+                                                BorderThickness="2"
+                                                IsVisible="{Binding LeftSelected}"
+                                                IsHitTestVisible="False"/>
+                                        <!-- Обводка ПКМ (красная) -->
+                                        <Border BorderBrush="#FF2222"
+                                                BorderThickness="2"
+                                                IsVisible="{Binding RightSelected}"
+                                                IsHitTestVisible="False"/>
+                                    </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
 
+                        <!-- Превью ЛКМ / ПКМ -->
                         <Border Grid.Row="4"
+                                Background="#1E1E1E"
+                                BorderBrush="#3E3E42"
+                                BorderThickness="1"
+                                CornerRadius="3"
+                                Margin="0,8,0,0"
+                                Padding="8">
+                            <Grid ColumnDefinitions="*,8,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Left click"
+                                               Foreground="#AAAAAA"
+                                               FontSize="10"
+                                               HorizontalAlignment="Center"/>
+                                    <Border CornerRadius="10"
+                                            BorderBrush="#555555"
+                                            BorderThickness="1"
+                                            Width="60" Height="60"
+                                            HorizontalAlignment="Center"
+                                            Background="#0E0E0E"
+                                            ClipToBounds="True">
+                                        <Image x:Name="LeftClickPreview"
+                                               Stretch="Fill"
+                                               RenderOptions.BitmapInterpolationMode="None"
+                                               RenderOptions.EdgeMode="Aliased"/>
+                                    </Border>
+                                    <TextBlock x:Name="LeftClickLabel"
+                                               Text="—"
+                                               Foreground="#888888"
+                                               FontSize="10"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Right click"
+                                               Foreground="#AAAAAA"
+                                               FontSize="10"
+                                               HorizontalAlignment="Center"/>
+                                    <Border CornerRadius="10"
+                                            BorderBrush="#555555"
+                                            BorderThickness="1"
+                                            Width="60" Height="60"
+                                            HorizontalAlignment="Center"
+                                            Background="#0E0E0E"
+                                            ClipToBounds="True">
+                                        <Image x:Name="RightClickPreview"
+                                               Stretch="Fill"
+                                               RenderOptions.BitmapInterpolationMode="None"
+                                               RenderOptions.EdgeMode="Aliased"/>
+                                    </Border>
+                                    <TextBlock x:Name="RightClickLabel"
+                                               Text="—"
+                                               Foreground="#888888"
+                                               FontSize="10"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- НИЖНЯЯ ПАНЕЛЬ -->
+                        <Border Grid.Row="5"
                                 Background="#252526"
                                 BorderBrush="#3E3E42"
                                 BorderThickness="0,1,0,0"
