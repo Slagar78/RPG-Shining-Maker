@@ -16,7 +16,7 @@ public static class ProjectPaths
     public static string MapsDir     => Path.Combine(DataDir, "maps");
     public static string AssetsDir   => Path.Combine(Root, "assets");
     public static string TilesetsDir => Path.Combine(AssetsDir, "tilesets");
-
+    public static string SoundsDir => Path.Combine(AssetsDir, "sounds");
     public static string EntriesFile => Path.Combine(MapsDir, "entries.json");
 
     public static string LayoutFile(string folder)   => Path.Combine(MapsDir, folder, "layout.json");

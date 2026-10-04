@@ -430,7 +430,10 @@
                         <TextBlock Text="Тайлсет:" Foreground="White" VerticalAlignment="Center"/>
                         <TextBlock x:Name="MapTilesetText" Text="—" Foreground="#4CAF50" VerticalAlignment="Center"/>
                         <TextBlock Text="Музыка:" Foreground="White" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="MapMusicText" Text="—" Foreground="#4CAF50" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="MapMusicSelector"
+                                  MinWidth="180"
+                                  VerticalAlignment="Center"
+                                  SelectionChanged="OnMapMusicChanged"/>
                     </StackPanel>
                 </Border>
             </Grid>

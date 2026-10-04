@@ -83,6 +83,12 @@ public partial class MainWindow : Window
     private int _leftSelectedIndex  = -1;
     private int _rightSelectedIndex = -1;
 
+    // Список карт из entries.json
+    private List<RpgShinzoMaker.Core.Models.MapEntry> _mapEntries = new();
+    private List<string> _musicFiles = new();
+    private bool _suppressMusicChange = false;
+
+
     public MainWindow()
     {
         InitializeComponent();
@@ -96,149 +102,113 @@ public partial class MainWindow : Window
         LoadProject();
     }
 
-// ─── Хранилище карт проекта ─────
-private List<RpgShinzoMaker.Core.Models.MapEntry> _mapEntries = new();
-
-// ─── Загрузка проекта (вызывается из конструктора) ─────
-private void LoadProject()
-{
-    var logPath = Path.Combine(Environment.CurrentDirectory, "startup_log.txt");
-    var log = new System.Text.StringBuilder();
-    void L(string s) { log.AppendLine(s); Debug.WriteLine(s); }
-
-    try
+    // ─── Загрузка проекта (читает entries.json, заполняет ComboBox) ─────
+    private void LoadProject()
     {
-        // 1. Корень
-        var root = FindProjectRoot();
-        L($"[TEST] root = {root ?? "NULL"}");
-        if (root == null) { L("❌ Корень не найден"); File.WriteAllText(logPath, log.ToString()); return; }
+        var logPath = Path.Combine(Environment.CurrentDirectory, "startup_log.txt");
+        var log = new System.Text.StringBuilder();
+        void L(string s) { log.AppendLine(s); Debug.WriteLine(s); }
 
-        RpgShinzoMaker.Core.Services.ProjectPaths.Root = root;
-
-        // 2. Читаем entries.json
-        _mapEntries = RpgShinzoMaker.Core.Services.EntriesService.Load(
-            RpgShinzoMaker.Core.Services.ProjectPaths.EntriesFile);
-        L($"[TEST] entries: {_mapEntries.Count}");
-        if (_mapEntries.Count == 0) { L("❌ entries пуст"); File.WriteAllText(logPath, log.ToString()); return; }
-
-        // 3. Заполняем ComboBox именами карт
-        MapSelector.ItemsSource = null;
-        MapSelector.ItemsSource = _mapEntries
-            .Select(e => e.Name)
-            .ToList();
-
-        // 4. Грузим первую карту
-        MapSelector.SelectedIndex = 0;   // вызовет OnMapSelectorChanged → загрузка
-
-        L("[TEST] ✅ Проект загружен");
-    }
-    catch (Exception ex)
-    {
-        L($"[TEST] ❌ {ex.Message}\n{ex.StackTrace}");
-    }
-
-    File.WriteAllText(logPath, log.ToString());
-}
-
-// ─── Загрузка конкретной карты по её entry ─────
-private void LoadMapByEntry(RpgShinzoMaker.Core.Models.MapEntry entry)
-{
-    try
-    {
-        Debug.WriteLine($"[MAP] Загрузка: {entry.Name} (folder={entry.Folder})");
-
-        // 1. layout.json
-        var layoutPath = RpgShinzoMaker.Core.Services.ProjectPaths.LayoutFile(entry.Folder);
-        if (!File.Exists(layoutPath))
+        try
         {
-            Debug.WriteLine($"[MAP] ❌ layout.json не найден: {layoutPath}");
-            return;
+            // 1. Корень проекта
+            var root = FindProjectRoot();
+            L($"[TEST] root = {root ?? "NULL"}");
+            if (root == null) { L("Корень не найден"); File.WriteAllText(logPath, log.ToString()); return; }
+
+            RpgShinzoMaker.Core.Services.ProjectPaths.Root = root;
+
+            // 2. Читаем entries.json
+            _mapEntries = RpgShinzoMaker.Core.Services.EntriesService.Load(
+                RpgShinzoMaker.Core.Services.ProjectPaths.EntriesFile);
+            L($"[TEST] entries: {_mapEntries.Count}");
+            if (_mapEntries.Count == 0) { L("entries пуст"); File.WriteAllText(logPath, log.ToString()); return; }
+
+            // 3. Заполняем ComboBox именами карт
+            MapSelector.ItemsSource = null;
+            MapSelector.ItemsSource = _mapEntries.Select(e => e.Name).ToList();
+
+            // 4. Список mp3
+            PopulateMusicList();
+
+            // 5. Загружаем первую карту
+            MapSelector.SelectedIndex = 0;
+
+            L("[TEST] Проект загружен");
+        }
+        catch (Exception ex)
+        {
+            L($"[TEST] Ошибка: {ex.Message}\n{ex.StackTrace}");
         }
 
-        // 2. Читаем карту
-        var map = RpgShinzoMaker.Core.Services.MapJsonService.Load(layoutPath);
-        if (map == null) { Debug.WriteLine("[MAP] ❌ map = NULL"); return; }
+        File.WriteAllText(logPath, log.ToString());
+    }
 
-        // 3. Метаданные из entries
-        map.Name        = entry.Name;
-        map.Folder      = entry.Folder;
-        map.MusicFile   = entry.Music;
-        map.MusicVolume = entry.MusicVolume;
-        map.AreasPath   = entry.Areas;
-
-        // 4. Тайлсет
-        var tilesetName = Path.GetFileName(map.TilesetPath);
-        var tilesetPath = Path.Combine(
-            RpgShinzoMaker.Core.Services.ProjectPaths.TilesetsDir,
-            tilesetName);
-
-        if (!File.Exists(tilesetPath))
+    // ─── Загрузка конкретной карты ─────
+    private void LoadMapByEntry(RpgShinzoMaker.Core.Models.MapEntry entry)
+    {
+        try
         {
-            Debug.WriteLine($"[MAP] ❌ тайлсет не найден: {tilesetPath}");
-            return;
+            var layoutPath = RpgShinzoMaker.Core.Services.ProjectPaths.LayoutFile(entry.Folder);
+            if (!File.Exists(layoutPath)) return;
+
+            var map = RpgShinzoMaker.Core.Services.MapJsonService.Load(layoutPath);
+            if (map == null) return;
+
+            map.Name        = entry.Name;
+            map.Folder      = entry.Folder;
+            map.MusicFile   = entry.Music;
+            map.MusicVolume = entry.MusicVolume;
+            map.AreasPath   = entry.Areas;
+
+            var tilesetName = Path.GetFileName(map.TilesetPath);
+            var tilesetPath = Path.Combine(
+                RpgShinzoMaker.Core.Services.ProjectPaths.TilesetsDir, tilesetName);
+            if (!File.Exists(tilesetPath)) return;
+
+            LoadTileset(tilesetPath);
+            var tilesetBmp = new Bitmap(tilesetPath);
+            MapCanvasControl.SetMap(map, tilesetBmp);
+
+            MapSizeText.Text    = $"{map.Width}×{map.Height}";
+            MapTilesetText.Text = tilesetName;
+
+            // Музыка — выставить в ComboBox
+            _suppressMusicChange = true;
+            var musicName = string.IsNullOrEmpty(entry.Music) ? null : Path.GetFileName(entry.Music);
+            if (musicName != null && _musicFiles.Contains(musicName))
+                MapMusicSelector.SelectedItem = musicName;
+            else
+                MapMusicSelector.SelectedIndex = -1;
+            _suppressMusicChange = false;
         }
-
-        // 5. Грузим в UI
-        LoadTileset(tilesetPath);
-        var tilesetBmp = new Bitmap(tilesetPath);
-        MapCanvasControl.SetMap(map, tilesetBmp);
-
-        // 6. Подписи
-        MapSizeText.Text    = $"{map.Width}×{map.Height}";
-        MapTilesetText.Text = tilesetName;
-        // Музыка (берётся из entries.json)
-        var musicName = string.IsNullOrEmpty(entry.Music)
-            ? "—"
-            : Path.GetFileName(entry.Music);
-        MapMusicText.Text = musicName;
-
-        Debug.WriteLine($"[MAP] ✅ Загружено: {entry.Name}");
+        catch (Exception ex) { Debug.WriteLine($"[MAP] {ex.Message}"); }
     }
-    catch (Exception ex)
+
+    // ─── Обработчик смены карты в ComboBox ─────
+    private void OnMapSelectorChanged(object? sender, SelectionChangedEventArgs e)
     {
-        Debug.WriteLine($"[MAP] ❌ {ex.Message}\n{ex.StackTrace}");
+        int idx = MapSelector.SelectedIndex;
+        if (idx < 0 || idx >= _mapEntries.Count) return;
+
+        var entry = _mapEntries[idx];
+        LoadMapByEntry(entry);
     }
-}
 
-// ─── Обработчик ComboBox ─────
-private void OnMapSelectorChanged(object? sender, SelectionChangedEventArgs e)
-{
-    int idx = MapSelector.SelectedIndex;
-    if (idx < 0 || idx >= _mapEntries.Count) return;
-
-    var entry = _mapEntries[idx];
-    LoadMapByEntry(entry);
-}
-
-private static string? ResolveTilesetPath(string basePath, string rawPath)
-{
-    if (string.IsNullOrWhiteSpace(rawPath)) return null;
-    var normalized = rawPath.Replace('\\', '/').Trim();
-    if (normalized.Length >= 2 && normalized[1] == ':')
-        return normalized.Replace('/', Path.DirectorySeparatorChar);
-    if (normalized.StartsWith("assets/", StringComparison.OrdinalIgnoreCase))
-        return Path.Combine(basePath, normalized.Replace('/', Path.DirectorySeparatorChar));
-    while (normalized.StartsWith("../"))
-        normalized = normalized.Substring(3);
-    if (!normalized.Contains('/'))
-        return Path.Combine(basePath, "assets", "tilesets", normalized);
-    return Path.Combine(basePath, normalized.Replace('/', Path.DirectorySeparatorChar));
-}
-
-private static string? FindProjectRoot()
-{
-    var dir = new DirectoryInfo(Environment.CurrentDirectory);
-    for (int i = 0; i < 10 && dir != null; i++)
+    // ─── Поиск корня проекта (папка с data/maps) ─────
+    private static string? FindProjectRoot()
     {
-        if (Directory.Exists(Path.Combine(dir.FullName, "data", "maps")))
-            return dir.FullName;
-        dir = dir.Parent;
+        var dir = new DirectoryInfo(Environment.CurrentDirectory);
+        for (int i = 0; i < 10 && dir != null; i++)
+        {
+            if (Directory.Exists(Path.Combine(dir.FullName, "data", "maps")))
+                return dir.FullName;
+            dir = dir.Parent;
+        }
+        return null;
     }
-    return null;
-}
 
-
-    // ─── Загрузка тайлсета ──────────────────
+    // ─── Загрузка тайлсета по кнопке ─────
     private async void OnLoadTilesetClick(object? sender, RoutedEventArgs e)
     {
         var options = new FilePickerOpenOptions
@@ -274,6 +244,7 @@ private static string? FindProjectRoot()
         LoadTileset(files[0].Path.LocalPath);
     }
 
+    // ─── Нарезка тайлсета (strip-based, как в C) ─────
     private void LoadTileset(string path)
     {
         try
@@ -338,7 +309,7 @@ private static string? FindProjectRoot()
         }
     }
 
-    // ─── Режимы A / B ───────────────────────
+    // ─── Режимы A / B ─────
     private void OnModeAClick(object? sender, RoutedEventArgs e)
     {
         ModeA.IsChecked = true;
@@ -394,10 +365,10 @@ private static string? FindProjectRoot()
         RightClickLabel.Text = "—";
     }
 
-    // ─── Grid Mode (заблокирован) ───────────
+    // ─── Grid Mode (заблокирован, управляется A/B) ─────
     private void OnGridModeClick(object? sender, RoutedEventArgs e) { }
 
-    // ─── Клик по кружку типа ────────────────
+    // ─── Клик по кружку типа ─────
     private void OnTileTypeClick(object? sender, PointerPressedEventArgs e)
     {
         if (sender is not Border border || border.Tag is not string tagStr) return;
@@ -434,7 +405,7 @@ private static string? FindProjectRoot()
         TypePreviewLabel.Text = label;
     }
 
-    // ─── Клик ЛКМ/ПКМ по тайлу палитры ──────
+    // ─── Клик ЛКМ/ПКМ по тайлу палитры ─────
     private void OnPaletteItemPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (_isModeB) return;
@@ -466,7 +437,7 @@ private static string? FindProjectRoot()
         }
     }
 
-    // ─── Назначение типа в режиме B ─────────
+    // ─── Назначение типа в режиме B ─────
     private void OnPaletteSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (!_isModeB) return;
@@ -478,11 +449,36 @@ private static string? FindProjectRoot()
 
         Debug.WriteLine($"Тайл #{tile.Index} → тип {_currentTileType}");
     }
-    // ─── Инструменты (пока заглушки) ─────
+
+    // ─── Инструменты (заглушки) ─────
     private void OnToolPencilClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Карандаш"); }
     private void OnToolEraserClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Ластик"); }
     private void OnToolFillClick(object? sender, RoutedEventArgs e)    { Debug.WriteLine("Инструмент: Заливка"); }
     private void OnToolRectClick(object? sender, RoutedEventArgs e)    { Debug.WriteLine("Инструмент: Прямоугольник"); }
     private void OnToolPickerClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Пипетка"); }
-    private void OnToolSelectClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Выделение"); }    
+    private void OnToolSelectClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Выделение"); }
+    private void PopulateMusicList()
+    {
+        _musicFiles.Clear();
+        var dir = RpgShinzoMaker.Core.Services.ProjectPaths.SoundsDir;
+        if (Directory.Exists(dir))
+        {
+            foreach (var f in Directory.GetFiles(dir, "*.mp3"))
+                _musicFiles.Add(Path.GetFileName(f));
+            _musicFiles.Sort(StringComparer.OrdinalIgnoreCase);
+        }
+        MapMusicSelector.ItemsSource = null;
+        MapMusicSelector.ItemsSource = _musicFiles;
+    }
+
+    private void OnMapMusicChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressMusicChange) return;
+        int idx = MapSelector.SelectedIndex;
+        if (idx < 0 || idx >= _mapEntries.Count) return;
+        if (MapMusicSelector.SelectedItem is not string name) return;
+        _mapEntries[idx].Music = "assets/sounds/" + name;
+        Debug.WriteLine($"[MUSIC] {_mapEntries[idx].Name} → {name}");
+    }
 }
+
