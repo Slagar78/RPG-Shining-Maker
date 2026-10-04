@@ -174,17 +174,14 @@
                                           ClipToBounds="True"
                                           Tag="{Binding}"
                                           PointerPressed="OnPaletteItemPointerPressed">
-                                        <!-- Сам тайл -->
                                         <Image Source="{Binding Image}"
                                                Stretch="Fill"
                                                RenderOptions.BitmapInterpolationMode="None"
                                                RenderOptions.EdgeMode="Aliased"
                                                IsHitTestVisible="False"/>
-                                        <!-- Сетка: правый+нижний бордер -->
                                         <Border BorderBrush="#3E3E42"
                                                 BorderThickness="0,0,1,1"
                                                 IsHitTestVisible="False"/>
-                                        <!-- Кружок типа в режиме B -->
                                         <Border Width="8" Height="8"
                                                 HorizontalAlignment="Right"
                                                 VerticalAlignment="Bottom"
@@ -193,12 +190,10 @@
                                                 Background="{Binding TileColor}"
                                                 IsVisible="{Binding ShowType}"
                                                 IsHitTestVisible="False"/>
-                                        <!-- Обводка ЛКМ (жёлтая) -->
                                         <Border BorderBrush="#FFD700"
                                                 BorderThickness="2"
                                                 IsVisible="{Binding LeftSelected}"
                                                 IsHitTestVisible="False"/>
-                                        <!-- Обводка ПКМ (красная) -->
                                         <Border BorderBrush="#FF2222"
                                                 BorderThickness="2"
                                                 IsVisible="{Binding RightSelected}"
@@ -208,7 +203,7 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
 
-                        <!-- Превью ЛКМ / ПКМ -->
+                        <!-- Превью: A → Left/Right click (квадраты), B → Selected type (круг) -->
                         <Border Grid.Row="4"
                                 Background="#1E1E1E"
                                 BorderBrush="#3E3E42"
@@ -216,49 +211,81 @@
                                 CornerRadius="3"
                                 Margin="0,8,0,0"
                                 Padding="8">
-                            <Grid ColumnDefinitions="*,8,*">
-                                <StackPanel Grid.Column="0" Spacing="4">
-                                    <TextBlock Text="Left click"
+                            <Grid>
+
+                                <!-- РЕЖИМ A: два скруглённых квадрата -->
+                                <Grid x:Name="ModeAPreviewGrid" ColumnDefinitions="*,*">
+                                    <StackPanel Grid.Column="0" Spacing="4" HorizontalAlignment="Center">
+                                        <TextBlock Text="Left click"
+                                                   Foreground="#AAAAAA"
+                                                   FontSize="10"
+                                                   HorizontalAlignment="Center"/>
+                                        <Border CornerRadius="10"
+                                                BorderBrush="#555555"
+                                                BorderThickness="1"
+                                                Width="60" Height="60"
+                                                HorizontalAlignment="Center"
+                                                Background="#0E0E0E"
+                                                ClipToBounds="True">
+                                            <Image x:Name="LeftClickPreview"
+                                                   Stretch="Fill"
+                                                   RenderOptions.BitmapInterpolationMode="None"
+                                                   RenderOptions.EdgeMode="Aliased"/>
+                                        </Border>
+                                        <TextBlock x:Name="LeftClickLabel"
+                                                   Text="—"
+                                                   Foreground="#888888"
+                                                   FontSize="10"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Center">
+                                        <TextBlock Text="Right click"
+                                                   Foreground="#AAAAAA"
+                                                   FontSize="10"
+                                                   HorizontalAlignment="Center"/>
+                                        <Border CornerRadius="10"
+                                                BorderBrush="#555555"
+                                                BorderThickness="1"
+                                                Width="60" Height="60"
+                                                HorizontalAlignment="Center"
+                                                Background="#0E0E0E"
+                                                ClipToBounds="True">
+                                            <Image x:Name="RightClickPreview"
+                                                   Stretch="Fill"
+                                                   RenderOptions.BitmapInterpolationMode="None"
+                                                   RenderOptions.EdgeMode="Aliased"/>
+                                        </Border>
+                                        <TextBlock x:Name="RightClickLabel"
+                                                   Text="—"
+                                                   Foreground="#888888"
+                                                   FontSize="10"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- РЕЖИМ B: один круг -->
+                                <StackPanel x:Name="ModeBPreviewPanel"
+                                            Spacing="4"
+                                            HorizontalAlignment="Center"
+                                            IsVisible="False">
+                                    <TextBlock Text="Selected type"
                                                Foreground="#AAAAAA"
                                                FontSize="10"
                                                HorizontalAlignment="Center"/>
-                                    <Border CornerRadius="10"
+                                    <Border CornerRadius="30"
                                             BorderBrush="#555555"
                                             BorderThickness="1"
                                             Width="60" Height="60"
                                             HorizontalAlignment="Center"
-                                            Background="#0E0E0E"
-                                            ClipToBounds="True">
-                                        <Image x:Name="LeftClickPreview"
-                                               Stretch="Fill"
-                                               RenderOptions.BitmapInterpolationMode="None"
-                                               RenderOptions.EdgeMode="Aliased"/>
+                                            Background="#0E0E0E">
+                                        <Ellipse x:Name="TypePreviewEllipse"
+                                                 Width="40" Height="40"
+                                                 Fill="#4CAF50"
+                                                 HorizontalAlignment="Center"
+                                                 VerticalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock x:Name="LeftClickLabel"
-                                               Text="—"
-                                               Foreground="#888888"
-                                               FontSize="10"
-                                               HorizontalAlignment="Center"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="4">
-                                    <TextBlock Text="Right click"
-                                               Foreground="#AAAAAA"
-                                               FontSize="10"
-                                               HorizontalAlignment="Center"/>
-                                    <Border CornerRadius="10"
-                                            BorderBrush="#555555"
-                                            BorderThickness="1"
-                                            Width="60" Height="60"
-                                            HorizontalAlignment="Center"
-                                            Background="#0E0E0E"
-                                            ClipToBounds="True">
-                                        <Image x:Name="RightClickPreview"
-                                               Stretch="Fill"
-                                               RenderOptions.BitmapInterpolationMode="None"
-                                               RenderOptions.EdgeMode="Aliased"/>
-                                    </Border>
-                                    <TextBlock x:Name="RightClickLabel"
-                                               Text="—"
+                                    <TextBlock x:Name="TypePreviewLabel"
+                                               Text="Passable"
                                                Foreground="#888888"
                                                FontSize="10"
                                                HorizontalAlignment="Center"/>

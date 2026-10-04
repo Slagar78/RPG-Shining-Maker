@@ -86,6 +86,12 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         UpdateTypeIconSelection();
+        UpdateTypePreview();
+        UpdatePreviewVisibility();
+
+        _gridMode = false;
+        GridModeToggle.Content = "OFF";
+        GridModeToggle.IsEnabled = false;
     }
 
     // ─── Загрузка тайлсета ──────────────────
@@ -167,13 +173,8 @@ public partial class MainWindow : Window
             _tiles = newTiles;
             _tileTypes = new int[_tiles.Count];
 
-            // Сброс выделений при новой загрузке
-            _leftSelectedIndex  = -1;
-            _rightSelectedIndex = -1;
-            LeftClickPreview.Source = null;
-            RightClickPreview.Source = null;
-            LeftClickLabel.Text  = "—";
-            RightClickLabel.Text = "—";
+            ClearSelections();
+            ClearPreviews();
 
             PaletteList.ItemsSource = null;
             PaletteList.ItemsSource = _tiles;
@@ -213,16 +214,46 @@ public partial class MainWindow : Window
         _isModeB = isB;
         foreach (var tile in _tiles)
             tile.ShowType = isB;
-    }
 
-    // ─── Grid Mode ──────────────────────────
-    private void OnGridModeClick(object? sender, RoutedEventArgs e)
-    {
-        _gridMode = !_gridMode;
+        _gridMode = isB;
         GridModeToggle.Content = _gridMode ? "ON" : "OFF";
+
+        ClearSelections();
+        ClearPreviews();
+        UpdatePreviewVisibility();
+
+        Debug.WriteLine(isB ? "Режим B — типы + Grid ON" : "Режим A — рисование + Grid OFF");
     }
 
-    // ─── Клик по кружку типа (внизу палитры) ────
+    private void UpdatePreviewVisibility()
+    {
+        ModeAPreviewGrid.IsVisible  = !_isModeB;
+        ModeBPreviewPanel.IsVisible = _isModeB;
+    }
+
+    private void ClearSelections()
+    {
+        _leftSelectedIndex  = -1;
+        _rightSelectedIndex = -1;
+        foreach (var t in _tiles)
+        {
+            t.LeftSelected  = false;
+            t.RightSelected = false;
+        }
+    }
+
+    private void ClearPreviews()
+    {
+        LeftClickPreview.Source  = null;
+        RightClickPreview.Source = null;
+        LeftClickLabel.Text  = "—";
+        RightClickLabel.Text = "—";
+    }
+
+    // ─── Grid Mode (заблокирован) ───────────
+    private void OnGridModeClick(object? sender, RoutedEventArgs e) { }
+
+    // ─── Клик по кружку типа ────────────────
     private void OnTileTypeClick(object? sender, PointerPressedEventArgs e)
     {
         if (sender is not Border border || border.Tag is not string tagStr) return;
@@ -230,6 +261,7 @@ public partial class MainWindow : Window
 
         _currentTileType = type;
         UpdateTypeIconSelection();
+        UpdateTypePreview();
     }
 
     private void UpdateTypeIconSelection()
@@ -244,9 +276,24 @@ public partial class MainWindow : Window
         }
     }
 
-    // ─── Клик ЛКМ/ПКМ по тайлу в палитре ────
+    private void UpdateTypePreview()
+    {
+        var (brush, label) = _currentTileType switch
+        {
+            0 => ((IBrush)new SolidColorBrush(Color.Parse("#4CAF50")), "Passable"),
+            1 => (new SolidColorBrush(Color.Parse("#E74C3C")), "Block"),
+            2 => (new SolidColorBrush(Color.Parse("#3498DB")), "Slow"),
+            3 => (new SolidColorBrush(Color.Parse("#E67E22")), "Under"),
+            _ => (Brushes.Gray, "Unknown")
+        };
+        TypePreviewEllipse.Fill = brush;
+        TypePreviewLabel.Text = label;
+    }
+
+    // ─── Клик ЛКМ/ПКМ по тайлу палитры ──────
     private void OnPaletteItemPointerPressed(object? sender, PointerPressedEventArgs e)
     {
+        if (_isModeB) return;
         if (sender is not Grid grid || grid.Tag is not TileItem tile) return;
 
         var props = e.GetCurrentPoint(grid).Properties;
@@ -260,7 +307,7 @@ public partial class MainWindow : Window
             LeftClickPreview.Source = tile.Image;
             LeftClickLabel.Text = $"Tile #{tile.Index}";
 
-            Debug.WriteLine($"ЛКМ выбран тайл #{tile.Index}");
+            Debug.WriteLine($"ЛКМ тайл #{tile.Index}");
         }
         else if (props.IsRightButtonPressed)
         {
@@ -271,11 +318,11 @@ public partial class MainWindow : Window
             RightClickPreview.Source = tile.Image;
             RightClickLabel.Text = $"Tile #{tile.Index}";
 
-            Debug.WriteLine($"ПКМ выбран тайл #{tile.Index}");
+            Debug.WriteLine($"ПКМ тайл #{tile.Index}");
         }
     }
 
-    // ─── Обычное выделение ListBox (для назначения типа в режиме B) ──
+    // ─── Назначение типа в режиме B ─────────
     private void OnPaletteSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (!_isModeB) return;
