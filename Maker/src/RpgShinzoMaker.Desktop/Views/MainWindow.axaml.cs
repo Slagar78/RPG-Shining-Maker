@@ -432,4 +432,11 @@ private static string? FindProjectRoot()
 
         Debug.WriteLine($"Тайл #{tile.Index} → тип {_currentTileType}");
     }
+    // ─── Инструменты (пока заглушки) ─────
+    private void OnToolPencilClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Карандаш"); }
+    private void OnToolEraserClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Ластик"); }
+    private void OnToolFillClick(object? sender, RoutedEventArgs e)    { Debug.WriteLine("Инструмент: Заливка"); }
+    private void OnToolRectClick(object? sender, RoutedEventArgs e)    { Debug.WriteLine("Инструмент: Прямоугольник"); }
+    private void OnToolPickerClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Пипетка"); }
+    private void OnToolSelectClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Выделение"); }    
 }

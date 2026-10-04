@@ -47,6 +47,7 @@
 
     <DockPanel>
 
+        <!-- МЕНЮ -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_Файл">
                 <MenuItem Header="_Новый проект" InputGesture="Ctrl+N"/>
@@ -64,6 +65,7 @@
             </MenuItem>
         </Menu>
 
+        <!-- ТУЛБАР -->
         <Border DockPanel.Dock="Top" Background="#2D2D30" Padding="8,6">
             <StackPanel Orientation="Horizontal" Spacing="6">
                 <Button Content="💾" ToolTip.Tip="Сохранить"/>
@@ -77,6 +79,7 @@
             </StackPanel>
         </Border>
 
+        <!-- СТАТУС-БАР -->
         <Border DockPanel.Dock="Bottom" Background="#007ACC" Padding="8,4">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <TextBlock Grid.Column="0" Text="Готово" Foreground="White"/>
@@ -86,8 +89,10 @@
             </Grid>
         </Border>
 
-        <Grid ColumnDefinitions="305,0,*,4,320">
+        <!-- ОСНОВНАЯ ОБЛАСТЬ -->
+        <Grid ColumnDefinitions="305,0,*,4,192,4,320">
 
+            <!-- ЛЕВАЯ КОЛОНКА: БЛОКСЕТ -->
             <Border Grid.Column="0" Background="#252526" Padding="8">
                 <Border Background="#1E1E1E"
                         BorderBrush="#3E3E42"
@@ -203,7 +208,7 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
 
-                        <!-- Превью: A → Left/Right click (квадраты), B → Selected type (круг) -->
+                        <!-- ПРЕВЬЮ: A → два квадрата, B → круг -->
                         <Border Grid.Row="4"
                                 Background="#1E1E1E"
                                 BorderBrush="#3E3E42"
@@ -212,8 +217,6 @@
                                 Margin="0,8,0,0"
                                 Padding="8">
                             <Grid>
-
-                                <!-- РЕЖИМ A: два скруглённых квадрата -->
                                 <Grid x:Name="ModeAPreviewGrid" ColumnDefinitions="*,*">
                                     <StackPanel Grid.Column="0" Spacing="4" HorizontalAlignment="Center">
                                         <TextBlock Text="Left click"
@@ -263,7 +266,6 @@
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- РЕЖИМ B: один круг -->
                                 <StackPanel x:Name="ModeBPreviewPanel"
                                             Spacing="4"
                                             HorizontalAlignment="Center"
@@ -399,11 +401,12 @@
                 </Border>
             </Border>
 
+            <!-- ЦЕНТР: Карты / Эвенты -->
             <Grid Grid.Column="2" RowDefinitions="*,Auto">
                 <TabControl Grid.Row="0">
-				<TabItem Header="Карты">
-					<views:MapCanvas x:Name="MapCanvasControl"/>
-				</TabItem>
+                    <TabItem Header="Карты">
+                        <views:MapCanvas x:Name="MapCanvasControl"/>
+                    </TabItem>
                     <TabItem Header="Эвенты">
                         <Border Background="#1E1E1E">
                             <TextBlock Text="Редактор событий"
@@ -419,20 +422,56 @@
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <TextBlock Text="Карта:" Foreground="White" VerticalAlignment="Center"/>
                         <TextBlock x:Name="MapNameText" Text="—" Foreground="#4CAF50" VerticalAlignment="Center"/>
-
                         <TextBlock Text="Размер:" Foreground="White" VerticalAlignment="Center"/>
                         <TextBlock x:Name="MapSizeText" Text="—" Foreground="#4CAF50" VerticalAlignment="Center"/>
-
                         <TextBlock Text="Тайлсет:" Foreground="White" VerticalAlignment="Center"/>
                         <TextBlock x:Name="MapTilesetText" Text="—" Foreground="#4CAF50" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
             </Grid>
 
+            <!-- РАЗДЕЛИТЕЛЬ -->
             <GridSplitter Grid.Column="3" Background="#3E3E42"
                           ResizeDirection="Columns" Width="4"/>
 
-            <Grid Grid.Column="4" RowDefinitions="*,4,280">
+            <!-- ▶ ПАНЕЛЬ ИНСТРУМЕНТОВ -->
+            <Border Grid.Column="4" Background="#252526" Padding="8">
+                <Border Background="#1E1E1E"
+                        BorderBrush="#3E3E42"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                    <DockPanel Margin="8">
+                        <TextBlock DockPanel.Dock="Top"
+                                   Text="ИНСТРУМЕНТЫ"
+                                   Foreground="White"
+                                   FontWeight="Bold"
+                                   FontSize="12"
+                                   Margin="0,0,0,10"/>
+
+                        <UniformGrid Columns="3" Rows="4" VerticalAlignment="Top">
+                            <Button Content="✏" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolPencilClick"/>
+                            <Button Content="🧽" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolEraserClick"/>
+                            <Button Content="🪣" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolFillClick"/>
+                            <Button Content="▭" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolRectClick"/>
+                            <Button Content="🎯" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolPickerClick"/>
+                            <Button Content="▢" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolSelectClick"/>
+                            <Button Content="↶" FontSize="20" Width="48" Height="48" Margin="2"/>
+                            <Button Content="↷" FontSize="20" Width="48" Height="48" Margin="2"/>
+                            <Button Content="🔍" FontSize="20" Width="48" Height="48" Margin="2"/>
+                            <Button Content="📐" FontSize="20" Width="48" Height="48" Margin="2"/>
+                            <Button Content="📌" FontSize="20" Width="48" Height="48" Margin="2"/>
+                            <Button Content="💾" FontSize="20" Width="48" Height="48" Margin="2"/>
+                        </UniformGrid>
+                    </DockPanel>
+                </Border>
+            </Border>
+
+            <!-- РАЗДЕЛИТЕЛЬ 2 -->
+            <GridSplitter Grid.Column="5" Background="#3E3E42"
+                          ResizeDirection="Columns" Width="4"/>
+
+            <!-- ПРАВАЯ КОЛОНКА (номер колонки меняем с 4 на 6) -->
+            <Grid Grid.Column="6" RowDefinitions="*,4,280">
                 <Border Grid.Row="0" Background="#252526" Padding="8">
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Top" Text="ДЕРЕВО ПРОЕКТА"
@@ -479,6 +518,7 @@
                     </DockPanel>
                 </Border>
             </Grid>
+
         </Grid>
     </DockPanel>
 </Window>
