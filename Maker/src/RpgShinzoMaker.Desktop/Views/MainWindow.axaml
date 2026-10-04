@@ -418,19 +418,13 @@
                 <Border Grid.Row="1" Background="#252526" Padding="8,6">
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <TextBlock Text="Карта:" Foreground="White" VerticalAlignment="Center"/>
-                        <ComboBox SelectedIndex="0" MinWidth="150">
-                            <ComboBoxItem>Город</ComboBoxItem>
-                            <ComboBoxItem>Лес</ComboBoxItem>
-                            <ComboBoxItem>Пещера</ComboBoxItem>
-                        </ComboBox>
-                        <TextBlock Text="Ширина:" Foreground="White" VerticalAlignment="Center"/>
-                        <TextBox Text="32" Width="60"/>
-                        <TextBlock Text="Высота:" Foreground="White" VerticalAlignment="Center"/>
-                        <TextBox Text="32" Width="60"/>
+                        <TextBlock x:Name="MapNameText" Text="—" Foreground="#4CAF50" VerticalAlignment="Center"/>
+
+                        <TextBlock Text="Размер:" Foreground="White" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="MapSizeText" Text="—" Foreground="#4CAF50" VerticalAlignment="Center"/>
+
                         <TextBlock Text="Тайлсет:" Foreground="White" VerticalAlignment="Center"/>
-                        <ComboBox SelectedIndex="0" MinWidth="120">
-                            <ComboBoxItem>town.png</ComboBoxItem>
-                        </ComboBox>
+                        <TextBlock x:Name="MapTilesetText" Text="—" Foreground="#4CAF50" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
             </Grid>

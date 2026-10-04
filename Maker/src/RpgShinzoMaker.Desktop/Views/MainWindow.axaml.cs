@@ -99,103 +99,98 @@ private void LoadGransealForTest()
 {
     var logPath = Path.Combine(Environment.CurrentDirectory, "startup_log.txt");
     var log = new System.Text.StringBuilder();
-
-    void L(string s)
-    {
-        log.AppendLine(s);
-        Debug.WriteLine(s);
-    }
+    void L(string s) { log.AppendLine(s); Debug.WriteLine(s); }
 
     try
     {
-        L($"[TEST] CurrentDirectory = {Environment.CurrentDirectory}");
-
         var basePath = FindProjectRoot();
         L($"[TEST] basePath = {basePath ?? "NULL"}");
+        if (basePath == null) { L("❌ Корень не найден"); File.WriteAllText(logPath, log.ToString()); return; }
 
-        if (basePath == null) { L("[TEST] ❌ Корень проекта не найден"); File.WriteAllText(logPath, log.ToString()); return; }
+        // 1. Читаем entries.json
+        var entriesPath = Path.Combine(basePath, "data", "maps", "entries.json");
+        var entries = RpgShinzoMaker.Core.Services.EntriesService.Load(entriesPath);
+        L($"[TEST] entries: {entries.Count} записей");
+        if (entries.Count == 0) { L("❌ entries.json пуст"); File.WriteAllText(logPath, log.ToString()); return; }
 
-        var layoutPath = Path.Combine(basePath, "data", "maps", "Granseal", "layout.json");
+        // 2. Берём ПЕРВУЮ карту из entries (или ту, что нужна)
+        var entry = entries[0];
+        L($"[TEST] entry: folder='{entry.Folder}', name='{entry.Name}'");
+
+        // 3. Путь к layout.json — по folder из entries
+        var layoutPath = Path.Combine(basePath, "data", "maps", entry.Folder, "layout.json");
         L($"[TEST] layout: {layoutPath}, exists={File.Exists(layoutPath)}");
-
         if (!File.Exists(layoutPath)) { File.WriteAllText(logPath, log.ToString()); return; }
 
-        // 1. Читаем карту
+        // 4. Читаем карту
         var map = RpgShinzoMaker.Core.Services.MapJsonService.Load(layoutPath);
-        L($"[TEST] map = {(map == null ? "NULL" : $"{map.Width}×{map.Height}")}");
-        if (map == null) { File.WriteAllText(logPath, log.ToString()); return; }
+        if (map == null) { L("❌ map = NULL"); File.WriteAllText(logPath, log.ToString()); return; }
 
-        // 2. Путь к тайлсету — берём ИЗ КАРТЫ
-        L($"[TEST] map.TilesetPath = '{map.TilesetPath}'");
+        // 5. Заполняем метаданные ИЗ entries (как в C-версии)
+        map.Name         = entry.Name;
+        map.Folder       = entry.Folder;
+        map.MusicFile    = entry.Music;
+        map.MusicVolume  = entry.MusicVolume;
+        map.AreasPath    = entry.Areas;
 
-        // map.TilesetPath обычно вида "assets/tilesets/xxx.png"
-        var tilesetPath = Path.Combine(basePath, map.TilesetPath.Replace('/', Path.DirectorySeparatorChar));
-        L($"[TEST] resolved tileset: {tilesetPath}");
-        L($"[TEST] tileset exists: {File.Exists(tilesetPath)}");
+        L($"[TEST] map: {map.Width}×{map.Height}, name='{map.Name}', tileset='{map.TilesetPath}'");
 
-        if (!File.Exists(tilesetPath))
+        // 6. Путь к тайлсету — из map.TilesetPath
+        var tilesetPath = ResolveTilesetPath(basePath, map.TilesetPath);
+        L($"[TEST] tileset: {tilesetPath}, exists={tilesetPath != null && File.Exists(tilesetPath)}");
+        if (tilesetPath == null || !File.Exists(tilesetPath))
         {
-            // Попробуем как альтернативу — ищем любой PNG в assets/tilesets
-            var tdir = Path.Combine(basePath, "assets", "tilesets");
-            if (Directory.Exists(tdir))
-            {
-                var pngs = Directory.GetFiles(tdir, "*.png");
-                L($"[TEST] Доступные PNG в assets/tilesets ({pngs.Length}):");
-                foreach (var p in pngs) L($"  - {Path.GetFileName(p)}");
-
-                if (pngs.Length > 0)
-                {
-                    tilesetPath = pngs[0];
-                    L($"[TEST] Возьму первый: {tilesetPath}");
-                }
-                else
-                {
-                    L("[TEST] ❌ PNG вообще нет");
-                    File.WriteAllText(logPath, log.ToString());
-                    return;
-                }
-            }
-            else
-            {
-                L($"[TEST] ❌ Папки нет: {tdir}");
-                File.WriteAllText(logPath, log.ToString());
-                return;
-            }
+            File.WriteAllText(logPath, log.ToString());
+            return;
         }
 
-        // 3. Загрузка тайлсета в палитру
+        // 7. Грузим тайлсет в палитру и отдаём карту в холст
         LoadTileset(tilesetPath);
-        L($"[TEST] LoadTileset вызван, _tiles.Count = {_tiles.Count}");
-
-        // 4. Отдать карту в холст
         var tilesetBmp = new Bitmap(tilesetPath);
         MapCanvasControl.SetMap(map, tilesetBmp);
+
+        // 8. Обновляем подписи — ВСЁ из объекта map, БЕЗ хардкода
+        MapNameText.Text    = map.Name;
+        MapSizeText.Text    = $"{map.Width}×{map.Height}";
+        MapTilesetText.Text = Path.GetFileName(map.TilesetPath);
+
         L("[TEST] ✅ Всё загружено");
     }
     catch (Exception ex)
     {
-        L($"[TEST] ❌ Exception: {ex.Message}");
-        L($"[TEST] Stack: {ex.StackTrace}");
+        L($"[TEST] ❌ {ex.Message}\n{ex.StackTrace}");
     }
 
     File.WriteAllText(logPath, log.ToString());
 }
 
-    private static string? FindProjectRoot()
+private static string? ResolveTilesetPath(string basePath, string rawPath)
+{
+    if (string.IsNullOrWhiteSpace(rawPath)) return null;
+    var normalized = rawPath.Replace('\\', '/').Trim();
+    if (normalized.Length >= 2 && normalized[1] == ':')
+        return normalized.Replace('/', Path.DirectorySeparatorChar);
+    if (normalized.StartsWith("assets/", StringComparison.OrdinalIgnoreCase))
+        return Path.Combine(basePath, normalized.Replace('/', Path.DirectorySeparatorChar));
+    while (normalized.StartsWith("../"))
+        normalized = normalized.Substring(3);
+    if (!normalized.Contains('/'))
+        return Path.Combine(basePath, "assets", "tilesets", normalized);
+    return Path.Combine(basePath, normalized.Replace('/', Path.DirectorySeparatorChar));
+}
+
+private static string? FindProjectRoot()
+{
+    var dir = new DirectoryInfo(Environment.CurrentDirectory);
+    for (int i = 0; i < 10 && dir != null; i++)
     {
-        var dir = new DirectoryInfo(Environment.CurrentDirectory);
-
-        for (int i = 0; i < 10 && dir != null; i++)
-        {
-            var test = Path.Combine(dir.FullName, "data", "maps");
-            if (Directory.Exists(test))
-                return dir.FullName;
-
-            dir = dir.Parent;
-        }
-
-        return null;
+        if (Directory.Exists(Path.Combine(dir.FullName, "data", "maps")))
+            return dir.FullName;
+        dir = dir.Parent;
     }
+    return null;
+}
+
 
     // ─── Загрузка тайлсета ──────────────────
     private async void OnLoadTilesetClick(object? sender, RoutedEventArgs e)

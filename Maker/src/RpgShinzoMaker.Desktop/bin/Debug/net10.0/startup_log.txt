@@ -1,0 +1,7 @@
+[TEST] basePath = C:\SHINZO\RPG-Shining-Maker
+[TEST] entries: 3 записей
+[TEST] entry: folder='Granseal', name='Granseal'
+[TEST] layout: C:\SHINZO\RPG-Shining-Maker\data\maps\Granseal\layout.json, exists=True
+[TEST] map: 64×64, name='Granseal', tileset='assets/tilesets/tileset01.png'
+[TEST] tileset: C:\SHINZO\RPG-Shining-Maker\assets\tilesets\tileset01.png, exists=True
+[TEST] ✅ Всё загружено
