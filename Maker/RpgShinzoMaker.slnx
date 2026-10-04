@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RpgShinzoMaker.Core/RpgShinzoMaker.Core.csproj" />
+    <Project Path="src/RpgShinzoMaker.Desktop/RpgShinzoMaker.Desktop.csproj" />
+  </Folder>
+</Solution>
