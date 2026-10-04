@@ -1,0 +1,76 @@
+
+Maker/src/
+│
+├── RpgShinzoMaker.Core/                 ← БИБЛИОТЕКА (общее ядро)
+│   ├── Models/
+│   │   ├── GameMap.cs
+│   │   ├── MapEntry.cs
+│   │   ├── TileItem.cs
+│   │   ├── TileType.cs
+│   │   ├── BattleScene.cs
+│   │   ├── Actor.cs
+│   │   └── TextEntry.cs
+│   ├── Services/
+│   │   ├── JsonService.cs
+│   │   ├── TilesetService.cs
+│   │   ├── ProjectService.cs
+│   │   ├── TileTypesService.cs
+│   │   └── FileDialogService.cs
+│   └── Controls/
+│       ├── TilesetPalette.axaml(.cs)
+│       ├── ZoomScrollCanvas.axaml(.cs)
+│       ├── TileTypePicker.axaml(.cs)
+│       └── MapListPanel.axaml(.cs)
+│
+├── RpgShinzoMaker.MapEditor/            ← БИБЛИОТЕКА (UserControl)
+│   ├── MapEditorView.axaml(.cs)         ← главный UserControl редактора
+│   ├── MapCanvas.axaml(.cs)
+│   ├── RightPanel.axaml(.cs)
+│   └── Dialogs/
+│       ├── NewMapDialog.axaml(.cs)
+│       ├── ResizeMapDialog.axaml(.cs)
+│       ├── RenameMapDialog.axaml(.cs)
+│       ├── ConfirmDialog.axaml(.cs)
+│       ├── MusicDialog.axaml(.cs)
+│       └── AreasDialog.axaml(.cs)
+│
+├── RpgShinzoMaker.EventEditor/          ← БИБЛИОТЕКА (UserControl)
+│   ├── EventEditorView.axaml(.cs)
+│   └── Dialogs/
+│
+├── RpgShinzoMaker.BattleEditor/         ← БИБЛИОТЕКА (UserControl)
+│   ├── BattleEditorView.axaml(.cs)
+│   └── AnimationPreview.axaml(.cs)
+│
+├── RpgShinzoMaker.TextEditor/           ← БИБЛИОТЕКА (UserControl)
+├── RpgShinzoMaker.Database/             ← БИБЛИОТЕКА (UserControl)
+│
+├── RpgShinzoMaker.Desktop/              ← ОДИН .EXE (главное окно)
+│   ├── App.axaml(.cs)
+│   ├── MainWindow.axaml(.cs)            ← табы: Карты / Эвенты / Битвы / Тексты / База
+│   └── Assets/
+│
+└── RpgShinzoMaker.sln                   ← solution со всеми проектами
+
+
+
+
+
+
+RPG-Shining-Maker/
+├── BattleEditor/          # C + SDL2
+├── BattleScenes/          # C + SDL2
+├── Constructor/           # C + SDL2 (главное окно)
+├── Database/              # C + SDL2
+├── Maker/                 # ← здесь src + exe
+│   └── src/               # ← ТУТ ТВОЙ ТЕКУЩИЙ ПРОЕКТ C#
+├── MapCreator/            # C + SDL2
+├── MapEditor/             # C + SDL2
+├── MapEvent-python/       # Python
+├── PortableRuby/          # Ruby runtime
+├── TextEditor/            # C + SDL2
+├── TilesetAnimation/      # ?
+├── assets/                # общие ресурсы
+├── data/                  # JSON данные
+└── lib/                   # Ruby скрипты движка
+
