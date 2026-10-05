@@ -196,14 +196,91 @@ public partial class MapCanvas : UserControl
         if (Math.Abs(zoom - _zoom) < 0.001) return;
         _zoom = zoom;
 
-        // Просто пересоздаём карту с новым размером тайлов.
-        // Никаких RenderTransform / LayoutTransform — ScrollViewer
-        // видит настоящий размер RootPanel и корректно работает.
         if (_map != null)
         {
-            SetMap(_map, _tiles);
+            ResizeToZoom();
             ResetScrollOffset();
         }
+    }
+
+    // Пересчёт размеров БЕЗ пересоздания контролов.
+    // В разы быстрее, чем SetMap — только меняем Width/Height/Canvas.Left/Top.
+    private void ResizeToZoom()
+    {
+        if (_map == null) return;
+
+        int ts = TilePx;
+        int mapW = _map.Width  * ts;
+        int mapH = _map.Height * ts;
+
+        // RootPanel и фон
+        RootPanel.Width  = mapW;
+        RootPanel.Height = mapH;
+
+        BgImage.Source = GenerateCheckerboard(mapW, mapH);
+        BgImage.Width  = mapW;
+        BgImage.Height = mapH;
+
+        // Тайлы — меняем размер и позицию существующих Image
+        int i = 0;
+        for (int x = 0; x < _map.Width; x++)
+        for (int y = 0; y < _map.Height; y++)
+        {
+            var tc = _controls[i++];
+            if (tc.L1 != null)
+            {
+                tc.L1.Width  = ts;
+                tc.L1.Height = ts;
+                Canvas.SetLeft(tc.L1, x * ts);
+                Canvas.SetTop (tc.L1, y * ts);
+            }
+            if (tc.L2 != null)
+            {
+                tc.L2.Width  = ts;
+                tc.L2.Height = ts;
+                Canvas.SetLeft(tc.L2, x * ts);
+                Canvas.SetTop (tc.L2, y * ts);
+            }
+        }
+
+        // Оверлей Grid Mode
+        GridOverlayCanvas.Width  = mapW;
+        GridOverlayCanvas.Height = mapH;
+
+        // Линии сетки — идём по порядку: сначала вертикальные (_map.Width + 1),
+        // потом горизонтальные (_map.Height + 1)
+        int li = 0;
+        for (int x = 0; x <= _map.Width; x++)
+        {
+            var line = _gridLines[li++];
+            line.StartPoint = new Point(x * ts, 0);
+            line.EndPoint   = new Point(x * ts, mapH);
+        }
+        for (int y = 0; y <= _map.Height; y++)
+        {
+            var line = _gridLines[li++];
+            line.StartPoint = new Point(0, y * ts);
+            line.EndPoint   = new Point(mapW, y * ts);
+        }
+
+        // Точки типов
+        int di = 0;
+        for (int x = 0; x < _map.Width; x++)
+        for (int y = 0; y < _map.Height; y++)
+        {
+            var dot = _gridDots[di++];
+            Canvas.SetLeft(dot, x * ts + (ts - 14) / 2);
+            Canvas.SetTop (dot, y * ts + (ts - 14) / 2);
+        }
+
+        // Рамка-курсор
+        if (_hoverBorder != null)
+        {
+            _hoverBorder.Width  = ts;
+            _hoverBorder.Height = ts;
+        }
+
+        UpdateGridOverlay();
     }
 
     private void ResetScrollOffset()
