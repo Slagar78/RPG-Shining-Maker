@@ -33,7 +33,7 @@ class BattleManager
   include BattleDrop
   include BattleEquip
   include BattleUtils
-  attr_reader :game_map, :battle_entry, :battle_state, :battle_menu
+attr_reader :game_map, :battle_entry, :battle_state, :battle_menu, :aoe_textures
 attr_reader :camera, :static_bg, :layer2, :top_layer,
             :highlight_tiles, :highlight_timer, :current_unit,
             :allies, :enemies, :battle_player, :cursor,
@@ -194,7 +194,8 @@ end
     @attack_confirm_ready = false
     @attack_targets = []
     @attack_target_index = 0
-    @highlight_tex = load_highlight_texture
+    load_aoe_textures
+	@highlight_tex = @aoe_textures[0]
 
     @message_panel_tex = Raylib.LoadTexture("assets/ui/message_panel.png")
     Raylib.SetTextureFilter(@message_panel_tex, Raylib::TEXTURE_FILTER_POINT)
@@ -391,6 +392,17 @@ end
     tex
   end
 
+def load_aoe_textures
+  @aoe_textures = {}
+  Dir.glob("assets/AoE/*.png").each do |path|
+    id = File.basename(path, ".png").to_i
+    img = LoadImage(path)
+    tex = LoadTextureFromImage(img)
+    UnloadImage(img)
+    SetTextureFilter(tex, TEXTURE_FILTER_POINT)
+    @aoe_textures[id] = tex
+  end
+end
 
   def load_mapsprite(name)
     return nil if name.nil? || name.empty?

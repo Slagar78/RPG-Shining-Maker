@@ -79,13 +79,23 @@ Raylib.DrawRectangle(
   draw_info_cursor(int_cam_x, int_cam_y)
 
   # === Рамка цели (целая камера) ===
-  if (@manager.battle_state == :attack_targeting || @manager.battle_state == :give_targeting) && @manager.target_highlight && @manager.highlight_tex
-    tx = @manager.target_highlight[:x] * BattleManager::TILE_SIZE + int_cam_x
-    ty = @manager.target_highlight[:y] * BattleManager::TILE_SIZE + int_cam_y
-    src = Raylib::Rectangle.create(0, 0, @manager.highlight_tex.width, @manager.highlight_tex.height)
-    dst = Raylib::Rectangle.create(tx, ty, BattleManager::TILE_SIZE, BattleManager::TILE_SIZE)
-    Raylib.DrawTexturePro(@manager.highlight_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-  end
+if (@manager.battle_state == :attack_targeting || @manager.battle_state == :give_targeting) && @manager.target_highlight && @manager.highlight_tex
+  tex = @manager.highlight_tex
+  tx = @manager.target_highlight[:x] * BattleManager::TILE_SIZE + int_cam_x
+  ty = @manager.target_highlight[:y] * BattleManager::TILE_SIZE + int_cam_y
+
+  # Пульсация: альфа от ~0.5 до 1.0
+  pulse = (Math.sin(@manager.highlight_timer * 0.15) * 0.25 + 0.75)
+  tint = Raylib::Color.new
+  tint.r = 255
+  tint.g = 255
+  tint.b = 255
+  tint.a = (pulse * 255).to_i.clamp(0, 255)
+
+  src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
+  dst = Raylib::Rectangle.create(tx, ty, BattleManager::TILE_SIZE, BattleManager::TILE_SIZE)
+  Raylib::DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, tint)
+end
 
   # --- союзники (кроме активного игрока) (целая камера) ---
   @manager.allies.each do |ally|
