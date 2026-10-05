@@ -16,6 +16,8 @@
             <Canvas x:Name="Layer1Canvas" IsHitTestVisible="False"/>
             <!-- Слой 2 -->
             <Canvas x:Name="Layer2Canvas" IsHitTestVisible="False"/>
+            <!-- Оверлей Grid Mode -->
+            <Canvas x:Name="GridOverlayCanvas" IsHitTestVisible="False"/>
         </Panel>
     </ScrollViewer>
 </UserControl>

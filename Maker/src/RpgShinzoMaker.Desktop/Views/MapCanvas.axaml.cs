@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -31,8 +32,12 @@ public partial class MapCanvas : UserControl
     }
 
     private readonly List<TileCtrl> _controls = new();
-
     private Border? _hoverBorder;
+    private readonly List<Ellipse> _gridDots = new();
+    private readonly List<Line> _gridLines = new();
+
+    public bool ShowGridMode { get; set; } = false;
+    public int[]? TileTypes { get; set; }
 
     public MapCanvas()
     {
@@ -81,7 +86,66 @@ public partial class MapCanvas : UserControl
             UpdateTileCtrl(tc);
         }
 
-        // Рамка-курсор поверх всех тайлов
+        // ─── Оверлей Grid Mode ───
+        GridOverlayCanvas.Children.Clear();
+        GridOverlayCanvas.Width  = mapW;
+        GridOverlayCanvas.Height = mapH;
+        _gridDots.Clear();
+        _gridLines.Clear();
+
+        var gridBrush = new SolidColorBrush(Color.Parse("#66FFFFFF"));   // белый, alpha ~40%
+
+        // Вертикальные линии
+        for (int x = 0; x <= _map.Width; x++)
+        {
+            var line = new Line
+            {
+                StartPoint = new Point(x * GameMap.TileSize, 0),
+                EndPoint   = new Point(x * GameMap.TileSize, mapH),
+                Stroke = gridBrush,
+                StrokeThickness = 1,
+                IsVisible = false,
+                IsHitTestVisible = false,
+            };
+            GridOverlayCanvas.Children.Add(line);
+            _gridLines.Add(line);
+        }
+
+        // Горизонтальные линии
+        for (int y = 0; y <= _map.Height; y++)
+        {
+            var line = new Line
+            {
+                StartPoint = new Point(0, y * GameMap.TileSize),
+                EndPoint   = new Point(mapW, y * GameMap.TileSize),
+                Stroke = gridBrush,
+                StrokeThickness = 1,
+                IsVisible = false,
+                IsHitTestVisible = false,
+            };
+            GridOverlayCanvas.Children.Add(line);
+            _gridLines.Add(line);
+        }
+
+        // Точки типов — поверх линий
+        for (int x = 0; x < _map.Width; x++)
+        for (int y = 0; y < _map.Height; y++)
+        {
+            var dot = new Ellipse
+            {
+                Width  = 14,
+                Height = 14,
+                Opacity = 0.7,
+                IsVisible = false,
+                IsHitTestVisible = false,
+            };
+            Canvas.SetLeft(dot, x * GameMap.TileSize + (GameMap.TileSize - 14) / 2);
+            Canvas.SetTop (dot, y * GameMap.TileSize + (GameMap.TileSize - 14) / 2);
+            GridOverlayCanvas.Children.Add(dot);
+            _gridDots.Add(dot);
+        }
+
+        // Рамка-курсор — поверх всего
         _hoverBorder = new Border
         {
             BorderBrush = new SolidColorBrush(Color.Parse("#FFD700")),
@@ -91,7 +155,9 @@ public partial class MapCanvas : UserControl
             IsVisible = false,
             IsHitTestVisible = false,
         };
-        Layer2Canvas.Children.Add(_hoverBorder);
+        GridOverlayCanvas.Children.Add(_hoverBorder);
+
+        UpdateGridOverlay();
     }
 
     private Image CreateTileImage(int x, int y)
@@ -137,7 +203,46 @@ public partial class MapCanvas : UserControl
         foreach (var tc in _controls)
             UpdateTileCtrl(tc);
     }
+    // ══════════════════════════════════════════════
+    //   GRID MODE — обновить иконки типов
+    // ══════════════════════════════════════════════
+    public void UpdateGridOverlay()
+    {
+        if (_map == null || _gridDots.Count == 0) return;
 
+        // Линии — все разом
+        foreach (var line in _gridLines)
+            line.IsVisible = ShowGridMode;
+
+        // Точки — по типу тайла
+        for (int x = 0; x < _map.Width; x++)
+        for (int y = 0; y < _map.Height; y++)
+        {
+            int idx = x * _map.Height + y;
+            if (idx < 0 || idx >= _gridDots.Count) continue;
+
+            var dot = _gridDots[idx];
+            int tileId = (CurrentLayer == 0) ? _map.Tiles[idx] : _map.Tiles2[idx];
+
+            if (!ShowGridMode || TileTypes == null || tileId < 0 || tileId >= TileTypes.Length)
+            {
+                dot.IsVisible = false;
+                continue;
+            }
+
+            int type = TileTypes[tileId];
+            dot.Fill = type switch
+            {
+                0 => new SolidColorBrush(Color.Parse("#4CAF50")),
+                1 => new SolidColorBrush(Color.Parse("#E74C3C")),
+                2 => new SolidColorBrush(Color.Parse("#3498DB")),
+                3 => new SolidColorBrush(Color.Parse("#E67E22")),
+                _ => Brushes.Transparent
+            };
+            dot.IsVisible = type >= 0 && type <= 3;
+        }
+    }
+    
     private void UpdateTileCtrl(TileCtrl tc)
     {
         if (_map == null || tc.L1 == null || tc.L2 == null) return;

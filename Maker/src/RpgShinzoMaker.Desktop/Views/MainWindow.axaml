@@ -572,12 +572,21 @@
                        RenderOptions.EdgeMode="Aliased"/>
             </Border>
             <TextBlock x:Name="MapRightLabel"
-                       Text="—" Foreground="#888888" FontSize="10"
-                       HorizontalAlignment="Center"/>
-        </StackPanel>
-    </UniformGrid>
-
-</StackPanel>
+            Text="—" Foreground="#888888" FontSize="10"
+            HorizontalAlignment="Center"/>
+                              </StackPanel>
+                            </UniformGrid>
+                            <!-- Ряд 5: Grid Mode -->
+                            <ToggleButton x:Name="GridModeButton"
+                            Content="Grid Mode"
+                            FontSize="12" FontWeight="Bold"
+                            Height="32" Margin="0,8,0,0"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Background="#3E3E42"
+                            Foreground="White"
+                             Click="OnGridModeToggle"/>
+                        </StackPanel>
                     </DockPanel>
                 </Border>
             </Border>

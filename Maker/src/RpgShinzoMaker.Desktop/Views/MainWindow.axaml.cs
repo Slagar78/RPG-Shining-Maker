@@ -306,6 +306,8 @@ public partial class MainWindow : Window
 
             _tiles = newTiles;
             _tileTypes = new int[_tiles.Count];
+            // Отдать типы канвасу для Grid Mode
+            MapCanvasControl.TileTypes = _tileTypes;
 
             ClearSelections();
             ClearPreviews();
@@ -344,9 +346,7 @@ public partial class MainWindow : Window
         foreach (var tile in _tiles)
             tile.ShowType = isB;
 
-        _gridMode = isB;
-        GridModeToggle.Content = _gridMode ? "ON" : "OFF";
-
+        // Grid Mode больше не привязан к режиму B — управляется отдельной кнопкой
         ClearSelections();
         ClearPreviews();
         UpdatePreviewVisibility();
@@ -392,7 +392,38 @@ public partial class MainWindow : Window
         UpdateTypeIconSelection();
         UpdateTypePreview();
     }
+    
+    // ─── Grid Mode toggle ─────
+    private void OnGridModeToggle(object? sender, RoutedEventArgs e)
+    {
+        _gridMode = GridModeButton.IsChecked == true;
 
+        GridModeButton.Background = new SolidColorBrush(
+            Color.Parse(_gridMode ? "#C83232" : "#3E3E42"));
+
+        // Синхронизируем старый маленький тумблер в палитре
+        GridModeToggle.Content = _gridMode ? "ON" : "OFF";
+
+        // ═══ Авто-переключение блоксета A/B ═══
+        if (_gridMode)
+        {
+            // Включаем Grid Mode → переключаем блоксет в Mode B
+            ModeA.IsChecked = false;
+            ModeB.IsChecked = true;
+            SetModeB(true);
+        }
+        else
+        {
+            // Выключаем Grid Mode → переключаем блоксет обратно в Mode A
+            ModeA.IsChecked = true;
+            ModeB.IsChecked = false;
+            SetModeB(false);
+        }
+
+        MapCanvasControl.ShowGridMode = _gridMode;
+        MapCanvasControl.UpdateGridOverlay();
+    }
+    
     private void UpdateTypeIconSelection()
     {
         var icons = new[] { TypeIcon0, TypeIcon1, TypeIcon2, TypeIcon3 };
@@ -462,6 +493,9 @@ public partial class MainWindow : Window
         if (tile.Index < 0 || tile.Index >= _tileTypes.Length) return;
         _tileTypes[tile.Index] = _currentTileType;
         tile.TileType = _currentTileType;
+
+        // Обновить оверлей на карте, если Grid Mode включён
+        MapCanvasControl.UpdateGridOverlay();
     }
 
     // ─── Непрерывное «мазание» типа по палитре ─────
@@ -543,6 +577,7 @@ public partial class MainWindow : Window
             Color.Parse(_currentLayer == 0 ? "#6497C8" : "#4169E1"));
 
         MapCanvasControl.CurrentLayer = _currentLayer;
+        MapCanvasControl.UpdateGridOverlay();
     }
 
     private void UpdateCanvasLayers()
