@@ -185,8 +185,7 @@ end
 end
 
 	def update_movement(dt = 1.0 / 60.0)
-	snapped_dt = (dt * 60.0).round / 60.0
-	  @move_accum += snapped_dt
+	  @move_accum += dt
 	  @move_accum = FIXED_DT * 5 if @move_accum > FIXED_DT * 5
 
 	  while @move_accum >= FIXED_DT

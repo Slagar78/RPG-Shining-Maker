@@ -122,22 +122,20 @@ end
     update_blinking(dt)
   end
 
-  def update_movement(dt = 1.0 / 60.0)
-    unless @moving
-      @move_accum = 0.0
-      return
-    end
+	def update_movement(dt = 1.0 / 60.0)
+	  unless @moving
+		@move_accum = 0.0
+		return
+	  end
 
-    # Приводим dt к ближайшему кратному 1/60 — убирает дрожание vsync
-    snapped_dt = (dt * 60.0).round / 60.0
-    @move_accum += snapped_dt
-    @move_accum = FIXED_DT * 5 if @move_accum > FIXED_DT * 5
+	  @move_accum += dt
+	  @move_accum = FIXED_DT * 5 if @move_accum > FIXED_DT * 5
 
-    while @move_accum >= FIXED_DT && @moving
-      @move_accum -= FIXED_DT
-      step_movement
-    end
-  end
+	  while @move_accum >= FIXED_DT && @moving
+		@move_accum -= FIXED_DT
+		step_movement
+	  end
+	end
 
   def step_movement
     @step_progress += 1
