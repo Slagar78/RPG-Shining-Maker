@@ -14,7 +14,7 @@ class BattleCamera
     @y = 0.0
     @target_x = 0.0
     @target_y = 0.0
-    @smooth_factor = 0.1
+    @smooth_factor = 10.0
   end
 
 def snap_to(x, y)
@@ -40,8 +40,9 @@ def follow_point(px, py)
 end
 
 def update(dt = 1.0 / 60.0)
-  @x = @target_x
-  @y = @target_y
+  t = 1.0 - Math.exp(-@smooth_factor * dt)
+  @x += (@target_x - @x) * t
+  @y += (@target_y - @y) * t
 end
 
   # Для рендеринга – только целые пиксели, чтобы убрать субпиксельное дрожание
@@ -66,7 +67,7 @@ end
 	def clamp_target!
 	  max_x = @map_width - @screen_width
 	  max_y = @map_height - @screen_height
-	  min_y = -16
+	  min_y = -16   # высота чёрной полосы над картой
 	  @target_x = @target_x.clamp(0, max_x > 0 ? max_x : 0)
 	  @target_y = @target_y.clamp(min_y, max_y > min_y ? max_y : min_y)
 	end

@@ -440,9 +440,10 @@ end
     @turn_order = @units.sort_by { |u| -u[:agi] }
     @current_unit_index = 0
   end
-
+  
+# start_current_turn — начало хода, камера уже на юните
   def start_current_turn
-    @camera.smooth_factor = 0.2
+    @camera.smooth_factor = 15.0
     @current_unit = @turn_order[@current_unit_index]
     return unless @current_unit
 
@@ -489,6 +490,7 @@ end
     @cursor.move_to(@current_unit[:x], @current_unit[:y])	
   end
   
+ # start_cursor_return_from_info — возврат к юниту после осмотра 
 def start_cursor_return_from_info
   # Перемещаем курсор в пиксельные координаты центра клетки, где он сейчас (info_cursor)
   start_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2
@@ -501,7 +503,7 @@ def start_cursor_return_from_info
 
   @cursor.visible = true
   @battle_state = :cursor_returning
-  @camera.smooth_factor = 0.3
+  @camera.smooth_factor = 15.0
   @camera.follow_point(start_px, start_py)
 end
 
@@ -509,7 +511,8 @@ end
     next_index = (@current_unit_index + 1) % @turn_order.size
     @turn_order[next_index]
   end
-
+  
+# start_cursor_transition — перелёт между юнитами
 def start_cursor_transition(from_unit, to_unit)
   @cursor.visible = true
   @battle_player = nil
@@ -526,7 +529,7 @@ def start_cursor_transition(from_unit, to_unit)
   @cursor_moving_to_target = true
 
   # Переключаем камеру на быстрый, но плавный скролл перед началом движения
-  @camera.smooth_factor = 0.3
+  @camera.smooth_factor = 12.0
   @camera.follow_point(start_px, start_py)
 end
   
