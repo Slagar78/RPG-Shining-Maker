@@ -214,7 +214,12 @@ public partial class MainWindow : Window
                 SaveTileTypesForTileset(tilesetAbs);
             }
 
-            // 2. Обновляем статус-бар
+            // 3. Сохраняем entries.json (музыка, громкость, области)
+            RpgShinzoMaker.Core.Services.EntriesService.Save(
+                RpgShinzoMaker.Core.Services.ProjectPaths.EntriesFile,
+                _mapEntries);
+
+            // 4. Обновляем статус-бар
             // (Если у вас есть TextBlock для статуса, раскомментируйте и используйте)
             // StatusText.Text = "Сохранено!";
         }
@@ -665,7 +670,13 @@ public partial class MainWindow : Window
         int idx = MapSelector.SelectedIndex;
         if (idx < 0 || idx >= _mapEntries.Count) return;
         if (MapMusicSelector.SelectedItem is not string name) return;
-        _mapEntries[idx].Music = "assets/sounds/" + name;
+
+        string musicPath = "assets/sounds/" + name;
+        _mapEntries[idx].Music = musicPath;
+
+        // Синхронизируем текущую карту, чтобы при SAVE это ушло и в layout.json
+        if (_currentMap != null)
+            _currentMap.MusicFile = musicPath;
     }
 
     // ─── Слои ─────

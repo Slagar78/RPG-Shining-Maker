@@ -40,4 +40,28 @@ public static class EntriesService
             if (e.Folder == folder) return e;
         return null;
     }
+
+    public static void Save(string path, IEnumerable<MapEntry> entries)
+    {
+        var arr = new JsonArray();
+        foreach (var e in entries)
+        {
+            arr.Add(new JsonObject
+            {
+                ["folder"]       = e.Folder,
+                ["name"]         = e.Name,
+                ["music"]        = e.Music,
+                ["music_volume"] = e.MusicVolume,
+                ["areas"]        = e.Areas,
+            });
+        }
+
+        var dir = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+        File.WriteAllText(path, arr.ToJsonString(new JsonSerializerOptions
+        {
+            WriteIndented = true
+        }));
+    }
 }
