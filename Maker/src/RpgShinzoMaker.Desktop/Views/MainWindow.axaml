@@ -456,20 +456,56 @@
                                    FontSize="12"
                                    Margin="0,0,0,10"/>
 
-                        <UniformGrid Columns="3" Rows="4" VerticalAlignment="Top">
-                            <Button Content="✏" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolPencilClick"/>
-                            <Button Content="🧽" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolEraserClick"/>
-                            <Button Content="🪣" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolFillClick"/>
-                            <Button Content="▭" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolRectClick"/>
-                            <Button Content="🎯" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolPickerClick"/>
-                            <Button Content="▢" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolSelectClick"/>
-                            <Button Content="↶" FontSize="20" Width="48" Height="48" Margin="2"/>
-                            <Button Content="↷" FontSize="20" Width="48" Height="48" Margin="2"/>
-                            <Button Content="🔍" FontSize="20" Width="48" Height="48" Margin="2"/>
-                            <Button Content="📐" FontSize="20" Width="48" Height="48" Margin="2"/>
-                            <Button Content="📌" FontSize="20" Width="48" Height="48" Margin="2"/>
-                            <Button Content="💾" FontSize="20" Width="48" Height="48" Margin="2"/>
-                        </UniformGrid>
+            <UniformGrid Columns="3" Rows="4" VerticalAlignment="Top">
+
+                <!-- Ряд 1: L1 / L2 / Active Layer -->
+                <ToggleButton x:Name="Layer1Toggle"
+                              Content="L1"
+                              FontSize="14"
+                              FontWeight="Bold"
+                              Width="48" Height="48"
+                              Margin="2"
+                              IsChecked="True"
+                              Background="#4CAF50"
+                              Foreground="White"
+                              Click="OnLayer1ToggleClick"/>
+
+                <ToggleButton x:Name="Layer2Toggle"
+                              Content="L2"
+                              FontSize="14"
+                              FontWeight="Bold"
+                              Width="48" Height="48"
+                              Margin="2"
+                              IsChecked="True"
+                              Background="#4CAF50"
+                              Foreground="White"
+                              Click="OnLayer2ToggleClick"/>
+
+                <Button x:Name="ActiveLayerButton"
+                        Content="1"
+                        FontSize="14"
+                        FontWeight="Bold"
+                        Width="48" Height="48"
+                        Margin="2"
+                        Background="#6497C8"
+                        Foreground="White"
+                        Click="OnActiveLayerClick"/>
+
+                <!-- Ряд 2: карандаш / ластик / заливка -->
+                <Button Content="✏" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolPencilClick"/>
+                <Button Content="🧽" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolEraserClick"/>
+                <Button Content="🪣" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolFillClick"/>
+
+                <!-- Ряд 3: прямоугольник / пипетка / выделение -->
+                <Button Content="▭" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolRectClick"/>
+                <Button Content="🎯" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolPickerClick"/>
+                <Button Content="▢" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolSelectClick"/>
+
+                <!-- Ряд 4: undo / redo / save -->
+                <Button Content="↶" FontSize="20" Width="48" Height="48" Margin="2"/>
+                <Button Content="↷" FontSize="20" Width="48" Height="48" Margin="2"/>
+                <Button Content="💾" FontSize="20" Width="48" Height="48" Margin="2"/>
+            </UniformGrid>
                     </DockPanel>
                 </Border>
             </Border>

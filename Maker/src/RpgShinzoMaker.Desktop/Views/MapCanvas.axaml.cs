@@ -10,10 +10,14 @@ namespace RpgShinzoMaker.Desktop.Views;
 public partial class MapCanvas : UserControl
 {
     private WriteableBitmap? _surface;
-    private WriteableBitmap? _sourceTileset;  // ← WriteableBitmap, не Bitmap
+    private WriteableBitmap? _sourceTileset;
     private GameMap? _map;
 
     private int _tsCols, _tsRows, _tsStrips;
+
+    // Видимость слоёв (управляется кнопками L1/L2)
+    public bool ShowLayer1 { get; set; } = true;
+    public bool ShowLayer2 { get; set; } = true;
 
     public MapCanvas()
     {
@@ -26,7 +30,6 @@ public partial class MapCanvas : UserControl
 
         if (sourceTileset != null)
         {
-            // Конвертируем Bitmap → WriteableBitmap один раз
             _sourceTileset = ConvertToWriteableBitmap(sourceTileset);
             _tsCols = _sourceTileset.PixelSize.Width  / GameMap.TileSize;
             _tsRows = _sourceTileset.PixelSize.Height / GameMap.TileSize;
@@ -36,9 +39,6 @@ public partial class MapCanvas : UserControl
         Redraw();
     }
 
-    /// <summary>
-    /// Копирует Bitmap в WriteableBitmap для прямого доступа к пикселям.
-    /// </summary>
     private static WriteableBitmap ConvertToWriteableBitmap(Bitmap src)
     {
         int w = src.PixelSize.Width;
@@ -91,11 +91,18 @@ public partial class MapCanvas : UserControl
 
                 FillCheckerboard(basePtr, stride, mapW, mapH);
 
-                DrawLayer(basePtr, stride,
-                    _map.Tiles, _map.Rot, _map.MirrorX, _map.MirrorY);
+                // Слой 1
+                if (ShowLayer1)
+                    DrawLayer(basePtr, stride,
+                        _map.Tiles, _map.Rot, _map.MirrorX, _map.MirrorY, 255);
 
-                DrawLayer(basePtr, stride,
-                    _map.Tiles2, _map.Rot2, _map.MirrorX2, _map.MirrorY2);
+                // Слой 2 — полупрозрачный если виден слой 1 (как в C-версии)
+                if (ShowLayer2)
+                {
+                    byte layer2Alpha = ShowLayer1 ? (byte)96 : (byte)255;
+                    DrawLayer(basePtr, stride,
+                        _map.Tiles2, _map.Rot2, _map.MirrorX2, _map.MirrorY2, layer2Alpha);
+                }
             }
         }
 
@@ -119,7 +126,7 @@ public partial class MapCanvas : UserControl
     }
 
     private unsafe void DrawLayer(byte* basePtr, int stride,
-        int[] tiles, int[] rot, bool[] mx, bool[] my)
+        int[] tiles, int[] rot, bool[] mx, bool[] my, byte layerAlpha)
     {
         if (_map == null || _sourceTileset == null) return;
 
@@ -133,6 +140,8 @@ public partial class MapCanvas : UserControl
         int srcStride = srcFb.RowBytes;
         int srcW = _sourceTileset.PixelSize.Width;
         int srcH = _sourceTileset.PixelSize.Height;
+
+        bool isOpaque = (layerAlpha == 255);
 
         for (int x = 0; x < _map.Width; x++)
         {
@@ -164,10 +173,41 @@ public partial class MapCanvas : UserControl
                         int dx = dstX + ox;
                         if (dx < 0 || dx >= mapW) continue;
 
-                        uint c = srcRow[sx];
-                        if ((c & 0xFF000000) == 0) continue;  // прозрачный
+                        uint src = srcRow[sx];
+                        byte srcA = (byte)((src >> 24) & 0xFF);
 
-                        dstRow[dx] = c;
+                        if (srcA == 0) continue;  // полностью прозрачный пиксель
+
+                        if (isOpaque)
+                        {
+                            // Простое копирование
+                            dstRow[dx] = src;
+                        }
+                        else
+                        {
+                            // Альфа-блендинг: result = src*α + dst*(1-α)
+                            int a = (srcA * layerAlpha) / 255;
+                            if (a == 0) continue;
+
+                            uint dst = dstRow[dx];
+
+                            byte sr2 = (byte)((src >> 16) & 0xFF);
+                            byte sg  = (byte)((src >> 8)  & 0xFF);
+                            byte sb  = (byte)( src        & 0xFF);
+
+                            byte dr  = (byte)((dst >> 16) & 0xFF);
+                            byte dg  = (byte)((dst >> 8)  & 0xFF);
+                            byte db  = (byte)( dst        & 0xFF);
+
+                            byte r = (byte)((sr2 * a + dr * (255 - a)) / 255);
+                            byte g = (byte)((sg  * a + dg * (255 - a)) / 255);
+                            byte b = (byte)((sb  * a + db * (255 - a)) / 255);
+
+                            dstRow[dx] = 0xFF000000u
+                                       | ((uint)r << 16)
+                                       | ((uint)g << 8)
+                                       |  (uint)b;
+                        }
                     }
                 }
             }

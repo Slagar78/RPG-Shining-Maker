@@ -87,7 +87,9 @@ public partial class MainWindow : Window
     private List<RpgShinzoMaker.Core.Models.MapEntry> _mapEntries = new();
     private List<string> _musicFiles = new();
     private bool _suppressMusicChange = false;
-
+    private bool _showLayer1 = true;
+    private bool _showLayer2 = true;
+    private int  _currentLayer = 0;
 
     public MainWindow()
     {
@@ -479,6 +481,37 @@ public partial class MainWindow : Window
         if (MapMusicSelector.SelectedItem is not string name) return;
         _mapEntries[idx].Music = "assets/sounds/" + name;
         Debug.WriteLine($"[MUSIC] {_mapEntries[idx].Name} → {name}");
+    }
+    // ─── Слои ─────
+    private void OnLayer1ToggleClick(object? sender, RoutedEventArgs e)
+    {
+        _showLayer1 = Layer1Toggle.IsChecked == true;
+        Layer1Toggle.Background = new SolidColorBrush(
+            Color.Parse(_showLayer1 ? "#4CAF50" : "#555555"));
+        UpdateCanvasLayers();
+    }
+
+    private void OnLayer2ToggleClick(object? sender, RoutedEventArgs e)
+    {
+        _showLayer2 = Layer2Toggle.IsChecked == true;
+        Layer2Toggle.Background = new SolidColorBrush(
+            Color.Parse(_showLayer2 ? "#4CAF50" : "#555555"));
+        UpdateCanvasLayers();
+    }
+
+    private void OnActiveLayerClick(object? sender, RoutedEventArgs e)
+    {
+        _currentLayer = 1 - _currentLayer;
+        ActiveLayerButton.Content = (_currentLayer + 1).ToString();
+        ActiveLayerButton.Background = new SolidColorBrush(
+            Color.Parse(_currentLayer == 0 ? "#6497C8" : "#4169E1"));
+    }
+
+    private void UpdateCanvasLayers()
+    {
+        MapCanvasControl.ShowLayer1 = _showLayer1;
+        MapCanvasControl.ShowLayer2 = _showLayer2;
+        MapCanvasControl.Redraw();
     }
 }
 
