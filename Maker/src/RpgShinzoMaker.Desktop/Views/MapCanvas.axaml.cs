@@ -17,6 +17,7 @@ public partial class MapCanvas : UserControl
     public int CurrentLayer { get; set; } = 0;
 
     public event Action<int, int, int, bool>? TileClicked;
+    public event Action<int, int, int, bool>? TileDragged;
 
     private GameMap? _map;
     private List<CroppedBitmap> _tiles = new();
@@ -34,6 +35,7 @@ public partial class MapCanvas : UserControl
     public MapCanvas()
     {
         InitializeComponent();
+        PointerMoved += OnCanvasPointerMoved;
     }
 
     // ══════════════════════════════════════════════
@@ -202,7 +204,31 @@ public partial class MapCanvas : UserControl
 
         return wb;
     }
+    private void OnCanvasPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (_map == null) return;
 
+        var props = e.GetCurrentPoint(RootPanel).Properties;
+
+        bool isLeft  = props.IsLeftButtonPressed;
+        bool isRight = props.IsRightButtonPressed;
+
+        if (!isLeft && !isRight) return;
+
+        var p = e.GetPosition(RootPanel);
+        int tx = (int)(p.X / GameMap.TileSize);
+        int ty = (int)(p.Y / GameMap.TileSize);
+
+        if (tx < 0 || tx >= _map.Width) return;
+        if (ty < 0 || ty >= _map.Height) return;
+
+        int idx = tx * _map.Height + ty;
+        int tileId = (CurrentLayer == 0) ? _map.Tiles[idx] : _map.Tiles2[idx];
+
+        // Передаём какая кнопка зажата
+        TileDragged?.Invoke(tx, ty, tileId, isLeft);
+    }
+    
     // ══════════════════════════════════════════════
     //   КЛИК ПО КАРТЕ
     // ══════════════════════════════════════════════

@@ -107,6 +107,7 @@ public partial class MainWindow : Window
 
         LoadProject();
         MapCanvasControl.TileClicked += OnMapTileClicked;
+        MapCanvasControl.TileDragged += OnMapTileDragged;
     }
 
     // ─── Загрузка проекта ─────
@@ -499,13 +500,18 @@ public partial class MainWindow : Window
         FlipVBtn.IsEnabled  = _tileEditorMode;
         DeleteBtn.IsEnabled = _tileEditorMode;
 
-        // Сброс превью когда выключаем
-        if (!_tileEditorMode)
+        if (_tileEditorMode)
         {
+            // Автовыбор первого режима — Rotate
+            _transformMode = 1;
+            UpdateTransformHighlight();
+        }
+        else
+        {
+            // Сброс превью когда выключаем
             _transformMode = 0;
             UpdateTransformHighlight();
 
-            // Сброс Left/Right click превью
             MapLeftPreview.Source  = null;
             MapRightPreview.Source = null;
             MapLeftLabel.Text  = "—";
@@ -611,6 +617,24 @@ public partial class MainWindow : Window
 
         return rtb;
     }   
+    // ─── Drag по карте (только для Delete) ─────
+    private void OnMapTileDragged(int tx, int ty, int tileId, bool isLeftButton)
+    {
+        if (!_tileEditorMode) return;
+        if (_transformMode != 4) return;   // drag работает ТОЛЬКО для Delete
+        if (_currentMap == null) return;
+
+        int idx = tx * _currentMap.Height + ty;
+        if (idx < 0 || idx >= _currentMap.TotalCells) return;
+
+        // Уже пустая клетка — пропускаем
+        int currentTile = (_currentLayer == 0)
+            ? _currentMap.Tiles[idx]
+            : _currentMap.Tiles2[idx];
+        if (currentTile < 0) return;
+
+        ApplyTransform(tx, ty);
+    }
     
     private void ApplyTransform(int tx, int ty)
     {
