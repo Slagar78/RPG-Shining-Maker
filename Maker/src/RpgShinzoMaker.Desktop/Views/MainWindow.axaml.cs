@@ -501,6 +501,30 @@ public partial class MainWindow : Window
         // Синхронизируем старый маленький тумблер в палитре
         GridModeToggle.Content = _gridMode ? "ON" : "OFF";
 
+        // ═══ Взаимоисключение с Tile Editor ═══
+        if (_gridMode && _tileEditorMode)
+        {
+            // Принудительно выключаем Tile Editor
+            TileEditorToggle.IsChecked = false;
+            _tileEditorMode = false;
+            _transformMode = 0;
+
+            TileEditorIcon.Text = "✗";
+            TileEditorIcon.Foreground = new SolidColorBrush(Color.Parse("#E74C3C"));
+
+            RotateBtn.IsEnabled = false;
+            FlipHBtn.IsEnabled  = false;
+            FlipVBtn.IsEnabled  = false;
+            DeleteBtn.IsEnabled = false;
+
+            UpdateTransformHighlight();
+
+            MapLeftPreview.Source  = null;
+            MapRightPreview.Source = null;
+            MapLeftLabel.Text  = "—";
+            MapRightLabel.Text = "—";
+        }
+
         // ═══ Авто-переключение блоксета A/B ═══
         if (_gridMode)
         {
@@ -721,6 +745,20 @@ public partial class MainWindow : Window
     private void OnTileEditorToggle(object? sender, RoutedEventArgs e)
     {
         _tileEditorMode = TileEditorToggle.IsChecked == true;
+
+        // ═══ Взаимоисключение с Grid Mode ═══
+        if (_tileEditorMode && _gridMode)
+        {
+            // Принудительно выключаем Grid Mode
+            GridModeButton.IsChecked = false;
+            _gridMode = false;
+
+            GridModeButton.Background = new SolidColorBrush(Color.Parse("#3E3E42"));
+            GridModeToggle.Content = "OFF";
+
+            MapCanvasControl.ShowGridMode = false;
+            MapCanvasControl.UpdateGridOverlay();
+        }
 
         // Галочка / крестик
         TileEditorIcon.Text = _tileEditorMode ? "✓" : "✗";
