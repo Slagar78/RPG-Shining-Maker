@@ -143,6 +143,7 @@ class Game
 
   def run
     until WindowShouldClose()
+	@dt = GetFrameTime()
       handle_input
       update
       draw
