@@ -917,7 +917,6 @@ end
 
    when :item_grid_select
      @battle_menu.handle_input
-     @battle_player&.update_animation(dt)
      if (result = @battle_menu.fetch_pending_grid_item)
        item, mode = result
        case mode
