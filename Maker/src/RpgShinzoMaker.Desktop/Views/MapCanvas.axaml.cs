@@ -32,10 +32,13 @@ public partial class MapCanvas : UserControl
 
     private readonly List<TileCtrl> _controls = new();
 
+    private Border? _hoverBorder;
+
     public MapCanvas()
     {
         InitializeComponent();
         PointerMoved += OnCanvasPointerMoved;
+        PointerExited += OnCanvasPointerExited;
     }
 
     // ══════════════════════════════════════════════
@@ -77,6 +80,18 @@ public partial class MapCanvas : UserControl
             _controls.Add(tc);
             UpdateTileCtrl(tc);
         }
+
+        // Рамка-курсор поверх всех тайлов
+        _hoverBorder = new Border
+        {
+            BorderBrush = new SolidColorBrush(Color.Parse("#FFD700")),
+            BorderThickness = new Thickness(2),
+            Width  = GameMap.TileSize,
+            Height = GameMap.TileSize,
+            IsVisible = false,
+            IsHitTestVisible = false,
+        };
+        Layer2Canvas.Children.Add(_hoverBorder);
     }
 
     private Image CreateTileImage(int x, int y)
@@ -208,25 +223,43 @@ public partial class MapCanvas : UserControl
     {
         if (_map == null) return;
 
-        var props = e.GetCurrentPoint(RootPanel).Properties;
-
-        bool isLeft  = props.IsLeftButtonPressed;
-        bool isRight = props.IsRightButtonPressed;
-
-        if (!isLeft && !isRight) return;
-
         var p = e.GetPosition(RootPanel);
         int tx = (int)(p.X / GameMap.TileSize);
         int ty = (int)(p.Y / GameMap.TileSize);
 
-        if (tx < 0 || tx >= _map.Width) return;
-        if (ty < 0 || ty >= _map.Height) return;
+        // Курсор вне клеток карты — прячем рамку
+        if (tx < 0 || tx >= _map.Width || ty < 0 || ty >= _map.Height)
+        {
+            if (_hoverBorder != null) _hoverBorder.IsVisible = false;
+            return;
+        }
+
+        // Рамка вокруг клетки под курсором
+        var props = e.GetCurrentPoint(RootPanel).Properties;
+        bool isLeft  = props.IsLeftButtonPressed;
+        bool isRight = props.IsRightButtonPressed;
+
+        if (_hoverBorder != null)
+        {
+            _hoverBorder.IsVisible = true;
+            Canvas.SetLeft(_hoverBorder, tx * GameMap.TileSize);
+            Canvas.SetTop (_hoverBorder, ty * GameMap.TileSize);
+
+            // ПКМ → красная, иначе → жёлтая
+            string color = isRight ? "#FF2222" : "#FFD700";
+            _hoverBorder.BorderBrush = new SolidColorBrush(Color.Parse(color));
+        }
+
+        if (!isLeft && !isRight) return;
 
         int idx = tx * _map.Height + ty;
         int tileId = (CurrentLayer == 0) ? _map.Tiles[idx] : _map.Tiles2[idx];
-
-        // Передаём какая кнопка зажата
         TileDragged?.Invoke(tx, ty, tileId, isLeft);
+    }
+
+    private void OnCanvasPointerExited(object? sender, PointerEventArgs e)
+    {
+        if (_hoverBorder != null) _hoverBorder.IsVisible = false;
     }
     
     // ══════════════════════════════════════════════

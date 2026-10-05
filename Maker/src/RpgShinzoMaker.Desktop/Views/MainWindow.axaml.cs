@@ -187,7 +187,32 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) { Debug.WriteLine($"[MAP] {ex.Message}"); }
     }
+    // ─── Сохранение текущей карты ─────
+    private void OnSaveClick(object? sender, RoutedEventArgs e)
+    {
+        if (_currentMap == null) 
+        {
+            Debug.WriteLine("[SAVE] Нет активной карты для сохранения.");
+            return;
+        }
 
+        try
+        {
+            // 1. Сохраняем layout.json (тайлы, повороты, коллизии)
+            var layoutPath = RpgShinzoMaker.Core.Services.ProjectPaths.LayoutFile(_currentMap.Folder);
+            RpgShinzoMaker.Core.Services.MapJsonService.Save(layoutPath, _currentMap);
+            Debug.WriteLine($"[SAVE] Карта сохранена: {layoutPath}");
+
+            // 2. Обновляем статус-бар
+            // (Если у вас есть TextBlock для статуса, раскомментируйте и используйте)
+            // StatusText.Text = "Сохранено!";
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[SAVE] Ошибка сохранения: {ex.Message}");
+        }
+    }
+    
     private void OnMapSelectorChanged(object? sender, SelectionChangedEventArgs e)
     {
         int idx = MapSelector.SelectedIndex;
@@ -315,6 +340,9 @@ public partial class MainWindow : Window
         ClearSelections();
         ClearPreviews();
         UpdatePreviewVisibility();
+
+        // Обновить стиль иконок типов (мигание только в B)
+        UpdateTypeIconSelection();
     }
 
     private void UpdatePreviewVisibility()
@@ -363,7 +391,9 @@ public partial class MainWindow : Window
             bool selected = i == _currentTileType;
             icons[i].BorderBrush = selected ? Brushes.White : new SolidColorBrush(Color.Parse("#555555"));
             icons[i].BorderThickness = new Thickness(2);
-            icons[i].Classes.Set("selected", selected);
+
+            // Мигание — только в режиме B (Mode A — просто статичное выделение)
+            icons[i].Classes.Set("selected", selected && _isModeB);
         }
     }
 
@@ -549,45 +579,43 @@ public partial class MainWindow : Window
     // ─── Клик по тайлу на карте ─────
     private void OnMapTileClicked(int tx, int ty, int tileId, bool isLeftButton)
     {
-        if (!_tileEditorMode) return;
         if (_currentMap == null) return;
 
         int idx = tx * _currentMap.Height + ty;
         if (idx < 0 || idx >= _currentMap.TotalCells) return;
 
-        // 1. СНАЧАЛА применяем трансформацию (если выбрана)
-        if (_transformMode != 0)
-            ApplyTransform(tx, ty);
+        // ═══ Tile Editor ВЫКЛЮЧЕН → рисуем тайлом из палитры ═══
+        if (!_tileEditorMode)
+        {
+            if (_isModeB) return;  // в режиме типов по карте не рисуем
 
-        // 2. ЧИТАЕМ обновлённое состояние из карты
-        int newTileId = (_currentLayer == 0)
-            ? _currentMap.Tiles[idx]
-            : _currentMap.Tiles2[idx];
+            int paintTile = isLeftButton ? _leftSelectedIndex : _rightSelectedIndex;
+            if (paintTile < 0) return;
 
+            PaintTile(idx, paintTile);
+            MapCanvasControl.RedrawTile(tx, ty);
+            return;
+        }
+
+        // ═══ Tile Editor ВКЛЮЧЁН → трансформации (как было) ═══
+        if (_transformMode == 0) return;
+
+        ApplyTransform(tx, ty);
+
+        int newTileId = (_currentLayer == 0) ? _currentMap.Tiles[idx] : _currentMap.Tiles2[idx];
         int rot = (_currentLayer == 0) ? _currentMap.Rot[idx]     : _currentMap.Rot2[idx];
         bool mx  = (_currentLayer == 0) ? _currentMap.MirrorX[idx] : _currentMap.MirrorX2[idx];
         bool my  = (_currentLayer == 0) ? _currentMap.MirrorY[idx] : _currentMap.MirrorY2[idx];
 
-        // 3. Превью — только для Rotate/FlipH/FlipV (не для Delete)
         if (_transformMode != 4)
         {
             var img = RenderTileWithTransform(newTileId, rot, mx, my);
-            if (isLeftButton)
-            {
-                MapLeftPreview.Source = img;
-                MapLeftLabel.Text = newTileId >= 0 ? $"#{newTileId}" : "—";
-            }
-            else
-            {
-                MapRightPreview.Source = img;
-                MapRightLabel.Text = newTileId >= 0 ? $"#{newTileId}" : "—";
-            }
+            if (isLeftButton) { MapLeftPreview.Source  = img; MapLeftLabel.Text  = newTileId >= 0 ? $"#{newTileId}" : "—"; }
+            else              { MapRightPreview.Source = img; MapRightLabel.Text = newTileId >= 0 ? $"#{newTileId}" : "—"; }
         }
     }
-
-    /// <summary>
+    
     /// Рендерит тайл с учётом rot/mirror — для превью.
-    /// </summary>
     private Bitmap? RenderTileWithTransform(int tileId, int rot, bool mx, bool my)
     {
         if (tileId < 0 || tileId >= _tiles.Count) return null;
@@ -620,17 +648,32 @@ public partial class MainWindow : Window
     // ─── Drag по карте (только для Delete) ─────
     private void OnMapTileDragged(int tx, int ty, int tileId, bool isLeftButton)
     {
-        if (!_tileEditorMode) return;
-        if (_transformMode != 4) return;   // drag работает ТОЛЬКО для Delete
         if (_currentMap == null) return;
 
         int idx = tx * _currentMap.Height + ty;
         if (idx < 0 || idx >= _currentMap.TotalCells) return;
 
-        // Уже пустая клетка — пропускаем
-        int currentTile = (_currentLayer == 0)
-            ? _currentMap.Tiles[idx]
-            : _currentMap.Tiles2[idx];
+        // ═══ Tile Editor ВЫКЛЮЧЕН → непрерывное рисование ═══
+        if (!_tileEditorMode)
+        {
+            if (_isModeB) return;
+
+            int paintTile = isLeftButton ? _leftSelectedIndex : _rightSelectedIndex;
+            if (paintTile < 0) return;
+
+            // Уже такой тайл — не перерисовываем (оптимизация)
+            int existing = (_currentLayer == 0) ? _currentMap.Tiles[idx] : _currentMap.Tiles2[idx];
+            if (existing == paintTile) return;
+
+            PaintTile(idx, paintTile);
+            MapCanvasControl.RedrawTile(tx, ty);
+            return;
+        }
+
+        // ═══ Tile Editor ВКЛЮЧЁН → drag для Delete ═══
+        if (_transformMode != 4) return;
+
+        int currentTile = (_currentLayer == 0) ? _currentMap.Tiles[idx] : _currentMap.Tiles2[idx];
         if (currentTile < 0) return;
 
         ApplyTransform(tx, ty);
@@ -669,4 +712,25 @@ public partial class MainWindow : Window
 
         MapCanvasControl.RedrawTile(tx, ty);
     }
+    // ─── Записать тайл в активный слой ─────
+    private void PaintTile(int idx, int tileId)
+    {
+        if (_currentMap == null) return;
+
+        if (_currentLayer == 0)
+        {
+            _currentMap.Tiles[idx]   = tileId;
+            _currentMap.Rot[idx]     = 0;
+            _currentMap.MirrorX[idx] = false;
+            _currentMap.MirrorY[idx] = false;
+        }
+        else
+        {
+            _currentMap.Tiles2[idx]   = tileId;
+            _currentMap.Rot2[idx]     = 0;
+            _currentMap.MirrorX2[idx] = false;
+            _currentMap.MirrorY2[idx] = false;
+        }
+    }
+    
 }

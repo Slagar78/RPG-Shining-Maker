@@ -68,8 +68,13 @@
         <!-- ТУЛБАР -->
         <Border DockPanel.Dock="Top" Background="#2D2D30" Padding="8,6">
             <StackPanel Orientation="Horizontal" Spacing="6">
-                <Button Content="💾" ToolTip.Tip="Сохранить"/>
-                <Button Content="📂" ToolTip.Tip="Открыть"/>
+                <Button Content="💾 SAVE" 
+                        ToolTip.Tip="Сохранить карту (Ctrl+S)" 
+                        Background="#4CAF50" 
+                        Foreground="White" 
+                        FontWeight="Bold"
+                        Padding="12,6"
+                        Click="OnSaveClick"/>
                 <Separator Width="1" Margin="6,2"/>
                 <Button Content="▶ Запустить игру" ToolTip.Tip="F5"/>
                 <Button Content="⚔ Запустить битву" ToolTip.Tip="F6"/>
