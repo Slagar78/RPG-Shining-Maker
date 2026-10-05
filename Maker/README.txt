@@ -1,3 +1,54 @@
+RpgShinzoMaker.Core/
+├── Models/
+│   ├── GameMap.cs
+│   ├── MapEntry.cs
+│   ├── TileType.cs
+│   ├── Battle.cs          ← будущее
+│   ├── BattleScene.cs     ← будущее
+│   ├── Sprite.cs          ← будущее
+│   └── Database.cs        ← будущее
+├── Services/
+│   ├── ProjectPaths.cs
+│   ├── MapJsonService.cs
+│   ├── EntriesService.cs
+│   ├── TileTypesService.cs   ← вынести из MainWindow
+│   ├── BattleJsonService.cs  ← будущее
+│   └── ...
+└── ...
+
+RpgShinzoMaker.Desktop/
+├── Views/
+│   ├── MainWindow.axaml              ← только оболочка: меню, тулбар, TabControl
+│   ├── MainWindow.axaml.cs           ← запуск + переключение табов
+│   │
+│   ├── MapEditor/                    ← редактор карт
+│   │   ├── MapEditorView.axaml       ← то, что сейчас в табе "Карты"
+│   │   ├── MapEditorView.axaml.cs
+│   │   ├── MapCanvas.axaml
+│   │   ├── MapCanvas.axaml.cs
+│   │   ├── TileItem.cs
+│   │   └── MapEditorView.Painting.cs ← частичный класс для логики
+│   │
+│   ├── BattleEditor/                 ← будущее
+│   │   └── ...
+│   │
+│   ├── BattleSceneEditor/            ← будущее
+│   │   └── ...
+│   │
+│   ├── DatabaseEditor/               ← будущее
+│   │   └── ...
+│   │
+│   └── Shared/                       ← общие контролы
+│       ├── NumberField.axaml
+│       └── ...
+│
+├── ViewModels/                       ← если перейдёшь на MVVM
+└── ...
+
+
+
+
+
 ════════════════════════════════════════════════════════════════════
   RPG-Shinzo Maker — редактор карт для движка RPG-Shining-Maker
 ════════════════════════════════════════════════════════════════════

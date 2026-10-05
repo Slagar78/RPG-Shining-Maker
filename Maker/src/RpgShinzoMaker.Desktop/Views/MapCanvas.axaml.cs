@@ -136,6 +136,8 @@ public partial class MapCanvas : UserControl
                 Width  = 14,
                 Height = 14,
                 Opacity = 0.7,
+                Stroke = new SolidColorBrush(Color.Parse("#000000")),   // чёрная обводка
+                StrokeThickness = 2,
                 IsVisible = false,
                 IsHitTestVisible = false,
             };

@@ -589,7 +589,31 @@ public partial class MainWindow : Window
         // Обновить оверлей на карте, если Grid Mode включён
         MapCanvasControl.UpdateGridOverlay();
     }
+    // ─── Назначить тип тайлу, который лежит на карте в клетке idx ─────
+    private void AssignTypeToMapTile(int idx)
+    {
+        if (_currentMap == null) return;
+        if (idx < 0 || idx >= _currentMap.TotalCells) return;
 
+        int tileId = (_currentLayer == 0)
+            ? _currentMap.Tiles[idx]
+            : _currentMap.Tiles2[idx];
+
+        if (tileId < 0 || tileId >= _tileTypes.Length) return;
+
+        // Если тип не меняется — ничего не делаем
+        if (_tileTypes[tileId] == _currentTileType) return;
+
+        _tileTypes[tileId] = _currentTileType;
+
+        // Обновить квадратик в палитре (может быть null, если тайл не в списке)
+        if (tileId < _tiles.Count)
+            _tiles[tileId].TileType = _currentTileType;
+
+        // Обновить точки Grid Mode на карте
+        MapCanvasControl.UpdateGridOverlay();
+    }
+    
     // ─── Непрерывное «мазание» типа по палитре ─────
     private void OnPaletteItemPointerMoved(object? sender, PointerEventArgs e)
     {
@@ -752,6 +776,13 @@ public partial class MainWindow : Window
         int idx = tx * _currentMap.Height + ty;
         if (idx < 0 || idx >= _currentMap.TotalCells) return;
 
+        // ═══ Grid Mode ВКЛЮЧЁН → назначаем тип тайла под курсором ═══
+        if (_gridMode)
+        {
+            AssignTypeToMapTile(idx);
+            return;
+        }
+
         // ═══ Tile Editor ВЫКЛЮЧЕН → рисуем тайлом из палитры ═══
         if (!_tileEditorMode)
         {
@@ -765,7 +796,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        // ═══ Tile Editor ВКЛЮЧЁН → трансформации (как было) ═══
+        // ═══ Tile Editor ВКЛЮЧЁН → трансформации ═══
         if (_transformMode == 0) return;
 
         ApplyTransform(tx, ty);
@@ -813,39 +844,47 @@ public partial class MainWindow : Window
 
         return rtb;
     }   
-    // ─── Drag по карте (только для Delete) ─────
-    private void OnMapTileDragged(int tx, int ty, int tileId, bool isLeftButton)
-    {
-        if (_currentMap == null) return;
-
-        int idx = tx * _currentMap.Height + ty;
-        if (idx < 0 || idx >= _currentMap.TotalCells) return;
-
+    
         // ═══ Tile Editor ВЫКЛЮЧЕН → непрерывное рисование ═══
-        if (!_tileEditorMode)
+        private void OnMapTileDragged(int tx, int ty, int tileId, bool isLeftButton)
         {
-            if (_isModeB) return;
+            if (_currentMap == null) return;
 
-            int paintTile = isLeftButton ? _leftSelectedIndex : _rightSelectedIndex;
-            if (paintTile < 0) return;
+            int idx = tx * _currentMap.Height + ty;
+            if (idx < 0 || idx >= _currentMap.TotalCells) return;
 
-            // Уже такой тайл — не перерисовываем (оптимизация)
-            int existing = (_currentLayer == 0) ? _currentMap.Tiles[idx] : _currentMap.Tiles2[idx];
-            if (existing == paintTile) return;
+            // ═══ Grid Mode ВКЛЮЧЁН → непрерывно назначаем тип ═══
+            if (_gridMode)
+            {
+                AssignTypeToMapTile(idx);
+                return;
+            }
 
-            PaintTile(idx, paintTile);
-            MapCanvasControl.RedrawTile(tx, ty);
-            return;
+            // ═══ Tile Editor ВЫКЛЮЧЕН → непрерывное рисование ═══
+            if (!_tileEditorMode)
+            {
+                if (_isModeB) return;
+
+                int paintTile = isLeftButton ? _leftSelectedIndex : _rightSelectedIndex;
+                if (paintTile < 0) return;
+
+                // Уже такой тайл — не перерисовываем (оптимизация)
+                int existing = (_currentLayer == 0) ? _currentMap.Tiles[idx] : _currentMap.Tiles2[idx];
+                if (existing == paintTile) return;
+
+                PaintTile(idx, paintTile);
+                MapCanvasControl.RedrawTile(tx, ty);
+                return;
+            }
+
+            // ═══ Tile Editor ВКЛЮЧЁН → drag для Delete ═══
+            if (_transformMode != 4) return;
+
+            int currentTile = (_currentLayer == 0) ? _currentMap.Tiles[idx] : _currentMap.Tiles2[idx];
+            if (currentTile < 0) return;
+
+            ApplyTransform(tx, ty);
         }
-
-        // ═══ Tile Editor ВКЛЮЧЁН → drag для Delete ═══
-        if (_transformMode != 4) return;
-
-        int currentTile = (_currentLayer == 0) ? _currentMap.Tiles[idx] : _currentMap.Tiles2[idx];
-        if (currentTile < 0) return;
-
-        ApplyTransform(tx, ty);
-    }
     
     private void ApplyTransform(int tx, int ty)
     {
