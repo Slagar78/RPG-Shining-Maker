@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -203,6 +205,15 @@ public partial class MainWindow : Window
             RpgShinzoMaker.Core.Services.MapJsonService.Save(layoutPath, _currentMap);
             Debug.WriteLine($"[SAVE] Карта сохранена: {layoutPath}");
 
+            // 2. Сохраняем типы тайлов для текущего тайлсета
+            if (!string.IsNullOrEmpty(_currentMap.TilesetPath))
+            {
+                var tilesetName = Path.GetFileName(_currentMap.TilesetPath);
+                var tilesetAbs  = Path.Combine(
+                    RpgShinzoMaker.Core.Services.ProjectPaths.TilesetsDir, tilesetName);
+                SaveTileTypesForTileset(tilesetAbs);
+            }
+
             // 2. Обновляем статус-бар
             // (Если у вас есть TextBlock для статуса, раскомментируйте и используйте)
             // StatusText.Text = "Сохранено!";
@@ -272,7 +283,85 @@ public partial class MainWindow : Window
             MapTilesetText.Text = Path.GetFileName(newPath);
         }
     }
+    // ─── Относительный путь тайлсета (как в C) ─────
+    private static string GetRelativeTilesetPath(string absPath)
+    {
+        var root = RpgShinzoMaker.Core.Services.ProjectPaths.Root;
+        if (!string.IsNullOrEmpty(root) &&
+            absPath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+        {
+            var rel = absPath.Substring(root.Length).TrimStart('\\', '/');
+            return rel.Replace('\\', '/');
+        }
+        // Fallback — только имя файла
+        return Path.GetFileName(absPath);
+    }
 
+    // ─── Загрузить типы тайлов из JSON ─────
+    private void LoadTileTypesForTileset(string tilesetAbsPath)
+    {
+        _tileTypes = new int[_tiles.Count];   // по умолчанию все 0 (Passable)
+
+        string rel  = GetRelativeTilesetPath(tilesetAbsPath);
+        string file = RpgShinzoMaker.Core.Services.ProjectPaths.TileTypesFile(rel);
+
+        if (!File.Exists(file))
+        {
+            Debug.WriteLine($"[TILE_TYPES] Файл не найден: {file} — все типы 0");
+            return;
+        }
+
+        try
+        {
+            var arr = JsonNode.Parse(File.ReadAllText(file))?.AsArray();
+            if (arr == null) return;
+
+            int n = Math.Min(arr.Count, _tiles.Count);
+            for (int i = 0; i < n; i++)
+            {
+                int t = arr[i]?.GetValue<int>() ?? 0;
+                _tileTypes[i] = t;
+                _tiles[i].TileType = t;
+            }
+
+            Debug.WriteLine($"[TILE_TYPES] Загружено {n} типов из {file}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[TILE_TYPES] Ошибка загрузки: {ex.Message}");
+        }
+    }
+
+    // ─── Сохранить типы тайлов в JSON ─────
+    private void SaveTileTypesForTileset(string tilesetAbsPath)
+    {
+        if (_tiles.Count == 0 || _tileTypes.Length == 0) return;
+
+        string rel  = GetRelativeTilesetPath(tilesetAbsPath);
+        string file = RpgShinzoMaker.Core.Services.ProjectPaths.TileTypesFile(rel);
+
+        try
+        {
+            var dir = Path.GetDirectoryName(file);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+            var arr = new JsonArray();
+            for (int i = 0; i < _tileTypes.Length; i++)
+                arr.Add(_tileTypes[i]);
+
+            File.WriteAllText(file, arr.ToJsonString(new JsonSerializerOptions
+            {
+                WriteIndented = false
+            }));
+
+            Debug.WriteLine($"[TILE_TYPES] Сохранено: {file}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[TILE_TYPES] Ошибка сохранения: {ex.Message}");
+        }
+    }
+    
     // ─── Нарезка тайлсета (strip-based) ─────
     private void LoadTileset(string path)
     {
@@ -305,7 +394,10 @@ public partial class MainWindow : Window
             }
 
             _tiles = newTiles;
-            _tileTypes = new int[_tiles.Count];
+
+            // Загрузить реальные типы из data/tile_types/{tileset}.json
+            LoadTileTypesForTileset(path);
+
             // Отдать типы канвасу для Grid Mode
             MapCanvasControl.TileTypes = _tileTypes;
 
