@@ -1004,6 +1004,7 @@ end
           final_tile_x = (@cursor_target_x / TILE_SIZE).round
           final_tile_y = (@cursor_target_y / TILE_SIZE).round
           @cursor.move_to(final_tile_x, final_tile_y)
+		  @camera.snap_to(final_tile_x, final_tile_y)
           @cursor_moving_to_target = false
           @current_unit_index += 1
           @current_unit_index = 0 if @current_unit_index >= @turn_order.size
@@ -1015,7 +1016,7 @@ end
           new_px = cur_px + step_x
           new_py = cur_py + step_y
           @cursor.move_to_pixel(new_px, new_py)
-          @camera.follow_point(new_px.round, new_py.round)
+          @camera.lock_to(new_px, new_py)   # ← двигается синхронно
         end
       end
 	  
@@ -1032,7 +1033,7 @@ end
       final_tile_x = (@cursor_target_x / TILE_SIZE).round
       final_tile_y = (@cursor_target_y / TILE_SIZE).round
       @cursor.move_to(final_tile_x, final_tile_y)
-	  
+      @camera.snap_to(final_tile_x, final_tile_y)  
       @battle_state = :player_turn
       sync_cursor_to_unit   # на всякий случай подстрахует
     else
@@ -1041,7 +1042,7 @@ end
       new_px = cur_px + step_x
       new_py = cur_py + step_y
       @cursor.move_to_pixel(new_px, new_py)
-      @camera.follow_point(new_px.round, new_py.round)   # <-- камера следует за курсором
+      @camera.lock_to(new_px, new_py)
     end
 
     when :player_turn
@@ -1059,7 +1060,7 @@ end
         end
 
         # Камера всегда привязана к визуальному центру юнита (и при движении, и после остановки)
-        @camera.follow_point(
+        @camera.lock_to(
           @battle_player.visual_x + TILE_SIZE / 2,
           @battle_player.visual_y + TILE_SIZE / 2
         )
@@ -1155,7 +1156,7 @@ end
       @battle_player.update(dt)
 
       # Камера всегда привязана к визуальному центру (и при движении, и после остановки)
-      @camera.follow_point(
+      @camera.lock_to(
         @battle_player.visual_x + TILE_SIZE / 2,
         @battle_player.visual_y + TILE_SIZE / 2
       )
@@ -1312,7 +1313,7 @@ end
         @info_cursor_x = (@info_cursor_px / TILE_SIZE).floor
         @info_cursor_y = (@info_cursor_py / TILE_SIZE).floor
       end
-      @camera.follow_point(@info_cursor_px, @info_cursor_py)
+      @camera.lock_to(@info_cursor_px, @info_cursor_py)
       @battle_player&.update(dt)
 	  @battle_player&.update_animation(dt)
 	  
