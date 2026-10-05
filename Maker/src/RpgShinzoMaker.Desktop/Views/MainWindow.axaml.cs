@@ -260,7 +260,17 @@ public partial class MainWindow : Window
 
         var files = await StorageProvider.OpenFilePickerAsync(options);
         if (files.Count == 0) return;
-        LoadTileset(files[0].Path.LocalPath);
+
+        var newPath = files[0].Path.LocalPath;
+        LoadTileset(newPath);
+
+        // Обновить canvas — иначе старые CroppedBitmap'ы ссылаются на освобождённый Bitmap
+        if (_currentMap != null)
+        {
+            _currentMap.TilesetPath = "assets/tilesets/" + Path.GetFileName(newPath);
+            MapCanvasControl.SetMap(_currentMap, _tiles.Select(t => t.Image).ToList());
+            MapTilesetText.Text = Path.GetFileName(newPath);
+        }
     }
 
     // ─── Нарезка тайлсета (strip-based) ─────
@@ -414,11 +424,22 @@ public partial class MainWindow : Window
     // ─── Клик ЛКМ/ПКМ по тайлу палитры ─────
     private void OnPaletteItemPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (_isModeB) return;
         if (sender is not Grid grid || grid.Tag is not TileItem tile) return;
 
         var props = e.GetCurrentPoint(grid).Properties;
 
+        // ═══ Mode B → назначаем текущий тип тайлу палитры ═══
+        if (_isModeB)
+        {
+            if (props.IsLeftButtonPressed || props.IsRightButtonPressed)
+            {
+                AssignTypeToPaletteTile(tile);
+                e.Pointer.Capture(null);   // снять захват, иначе PointerMoved не пойдёт на соседние Grid
+            }
+            return;
+        }
+
+        // ═══ Mode A → выбор тайла для рисования ═══
         if (props.IsLeftButtonPressed)
         {
             _leftSelectedIndex = tile.Index;
@@ -433,6 +454,26 @@ public partial class MainWindow : Window
             RightClickPreview.Source = tile.Image;
             RightClickLabel.Text = $"Tile #{tile.Index}";
         }
+    }
+
+    // ─── Назначить текущий тип тайлу палитры ─────
+    private void AssignTypeToPaletteTile(TileItem tile)
+    {
+        if (tile.Index < 0 || tile.Index >= _tileTypes.Length) return;
+        _tileTypes[tile.Index] = _currentTileType;
+        tile.TileType = _currentTileType;
+    }
+
+    // ─── Непрерывное «мазание» типа по палитре ─────
+    private void OnPaletteItemPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (!_isModeB) return;
+        if (sender is not Grid grid || grid.Tag is not TileItem tile) return;
+
+        var props = e.GetCurrentPoint(grid).Properties;
+        if (!props.IsLeftButtonPressed && !props.IsRightButtonPressed) return;
+
+        AssignTypeToPaletteTile(tile);
     }
 
     // ─── Назначение типа в режиме B ─────

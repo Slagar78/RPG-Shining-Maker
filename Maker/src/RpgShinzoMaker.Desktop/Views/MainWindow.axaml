@@ -183,7 +183,8 @@
                                           Background="#1E1E1E"
                                           ClipToBounds="True"
                                           Tag="{Binding}"
-                                          PointerPressed="OnPaletteItemPointerPressed">
+                                          PointerPressed="OnPaletteItemPointerPressed"
+                                          PointerMoved="OnPaletteItemPointerMoved">
                                         <Image Source="{Binding Image}"
                                                Stretch="Fill"
                                                RenderOptions.BitmapInterpolationMode="None"
