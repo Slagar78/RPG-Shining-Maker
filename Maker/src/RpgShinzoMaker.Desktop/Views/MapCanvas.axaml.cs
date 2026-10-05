@@ -1,6 +1,7 @@
 using System;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using RpgShinzoMaker.Core.Models;
@@ -15,13 +16,39 @@ public partial class MapCanvas : UserControl
 
     private int _tsCols, _tsRows, _tsStrips;
 
-    // Видимость слоёв (управляется кнопками L1/L2)
     public bool ShowLayer1 { get; set; } = true;
     public bool ShowLayer2 { get; set; } = true;
+    public int CurrentLayer { get; set; } = 0;
+
+    // События наружу: tileX, tileY, tileId, isLeftButton
+    public event Action<int, int, int, bool>? TileClicked;
 
     public MapCanvas()
     {
         InitializeComponent();
+        PointerPressed += OnCanvasPointerPressed;
+    }
+
+    private void OnCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (_map == null) return;
+
+        var p = e.GetPosition(Surface);
+        int tx = (int)(p.X / GameMap.TileSize);
+        int ty = (int)(p.Y / GameMap.TileSize);
+
+        if (tx < 0 || tx >= _map.Width) return;
+        if (ty < 0 || ty >= _map.Height) return;
+
+        int idx = tx * _map.Height + ty;
+        int tileId = (CurrentLayer == 0) ? _map.Tiles[idx] : _map.Tiles2[idx];
+
+        var props = e.GetCurrentPoint(this).Properties;
+        bool isLeft = props.IsLeftButtonPressed;
+        bool isRight = props.IsRightButtonPressed;
+
+        if (isLeft || isRight)
+            TileClicked?.Invoke(tx, ty, tileId, isLeft);
     }
 
     public void SetMap(GameMap? map, Bitmap? sourceTileset)
@@ -45,18 +72,12 @@ public partial class MapCanvas : UserControl
         int h = src.PixelSize.Height;
 
         var wb = new WriteableBitmap(
-            src.PixelSize,
-            src.Dpi,
-            PixelFormat.Bgra8888,
-            AlphaFormat.Premul);
+            src.PixelSize, src.Dpi,
+            PixelFormat.Bgra8888, AlphaFormat.Premul);
 
         using var fb = wb.Lock();
-        src.CopyPixels(
-            new PixelRect(0, 0, w, h),
-            fb.Address,
-            fb.RowBytes * fb.Size.Height,
-            fb.RowBytes);
-
+        src.CopyPixels(new PixelRect(0, 0, w, h),
+            fb.Address, fb.RowBytes * fb.Size.Height, fb.RowBytes);
         return wb;
     }
 
@@ -78,8 +99,7 @@ public partial class MapCanvas : UserControl
             _surface = new WriteableBitmap(
                 new PixelSize(mapW, mapH),
                 new Vector(96, 96),
-                PixelFormat.Bgra8888,
-                AlphaFormat.Premul);
+                PixelFormat.Bgra8888, AlphaFormat.Premul);
         }
 
         using (var fb = _surface.Lock())
@@ -91,17 +111,13 @@ public partial class MapCanvas : UserControl
 
                 FillCheckerboard(basePtr, stride, mapW, mapH);
 
-                // Слой 1
                 if (ShowLayer1)
-                    DrawLayer(basePtr, stride,
-                        _map.Tiles, _map.Rot, _map.MirrorX, _map.MirrorY, 255);
+                    DrawLayer(basePtr, stride, _map.Tiles, _map.Rot, _map.MirrorX, _map.MirrorY, 255);
 
-                // Слой 2 — полупрозрачный если виден слой 1 (как в C-версии)
                 if (ShowLayer2)
                 {
-                    byte layer2Alpha = ShowLayer1 ? (byte)96 : (byte)255;
-                    DrawLayer(basePtr, stride,
-                        _map.Tiles2, _map.Rot2, _map.MirrorX2, _map.MirrorY2, layer2Alpha);
+                    byte a2 = ShowLayer1 ? (byte)96 : (byte)255;
+                    DrawLayer(basePtr, stride, _map.Tiles2, _map.Rot2, _map.MirrorX2, _map.MirrorY2, a2);
                 }
             }
         }
@@ -132,7 +148,7 @@ public partial class MapCanvas : UserControl
 
         int h = _map.Height;
         int ts = GameMap.TileSize;
-        int mapW = _map.Width  * ts;
+        int mapW = _map.Width * ts;
         int mapH = _map.Height * ts;
 
         using var srcFb = _sourceTileset.Lock();
@@ -144,70 +160,59 @@ public partial class MapCanvas : UserControl
         bool isOpaque = (layerAlpha == 255);
 
         for (int x = 0; x < _map.Width; x++)
+        for (int y = 0; y < h; y++)
         {
-            for (int y = 0; y < h; y++)
+            int idx = x * h + y;
+            int tileId = tiles[idx];
+            if (tileId < 0) continue;
+            if (!GetTileSourcePos(tileId, out int sc, out int sr)) continue;
+
+            int dstX = x * ts;
+            int dstY = y * ts;
+
+            for (int oy = 0; oy < ts; oy++)
             {
-                int idx = x * h + y;
-                int tileId = tiles[idx];
-                if (tileId < 0) continue;
+                int sy = sr * ts + oy;
+                if (sy < 0 || sy >= srcH) continue;
+                int dy = dstY + oy;
+                if (dy < 0 || dy >= mapH) continue;
 
-                if (!GetTileSourcePos(tileId, out int sc, out int sr)) continue;
+                uint* dstRow = (uint*)(basePtr + dy * stride);
+                uint* srcRow = (uint*)(srcPtr + sy * srcStride);
 
-                int dstX = x * ts;
-                int dstY = y * ts;
-
-                for (int oy = 0; oy < ts; oy++)
+                for (int ox = 0; ox < ts; ox++)
                 {
-                    int sy = sr * ts + oy;
-                    if (sy < 0 || sy >= srcH) continue;
-                    int dy = dstY + oy;
-                    if (dy < 0 || dy >= mapH) continue;
+                    int sx = sc * ts + ox;
+                    if (sx < 0 || sx >= srcW) continue;
+                    int dx = dstX + ox;
+                    if (dx < 0 || dx >= mapW) continue;
 
-                    uint* dstRow = (uint*)(basePtr + dy * stride);
-                    uint* srcRow = (uint*)(srcPtr + sy * srcStride);
+                    uint src = srcRow[sx];
+                    byte srcA = (byte)((src >> 24) & 0xFF);
+                    if (srcA == 0) continue;
 
-                    for (int ox = 0; ox < ts; ox++)
+                    if (isOpaque)
                     {
-                        int sx = sc * ts + ox;
-                        if (sx < 0 || sx >= srcW) continue;
-                        int dx = dstX + ox;
-                        if (dx < 0 || dx >= mapW) continue;
+                        dstRow[dx] = src;
+                    }
+                    else
+                    {
+                        int a = (srcA * layerAlpha) / 255;
+                        if (a == 0) continue;
 
-                        uint src = srcRow[sx];
-                        byte srcA = (byte)((src >> 24) & 0xFF);
+                        uint dst = dstRow[dx];
+                        byte sr2 = (byte)((src >> 16) & 0xFF);
+                        byte sg  = (byte)((src >> 8)  & 0xFF);
+                        byte sb  = (byte)( src        & 0xFF);
+                        byte dr  = (byte)((dst >> 16) & 0xFF);
+                        byte dg  = (byte)((dst >> 8)  & 0xFF);
+                        byte db  = (byte)( dst        & 0xFF);
 
-                        if (srcA == 0) continue;  // полностью прозрачный пиксель
+                        byte r = (byte)((sr2 * a + dr * (255 - a)) / 255);
+                        byte g = (byte)((sg  * a + dg * (255 - a)) / 255);
+                        byte b = (byte)((sb  * a + db * (255 - a)) / 255);
 
-                        if (isOpaque)
-                        {
-                            // Простое копирование
-                            dstRow[dx] = src;
-                        }
-                        else
-                        {
-                            // Альфа-блендинг: result = src*α + dst*(1-α)
-                            int a = (srcA * layerAlpha) / 255;
-                            if (a == 0) continue;
-
-                            uint dst = dstRow[dx];
-
-                            byte sr2 = (byte)((src >> 16) & 0xFF);
-                            byte sg  = (byte)((src >> 8)  & 0xFF);
-                            byte sb  = (byte)( src        & 0xFF);
-
-                            byte dr  = (byte)((dst >> 16) & 0xFF);
-                            byte dg  = (byte)((dst >> 8)  & 0xFF);
-                            byte db  = (byte)( dst        & 0xFF);
-
-                            byte r = (byte)((sr2 * a + dr * (255 - a)) / 255);
-                            byte g = (byte)((sg  * a + dg * (255 - a)) / 255);
-                            byte b = (byte)((sb  * a + db * (255 - a)) / 255);
-
-                            dstRow[dx] = 0xFF000000u
-                                       | ((uint)r << 16)
-                                       | ((uint)g << 8)
-                                       |  (uint)b;
-                        }
+                        dstRow[dx] = 0xFF000000u | ((uint)r << 16) | ((uint)g << 8) | (uint)b;
                     }
                 }
             }
@@ -225,8 +230,7 @@ public partial class MapCanvas : UserControl
         int strip = tileId / perStrip;
         int rest  = tileId % perStrip;
         row = rest / 8;
-        int cInStrip = rest % 8;
-        col = strip * 8 + cInStrip;
+        col = strip * 8 + (rest % 8);
         return true;
     }
 }

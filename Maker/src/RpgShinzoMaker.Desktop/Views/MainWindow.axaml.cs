@@ -11,6 +11,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using RpgShinzoMaker.Core.Models;
 
 namespace RpgShinzoMaker.Desktop.Views;
 
@@ -90,6 +91,9 @@ public partial class MainWindow : Window
     private bool _showLayer1 = true;
     private bool _showLayer2 = true;
     private int  _currentLayer = 0;
+    private GameMap? _currentMap;
+    private bool _tileEditorMode = false;
+    private int  _transformMode  = 0;   // 0=none 1=rotate 2=flipH 3=flipV 4=delete
 
     public MainWindow()
     {
@@ -102,9 +106,10 @@ public partial class MainWindow : Window
         GridModeToggle.Content = "OFF";
 
         LoadProject();
+        MapCanvasControl.TileClicked += OnMapTileClicked;
     }
 
-    // ─── Загрузка проекта (читает entries.json, заполняет ComboBox) ─────
+    // ─── Загрузка проекта ─────
     private void LoadProject()
     {
         var logPath = Path.Combine(Environment.CurrentDirectory, "startup_log.txt");
@@ -113,27 +118,22 @@ public partial class MainWindow : Window
 
         try
         {
-            // 1. Корень проекта
             var root = FindProjectRoot();
             L($"[TEST] root = {root ?? "NULL"}");
             if (root == null) { L("Корень не найден"); File.WriteAllText(logPath, log.ToString()); return; }
 
             RpgShinzoMaker.Core.Services.ProjectPaths.Root = root;
 
-            // 2. Читаем entries.json
             _mapEntries = RpgShinzoMaker.Core.Services.EntriesService.Load(
                 RpgShinzoMaker.Core.Services.ProjectPaths.EntriesFile);
             L($"[TEST] entries: {_mapEntries.Count}");
             if (_mapEntries.Count == 0) { L("entries пуст"); File.WriteAllText(logPath, log.ToString()); return; }
 
-            // 3. Заполняем ComboBox именами карт
             MapSelector.ItemsSource = null;
             MapSelector.ItemsSource = _mapEntries.Select(e => e.Name).ToList();
 
-            // 4. Список mp3
             PopulateMusicList();
 
-            // 5. Загружаем первую карту
             MapSelector.SelectedIndex = 0;
 
             L("[TEST] Проект загружен");
@@ -171,11 +171,12 @@ public partial class MainWindow : Window
             LoadTileset(tilesetPath);
             var tilesetBmp = new Bitmap(tilesetPath);
             MapCanvasControl.SetMap(map, tilesetBmp);
+            _currentMap = map;
+            MapCanvasControl.CurrentLayer = _currentLayer;
 
             MapSizeText.Text    = $"{map.Width}×{map.Height}";
             MapTilesetText.Text = tilesetName;
 
-            // Музыка — выставить в ComboBox
             _suppressMusicChange = true;
             var musicName = string.IsNullOrEmpty(entry.Music) ? null : Path.GetFileName(entry.Music);
             if (musicName != null && _musicFiles.Contains(musicName))
@@ -187,17 +188,13 @@ public partial class MainWindow : Window
         catch (Exception ex) { Debug.WriteLine($"[MAP] {ex.Message}"); }
     }
 
-    // ─── Обработчик смены карты в ComboBox ─────
     private void OnMapSelectorChanged(object? sender, SelectionChangedEventArgs e)
     {
         int idx = MapSelector.SelectedIndex;
         if (idx < 0 || idx >= _mapEntries.Count) return;
-
-        var entry = _mapEntries[idx];
-        LoadMapByEntry(entry);
+        LoadMapByEntry(_mapEntries[idx]);
     }
 
-    // ─── Поиск корня проекта (папка с data/maps) ─────
     private static string? FindProjectRoot()
     {
         var dir = new DirectoryInfo(Environment.CurrentDirectory);
@@ -231,22 +228,17 @@ public partial class MainWindow : Window
             if (Directory.Exists(defaultDir))
             {
                 var folder = await StorageProvider.TryGetFolderFromPathAsync(defaultDir);
-                if (folder != null)
-                    options.SuggestedStartLocation = folder;
+                if (folder != null) options.SuggestedStartLocation = folder;
             }
         }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Не удалось установить путь по умолчанию: {ex.Message}");
-        }
+        catch (Exception ex) { Debug.WriteLine($"Путь: {ex.Message}"); }
 
         var files = await StorageProvider.OpenFilePickerAsync(options);
         if (files.Count == 0) return;
-
         LoadTileset(files[0].Path.LocalPath);
     }
 
-    // ─── Нарезка тайлсета (strip-based, как в C) ─────
+    // ─── Нарезка тайлсета (strip-based) ─────
     private void LoadTileset(string path)
     {
         try
@@ -256,34 +248,24 @@ public partial class MainWindow : Window
 
             int cols = _sourceTileset.PixelSize.Width / TileSize;
             int rows = _sourceTileset.PixelSize.Height / TileSize;
-
             int strips = cols / PaletteCols;
 
             var newTiles = new List<TileItem>();
-
             int idx = 0;
             for (int strip = 0; strip < strips; strip++)
             {
                 int startCol = strip * PaletteCols;
                 int endCol   = startCol + PaletteCols;
-
                 for (int r = 0; r < rows; r++)
+                for (int c = startCol; c < endCol; c++)
                 {
-                    for (int c = startCol; c < endCol; c++)
+                    var crop = new CroppedBitmap(_sourceTileset,
+                        new PixelRect(c * TileSize, r * TileSize, TileSize, TileSize));
+                    newTiles.Add(new TileItem
                     {
-                        var crop = new CroppedBitmap(
-                            _sourceTileset,
-                            new PixelRect(c * TileSize, r * TileSize, TileSize, TileSize));
-
-                        newTiles.Add(new TileItem
-                        {
-                            Image    = crop,
-                            Index    = idx,
-                            TileType = 0,
-                            ShowType = _isModeB
-                        });
-                        idx++;
-                    }
+                        Image = crop, Index = idx, TileType = 0, ShowType = _isModeB
+                    });
+                    idx++;
                 }
             }
 
@@ -302,13 +284,8 @@ public partial class MainWindow : Window
             PaletteStatus.Text = isValid ? "✓" : "✗";
             PaletteStatus.Foreground = isValid ? Brushes.LightGreen : Brushes.IndianRed;
             PaletteInfo.Text = $"Тайлов: {_tiles.Count}";
-
-            Debug.WriteLine($"Загружено {_tiles.Count} тайлов (strip-based, {strips} полос)");
         }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Ошибка загрузки тайлсета: {ex.Message}");
-        }
+        catch (Exception ex) { Debug.WriteLine($"Ошибка: {ex.Message}"); }
     }
 
     // ─── Режимы A / B ─────
@@ -338,8 +315,6 @@ public partial class MainWindow : Window
         ClearSelections();
         ClearPreviews();
         UpdatePreviewVisibility();
-
-        Debug.WriteLine(isB ? "Режим B — типы + Grid ON" : "Режим A — рисование + Grid OFF");
     }
 
     private void UpdatePreviewVisibility()
@@ -367,7 +342,6 @@ public partial class MainWindow : Window
         RightClickLabel.Text = "—";
     }
 
-    // ─── Grid Mode (заблокирован, управляется A/B) ─────
     private void OnGridModeClick(object? sender, RoutedEventArgs e) { }
 
     // ─── Клик по кружку типа ─────
@@ -418,24 +392,16 @@ public partial class MainWindow : Window
         if (props.IsLeftButtonPressed)
         {
             _leftSelectedIndex = tile.Index;
-            foreach (var t in _tiles)
-                t.LeftSelected = (t.Index == tile.Index);
-
+            foreach (var t in _tiles) t.LeftSelected = (t.Index == tile.Index);
             LeftClickPreview.Source = tile.Image;
             LeftClickLabel.Text = $"Tile #{tile.Index}";
-
-            Debug.WriteLine($"ЛКМ тайл #{tile.Index}");
         }
         else if (props.IsRightButtonPressed)
         {
             _rightSelectedIndex = tile.Index;
-            foreach (var t in _tiles)
-                t.RightSelected = (t.Index == tile.Index);
-
+            foreach (var t in _tiles) t.RightSelected = (t.Index == tile.Index);
             RightClickPreview.Source = tile.Image;
             RightClickLabel.Text = $"Tile #{tile.Index}";
-
-            Debug.WriteLine($"ПКМ тайл #{tile.Index}");
         }
     }
 
@@ -448,17 +414,16 @@ public partial class MainWindow : Window
         if (tile.Index >= 0 && tile.Index < _tileTypes.Length)
             _tileTypes[tile.Index] = _currentTileType;
         tile.TileType = _currentTileType;
-
-        Debug.WriteLine($"Тайл #{tile.Index} → тип {_currentTileType}");
     }
 
     // ─── Инструменты (заглушки) ─────
-    private void OnToolPencilClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Карандаш"); }
-    private void OnToolEraserClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Ластик"); }
-    private void OnToolFillClick(object? sender, RoutedEventArgs e)    { Debug.WriteLine("Инструмент: Заливка"); }
-    private void OnToolRectClick(object? sender, RoutedEventArgs e)    { Debug.WriteLine("Инструмент: Прямоугольник"); }
-    private void OnToolPickerClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Пипетка"); }
-    private void OnToolSelectClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Инструмент: Выделение"); }
+    private void OnToolPencilClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Карандаш"); }
+    private void OnToolEraserClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Ластик"); }
+    private void OnToolFillClick(object? sender, RoutedEventArgs e)    { Debug.WriteLine("Заливка"); }
+    private void OnToolRectClick(object? sender, RoutedEventArgs e)    { Debug.WriteLine("Прямоугольник"); }
+    private void OnToolPickerClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Пипетка"); }
+    private void OnToolSelectClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Выделение"); }
+
     private void PopulateMusicList()
     {
         _musicFiles.Clear();
@@ -480,8 +445,8 @@ public partial class MainWindow : Window
         if (idx < 0 || idx >= _mapEntries.Count) return;
         if (MapMusicSelector.SelectedItem is not string name) return;
         _mapEntries[idx].Music = "assets/sounds/" + name;
-        Debug.WriteLine($"[MUSIC] {_mapEntries[idx].Name} → {name}");
     }
+
     // ─── Слои ─────
     private void OnLayer1ToggleClick(object? sender, RoutedEventArgs e)
     {
@@ -505,6 +470,8 @@ public partial class MainWindow : Window
         ActiveLayerButton.Content = (_currentLayer + 1).ToString();
         ActiveLayerButton.Background = new SolidColorBrush(
             Color.Parse(_currentLayer == 0 ? "#6497C8" : "#4169E1"));
+
+        MapCanvasControl.CurrentLayer = _currentLayer;
     }
 
     private void UpdateCanvasLayers()
@@ -513,5 +480,103 @@ public partial class MainWindow : Window
         MapCanvasControl.ShowLayer2 = _showLayer2;
         MapCanvasControl.Redraw();
     }
-}
 
+    // ══════════════════════════════════════════
+    //   TILE EDITOR
+    // ══════════════════════════════════════════
+
+    private void OnTileEditorToggle(object? sender, RoutedEventArgs e)
+    {
+        _tileEditorMode = TileEditorToggle.IsChecked == true;
+
+        RotateBtn.IsEnabled = _tileEditorMode;
+        FlipHBtn.IsEnabled  = _tileEditorMode;
+        FlipVBtn.IsEnabled  = _tileEditorMode;
+        DeleteBtn.IsEnabled = _tileEditorMode;
+
+        if (!_tileEditorMode)
+        {
+            _transformMode = 0;
+            UpdateTransformHighlight();
+        }
+    }
+
+    private void OnRotateClick(object? sender, RoutedEventArgs e) { _transformMode = 1; UpdateTransformHighlight(); }
+    private void OnFlipHClick(object? sender, RoutedEventArgs e)  { _transformMode = 2; UpdateTransformHighlight(); }
+    private void OnFlipVClick(object? sender, RoutedEventArgs e)  { _transformMode = 3; UpdateTransformHighlight(); }
+    private void OnDeleteClick(object? sender, RoutedEventArgs e) { _transformMode = 4; UpdateTransformHighlight(); }
+
+    private void UpdateTransformHighlight()
+    {
+        var yellow = new SolidColorBrush(Color.Parse("#FFD700"));
+        var normal = new SolidColorBrush(Color.Parse("#3E3E42"));
+
+        RotateBtn.BorderBrush = (_transformMode == 1) ? yellow : normal;
+        FlipHBtn.BorderBrush  = (_transformMode == 2) ? yellow : normal;
+        FlipVBtn.BorderBrush  = (_transformMode == 3) ? yellow : normal;
+        DeleteBtn.BorderBrush = (_transformMode == 4) ? yellow : normal;
+    }
+
+    // ─── Клик по тайлу на карте ─────
+    private void OnMapTileClicked(int tx, int ty, int tileId, bool isLeftButton)
+    {
+        // Обновляем превью для карты
+        if (tileId >= 0 && tileId < _tiles.Count)
+        {
+            var img = _tiles[tileId].Image;
+            if (isLeftButton)
+            {
+                MapLeftPreview.Source = img;
+                MapLeftLabel.Text = $"#{tileId}";
+            }
+            else
+            {
+                MapRightPreview.Source = img;
+                MapRightLabel.Text = $"#{tileId}";
+            }
+        }
+        else
+        {
+            if (isLeftButton) { MapLeftPreview.Source = null; MapLeftLabel.Text = "—"; }
+            else              { MapRightPreview.Source = null; MapRightLabel.Text = "—"; }
+        }
+
+        // Если включён Tile Editor + выбран режим → трансформируем
+        if (_tileEditorMode && _transformMode != 0)
+            ApplyTransform(tx, ty);
+    }
+
+    private void ApplyTransform(int tx, int ty)
+    {
+        var map = _currentMap;
+        if (map == null) return;
+
+        int idx = tx * map.Height + ty;
+        if (idx < 0 || idx >= map.TotalCells) return;
+
+        switch (_transformMode)
+        {
+            case 1: // Rotate
+                if (_currentLayer == 0) map.Rot[idx]   = (map.Rot[idx]   + 1) % 4;
+                else                    map.Rot2[idx]  = (map.Rot2[idx]  + 1) % 4;
+                break;
+
+            case 2: // Flip H
+                if (_currentLayer == 0) map.MirrorX[idx]  = !map.MirrorX[idx];
+                else                    map.MirrorX2[idx] = !map.MirrorX2[idx];
+                break;
+
+            case 3: // Flip V
+                if (_currentLayer == 0) map.MirrorY[idx]  = !map.MirrorY[idx];
+                else                    map.MirrorY2[idx] = !map.MirrorY2[idx];
+                break;
+
+            case 4: // Delete
+                if (_currentLayer == 0) map.Tiles[idx]  = -1;
+                else                    map.Tiles2[idx] = -1;
+                break;
+        }
+
+        MapCanvasControl.Redraw();
+    }
+}

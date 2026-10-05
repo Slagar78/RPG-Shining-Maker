@@ -456,56 +456,112 @@
                                    FontSize="12"
                                    Margin="0,0,0,10"/>
 
-            <UniformGrid Columns="3" Rows="4" VerticalAlignment="Top">
+<StackPanel Spacing="6" VerticalAlignment="Top" HorizontalAlignment="Stretch">
 
-                <!-- Ряд 1: L1 / L2 / Active Layer -->
-                <ToggleButton x:Name="Layer1Toggle"
-                              Content="L1"
-                              FontSize="14"
-                              FontWeight="Bold"
-                              Width="48" Height="48"
-                              Margin="2"
-                              IsChecked="True"
-                              Background="#4CAF50"
-                              Foreground="White"
-                              Click="OnLayer1ToggleClick"/>
+    <!-- Ряд 1: L1 / L2 / Active Layer -->
+    <UniformGrid Columns="3">
+        <ToggleButton x:Name="Layer1Toggle"
+                      Content="L1"
+                      FontSize="14" FontWeight="Bold"
+                      Width="48" Height="40" Margin="1"
+                      IsChecked="True"
+                      Background="#4CAF50" Foreground="White"
+                      Click="OnLayer1ToggleClick"/>
 
-                <ToggleButton x:Name="Layer2Toggle"
-                              Content="L2"
-                              FontSize="14"
-                              FontWeight="Bold"
-                              Width="48" Height="48"
-                              Margin="2"
-                              IsChecked="True"
-                              Background="#4CAF50"
-                              Foreground="White"
-                              Click="OnLayer2ToggleClick"/>
+        <ToggleButton x:Name="Layer2Toggle"
+                      Content="L2"
+                      FontSize="14" FontWeight="Bold"
+                      Width="48" Height="40" Margin="1"
+                      IsChecked="True"
+                      Background="#4CAF50" Foreground="White"
+                      Click="OnLayer2ToggleClick"/>
 
-                <Button x:Name="ActiveLayerButton"
-                        Content="1"
-                        FontSize="14"
-                        FontWeight="Bold"
-                        Width="48" Height="48"
-                        Margin="2"
-                        Background="#6497C8"
-                        Foreground="White"
-                        Click="OnActiveLayerClick"/>
+        <Button x:Name="ActiveLayerButton"
+                Content="1"
+                FontSize="14" FontWeight="Bold"
+                Width="48" Height="40" Margin="1"
+                Background="#6497C8" Foreground="White"
+                Click="OnActiveLayerClick"/>
+    </UniformGrid>
 
-                <!-- Ряд 2: карандаш / ластик / заливка -->
-                <Button Content="✏" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolPencilClick"/>
-                <Button Content="🧽" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolEraserClick"/>
-                <Button Content="🪣" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolFillClick"/>
+    <!-- Ряд 2: Tile Editor -->
+    <ToggleButton x:Name="TileEditorToggle"
+                  Content="Tile Editor"
+                  FontSize="12" FontWeight="Bold"
+                  Height="32"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"
+                  Click="OnTileEditorToggle"/>
 
-                <!-- Ряд 3: прямоугольник / пипетка / выделение -->
-                <Button Content="▭" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolRectClick"/>
-                <Button Content="🎯" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolPickerClick"/>
-                <Button Content="▢" FontSize="20" Width="48" Height="48" Margin="2" Click="OnToolSelectClick"/>
+    <!-- Ряд 3: 4 кнопки трансформации (2x2) -->
+    <UniformGrid Columns="2">
+        <Button x:Name="RotateBtn"
+                Content="🔄" FontSize="26"
+                Width="72" Height="72" Margin="1"
+                IsEnabled="False"
+                BorderThickness="3" BorderBrush="#3E3E42"
+                Click="OnRotateClick"/>
 
-                <!-- Ряд 4: undo / redo / save -->
-                <Button Content="↶" FontSize="20" Width="48" Height="48" Margin="2"/>
-                <Button Content="↷" FontSize="20" Width="48" Height="48" Margin="2"/>
-                <Button Content="💾" FontSize="20" Width="48" Height="48" Margin="2"/>
-            </UniformGrid>
+        <Button x:Name="FlipHBtn"
+                Content="↔" FontSize="26"
+                Width="72" Height="72" Margin="1"
+                IsEnabled="False"
+                BorderThickness="3" BorderBrush="#3E3E42"
+                Click="OnFlipHClick"/>
+
+        <Button x:Name="FlipVBtn"
+                Content="↕" FontSize="26"
+                Width="72" Height="72" Margin="1"
+                IsEnabled="False"
+                BorderThickness="3" BorderBrush="#3E3E42"
+                Click="OnFlipVClick"/>
+
+        <Button x:Name="DeleteBtn"
+                Content="❌" FontSize="26"
+                Width="72" Height="72" Margin="1"
+                IsEnabled="False"
+                BorderThickness="3" BorderBrush="#3E3E42"
+                Click="OnDeleteClick"/>
+    </UniformGrid>
+
+    <!-- Ряд 4: Left / Right preview (для карты) -->
+    <UniformGrid Columns="2" Margin="0,8,0,0">
+        <StackPanel Spacing="2" HorizontalAlignment="Center">
+            <TextBlock Text="Left click" Foreground="#AAAAAA" FontSize="10" HorizontalAlignment="Center"/>
+            <Border Width="60" Height="60"
+                    CornerRadius="10"
+                    BorderBrush="#555555" BorderThickness="1"
+                    Background="#0E0E0E"
+                    ClipToBounds="True">
+                <Image x:Name="MapLeftPreview"
+                       Stretch="Fill"
+                       RenderOptions.BitmapInterpolationMode="None"
+                       RenderOptions.EdgeMode="Aliased"/>
+            </Border>
+            <TextBlock x:Name="MapLeftLabel"
+                       Text="—" Foreground="#888888" FontSize="10"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <StackPanel Spacing="2" HorizontalAlignment="Center">
+            <TextBlock Text="Right click" Foreground="#AAAAAA" FontSize="10" HorizontalAlignment="Center"/>
+            <Border Width="60" Height="60"
+                    CornerRadius="10"
+                    BorderBrush="#555555" BorderThickness="1"
+                    Background="#0E0E0E"
+                    ClipToBounds="True">
+                <Image x:Name="MapRightPreview"
+                       Stretch="Fill"
+                       RenderOptions.BitmapInterpolationMode="None"
+                       RenderOptions.EdgeMode="Aliased"/>
+            </Border>
+            <TextBlock x:Name="MapRightLabel"
+                       Text="—" Foreground="#888888" FontSize="10"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </UniformGrid>
+
+</StackPanel>
                     </DockPanel>
                 </Border>
             </Border>
