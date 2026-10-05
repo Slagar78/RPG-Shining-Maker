@@ -88,6 +88,19 @@ class BattleScene
     else
       puts "WARNING: Panel_Edging_Big.png not found"
     end
+	
+	# для полосок 1 HP/ 1 MP
+	@edging_tex_1 = nil
+	edging_path_1 = "assets/ui/Panel_Edging_Big1.png"
+	if File.exist?(edging_path_1)
+	  img = Raylib.LoadImage(edging_path_1)
+	  @edging_tex_1 = Raylib.LoadTextureFromImage(img)
+	  Raylib.UnloadImage(img)
+	  Raylib.SetTextureFilter(@edging_tex_1, Raylib::TEXTURE_FILTER_POINT)
+	else
+	  puts "WARNING: Panel_Edging_Big1.png not found"
+	end
+
     load_stick_textures
     load_background
 
@@ -808,32 +821,40 @@ end
       prev_limit = limit
     end
 
-    if @edging_tex
-      if label == "HP"
-        actual_positions = [max_val, total_positions].min
-      else
-        actual_positions = [current, total_positions].min
-      end
-      total_w = actual_positions * STICK_W
+	if @edging_tex
+	  if label == "HP"
+		actual_positions = [max_val, total_positions].min
+	  else
+		actual_positions = [current, total_positions].min
+	  end
 
-      if total_w >= 2 * 3
-        left_src  = Raylib::Rectangle.create(0, 0, 3, @edging_tex.height)
-        mid_src   = Raylib::Rectangle.create(3, 0, 3, @edging_tex.height)
-        right_src = Raylib::Rectangle.create(6, 0, 3, @edging_tex.height)
+	  if actual_positions == 1 && @edging_tex_1
+		# Рамка для одной палочки
+		src = Raylib::Rectangle.create(0, 0, @edging_tex_1.width, @edging_tex_1.height)
+		dst = Raylib::Rectangle.create(bar_start_x, stick_y, @edging_tex_1.width, @edging_tex_1.height)
+		Raylib::DrawTexturePro(@edging_tex_1, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+	  else
+		total_w = actual_positions * STICK_W
 
-        left_dst = Raylib::Rectangle.create(bar_start_x, stick_y, 3, STICK_H)
-        Raylib.DrawTexturePro(@edging_tex, left_src, left_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+		if total_w >= 2 * 3
+		  left_src  = Raylib::Rectangle.create(0, 0, 3, @edging_tex.height)
+		  mid_src   = Raylib::Rectangle.create(3, 0, 3, @edging_tex.height)
+		  right_src = Raylib::Rectangle.create(6, 0, 3, @edging_tex.height)
 
-        mid_count = actual_positions - 2
-        mid_count.times do |i|
-          mid_dst = Raylib::Rectangle.create(bar_start_x + 3 + i * 3, stick_y, 3, STICK_H)
-          Raylib.DrawTexturePro(@edging_tex, mid_src, mid_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
-        end
+		  left_dst = Raylib::Rectangle.create(bar_start_x, stick_y, 3, STICK_H)
+		  Raylib::DrawTexturePro(@edging_tex, left_src, left_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
 
-        right_dst = Raylib::Rectangle.create(bar_start_x + (actual_positions - 1) * 3, stick_y, 3, STICK_H)
-        Raylib.DrawTexturePro(@edging_tex, right_src, right_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
-      end
-    end
+		  mid_count = actual_positions - 2
+		  mid_count.times do |i|
+			mid_dst = Raylib::Rectangle.create(bar_start_x + 3 + i * 3, stick_y, 3, STICK_H)
+			Raylib::DrawTexturePro(@edging_tex, mid_src, mid_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+		  end
+
+		  right_dst = Raylib::Rectangle.create(bar_start_x + (actual_positions - 1) * 3, stick_y, 3, STICK_H)
+		  Raylib::DrawTexturePro(@edging_tex, right_src, right_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+		end
+	  end
+	end
 
     number_x = bar_start_x + total_positions * STICK_W + gap
     if font
