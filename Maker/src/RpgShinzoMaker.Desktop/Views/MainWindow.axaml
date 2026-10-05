@@ -486,12 +486,22 @@
 
     <!-- Ряд 2: Tile Editor -->
     <ToggleButton x:Name="TileEditorToggle"
-                  Content="Tile Editor"
                   FontSize="12" FontWeight="Bold"
                   Height="32"
                   HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Center"
-                  Click="OnTileEditorToggle"/>
+                  Click="OnTileEditorToggle">
+        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+            <TextBlock x:Name="TileEditorIcon"
+                       Text="✗"
+                       FontSize="16"
+                       FontWeight="Bold"
+                       Foreground="#E74C3C"
+                       VerticalAlignment="Center"/>
+            <TextBlock Text="Tile Editor"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
+    </ToggleButton>
 
     <!-- Ряд 3: 4 кнопки трансформации (2x2) -->
     <UniformGrid Columns="2">

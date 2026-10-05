@@ -169,8 +169,7 @@ public partial class MainWindow : Window
             if (!File.Exists(tilesetPath)) return;
 
             LoadTileset(tilesetPath);
-            var tilesetBmp = new Bitmap(tilesetPath);
-            MapCanvasControl.SetMap(map, tilesetBmp);
+            MapCanvasControl.SetMap(map, _tiles.Select(t => t.Image).ToList());
             _currentMap = map;
             MapCanvasControl.CurrentLayer = _currentLayer;
 
@@ -489,22 +488,46 @@ public partial class MainWindow : Window
     {
         _tileEditorMode = TileEditorToggle.IsChecked == true;
 
+        // Галочка / крестик
+        TileEditorIcon.Text = _tileEditorMode ? "✓" : "✗";
+        TileEditorIcon.Foreground = new SolidColorBrush(
+            Color.Parse(_tileEditorMode ? "#4CAF50" : "#E74C3C"));
+
+        // 4 кнопки трансформации — активны только в режиме
         RotateBtn.IsEnabled = _tileEditorMode;
         FlipHBtn.IsEnabled  = _tileEditorMode;
         FlipVBtn.IsEnabled  = _tileEditorMode;
         DeleteBtn.IsEnabled = _tileEditorMode;
 
+        // Сброс превью когда выключаем
         if (!_tileEditorMode)
         {
             _transformMode = 0;
             UpdateTransformHighlight();
+
+            // Сброс Left/Right click превью
+            MapLeftPreview.Source  = null;
+            MapRightPreview.Source = null;
+            MapLeftLabel.Text  = "—";
+            MapRightLabel.Text = "—";
         }
     }
 
     private void OnRotateClick(object? sender, RoutedEventArgs e) { _transformMode = 1; UpdateTransformHighlight(); }
     private void OnFlipHClick(object? sender, RoutedEventArgs e)  { _transformMode = 2; UpdateTransformHighlight(); }
     private void OnFlipVClick(object? sender, RoutedEventArgs e)  { _transformMode = 3; UpdateTransformHighlight(); }
-    private void OnDeleteClick(object? sender, RoutedEventArgs e) { _transformMode = 4; UpdateTransformHighlight(); }
+    
+    private void OnDeleteClick(object? sender, RoutedEventArgs e)
+    {
+        _transformMode = 4;
+        UpdateTransformHighlight();
+
+        // Delete не использует превью — сбрасываем его
+        MapLeftPreview.Source  = null;
+        MapRightPreview.Source = null;
+        MapLeftLabel.Text  = "—";
+        MapRightLabel.Text = "—";
+    }
 
     private void UpdateTransformHighlight()
     {
@@ -520,32 +543,75 @@ public partial class MainWindow : Window
     // ─── Клик по тайлу на карте ─────
     private void OnMapTileClicked(int tx, int ty, int tileId, bool isLeftButton)
     {
-        // Обновляем превью для карты
-        if (tileId >= 0 && tileId < _tiles.Count)
+        if (!_tileEditorMode) return;
+        if (_currentMap == null) return;
+
+        int idx = tx * _currentMap.Height + ty;
+        if (idx < 0 || idx >= _currentMap.TotalCells) return;
+
+        // 1. СНАЧАЛА применяем трансформацию (если выбрана)
+        if (_transformMode != 0)
+            ApplyTransform(tx, ty);
+
+        // 2. ЧИТАЕМ обновлённое состояние из карты
+        int newTileId = (_currentLayer == 0)
+            ? _currentMap.Tiles[idx]
+            : _currentMap.Tiles2[idx];
+
+        int rot = (_currentLayer == 0) ? _currentMap.Rot[idx]     : _currentMap.Rot2[idx];
+        bool mx  = (_currentLayer == 0) ? _currentMap.MirrorX[idx] : _currentMap.MirrorX2[idx];
+        bool my  = (_currentLayer == 0) ? _currentMap.MirrorY[idx] : _currentMap.MirrorY2[idx];
+
+        // 3. Превью — только для Rotate/FlipH/FlipV (не для Delete)
+        if (_transformMode != 4)
         {
-            var img = _tiles[tileId].Image;
+            var img = RenderTileWithTransform(newTileId, rot, mx, my);
             if (isLeftButton)
             {
                 MapLeftPreview.Source = img;
-                MapLeftLabel.Text = $"#{tileId}";
+                MapLeftLabel.Text = newTileId >= 0 ? $"#{newTileId}" : "—";
             }
             else
             {
                 MapRightPreview.Source = img;
-                MapRightLabel.Text = $"#{tileId}";
+                MapRightLabel.Text = newTileId >= 0 ? $"#{newTileId}" : "—";
             }
         }
-        else
-        {
-            if (isLeftButton) { MapLeftPreview.Source = null; MapLeftLabel.Text = "—"; }
-            else              { MapRightPreview.Source = null; MapRightLabel.Text = "—"; }
-        }
-
-        // Если включён Tile Editor + выбран режим → трансформируем
-        if (_tileEditorMode && _transformMode != 0)
-            ApplyTransform(tx, ty);
     }
 
+    /// <summary>
+    /// Рендерит тайл с учётом rot/mirror — для превью.
+    /// </summary>
+    private Bitmap? RenderTileWithTransform(int tileId, int rot, bool mx, bool my)
+    {
+        if (tileId < 0 || tileId >= _tiles.Count) return null;
+
+        var src = _tiles[tileId].Image;
+        int ts = TileSize;
+
+        var rtb = new RenderTargetBitmap(new PixelSize(ts, ts), new Vector(96, 96));
+
+        using (var ctx = rtb.CreateDrawingContext())
+        {
+            double cx = ts / 2.0;
+            double cy = ts / 2.0;
+
+            var matrix = Matrix.Identity;
+            matrix = matrix * Matrix.CreateTranslation(-cx, -cy);
+            if (mx) matrix = matrix * Matrix.CreateScale(-1, 1);
+            if (my) matrix = matrix * Matrix.CreateScale(1, -1);
+            matrix = matrix * Matrix.CreateRotation(rot * Math.PI / 2);
+            matrix = matrix * Matrix.CreateTranslation(cx, cy);
+
+            using (ctx.PushTransform(matrix))
+            {
+                ctx.DrawImage(src, new Rect(0, 0, ts, ts));
+            }
+        }
+
+        return rtb;
+    }   
+    
     private void ApplyTransform(int tx, int ty)
     {
         var map = _currentMap;
@@ -577,6 +643,6 @@ public partial class MainWindow : Window
                 break;
         }
 
-        MapCanvasControl.Redraw();
+        MapCanvasControl.RedrawTile(tx, ty);
     }
 }

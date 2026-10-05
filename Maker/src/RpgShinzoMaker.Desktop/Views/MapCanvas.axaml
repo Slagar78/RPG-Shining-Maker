@@ -4,9 +4,18 @@
              Background="#1E1E1E">
     <ScrollViewer HorizontalScrollBarVisibility="Auto"
                   VerticalScrollBarVisibility="Auto">
-        <Image x:Name="Surface"
-               Stretch="None"
-               RenderOptions.BitmapInterpolationMode="None"
-               RenderOptions.EdgeMode="Aliased"/>
+        <Panel x:Name="RootPanel"
+               Background="Transparent"
+               PointerPressed="OnCanvasPointerPressed">
+            <!-- Шахматный фон -->
+            <Image x:Name="BgImage" Stretch="None"
+                   RenderOptions.BitmapInterpolationMode="None"
+                   RenderOptions.EdgeMode="Aliased"
+                   IsHitTestVisible="False"/>
+            <!-- Слой 1 -->
+            <Canvas x:Name="Layer1Canvas" IsHitTestVisible="False"/>
+            <!-- Слой 2 -->
+            <Canvas x:Name="Layer2Canvas" IsHitTestVisible="False"/>
+        </Panel>
     </ScrollViewer>
 </UserControl>
