@@ -576,17 +576,37 @@
             HorizontalAlignment="Center"/>
                               </StackPanel>
                             </UniformGrid>
-                            <!-- Ряд 5: Grid Mode -->
-                            <ToggleButton x:Name="GridModeButton"
-                            Content="Grid Mode"
-                            FontSize="12" FontWeight="Bold"
-                            Height="32" Margin="0,8,0,0"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Center"
-                            Background="#3E3E42"
-                            Foreground="White"
-                             Click="OnGridModeToggle"/>
-                        </StackPanel>
+    <!-- Ряд 5: Grid Mode -->
+    <ToggleButton x:Name="GridModeButton"
+                  Content="Grid Mode"
+                  FontSize="12" FontWeight="Bold"
+                  Height="32" Margin="0,8,0,0"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"
+                  Background="#3E3E42"
+                  Foreground="White"
+                  Click="OnGridModeToggle"/>
+
+                <!-- Ряд 6: Zoom -->
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6"
+                            HorizontalAlignment="Center">
+                    <TextBlock Text="Zoom"
+                               VerticalAlignment="Center"
+                               Foreground="#AAAAAA"
+                               FontSize="12"/>
+                    <ComboBox x:Name="ZoomSelector"
+                              Width="100"
+                              SelectedIndex="2"
+                              SelectionChanged="OnZoomChanged">
+                        <ComboBoxItem Content="1/4x"/>
+                        <ComboBoxItem Content="1/2x"/>
+                        <ComboBoxItem Content="1x"/>
+                        <ComboBoxItem Content="2x"/>
+                        <ComboBoxItem Content="4x"/>
+                    </ComboBox>
+                </StackPanel>
+
+            </StackPanel>
                     </DockPanel>
                 </Border>
             </Border>

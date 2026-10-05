@@ -32,9 +32,16 @@ public partial class MapCanvas : UserControl
     }
 
     private readonly List<TileCtrl> _controls = new();
+
     private Border? _hoverBorder;
     private readonly List<Ellipse> _gridDots = new();
     private readonly List<Line> _gridLines = new();
+
+    private double _zoom = 1.0;
+    public double Zoom => _zoom;
+
+    // Размер тайла на экране = 48 * zoom
+    private int TilePx => (int)(GameMap.TileSize * _zoom);
 
     public bool ShowGridMode { get; set; } = false;
     public int[]? TileTypes { get; set; }
@@ -56,7 +63,7 @@ public partial class MapCanvas : UserControl
 
         if (_map == null) return;
 
-        int ts = GameMap.TileSize;
+        int ts = TilePx;
         int mapW = _map.Width * ts;
         int mapH = _map.Height * ts;
 
@@ -75,8 +82,8 @@ public partial class MapCanvas : UserControl
         for (int x = 0; x < _map.Width; x++)
         for (int y = 0; y < _map.Height; y++)
         {
-            var img1 = CreateTileImage(x, y);
-            var img2 = CreateTileImage(x, y);
+            var img1 = CreateTileImage(x, y, ts);
+            var img2 = CreateTileImage(x, y, ts);
 
             Layer1Canvas.Children.Add(img1);
             Layer2Canvas.Children.Add(img2);
@@ -93,15 +100,15 @@ public partial class MapCanvas : UserControl
         _gridDots.Clear();
         _gridLines.Clear();
 
-        var gridBrush = new SolidColorBrush(Color.Parse("#66FFFFFF"));   // белый, alpha ~40%
+        var gridBrush = new SolidColorBrush(Color.Parse("#66FFFFFF"));
 
         // Вертикальные линии
         for (int x = 0; x <= _map.Width; x++)
         {
             var line = new Line
             {
-                StartPoint = new Point(x * GameMap.TileSize, 0),
-                EndPoint   = new Point(x * GameMap.TileSize, mapH),
+                StartPoint = new Point(x * ts, 0),
+                EndPoint   = new Point(x * ts, mapH),
                 Stroke = gridBrush,
                 StrokeThickness = 1,
                 IsVisible = false,
@@ -116,8 +123,8 @@ public partial class MapCanvas : UserControl
         {
             var line = new Line
             {
-                StartPoint = new Point(0, y * GameMap.TileSize),
-                EndPoint   = new Point(mapW, y * GameMap.TileSize),
+                StartPoint = new Point(0, y * ts),
+                EndPoint   = new Point(mapW, y * ts),
                 Stroke = gridBrush,
                 StrokeThickness = 1,
                 IsVisible = false,
@@ -136,13 +143,13 @@ public partial class MapCanvas : UserControl
                 Width  = 14,
                 Height = 14,
                 Opacity = 0.7,
-                Stroke = new SolidColorBrush(Color.Parse("#000000")),   // чёрная обводка
+                Stroke = new SolidColorBrush(Color.Parse("#000000")),
                 StrokeThickness = 2,
                 IsVisible = false,
                 IsHitTestVisible = false,
             };
-            Canvas.SetLeft(dot, x * GameMap.TileSize + (GameMap.TileSize - 14) / 2);
-            Canvas.SetTop (dot, y * GameMap.TileSize + (GameMap.TileSize - 14) / 2);
+            Canvas.SetLeft(dot, x * ts + (ts - 14) / 2);
+            Canvas.SetTop (dot, y * ts + (ts - 14) / 2);
             GridOverlayCanvas.Children.Add(dot);
             _gridDots.Add(dot);
         }
@@ -152,8 +159,8 @@ public partial class MapCanvas : UserControl
         {
             BorderBrush = new SolidColorBrush(Color.Parse("#FFD700")),
             BorderThickness = new Thickness(2),
-            Width  = GameMap.TileSize,
-            Height = GameMap.TileSize,
+            Width  = ts,
+            Height = ts,
             IsVisible = false,
             IsHitTestVisible = false,
         };
@@ -162,12 +169,12 @@ public partial class MapCanvas : UserControl
         UpdateGridOverlay();
     }
 
-    private Image CreateTileImage(int x, int y)
+    private Image CreateTileImage(int x, int y, int ts)
     {
         var img = new Image
         {
-            Width = GameMap.TileSize,
-            Height = GameMap.TileSize,
+            Width = ts,
+            Height = ts,
             Stretch = Stretch.Fill,
             RenderTransformOrigin = RelativePoint.Center,
         };
@@ -175,9 +182,42 @@ public partial class MapCanvas : UserControl
         RenderOptions.SetBitmapInterpolationMode(img, BitmapInterpolationMode.None);
         RenderOptions.SetEdgeMode(img, EdgeMode.Aliased);
 
-        Canvas.SetLeft(img, x * GameMap.TileSize);
-        Canvas.SetTop(img, y * GameMap.TileSize);
+        Canvas.SetLeft(img, x * ts);
+        Canvas.SetTop(img, y * ts);
         return img;
+    }
+
+    // ══════════════════════════════════════════════
+    //   ZOOM — пересоздаёт карту с новым размером тайлов
+    // ══════════════════════════════════════════════
+    public void SetZoom(double zoom)
+    {
+        if (zoom <= 0) return;
+        if (Math.Abs(zoom - _zoom) < 0.001) return;
+        _zoom = zoom;
+
+        // Просто пересоздаём карту с новым размером тайлов.
+        // Никаких RenderTransform / LayoutTransform — ScrollViewer
+        // видит настоящий размер RootPanel и корректно работает.
+        if (_map != null)
+        {
+            SetMap(_map, _tiles);
+            ResetScrollOffset();
+        }
+    }
+
+    private void ResetScrollOffset()
+    {
+        var parent = this.Parent;
+        while (parent != null)
+        {
+            if (parent is ScrollViewer sv)
+            {
+                sv.Offset = new Vector(0, 0);
+                return;
+            }
+            parent = parent.Parent;
+        }
     }
 
     // ══════════════════════════════════════════════
@@ -205,6 +245,7 @@ public partial class MapCanvas : UserControl
         foreach (var tc in _controls)
             UpdateTileCtrl(tc);
     }
+
     // ══════════════════════════════════════════════
     //   GRID MODE — обновить иконки типов
     // ══════════════════════════════════════════════
@@ -212,11 +253,9 @@ public partial class MapCanvas : UserControl
     {
         if (_map == null || _gridDots.Count == 0) return;
 
-        // Линии — все разом
         foreach (var line in _gridLines)
             line.IsVisible = ShowGridMode;
 
-        // Точки — по типу тайла
         for (int x = 0; x < _map.Width; x++)
         for (int y = 0; y < _map.Height; y++)
         {
@@ -244,20 +283,18 @@ public partial class MapCanvas : UserControl
             dot.IsVisible = type >= 0 && type <= 3;
         }
     }
-    
+
     private void UpdateTileCtrl(TileCtrl tc)
     {
         if (_map == null || tc.L1 == null || tc.L2 == null) return;
 
         int idx = tc.X * _map.Height + tc.Y;
 
-        // Слой 1
         ApplyToImage(tc.L1,
             _map.Tiles[idx], _map.Rot[idx], _map.MirrorX[idx], _map.MirrorY[idx],
             opacity: 1.0,
             visible: ShowLayer1);
 
-        // Слой 2 — полупрозрачный если виден слой 1
         double layer2Opacity = ShowLayer1 ? 0.376 : 1.0;
         ApplyToImage(tc.L2,
             _map.Tiles2[idx], _map.Rot2[idx], _map.MirrorX2[idx], _map.MirrorY2[idx],
@@ -326,22 +363,22 @@ public partial class MapCanvas : UserControl
 
         return wb;
     }
+
     private void OnCanvasPointerMoved(object? sender, PointerEventArgs e)
     {
         if (_map == null) return;
 
+        int ts = TilePx;
         var p = e.GetPosition(RootPanel);
-        int tx = (int)(p.X / GameMap.TileSize);
-        int ty = (int)(p.Y / GameMap.TileSize);
+        int tx = (int)(p.X / ts);
+        int ty = (int)(p.Y / ts);
 
-        // Курсор вне клеток карты — прячем рамку
         if (tx < 0 || tx >= _map.Width || ty < 0 || ty >= _map.Height)
         {
             if (_hoverBorder != null) _hoverBorder.IsVisible = false;
             return;
         }
 
-        // Рамка вокруг клетки под курсором
         var props = e.GetCurrentPoint(RootPanel).Properties;
         bool isLeft  = props.IsLeftButtonPressed;
         bool isRight = props.IsRightButtonPressed;
@@ -349,10 +386,9 @@ public partial class MapCanvas : UserControl
         if (_hoverBorder != null)
         {
             _hoverBorder.IsVisible = true;
-            Canvas.SetLeft(_hoverBorder, tx * GameMap.TileSize);
-            Canvas.SetTop (_hoverBorder, ty * GameMap.TileSize);
+            Canvas.SetLeft(_hoverBorder, tx * ts);
+            Canvas.SetTop (_hoverBorder, ty * ts);
 
-            // ПКМ → красная, иначе → жёлтая
             string color = isRight ? "#FF2222" : "#FFD700";
             _hoverBorder.BorderBrush = new SolidColorBrush(Color.Parse(color));
         }
@@ -368,7 +404,7 @@ public partial class MapCanvas : UserControl
     {
         if (_hoverBorder != null) _hoverBorder.IsVisible = false;
     }
-    
+
     // ══════════════════════════════════════════════
     //   КЛИК ПО КАРТЕ
     // ══════════════════════════════════════════════
@@ -376,9 +412,10 @@ public partial class MapCanvas : UserControl
     {
         if (_map == null) return;
 
+        int ts = TilePx;
         var p = e.GetPosition(RootPanel);
-        int tx = (int)(p.X / GameMap.TileSize);
-        int ty = (int)(p.Y / GameMap.TileSize);
+        int tx = (int)(p.X / ts);
+        int ty = (int)(p.Y / ts);
 
         if (tx < 0 || tx >= _map.Width) return;
         if (ty < 0 || ty >= _map.Height) return;

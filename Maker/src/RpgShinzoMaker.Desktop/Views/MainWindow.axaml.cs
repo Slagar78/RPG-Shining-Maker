@@ -544,7 +544,26 @@ public partial class MainWindow : Window
         MapCanvasControl.ShowGridMode = _gridMode;
         MapCanvasControl.UpdateGridOverlay();
     }
-    
+    // ─── Zoom ─────
+    private void OnZoomChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        // Во время инициализации XAML контролы ещё не готовы — выходим тихо
+        if (MapCanvasControl == null) return;
+        if (ZoomSelector?.SelectedItem is not ComboBoxItem item) return;
+        if (item.Content is not string text) return;
+
+        double zoom = text switch
+        {
+            "1/4x" => 0.25,
+            "1/2x" => 0.5,
+            "1x"   => 1.0,
+            "2x"   => 2.0,
+            "4x"   => 4.0,
+            _      => 1.0
+        };
+
+        MapCanvasControl.SetZoom(zoom);
+    }
     private void UpdateTypeIconSelection()
     {
         var icons = new[] { TypeIcon0, TypeIcon1, TypeIcon2, TypeIcon3 };

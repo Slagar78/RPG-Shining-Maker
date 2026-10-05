@@ -7,16 +7,12 @@
         <Panel x:Name="RootPanel"
                Background="Transparent"
                PointerPressed="OnCanvasPointerPressed">
-            <!-- Шахматный фон -->
             <Image x:Name="BgImage" Stretch="None"
                    RenderOptions.BitmapInterpolationMode="None"
                    RenderOptions.EdgeMode="Aliased"
                    IsHitTestVisible="False"/>
-            <!-- Слой 1 -->
             <Canvas x:Name="Layer1Canvas" IsHitTestVisible="False"/>
-            <!-- Слой 2 -->
             <Canvas x:Name="Layer2Canvas" IsHitTestVisible="False"/>
-            <!-- Оверлей Grid Mode -->
             <Canvas x:Name="GridOverlayCanvas" IsHitTestVisible="False"/>
         </Panel>
     </ScrollViewer>
