@@ -17,13 +17,13 @@ class BattleCamera
     @smooth_factor = 10.0
   end
 
-  def snap_to(x, y)
-    @target_x = (x * 48 + 24 - @screen_width / 2.0).round
-    @target_y = (y * 48 + 24 - @screen_height / 2.0).round
-    @x = @target_x
-    @y = @target_y
-    clamp_target!
-  end
+	def snap_to(x, y)
+	  @target_x = (x * 48 + 24 - @screen_width / 2.0).round
+	  @target_y = (y * 48 + 24 - @screen_height / 2.0).round
+	  clamp_target!      # ← сначала clamp
+	  @x = @target_x     # ← потом копируем уже обжатое значение
+	  @y = @target_y
+	end
 
   def follow_unit(unit)
     desired_x = unit[:x] * 48 + 24 - @screen_width / 2.0
