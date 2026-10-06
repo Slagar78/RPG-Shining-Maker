@@ -1075,10 +1075,72 @@ public partial class MainWindow : Window
         return "";
     }
     
-    // ─── Delete Map (заглушка) ─────
+    // ─── Delete Map ─────
     private void OnDeleteMapClick(object? sender, RoutedEventArgs e)
     {
-        Debug.WriteLine("[DELETE MAP] Кнопка нажата — TODO: реализовать");
+        if (_mapEntries.Count <= 1)
+        {
+            Debug.WriteLine("[DELETE MAP] Нельзя удалить последнюю карту");
+            return;
+        }
+
+        int idx = MapSelector.SelectedIndex;
+        if (idx < 0 || idx >= _mapEntries.Count) return;
+
+        var entry = _mapEntries[idx];
+        DeleteMapText.Text = $"Delete map \"{entry.Name}\" ({entry.Folder})?";
+        DeleteMapOverlay.IsVisible = true;
+    }
+
+    private void OnDeleteMapNoClick(object? sender, RoutedEventArgs e)
+    {
+        DeleteMapOverlay.IsVisible = false;
+    }
+
+    private void OnDeleteMapYesClick(object? sender, RoutedEventArgs e)
+    {
+        int idx = MapSelector.SelectedIndex;
+        if (idx < 0 || idx >= _mapEntries.Count) return;
+
+        var entry = _mapEntries[idx];
+
+        try
+        {
+            // 1. Удалить папку с файлами
+            var folderPath = Path.Combine(
+                RpgShinzoMaker.Core.Services.ProjectPaths.MapsDir,
+                entry.Folder);
+
+            if (Directory.Exists(folderPath))
+                Directory.Delete(folderPath, recursive: true);
+
+            // 2. Убрать из списка (сдвиг вверх происходит автоматически)
+            _mapEntries.RemoveAt(idx);
+
+            // 3. Сохранить entries.json
+            RpgShinzoMaker.Core.Services.EntriesService.Save(
+                RpgShinzoMaker.Core.Services.ProjectPaths.EntriesFile,
+                _mapEntries);
+
+            // 4. Обновить селектор
+            MapSelector.ItemsSource = null;
+            MapSelector.ItemsSource = _mapEntries.Select(e => e.Name).ToList();
+
+            // 5. Выбрать предыдущую или первую
+            int newIdx = Math.Min(idx, _mapEntries.Count - 1);
+            MapSelector.SelectedIndex = newIdx;
+
+            // 6. Загрузить выбранную карту
+            LoadMapByEntry(_mapEntries[newIdx]);
+
+            Debug.WriteLine($"[DELETE MAP] Удалено '{entry.Name}' ({entry.Folder})");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[DELETE MAP] Ошибка: {ex.Message}");
+        }
+
+        DeleteMapOverlay.IsVisible = false;
     }
 
     // ─── Resize Map (заглушка) ─────

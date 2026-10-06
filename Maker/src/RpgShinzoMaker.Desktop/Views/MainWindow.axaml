@@ -896,6 +896,50 @@
                 </StackPanel>
             </Border>
         </Panel>
+        <!-- ═══ Оверлей подтверждения Delete Map ═══ -->
+        <Panel x:Name="DeleteMapOverlay"
+               IsVisible="False"
+               Background="#80000000">
+            <Border Width="400"
+                    Background="#2D2D30"
+                    BorderBrush="#555555"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel Spacing="12">
 
+                    <TextBlock Text="Delete Map"
+                               FontSize="16" FontWeight="Bold"
+                               Foreground="#E74C3C"/>
+
+                    <TextBlock x:Name="DeleteMapText"
+                               Foreground="White"
+                               FontSize="12"
+                               TextWrapping="Wrap"/>
+
+                    <TextBlock Text="This cannot be undone."
+                               Foreground="#888888"
+                               FontSize="11"
+                               FontStyle="Italic"/>
+
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="8"
+                                HorizontalAlignment="Right">
+                        <Button Content="No"
+                                MinWidth="90"
+                                Click="OnDeleteMapNoClick"/>
+                        <Button Content="Yes"
+                                MinWidth="90"
+                                FontWeight="Bold"
+                                Background="#E74C3C"
+                                Foreground="White"
+                                Click="OnDeleteMapYesClick"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Panel>
+        
     </Panel>
 </Window>
