@@ -14,10 +14,10 @@
     "areas": "data/maps/map00/areas.json"
   },
   {
-    "folder": "Exprait",
-    "name": "Exprait",
+    "folder": "Expraito",
+    "name": "Expraito",
     "music": "assets/sounds/SF_Feather.mp3",
     "music_volume": 0.8,
-    "areas": "data/maps/Exprait/areas.json"
+    "areas": "data/maps/Expraito/areas.json"
   }
 ]

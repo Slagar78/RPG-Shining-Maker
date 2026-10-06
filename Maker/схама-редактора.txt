@@ -1,0 +1,229 @@
+RPG-Shining-Maker/
+│
+├── Maker/
+│   ├── RpgShinzoMaker.sln
+│   │
+│   ├── src/
+│   │   │
+│   │   ├── RpgShinzoMaker.Core/                    ← БИБЛИОТЕКА (без UI)
+│   │   │   ├── Models/
+│   │   │   │   ├── GameMap.cs                      (карта: tiles, rot, mirror, layers)
+│   │   │   │   ├── MapEntry.cs                     (запись из entries.json)
+│   │   │   │   └── TileType.cs                     (enum: Passable/Block/Slow/Under)
+│   │   │   │
+│   │   │   └── Services/
+│   │   │       ├── ProjectPaths.cs                 (пути: Root, MapsDir, LayoutFile...)
+│   │   │       ├── MapJsonService.cs               (layout.json: load/save)
+│   │   │       ├── EntriesService.cs               (entries.json: load/save)
+│   │   │       ├── TileTypesService.cs             ★ НОВЫЙ (tile_types/{tileset}.json)
+│   │   │       └── AreasService.cs                 ★ НОВЫЙ (areas.json + класс Areas)
+│   │   │
+│   │   └── RpgShinzoMaker.Desktop/                 ← UI
+│   │       ├── App.axaml
+│   │       ├── App.axaml.cs
+│   │       ├── Program.cs
+│   │       ├── ViewLocator.cs
+│   │       │
+│   │       ├── ViewModels/                         (пока не используется)
+│   │       │   ├── MainViewModel.cs
+│   │       │   └── ViewModelBase.cs
+│   │       │
+│   │       ├── Views/
+│   │       │   ├── MainWindow.axaml                ★ ПЕРЕПИСАН (оболочка + дерево/свойства)
+│   │       │   ├── MainWindow.axaml.cs             ★ ПЕРЕПИСАН (~90 строк)
+│   │       │   ├── MapCanvas.axaml                 (не трогали — чистый виджет рендера)
+│   │       │   └── MapCanvas.axaml.cs              (не трогали)
+│   │       │
+│   │       ├── Shared/
+│   │       │   └── Interfaces/
+│   │       │       └── IEditor.cs                  ★ НОВЫЙ (Save/Reload/OnActivate/OnDeactivate)
+│   │       │
+│   │       └── Editors/
+│   │           └── MapEditor/                      ★ НОВАЯ ПАПКА (редактор карт)
+│   │               ├── MapEditorView.axaml         (разметка редактора карт)
+│   │               ├── MapEditorView.axaml.cs      (поля, конструктор, IEditor)
+│   │               ├── MapEditorView.Palette.cs    (блоксет, палитра, Mode A/B)
+│   │               ├── MapEditorView.Map.cs        (загрузка карт, музыка, зум, SAVE)
+│   │               ├── MapEditorView.Painting.cs   (клики, drag, hover, рисование)
+│   │               ├── MapEditorView.Select.cs     (Select Mode, буфер)
+│   │               ├── MapEditorView.GridMode.cs   (Grid Mode toggle)
+│   │               ├── MapEditorView.Layers.cs     (L1 / L2 / Active Layer)
+│   │               ├── MapEditorView.TileEditor.cs (TileEditor + трансформации)
+│   │               ├── MapEditorView.Dialogs.cs    (5 диалогов)
+│   │               └── TileItem.cs                 (модель тайла палитры)
+│   │
+│   └── assets/
+│
+└── data/
+    ├── maps/
+    │   ├── entries.json
+    │   └── <map_name>/
+    │       ├── layout.json
+    │       └── areas.json
+    ├── tile_types/
+    │   └── <tileset>.json
+    └── ...
+	
+	
+	
+	┌─────────────────────────────────────────────────────────────────┐
+│                     MainWindow (Shell)                          │
+│                                                                 │
+│  ┌────────────────────────────────────────────────────────┐     │
+│  │ Тулбар: [SAVE] [▶ Run] [⚔ Battle] [↩ Undo] [↪ Redo]    │     │
+│  ├────────────────────────────────────────────────────────┤     │
+│  │  ┌─── TabControl (EditorTabs) ───────────────────────┐ │     │
+│  │  │ [Maps] [Events] [Battles] [Scenes] [Database]     │ │     │
+│  │  │                                                   │ │     │
+│  │  │  MapEditorView (IEditor)  ← активный редактор     │ │     │
+│  │  │                                                   │ │     │
+│  │  └───────────────────────────────────────────────────┘ │     │
+│  ├────────────────────────────────────────────────────────┤     │
+│  │  Статус-бар: [Готово] [Позиция: X,Y  Зум: 2x]  [Shinzo]│     │
+│  └────────────────────────────────────────────────────────┘     │
+│                                                                 │
+│  Правый док: [Дерево проекта] / [Свойства]                      │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │
+                                │  SAVE → editor.Save()
+                                │  Статус ← editor.StatusChanged
+                                │  Tab switch → editor.OnActivate()
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     IEditor (интерфейс)                         │
+│  Save() / Reload() / OnActivate() / OnDeactivate()              │
+│  + event StatusChanged(string)                                  │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │
+                                │  реализуют
+                                ▼
+        ┌───────────────────────┬───────────────────────┬───────────────────┐
+        ▼                       ▼                       ▼                   ▼
+  ┌───────────┐           ┌───────────┐           ┌───────────┐       ┌───────────┐
+  │ MapEditor │           │ EventEdit │           │ BattleEd  │       │  DB Editor│
+  │  ✓ готов  │           │  (план)   │           │  (план)   │       │  (план)   │
+  └─────┬─────┘           └───────────┘           └───────────┘       └───────────┘
+        │
+        │  использует
+        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Core.Services                              │
+│                                                                 │
+│   ProjectPaths      MapJsonService      EntriesService          │
+│   TileTypesService  AreasService                                │
+│                                                                 │
+│   + Core.Models: GameMap, MapEntry, TileType, Areas             │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               │  читают / пишут
+                               ▼
+                        ┌─────────────┐
+                        │   data/     │
+                        │  *.json     │
+                        └─────────────┘
+						
+						
+						
+	                    ┌──────────────────────────┐
+                    │ MapEditorView            │
+                    │ : UserControl, IEditor   │
+                    │                          │
+                    │ Один класс — 11 файлов   │
+                    └────────────┬─────────────┘
+                                 │
+        ┌────────────────────────┼─────────────────────────────┐
+        │                        │                             │
+        ▼                        ▼                             ▼
+ ┌──────────────┐         ┌──────────────┐              ┌──────────────┐
+ │ axaml.cs     │         │ Palette.cs   │              │ Map.cs       │
+ │              │         │              │              │              │
+ │ • поля       │         │ • LoadTileset│              │ • LoadProject│
+ │ • ctor       │         │ • Mode A/B   │              │ • SaveCurrent│
+ │ • IEditor    │         │ • типы       │              │ • комбо      │
+ │ • StatusChg  │         │ • Grid click │              │ • zoom       │
+ └──────────────┘         └──────────────┘              └──────────────┘
+        │                        │                             │
+        ▼                        ▼                             ▼
+ ┌──────────────┐         ┌──────────────┐              ┌──────────────┐
+ │ Painting.cs  │         │ Select.cs    │              │ Dialogs.cs   │
+ │              │         │              │              │              │
+ │ • клик       │         │ • Select tgl │              │ • New Map    │
+ │ • drag       │         │ • копия      │              │ • Rename     │
+ │ • hover      │         │ • вставка    │              │ • Delete     │
+ │ • Paint      │         │ • сброс      │              │ • Resize     │
+ │ • Transforms │         │              │              │ • Areas      │
+ └──────────────┘         └──────────────┘              └──────────────┘
+        │                        │                             │
+        ▼                        ▼                             ▼
+ ┌──────────────┐         ┌──────────────┐              ┌──────────────┐
+ │ Layers.cs    │         │ GridMode.cs  │              │ TileEditor.cs│
+ │              │         │              │              │              │
+ │ • L1 toggle  │         │ • Grid toggle│              │ • TileEditor │
+ │ • L2 toggle  │         │ • взаимоискл.│              │ • 4 кнопки   │
+ │ • Active L   │         │ • mode B авто│              │ • RenderPrev │
+ └──────────────┘         └──────────────┘              └──────────────┘
+ 
+Поток данных: клик по карте
+ [мышь клик]
+    │
+    ▼
+MapCanvas.axaml.cs (Views/)
+    │  событие TileClicked(tx, ty, tileId, isLeft)
+    ▼
+MapEditorView.Painting.cs → OnMapTileClicked()
+    │
+    ├─→ если Select Mode:    → Select.cs (CopySelectionToClipboard)
+    ├─→ если Grid Mode:      → AssignTypeToMapTile() → MapCanvas.UpdateGridOverlay()
+    ├─→ если просто рисование → PaintTile() → MapCanvas.RedrawTile()
+    └─→ если Tile Editor:    → ApplyTransform() → TileEditor.RenderTileWithTransform()
+	
+Поток данных: SAVE
+
+	[клик по кнопке 💾 SAVE]
+    │
+    ▼
+MainWindow.axaml.cs → OnSaveClick()
+    │  GetActiveEditor() → IEditor
+    ▼
+editor.Save()   (для MapEditor это → MapEditorView.Map.cs → SaveCurrentMap)
+    │
+    ├─→ MapJsonService.Save()      → data/maps/<map>/layout.json
+    ├─→ TileTypesService.Save()    → data/tile_types/<tileset>.json
+    ├─→ AreasService.Save()        → data/maps/<map>/areas.json
+    └─→ EntriesService.Save()      → data/maps/entries.json
+	
+Поток данных: статус-бар
+	[мышь двигается по карте]
+    │
+    ▼
+MapCanvas.axaml.cs → TileHover(tx, ty)
+    │
+    ▼
+MapEditorView.Painting.cs → OnMapTileHover()
+    │  запоминает _lastHoverX/Y
+    ▼
+PushStatusBar()
+    │  формирует строку: "Позиция: 5, 3   Зум: 1x"
+    ▼
+StatusChanged?.Invoke(text)   ← это событие
+    │
+    ▼
+MainWindow.axaml.cs → OnEditorStatusChanged()
+    │
+    ▼
+StatusInfoText.Text = text
+
+
+📐 Правила, чтобы код не превратился в кашу
+#	Правило	Как соблюдать
+1	Один редактор — одна папка	Хочешь BattleEditor → Editors/BattleEditor/. Не лезь в MapEditor/.
+2	Partial-файлы для больших редакторов	MapEditorView — не один файл на 3000 строк, а 9 partial по 100–400 строк. Каждый — за свою область.
+3	Core — общий для всех	Модели и сервисы в Core/. Любой редактор их использует.
+4	MainWindow знает только IEditor	Никаких ссылок на конкретные классы редакторов. Только интерфейс.
+5	Общение между редакторами — через Core	Не через прямые ссылки. BattleEditor захочет карту — вызовет MapJsonService.Load.
+6	События для взаимодействия с оболочкой	Не пихать логику MainWindow в редактор. Редактор кидает событие — MainWindow его ловит.
+
+
+
+	
+	

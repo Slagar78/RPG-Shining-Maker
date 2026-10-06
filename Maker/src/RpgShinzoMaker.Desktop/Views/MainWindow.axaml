@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:views="using:RpgShinzoMaker.Desktop.Views"
+        xmlns:mapEditor="using:RpgShinzoMaker.Desktop.Editors.MapEditor"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="RpgShinzoMaker.Desktop.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
@@ -13,16 +13,6 @@
         WindowStartupLocation="CenterScreen">
 
     <Window.Styles>
-        <Style Selector="Border.typeIcon.selected">
-            <Style.Animations>
-                <Animation Duration="0:0:0.8" IterationCount="Infinite">
-                    <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1"/></KeyFrame>
-                    <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.25"/></KeyFrame>
-                    <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1"/></KeyFrame>
-                </Animation>
-            </Style.Animations>
-        </Style>
-
         <Style Selector="ScrollBar">
             <Setter Property="Opacity" Value="1"/>
             <Setter Property="Background" Value="#1E1E1E"/>
@@ -45,40 +35,23 @@
         </Style>
     </Window.Styles>
 
-    <Panel>
+    <Grid ColumnDefinitions="*,4,320">
 
-        <DockPanel>
-
-            <!-- МЕНЮ -->
-            <Menu DockPanel.Dock="Top">
-                <MenuItem Header="_Файл">
-                    <MenuItem Header="_Новый проект" InputGesture="Ctrl+N"/>
-                    <MenuItem Header="_Открыть..." InputGesture="Ctrl+O"/>
-                    <MenuItem Header="_Сохранить" InputGesture="Ctrl+S"/>
-                    <Separator/>
-                    <MenuItem Header="_Выход"/>
-                </MenuItem>
-                <MenuItem Header="_Правка">
-                    <MenuItem Header="_Отменить" InputGesture="Ctrl+Z"/>
-                    <MenuItem Header="_Повторить" InputGesture="Ctrl+Y"/>
-                    <Separator/>
-                    <MenuItem Header="_Копировать" InputGesture="Ctrl+C"/>
-                    <MenuItem Header="_Вставить" InputGesture="Ctrl+V"/>
-                </MenuItem>
-            </Menu>
+        <!-- КОЛОНКА 0: Тулбар + Вкладки + Статус-бар -->
+        <DockPanel Grid.Column="0">
 
             <!-- ТУЛБАР -->
             <Border DockPanel.Dock="Top" Background="#2D2D30" Padding="8,6">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <Button Content="💾 SAVE"
-                            ToolTip.Tip="Сохранить карту (Ctrl+S)"
+                            ToolTip.Tip="Сохранить (Ctrl+S)"
                             Background="#4CAF50"
                             Foreground="White"
                             FontWeight="Bold"
                             Padding="12,6"
                             Click="OnSaveClick"/>
                     <Separator Width="1" Margin="6,2"/>
-                    <Button Content="▶ Запустить игру" ToolTip.Tip="F5"/>
+                    <Button Content="▶ Запустить игру"  ToolTip.Tip="F5"/>
                     <Button Content="⚔ Запустить битву" ToolTip.Tip="F6"/>
                     <Separator Width="1" Margin="6,2"/>
                     <Button Content="↩" ToolTip.Tip="Отменить"/>
@@ -90,996 +63,183 @@
             <Border DockPanel.Dock="Bottom" Background="#007ACC" Padding="8,4">
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <TextBlock x:Name="StatusText"
-                               Grid.Column="0" Text="Готово" Foreground="White"/>
+                               Grid.Column="0"
+                               Text="Готово"
+                               Foreground="White"/>
                     <TextBlock x:Name="StatusInfoText"
                                Grid.Column="1"
                                Text="Позиция: —    Зум: 1x"
-                               Foreground="White" HorizontalAlignment="Center"/>
-                    <TextBlock Grid.Column="2" Text="RPG-Shinzo" Foreground="White"/>
+                               Foreground="White"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="2"
+                               Text="RPG-Shinzo"
+                               Foreground="White"/>
                 </Grid>
             </Border>
 
-            <!-- ОСНОВНАЯ ОБЛАСТЬ -->
-            <Grid ColumnDefinitions="305,0,*,4,192,4,320">
+            <!-- ВКЛАДКИ -->
+            <TabControl x:Name="EditorTabs"
+                        SelectionChanged="OnTabChanged">
 
-                <!-- ЛЕВАЯ КОЛОНКА: БЛОКСЕТ -->
-                <Border Grid.Column="0" Background="#252526" Padding="8">
-                    <Border Background="#1E1E1E"
-                            BorderBrush="#3E3E42"
-                            BorderThickness="1"
-                            CornerRadius="4">
-                        <Grid Margin="8" RowDefinitions="Auto,Auto,Auto,384,Auto,Auto">
+                <TabItem Header="Карты">
+                    <mapEditor:MapEditorView x:Name="MapEditor"/>
+                </TabItem>
 
-                            <TextBlock Grid.Row="0"
-                                       Text="BLOCKSET"
-                                       Foreground="White"
-                                       FontWeight="Bold"
-                                       Margin="0,0,0,8"/>
-
-                            <Button Grid.Row="1"
-                                    Content="Load Tileset"
-                                    HorizontalAlignment="Stretch"
-                                    Margin="0,0,0,8"
-                                    Click="OnLoadTilesetClick"/>
-
-                            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,0,0,8">
-                                <ToggleButton x:Name="ModeA"
-                                              Grid.Column="0"
-                                              Content="A"
-                                              IsChecked="True"
-                                              HorizontalAlignment="Stretch"
-                                              HorizontalContentAlignment="Center"
-                                              Margin="0,0,2,0"
-                                              Click="OnModeAClick"/>
-                                <ToggleButton x:Name="ModeB"
-                                              Grid.Column="1"
-                                              Content="B"
-                                              HorizontalAlignment="Stretch"
-                                              HorizontalContentAlignment="Center"
-                                              Margin="2,0,0,0"
-                                              Click="OnModeBClick"/>
-                            </Grid>
-
-                            <!-- ПАЛИТРА -->
-                            <ListBox x:Name="PaletteList"
-                                     Grid.Row="3"
-                                     Height="384"
-                                     HorizontalAlignment="Stretch"
-                                     VerticalAlignment="Top"
-                                     Background="#1E1E1E"
-                                     BorderThickness="0"
-                                     Padding="0"
-                                     SelectionChanged="OnPaletteSelectionChanged"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
-                                     ScrollViewer.AllowAutoHide="False">
-                                <ListBox.Styles>
-                                    <Style Selector="ListBoxItem">
-                                        <Setter Property="Padding" Value="0"/>
-                                        <Setter Property="Margin" Value="0"/>
-                                        <Setter Property="MinHeight" Value="0"/>
-                                        <Setter Property="MinWidth" Value="0"/>
-                                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
-                                        <Setter Property="VerticalContentAlignment" Value="Top"/>
-                                    </Style>
-                                    <Style Selector="ListBoxItem /template/ ContentPresenter">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="Padding" Value="0"/>
-                                        <Setter Property="CornerRadius" Value="0"/>
-                                    </Style>
-                                    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                    </Style>
-                                    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                    </Style>
-                                </ListBox.Styles>
-                                <ListBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel Orientation="Horizontal"
-                                                   Width="256"
-                                                   HorizontalAlignment="Left"/>
-                                    </ItemsPanelTemplate>
-                                </ListBox.ItemsPanel>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate DataType="views:TileItem">
-                                        <Grid Width="32" Height="32"
-                                              Background="#1E1E1E"
-                                              ClipToBounds="True"
-                                              Tag="{Binding}"
-                                              PointerPressed="OnPaletteItemPointerPressed"
-                                              PointerMoved="OnPaletteItemPointerMoved">
-                                            <Image Source="{Binding Image}"
-                                                   Stretch="Fill"
-                                                   RenderOptions.BitmapInterpolationMode="None"
-                                                   RenderOptions.EdgeMode="Aliased"
-                                                   IsHitTestVisible="False"/>
-                                            <Border BorderBrush="#3E3E42"
-                                                    BorderThickness="0,0,1,1"
-                                                    IsHitTestVisible="False"/>
-                                            <Border Width="8" Height="8"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Bottom"
-                                                    Margin="0,0,1,1"
-                                                    CornerRadius="4"
-                                                    Background="{Binding TileColor}"
-                                                    IsVisible="{Binding ShowType}"
-                                                    IsHitTestVisible="False"/>
-                                            <Border BorderBrush="#FFD700"
-                                                    BorderThickness="2"
-                                                    IsVisible="{Binding LeftSelected}"
-                                                    IsHitTestVisible="False"/>
-                                            <Border BorderBrush="#FF2222"
-                                                    BorderThickness="2"
-                                                    IsVisible="{Binding RightSelected}"
-                                                    IsHitTestVisible="False"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-
-                            <!-- ПРЕВЬЮ: A → два квадрата, B → круг -->
-                            <Border Grid.Row="4"
-                                    Background="#1E1E1E"
-                                    BorderBrush="#3E3E42"
-                                    BorderThickness="1"
-                                    CornerRadius="3"
-                                    Margin="0,8,0,0"
-                                    Padding="8">
-                                <Grid>
-                                    <Grid x:Name="ModeAPreviewGrid" ColumnDefinitions="*,*">
-                                        <StackPanel Grid.Column="0" Spacing="4" HorizontalAlignment="Center">
-                                            <TextBlock Text="Left click"
-                                                       Foreground="#AAAAAA"
-                                                       FontSize="10"
-                                                       HorizontalAlignment="Center"/>
-                                            <Border CornerRadius="10"
-                                                    BorderBrush="#555555"
-                                                    BorderThickness="1"
-                                                    Width="60" Height="60"
-                                                    HorizontalAlignment="Center"
-                                                    Background="#0E0E0E"
-                                                    ClipToBounds="True">
-                                                <Image x:Name="LeftClickPreview"
-                                                       Stretch="Fill"
-                                                       RenderOptions.BitmapInterpolationMode="None"
-                                                       RenderOptions.EdgeMode="Aliased"/>
-                                            </Border>
-                                            <TextBlock x:Name="LeftClickLabel"
-                                                       Text="—"
-                                                       Foreground="#888888"
-                                                       FontSize="10"
-                                                       HorizontalAlignment="Center"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Center">
-                                            <TextBlock Text="Right click"
-                                                       Foreground="#AAAAAA"
-                                                       FontSize="10"
-                                                       HorizontalAlignment="Center"/>
-                                            <Border CornerRadius="10"
-                                                    BorderBrush="#555555"
-                                                    BorderThickness="1"
-                                                    Width="60" Height="60"
-                                                    HorizontalAlignment="Center"
-                                                    Background="#0E0E0E"
-                                                    ClipToBounds="True">
-                                                <Image x:Name="RightClickPreview"
-                                                       Stretch="Fill"
-                                                       RenderOptions.BitmapInterpolationMode="None"
-                                                       RenderOptions.EdgeMode="Aliased"/>
-                                            </Border>
-                                            <TextBlock x:Name="RightClickLabel"
-                                                       Text="—"
-                                                       Foreground="#888888"
-                                                       FontSize="10"
-                                                       HorizontalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <StackPanel x:Name="ModeBPreviewPanel"
-                                                Spacing="4"
-                                                HorizontalAlignment="Center"
-                                                IsVisible="False">
-                                        <TextBlock Text="Selected type"
-                                                   Foreground="#AAAAAA"
-                                                   FontSize="10"
-                                                   HorizontalAlignment="Center"/>
-                                        <Border CornerRadius="30"
-                                                BorderBrush="#555555"
-                                                BorderThickness="1"
-                                                Width="60" Height="60"
-                                                HorizontalAlignment="Center"
-                                                Background="#0E0E0E">
-                                            <Ellipse x:Name="TypePreviewEllipse"
-                                                     Width="40" Height="40"
-                                                     Fill="#4CAF50"
-                                                     HorizontalAlignment="Center"
-                                                     VerticalAlignment="Center"/>
-                                        </Border>
-                                        <TextBlock x:Name="TypePreviewLabel"
-                                                   Text="Passable"
-                                                   Foreground="#888888"
-                                                   FontSize="10"
-                                                   HorizontalAlignment="Center"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-
-                            <!-- НИЖНЯЯ ПАНЕЛЬ -->
-                            <Border Grid.Row="5"
-                                    Background="#252526"
-                                    BorderBrush="#3E3E42"
-                                    BorderThickness="0,1,0,0"
-                                    Padding="8,4"
-                                    Margin="0,8,0,0">
-                                <StackPanel Spacing="4">
-
-                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-                                        <TextBlock x:Name="PaletteStatus"
-                                                   Grid.Column="0"
-                                                   Text="✗"
-                                                   Foreground="#E74C3C"
-                                                   FontSize="14"
-                                                   FontWeight="Bold"
-                                                   VerticalAlignment="Center"
-                                                   Margin="0,0,6,0"/>
-                                        <TextBlock x:Name="PaletteInfo"
-                                                   Grid.Column="1"
-                                                   Text="Тайлов: 0"
-                                                   Foreground="#AAAAAA"
-                                                   FontSize="12"
-                                                   VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="3"
-                                                   Text="48×48"
-                                                   Foreground="#666666"
-                                                   FontSize="12"
-                                                   VerticalAlignment="Center"/>
-                                    </Grid>
-
-                                    <Border Background="#1E1E1E"
-                                            BorderBrush="#3E3E42"
-                                            BorderThickness="1"
-                                            CornerRadius="3"
-                                            Padding="4,3">
-                                        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto">
-                                            <TextBlock Grid.Column="0"
-                                                       Text="Grid"
-                                                       Foreground="#AAAAAA"
-                                                       FontSize="11"
-                                                       VerticalAlignment="Center"
-                                                       Margin="0,0,6,0"/>
-                                            <ToggleButton x:Name="GridModeToggle"
-                                                          Grid.Column="1"
-                                                          Content="OFF"
-                                                          FontSize="10"
-                                                          Padding="6,1"
-                                                          MinHeight="0"
-                                                          Click="OnGridModeClick"/>
-                                            <Border Grid.Column="3"
-                                                    x:Name="TypeIcon0"
-                                                    Classes="typeIcon"
-                                                    Width="18" Height="18"
-                                                    Background="#4CAF50"
-                                                    Margin="2,0"
-                                                    BorderBrush="#FFFFFF"
-                                                    BorderThickness="2"
-                                                    CornerRadius="9"
-                                                    Cursor="Hand"
-                                                    Tag="0"
-                                                    PointerPressed="OnTileTypeClick"/>
-                                            <Border Grid.Column="4"
-                                                    x:Name="TypeIcon1"
-                                                    Classes="typeIcon"
-                                                    Width="18" Height="18"
-                                                    Background="#E74C3C"
-                                                    Margin="2,0"
-                                                    BorderBrush="#555555"
-                                                    BorderThickness="2"
-                                                    CornerRadius="9"
-                                                    Cursor="Hand"
-                                                    Tag="1"
-                                                    PointerPressed="OnTileTypeClick"/>
-                                            <Border Grid.Column="5"
-                                                    x:Name="TypeIcon2"
-                                                    Classes="typeIcon"
-                                                    Width="18" Height="18"
-                                                    Background="#3498DB"
-                                                    Margin="2,0"
-                                                    BorderBrush="#555555"
-                                                    BorderThickness="2"
-                                                    CornerRadius="9"
-                                                    Cursor="Hand"
-                                                    Tag="2"
-                                                    PointerPressed="OnTileTypeClick"/>
-                                            <Border Grid.Column="6"
-                                                    x:Name="TypeIcon3"
-                                                    Classes="typeIcon"
-                                                    Width="18" Height="18"
-                                                    Background="#E67E22"
-                                                    Margin="2,0"
-                                                    BorderBrush="#555555"
-                                                    BorderThickness="2"
-                                                    CornerRadius="9"
-                                                    Cursor="Hand"
-                                                    Tag="3"
-                                                    PointerPressed="OnTileTypeClick"/>
-                                        </Grid>
-                                    </Border>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
+                <TabItem Header="Эвенты">
+                    <Border Background="#1E1E1E">
+                        <TextBlock Text="Редактор событий"
+                                   Foreground="Gray"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="20"/>
                     </Border>
-                </Border>
+                </TabItem>
 
-                <!-- ЦЕНТР: Карты / Эвенты -->
-                <Grid Grid.Column="2" RowDefinitions="*,Auto">
-                    <TabControl Grid.Row="0">
-                        <TabItem Header="Карты">
-                            <views:MapCanvas x:Name="MapCanvasControl"/>
-                        </TabItem>
-                        <TabItem Header="Эвенты">
-                            <Border Background="#1E1E1E">
-                                <TextBlock Text="Редактор событий"
-                                           Foreground="Gray"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontSize="20"/>
-                            </Border>
-                        </TabItem>
-                    </TabControl>
-
-                    <Border Grid.Row="1" Background="#252526" Padding="8,6">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <TextBlock Text="Карта:" Foreground="White" VerticalAlignment="Center"/>
-                            <ComboBox x:Name="MapSelector"
-                                      MinWidth="180"
-                                      VerticalAlignment="Center"
-                                      SelectionChanged="OnMapSelectorChanged"/>
-                            <TextBlock Text="Размер:" Foreground="White" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="MapSizeText" Text="—" Foreground="#4CAF50" VerticalAlignment="Center"/>
-                            <TextBlock Text="Тайлсет:" Foreground="White" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="MapTilesetText" Text="—" Foreground="#4CAF50" VerticalAlignment="Center"/>
-                            <TextBlock Text="Музыка:" Foreground="White" VerticalAlignment="Center"/>
-                            <ComboBox x:Name="MapMusicSelector"
-                                      MinWidth="180"
-                                      VerticalAlignment="Center"
-                                      SelectionChanged="OnMapMusicChanged"/>
-                        </StackPanel>
+                <TabItem Header="Бои">
+                    <Border Background="#1E1E1E">
+                        <TextBlock Text="Редактор боёв"
+                                   Foreground="Gray"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="20"/>
                     </Border>
-                </Grid>
+                </TabItem>
 
-                <!-- РАЗДЕЛИТЕЛЬ -->
-                <GridSplitter Grid.Column="3" Background="#3E3E42"
-                              ResizeDirection="Columns" Width="4"/>
-
-                <!-- ▶ ПАНЕЛЬ ИНСТРУМЕНТОВ -->
-                <Border Grid.Column="4" Background="#252526" Padding="8">
-                    <Border Background="#1E1E1E"
-                            BorderBrush="#3E3E42"
-                            BorderThickness="1"
-                            CornerRadius="4">
-                        <DockPanel Margin="8">
-                            <TextBlock DockPanel.Dock="Top"
-                                       Text="TOOLS"
-                                       Foreground="White"
-                                       FontWeight="Bold"
-                                       FontSize="12"
-                                       Margin="0,0,0,10"/>
-
-                            <StackPanel Spacing="6" VerticalAlignment="Top" HorizontalAlignment="Stretch">
-
-                                <!-- Ряд 1: L1 / L2 / Active Layer -->
-                                <UniformGrid Columns="3">
-                                    <ToggleButton x:Name="Layer1Toggle"
-                                                  Content="L1"
-                                                  FontSize="14" FontWeight="Bold"
-                                                  Width="48" Height="40" Margin="1"
-                                                  IsChecked="True"
-                                                  Background="#4CAF50" Foreground="White"
-                                                  Click="OnLayer1ToggleClick"/>
-
-                                    <ToggleButton x:Name="Layer2Toggle"
-                                                  Content="L2"
-                                                  FontSize="14" FontWeight="Bold"
-                                                  Width="48" Height="40" Margin="1"
-                                                  IsChecked="True"
-                                                  Background="#4CAF50" Foreground="White"
-                                                  Click="OnLayer2ToggleClick"/>
-
-                                    <Button x:Name="ActiveLayerButton"
-                                            Content="1"
-                                            FontSize="14" FontWeight="Bold"
-                                            Width="48" Height="40" Margin="1"
-                                            Background="#6497C8" Foreground="White"
-                                            Click="OnActiveLayerClick"/>
-                                </UniformGrid>
-
-                                <!-- Ряд 2: Tile Editor -->
-                                <ToggleButton x:Name="TileEditorToggle"
-                                              FontSize="12" FontWeight="Bold"
-                                              Height="32"
-                                              HorizontalAlignment="Stretch"
-                                              HorizontalContentAlignment="Center"
-                                              Click="OnTileEditorToggle">
-                                    <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                                        <TextBlock x:Name="TileEditorIcon"
-                                                   Text="✗"
-                                                   FontSize="16"
-                                                   FontWeight="Bold"
-                                                   Foreground="#E74C3C"
-                                                   VerticalAlignment="Center"/>
-                                        <TextBlock Text="Tile Editor"
-                                                   VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </ToggleButton>
-
-                                <!-- Ряд 3: 4 кнопки трансформации (2x2) -->
-                                <UniformGrid Columns="2">
-                                    <Button x:Name="RotateBtn"
-                                            Content="🔄" FontSize="26"
-                                            Width="72" Height="72" Margin="1"
-                                            IsEnabled="False"
-                                            BorderThickness="3" BorderBrush="#3E3E42"
-                                            Click="OnRotateClick"/>
-
-                                        <Button x:Name="FlipHBtn"
-                                                Width="72" Height="72" Margin="1"
-                                                IsEnabled="False"
-                                                BorderThickness="3" BorderBrush="#3E3E42"
-                                                Click="OnFlipHClick">
-                                            <TextBlock Text="↕" FontSize="26">
-                                                <TextBlock.RenderTransform>
-                                                    <RotateTransform Angle="90"/>
-                                                </TextBlock.RenderTransform>
-                                            </TextBlock>
-                                        </Button>
-
-                                    <Button x:Name="FlipVBtn"
-                                            Content="↕" FontSize="26"
-                                            Width="72" Height="72" Margin="1"
-                                            IsEnabled="False"
-                                            BorderThickness="3" BorderBrush="#3E3E42"
-                                            Click="OnFlipVClick"/>
-
-                                    <Button x:Name="DeleteBtn"
-                                            Content="❌" FontSize="26"
-                                            Width="72" Height="72" Margin="1"
-                                            IsEnabled="False"
-                                            BorderThickness="3" BorderBrush="#3E3E42"
-                                            Click="OnDeleteClick"/>
-                                </UniformGrid>
-
-                                <!-- Ряд 4: Left / Right preview (для карты) -->
-                                <UniformGrid Columns="2" Margin="0,8,0,0">
-                                    <StackPanel Spacing="2" HorizontalAlignment="Center">
-                                        <TextBlock Text="Left click" Foreground="#AAAAAA" FontSize="10" HorizontalAlignment="Center"/>
-                                        <Border Width="60" Height="60"
-                                                CornerRadius="10"
-                                                BorderBrush="#555555" BorderThickness="1"
-                                                Background="#0E0E0E"
-                                                ClipToBounds="True">
-                                            <Image x:Name="MapLeftPreview"
-                                                   Stretch="Fill"
-                                                   RenderOptions.BitmapInterpolationMode="None"
-                                                   RenderOptions.EdgeMode="Aliased"/>
-                                        </Border>
-                                        <TextBlock x:Name="MapLeftLabel"
-                                                   Text="—" Foreground="#888888" FontSize="10"
-                                                   HorizontalAlignment="Center"/>
-                                    </StackPanel>
-
-                                    <StackPanel Spacing="2" HorizontalAlignment="Center">
-                                        <TextBlock Text="Right click" Foreground="#AAAAAA" FontSize="10" HorizontalAlignment="Center"/>
-                                        <Border Width="60" Height="60"
-                                                CornerRadius="10"
-                                                BorderBrush="#555555" BorderThickness="1"
-                                                Background="#0E0E0E"
-                                                ClipToBounds="True">
-                                            <Image x:Name="MapRightPreview"
-                                                   Stretch="Fill"
-                                                   RenderOptions.BitmapInterpolationMode="None"
-                                                   RenderOptions.EdgeMode="Aliased"/>
-                                        </Border>
-                                        <TextBlock x:Name="MapRightLabel"
-                                                   Text="—" Foreground="#888888" FontSize="10"
-                                                   HorizontalAlignment="Center"/>
-                                    </StackPanel>
-                                </UniformGrid>
-
-                                <!-- Ряд 5: Grid Mode -->
-                                <ToggleButton x:Name="GridModeButton"
-                                              Content="Grid Mode"
-                                              FontSize="12" FontWeight="Bold"
-                                              Height="32" Margin="0,8,0,0"
-                                              HorizontalAlignment="Stretch"
-                                              HorizontalContentAlignment="Center"
-                                              Background="#3E3E42"
-                                              Foreground="White"
-                                              Click="OnGridModeToggle"/>
-
-                                <!-- Ряд 6: Zoom -->
-                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="6"
-                                            HorizontalAlignment="Center">
-                                    <TextBlock Text="Zoom"
-                                               VerticalAlignment="Center"
-                                               Foreground="#AAAAAA"
-                                               FontSize="12"/>
-                                    <ComboBox x:Name="ZoomSelector"
-                                              Width="100"
-                                              SelectedIndex="2"
-                                              SelectionChanged="OnZoomChanged">
-                                        <ComboBoxItem Content="1/4x"/>
-                                        <ComboBoxItem Content="1/2x"/>
-                                        <ComboBoxItem Content="1x"/>
-                                        <ComboBoxItem Content="2x"/>
-                                        <ComboBoxItem Content="4x"/>
-                                    </ComboBox>
-                                </StackPanel>
-
-                                                                <!-- Ряд 7: Select -->
-                                <ToggleButton x:Name="SelectButton"
-                                              Content="Select"
-                                              FontSize="12" FontWeight="Bold"
-                                              Height="28" Margin="0,4,0,0"
-                                              HorizontalAlignment="Stretch"
-                                              HorizontalContentAlignment="Center"
-                                              Background="#3E3E42"
-                                              Foreground="White"
-                                              Click="OnSelectToggle"/>
-
-                                <!-- Ряд 8: Areas -->
-                                <Button x:Name="AreasBtn"
-                                        Content="Areas"
-                                        FontSize="12" FontWeight="Bold"
-                                        Height="28" Margin="0,4,0,0"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Center"
-                                        Click="OnAreasClick"/>
-
-                                <!-- Ряд 9: New Map -->
-                                <Button x:Name="NewMapBtn"
-                                        Content="New Map"
-                                        FontSize="12" FontWeight="Bold"
-                                        Height="28" Margin="0,4,0,0"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Center"
-                                        Click="OnNewMapClick"/>
-
-                                <!-- Ряд 10: Rename Map -->
-                                <Button x:Name="RenameMapBtn"
-                                        Content="Rename Map"
-                                        FontSize="12" FontWeight="Bold"
-                                        Height="28" Margin="0,4,0,0"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Center"
-                                        Click="OnRenameMapClick"/>
-
-                                <!-- Ряд 11: Delete Map -->
-                                <Button x:Name="DeleteMapBtn"
-                                        Content="Delete Map"
-                                        FontSize="12" FontWeight="Bold"
-                                        Height="28" Margin="0,4,0,0"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Center"
-                                        Click="OnDeleteMapClick"/>
-
-                                <!-- Ряд 12: Resize Map -->
-                                <Button x:Name="ResizeMapBtn"
-                                        Content="Resize Map"
-                                        FontSize="12" FontWeight="Bold"
-                                        Height="28" Margin="0,4,0,0"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Center"
-                                        Click="OnResizeMapClick"/>
-
-                            </StackPanel>
-                        </DockPanel>
+                <TabItem Header="Сцены">
+                    <Border Background="#1E1E1E">
+                        <TextBlock Text="Редактор боевых сцен"
+                                   Foreground="Gray"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="20"/>
                     </Border>
-                </Border>
+                </TabItem>
 
-                <!-- РАЗДЕЛИТЕЛЬ 2 -->
-                <GridSplitter Grid.Column="5" Background="#3E3E42"
-                              ResizeDirection="Columns" Width="4"/>
-
-                <!-- ПРАВАЯ КОЛОНКА -->
-                <Grid Grid.Column="6" RowDefinitions="*,4,280">
-                    <Border Grid.Row="0" Background="#252526" Padding="8">
-                        <DockPanel>
-                            <TextBlock DockPanel.Dock="Top" Text="ДЕРЕВО ПРОЕКТА"
-                                       Foreground="White" FontWeight="Bold"
-                                       Margin="0,0,0,8"/>
-                            <TreeView Background="Transparent">
-                                <TreeViewItem Header="📁 Проект" IsExpanded="True">
-                                    <TreeViewItem Header="⚔ Бои">
-                                        <TreeViewItem Header="Бой 1"/>
-                                        <TreeViewItem Header="Бой 2"/>
-                                    </TreeViewItem>
-                                    <TreeViewItem Header="🎬 Боевые сцены">
-                                        <TreeViewItem Header="Атака"/>
-                                        <TreeViewItem Header="Защита"/>
-                                    </TreeViewItem>
-                                    <TreeViewItem Header="📜 Тексты">
-                                        <TreeViewItem Header="0001"/>
-                                        <TreeViewItem Header="0002"/>
-                                    </TreeViewItem>
-                                    <TreeViewItem Header="📁 assets">
-                                        <TreeViewItem Header="tilesets"/>
-                                        <TreeViewItem Header="sprites"/>
-                                    </TreeViewItem>
-                                </TreeViewItem>
-                            </TreeView>
-                        </DockPanel>
+                <TabItem Header="База данных">
+                    <Border Background="#1E1E1E">
+                        <TextBlock Text="База данных"
+                                   Foreground="Gray"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="20"/>
                     </Border>
-
-                    <GridSplitter Grid.Row="1" Background="#3E3E42"
-                                  ResizeDirection="Rows" Height="4"/>
-
-                    <Border Grid.Row="2" Background="#252526" Padding="8">
-                        <DockPanel>
-                            <TextBlock DockPanel.Dock="Top" Text="СВОЙСТВА"
-                                       Foreground="White" FontWeight="Bold"
-                                       Margin="0,0,0,8"/>
-                            <ScrollViewer>
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="Ничего не выбрано"
-                                               Foreground="Gray"
-                                               FontStyle="Italic"/>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </DockPanel>
-                    </Border>
-                </Grid>
-
-            </Grid>
+                </TabItem>
+            </TabControl>
         </DockPanel>
 
-        <!-- ═══ Оверлей диалога Areas ═══ -->
-        <Panel x:Name="AreasOverlay"
-               IsVisible="False"
-               Background="#80000000">
-            <Border Width="420"
-                    Background="#2D2D30"
-                    BorderBrush="#555555"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="20"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-                <StackPanel Spacing="12">
+        <!-- РАЗДЕЛИТЕЛЬ -->
+        <GridSplitter Grid.Column="1"
+                      Background="#3E3E42"
+                      ResizeDirection="Columns"
+                      Width="4"/>
 
-                    <TextBlock Text="Areas"
-                               FontSize="16" FontWeight="Bold"
-                               Foreground="White"/>
+<!-- КОЛОНКА 2: ASSETS + Свойства -->
+        <Grid Grid.Column="2" RowDefinitions="*,4,280">
 
-                    <Grid ColumnDefinitions="80,*,80,*"
-                          RowDefinitions="Auto,Auto"
-                          RowSpacing="10" ColumnSpacing="10">
-
-                        <TextBlock Grid.Row="0" Grid.Column="0"
-                                   Text="Start X:"
-                                   Foreground="#CCCCCC"
-                                   VerticalAlignment="Center"/>
-                        <NumericUpDown Grid.Row="0" Grid.Column="1"
-                                       x:Name="AreaStartX"
-                                       Minimum="0"
-                                       FormatString="0"
-                                       Increment="1"/>
-
-                        <TextBlock Grid.Row="0" Grid.Column="2"
-                                   Text="Start Y:"
-                                   Foreground="#CCCCCC"
-                                   VerticalAlignment="Center"/>
-                        <NumericUpDown Grid.Row="0" Grid.Column="3"
-                                       x:Name="AreaStartY"
-                                       Minimum="0"
-                                       FormatString="0"
-                                       Increment="1"/>
-
-                        <TextBlock Grid.Row="1" Grid.Column="0"
-                                   Text="Width:"
-                                   Foreground="#CCCCCC"
-                                   VerticalAlignment="Center"/>
-                        <NumericUpDown Grid.Row="1" Grid.Column="1"
-                                       x:Name="AreaWidth"
-                                       Minimum="2"
-                                       FormatString="0"
-                                       Increment="1"/>
-
-                        <TextBlock Grid.Row="1" Grid.Column="2"
-                                   Text="Height:"
-                                   Foreground="#CCCCCC"
-                                   VerticalAlignment="Center"/>
-                        <NumericUpDown Grid.Row="1" Grid.Column="3"
-                                       x:Name="AreaHeight"
-                                       Minimum="2"
-                                       FormatString="0"
-                                       Increment="1"/>
-                    </Grid>
-
-                    <TextBlock x:Name="AreaError"
-                               Foreground="#E74C3C"
-                               FontSize="11"
-                               TextWrapping="Wrap"
-                               IsVisible="False"/>
-
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="8"
-                                HorizontalAlignment="Right">
-                        <Button Content="Cancel"
-                                MinWidth="90"
-                                Click="OnAreasCancelClick"/>
-                        <Button Content="OK"
-                                MinWidth="90"
-                                FontWeight="Bold"
-                                Background="#4CAF50"
-                                Foreground="White"
-                                Click="OnAreasOkClick"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Panel>
-                <!-- ═══ Оверлей диалога New Map ═══ -->
-        <Panel x:Name="NewMapOverlay"
-               IsVisible="False"
-               Background="#80000000">
-            <Border Width="420"
-                    Background="#2D2D30"
-                    BorderBrush="#555555"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="20"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-                <StackPanel Spacing="12">
-
-                    <TextBlock Text="New Map"
-                               FontSize="16" FontWeight="Bold"
-                               Foreground="White"/>
-
-                    <!-- Name -->
-                    <Grid ColumnDefinitions="80,*">
-                        <TextBlock Grid.Column="0"
-                                   Text="Name:"
-                                   Foreground="#CCCCCC"
-                                   VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1"
-                                 x:Name="NewMapName"
-                                 Text="map00"
-                                 TextInput="OnNewMapNameTextInput"/>
-                    </Grid>
-
-                    <!-- Map size -->
-                    <TextBlock Text="Map Size"
-                               FontSize="11" FontWeight="Bold"
-                               Foreground="#888888"
-                               Margin="0,4,0,0"/>
-
-                    <Grid ColumnDefinitions="80,*,20,80,*">
-                        <TextBlock Grid.Column="0"
-                                   Text="Width:"
-                                   Foreground="#CCCCCC"
-                                   VerticalAlignment="Center"/>
-                        <NumericUpDown Grid.Column="1"
-                                       x:Name="NewMapWidth"
-                                       Minimum="4" Maximum="128"
-                                       Value="20"
-                                       FormatString="0" Increment="1"/>
-
-                        <TextBlock Grid.Column="3"
-                                   Text="Height:"
-                                   Foreground="#CCCCCC"
-                                   VerticalAlignment="Center"/>
-                        <NumericUpDown Grid.Column="4"
-                                       x:Name="NewMapHeight"
-                                       Minimum="4" Maximum="128"
-                                       Value="15"
-                                       FormatString="0" Increment="1"/>
-                    </Grid>
-
-                    <TextBlock Text="Area = размеру карты"
-                               Foreground="#888888"
-                               FontSize="10"
-                               FontStyle="Italic"/>
-
-                    <TextBlock x:Name="NewMapStatus"
-                               FontSize="11"
-                               TextWrapping="Wrap"
-                               IsVisible="False"/>
-
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="8"
-                                HorizontalAlignment="Right">
-                        <Button x:Name="NewMapCancelBtn"
-                                Content="Cancel"
-                                MinWidth="90"
-                                Click="OnNewMapCancelClick"/>
-                        <Button x:Name="NewMapOkBtn"
-                                Content="OK"
-                                MinWidth="90"
-                                FontWeight="Bold"
-                                Background="#4CAF50"
-                                Foreground="White"
-                                Click="OnNewMapOkClick"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Panel>
-        <!-- ═══ Оверлей подтверждения Delete Map ═══ -->
-        <Panel x:Name="DeleteMapOverlay"
-               IsVisible="False"
-               Background="#80000000">
-            <Border Width="400"
-                    Background="#2D2D30"
-                    BorderBrush="#555555"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="20"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-                <StackPanel Spacing="12">
-
-                    <TextBlock Text="Delete Map"
-                               FontSize="16" FontWeight="Bold"
-                               Foreground="#E74C3C"/>
-
-                    <TextBlock x:Name="DeleteMapText"
+            <!-- ASSETS -->
+            <Border Grid.Row="0" Background="#252526" Padding="8">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="ASSETS"
                                Foreground="White"
-                               FontSize="12"
-                               TextWrapping="Wrap"/>
+                               FontWeight="Bold"
+                               Margin="0,0,0,8"/>
 
-                    <TextBlock Text="This cannot be undone."
-                               Foreground="#888888"
-                               FontSize="11"
-                               FontStyle="Italic"/>
+                    <TreeView Background="Transparent">
+                        <TreeViewItem Header="🗺 Maps" IsExpanded="True">
+                            <TreeViewItem Header="Granseal"/>
+                            <TreeViewItem Header="Ribble"/>
+                            <TreeViewItem Header="Castle"/>
+                        </TreeViewItem>
 
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="8"
-                                HorizontalAlignment="Right">
-                        <Button Content="No"
-                                MinWidth="90"
-                                Click="OnDeleteMapNoClick"/>
-                        <Button Content="Yes"
-                                MinWidth="90"
-                                FontWeight="Bold"
-                                Background="#E74C3C"
-                                Foreground="White"
-                                Click="OnDeleteMapYesClick"/>
-                    </StackPanel>
-                </StackPanel>
+                        <TreeViewItem Header="⚔ Battles" IsExpanded="False">
+                            <TreeViewItem Header="Battle 1 — Goblins"/>
+                            <TreeViewItem Header="Battle 2 — Dark Mage"/>
+                            <TreeViewItem Header="Battle 3 — Boss"/>
+                        </TreeViewItem>
+
+                        <TreeViewItem Header="🧙 Characters" IsExpanded="False">
+                            <TreeViewItem Header="Bowie"/>
+                            <TreeViewItem Header="Sarah"/>
+                            <TreeViewItem Header="Chester"/>
+                            <TreeViewItem Header="Jaha"/>
+                        </TreeViewItem>
+
+                        <TreeViewItem Header="🎒 Items" IsExpanded="False">
+                            <TreeViewItem Header="🔧 Weapons">
+                                <TreeViewItem Header="Iron Sword"/>
+                                <TreeViewItem Header="Steel Lance"/>
+                            </TreeViewItem>
+                            <TreeViewItem Header="🛡 Armor">
+                                <TreeViewItem Header="Leather Armor"/>
+                                <TreeViewItem Header="Chain Mail"/>
+                            </TreeViewItem>
+                            <TreeViewItem Header="🧪 Potions">
+                                <TreeViewItem Header="Herb"/>
+                                <TreeViewItem Header="Antidote"/>
+                            </TreeViewItem>
+                        </TreeViewItem>
+
+                        <TreeViewItem Header="✨ Spells" IsExpanded="False">
+                            <TreeViewItem Header="Blaze"/>
+                            <TreeViewItem Header="Heal"/>
+                            <TreeViewItem Header="Bolt"/>
+                        </TreeViewItem>
+
+                        <TreeViewItem Header="👹 Enemies" IsExpanded="False">
+                            <TreeViewItem Header="Goblin"/>
+                            <TreeViewItem Header="Dark Mage"/>
+                            <TreeViewItem Header="Dragon"/>
+                        </TreeViewItem>
+
+                        <TreeViewItem Header="🎬 Scenes" IsExpanded="False">
+                            <TreeViewItem Header="Intro"/>
+                            <TreeViewItem Header="Granseal's Fall"/>
+                            <TreeViewItem Header="Final Battle"/>
+                        </TreeViewItem>
+
+                        <TreeViewItem Header="📜 Dialogues" IsExpanded="False">
+                            <TreeViewItem Header="npc_granseal_01"/>
+                            <TreeViewItem Header="battle_intro_01"/>
+                            <TreeViewItem Header="ending"/>
+                        </TreeViewItem>
+
+                        <TreeViewItem Header="🎵 Music" IsExpanded="False">
+                            <TreeViewItem Header="Track1.mp3"/>
+                            <TreeViewItem Header="Track2.mp3"/>
+                        </TreeViewItem>
+
+                        <TreeViewItem Header="🖼 Sprites" IsExpanded="False">
+                            <TreeViewItem Header="Tilesets"/>
+                            <TreeViewItem Header="Characters"/>
+                        </TreeViewItem>
+                    </TreeView>
+                </DockPanel>
             </Border>
-        </Panel>
-                <!-- ═══ Оверлей диалога Resize Map ═══ -->
-        <Panel x:Name="ResizeMapOverlay"
-               IsVisible="False"
-               Background="#80000000">
-            <Border Width="420"
-                    Background="#2D2D30"
-                    BorderBrush="#555555"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="20"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-                <StackPanel Spacing="12">
 
-                    <TextBlock Text="Resize Map"
-                               FontSize="16" FontWeight="Bold"
-                               Foreground="White"/>
+            <!-- РАЗДЕЛИТЕЛЬ между ASSETS и Свойствами -->
+            <GridSplitter Grid.Row="1"
+                          Background="#3E3E42"
+                          ResizeDirection="Rows"
+                          Height="4"/>
 
-                    <TextBlock x:Name="ResizeMapCurrent"
-                               Foreground="#888888"
-                               FontSize="11"/>
-
-                    <Grid ColumnDefinitions="80,*,20,80,*">
-                        <TextBlock Grid.Column="0"
-                                   Text="Width:"
-                                   Foreground="#CCCCCC"
-                                   VerticalAlignment="Center"/>
-                        <NumericUpDown Grid.Column="1"
-                                       x:Name="ResizeMapWidth"
-                                       Minimum="4" Maximum="128"
-                                       FormatString="0" Increment="1"/>
-
-                        <TextBlock Grid.Column="3"
-                                   Text="Height:"
-                                   Foreground="#CCCCCC"
-                                   VerticalAlignment="Center"/>
-                        <NumericUpDown Grid.Column="4"
-                                       x:Name="ResizeMapHeight"
-                                       Minimum="4" Maximum="128"
-                                       FormatString="0" Increment="1"/>
-                    </Grid>
-
-                    <TextBlock Text="Tiles outside the new size will be lost."
-                               Foreground="#888888"
-                               FontSize="10"
-                               FontStyle="Italic"/>
-
-                    <TextBlock x:Name="ResizeMapStatus"
-                               FontSize="11"
-                               TextWrapping="Wrap"
-                               IsVisible="False"/>
-
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="8"
-                                HorizontalAlignment="Right">
-                        <Button x:Name="ResizeMapCancelBtn"
-                                Content="Cancel"
-                                MinWidth="90"
-                                Click="OnResizeMapCancelClick"/>
-                        <Button x:Name="ResizeMapOkBtn"
-                                Content="OK"
-                                MinWidth="90"
-                                FontWeight="Bold"
-                                Background="#4CAF50"
-                                Foreground="White"
-                                Click="OnResizeMapOkClick"/>
-                    </StackPanel>
-                </StackPanel>
+            <!-- СВОЙСТВА -->
+            <Border Grid.Row="2" Background="#252526" Padding="8">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="СВОЙСТВА"
+                               Foreground="White"
+                               FontWeight="Bold"
+                               Margin="0,0,0,8"/>
+                    <ScrollViewer>
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Ничего не выбрано"
+                                       Foreground="Gray"
+                                       FontStyle="Italic"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
             </Border>
-        </Panel>
-        <!-- ═══ Оверлей диалога Rename Map ═══ -->
-        <Panel x:Name="RenameMapOverlay"
-               IsVisible="False"
-               Background="#80000000">
-            <Border Width="420"
-                    Background="#2D2D30"
-                    BorderBrush="#555555"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="20"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-                <StackPanel Spacing="12">
-
-                    <TextBlock Text="Rename Map"
-                               FontSize="16" FontWeight="Bold"
-                               Foreground="White"/>
-
-                    <TextBlock x:Name="RenameMapCurrent"
-                               Foreground="#888888"
-                               FontSize="11"/>
-
-                    <Grid ColumnDefinitions="90,*">
-                        <TextBlock Grid.Column="0"
-                                   Text="New name:"
-                                   Foreground="#CCCCCC"
-                                   VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1"
-                                 x:Name="RenameMapName"
-                                 TextInput="OnRenameMapNameTextInput"/>
-                    </Grid>
-
-                    <TextBlock Text="Only [A-Za-z0-9_-], max 30 chars. Folder will be renamed too."
-                               Foreground="#888888"
-                               FontSize="10"
-                               FontStyle="Italic"
-                               TextWrapping="Wrap"/>
-
-                    <TextBlock x:Name="RenameMapStatus"
-                               FontSize="11"
-                               TextWrapping="Wrap"
-                               IsVisible="False"/>
-
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="8"
-                                HorizontalAlignment="Right">
-                        <Button x:Name="RenameMapCancelBtn"
-                                Content="Cancel"
-                                MinWidth="90"
-                                Click="OnRenameMapCancelClick"/>
-                        <Button x:Name="RenameMapOkBtn"
-                                Content="OK"
-                                MinWidth="90"
-                                FontWeight="Bold"
-                                Background="#4CAF50"
-                                Foreground="White"
-                                Click="OnRenameMapOkClick"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Panel>
-        
-    </Panel>
+        </Grid>
+    </Grid>
 </Window>

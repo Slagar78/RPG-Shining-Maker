@@ -1,52 +1,3 @@
-RpgShinzoMaker.Core/
-├── Models/
-│   ├── GameMap.cs
-│   ├── MapEntry.cs
-│   ├── TileType.cs
-│   ├── Battle.cs          ← будущее
-│   ├── BattleScene.cs     ← будущее
-│   ├── Sprite.cs          ← будущее
-│   └── Database.cs        ← будущее
-├── Services/
-│   ├── ProjectPaths.cs
-│   ├── MapJsonService.cs
-│   ├── EntriesService.cs
-│   ├── TileTypesService.cs   ← вынести из MainWindow
-│   ├── BattleJsonService.cs  ← будущее
-│   └── ...
-└── ...
-
-RpgShinzoMaker.Desktop/
-├── Views/
-│   ├── MainWindow.axaml              ← только оболочка: меню, тулбар, TabControl
-│   ├── MainWindow.axaml.cs           ← запуск + переключение табов
-│   │
-│   ├── MapEditor/                    ← редактор карт
-│   │   ├── MapEditorView.axaml       ← то, что сейчас в табе "Карты"
-│   │   ├── MapEditorView.axaml.cs
-│   │   ├── MapCanvas.axaml
-│   │   ├── MapCanvas.axaml.cs
-│   │   ├── TileItem.cs
-│   │   └── MapEditorView.Painting.cs ← частичный класс для логики
-│   │
-│   ├── BattleEditor/                 ← будущее
-│   │   └── ...
-│   │
-│   ├── BattleSceneEditor/            ← будущее
-│   │   └── ...
-│   │
-│   ├── DatabaseEditor/               ← будущее
-│   │   └── ...
-│   │
-│   └── Shared/                       ← общие контролы
-│       ├── NumberField.axaml
-│       └── ...
-│
-├── ViewModels/                       ← если перейдёшь на MVVM
-└── ...
-
-
-
 
 
 ════════════════════════════════════════════════════════════════════
@@ -109,26 +60,6 @@ RpgShinzoMaker.Desktop/
     Semi.Avalonia               12.1.0.1
 
 
-────────────────────────────────────────────────────────────────────
-  СТРУКТУРА ПРОЕКТА
-────────────────────────────────────────────────────────────────────
-
-  Maker/src/
-    │
-    ├── RpgShinzoMaker.Core/           общее ядро (библиотека)
-    │   ├── Models/
-    │   │   ├── GameMap.cs             9 массивов карты
-    │   │   ├── MapEntry.cs            запись из entries.json
-    │   │   └── TileType.cs            enum: Passable/Block/Slow/Under
-    │   └── Services/
-    │       ├── MapJsonService.cs      чтение/запись layout.json
-    │       └── EntriesService.cs      чтение entries.json
-    │
-    └── RpgShinzoMaker.Desktop/        UI-приложение (главный .exe)
-        └── Views/
-            ├── MainWindow.axaml       палитра, режимы A/B, типы
-            └── MapCanvas.axaml        холст карты (рендер через WriteableBitmap)
-
 
 ────────────────────────────────────────────────────────────────────
   ФОРМАТ ДАННЫХ
@@ -190,20 +121,7 @@ RpgShinzoMaker.Desktop/
   СТАТУС РАЗРАБОТКИ
 ────────────────────────────────────────────────────────────────────
 
-  ✅ Загрузка тайлсета (1024 тайла, strip-based порядок как в C)
-  ✅ Палитра 8×N с скроллом
-  ✅ Режимы A (рисование) / B (типы)
-  ✅ 4 типа тайлов + Grid Mode
-  ✅ Превью ЛКМ/ПКМ
-  ✅ Чтение layout.json + entries.json
-  ✅ Холст карты (2 слоя, шахматный фон)
-
-  🔧 Рисование по клику (в разработке)
-  🔧 Трансформации тайлов (rot / mirror) по ПКМ
-  🔧 Правая панель MAPS со списком карт
-  🔧 Кнопки New / Save / Delete / Rename / Resize / Music / Areas
-  🔧 Диалоги
-  🔧 Clipboard (Alt+drag, Ctrl+V, preview)
+?????
 
 
 ────────────────────────────────────────────────────────────────────
