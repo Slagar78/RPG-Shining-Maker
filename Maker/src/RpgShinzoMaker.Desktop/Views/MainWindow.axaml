@@ -609,7 +609,18 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <!-- Ряд 7: Areas -->
+                                <!-- Ряд 7: Select -->
+                                <ToggleButton x:Name="SelectButton"
+                                              Content="Select"
+                                              FontSize="12" FontWeight="Bold"
+                                              Height="32" Margin="0,8,0,0"
+                                              HorizontalAlignment="Stretch"
+                                              HorizontalContentAlignment="Center"
+                                              Background="#3E3E42"
+                                              Foreground="White"
+                                              Click="OnSelectToggle"/>
+
+                                <!-- Ряд 8: Areas -->
                                 <Button x:Name="AreasBtn"
                                         Content="Areas"
                                         FontSize="12" FontWeight="Bold"

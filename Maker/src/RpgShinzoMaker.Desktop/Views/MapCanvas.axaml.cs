@@ -21,6 +21,8 @@ public partial class MapCanvas : UserControl
 
     public event Action<int, int, int, bool>? TileClicked;
     public event Action<int, int, int, bool>? TileDragged;
+    public event Action<int, int, bool>? TileReleased;
+    public event Action<int, int>? TileHover;
 
     private GameMap? _map;
     private List<CroppedBitmap> _tiles = new();
@@ -36,6 +38,8 @@ public partial class MapCanvas : UserControl
     private readonly List<TileCtrl> _controls = new();
 
     private Border? _hoverBorder;
+    private Border? _selectionBorder;
+    private Border? _pasteBorder;
     private readonly List<Ellipse> _gridDots = new();
     private readonly List<Line> _gridLines = new();
 
@@ -57,6 +61,7 @@ public partial class MapCanvas : UserControl
         InitializeComponent();
         PointerMoved += OnCanvasPointerMoved;
         PointerExited += OnCanvasPointerExited;
+        PointerReleased += OnCanvasPointerReleased;
     }
 
     // ══════════════════════════════════════════════
@@ -105,6 +110,8 @@ public partial class MapCanvas : UserControl
         GridOverlayCanvas.Height = mapH;
         _gridDots.Clear();
         _gridLines.Clear();
+        _selectionBorder = null;
+        _pasteBorder = null;
 
         var gridBrush = new SolidColorBrush(Color.Parse("#66FFFFFF"));
 
@@ -288,7 +295,70 @@ public partial class MapCanvas : UserControl
 
         UpdateGridOverlay();
     }
+    // ══════════════════════════════════════════════
+    //   SELECTION / PASTE — рамки
+    // ══════════════════════════════════════════════
+    public void ShowSelectionRect(int x1, int y1, int x2, int y2)
+    {
+        if (_map == null) return;
 
+        if (_selectionBorder == null)
+        {
+            _selectionBorder = new Border
+            {
+                BorderBrush = new SolidColorBrush(Color.Parse("#FFD700")),
+                BorderThickness = new Thickness(2),
+                IsHitTestVisible = false,
+            };
+            GridOverlayCanvas.Children.Add(_selectionBorder);
+        }
+
+        int ts = TilePx;
+        int minX = Math.Min(x1, x2);
+        int minY = Math.Min(y1, y2);
+        int maxX = Math.Max(x1, x2);
+        int maxY = Math.Max(y1, y2);
+
+        Canvas.SetLeft(_selectionBorder, minX * ts);
+        Canvas.SetTop (_selectionBorder, minY * ts);
+        _selectionBorder.Width  = (maxX - minX + 1) * ts;
+        _selectionBorder.Height = (maxY - minY + 1) * ts;
+        _selectionBorder.IsVisible = true;
+    }
+
+    public void HideSelectionRect()
+    {
+        if (_selectionBorder != null) _selectionBorder.IsVisible = false;
+    }
+
+    public void ShowPasteRect(int x, int y, int w, int h)
+    {
+        if (_map == null) return;
+
+        if (_pasteBorder == null)
+        {
+            _pasteBorder = new Border
+            {
+                BorderBrush = new SolidColorBrush(Color.Parse("#00FFFF")),
+                BorderThickness = new Thickness(2),
+                IsHitTestVisible = false,
+            };
+            GridOverlayCanvas.Children.Add(_pasteBorder);
+        }
+
+        int ts = TilePx;
+        Canvas.SetLeft(_pasteBorder, x * ts);
+        Canvas.SetTop (_pasteBorder, y * ts);
+        _pasteBorder.Width  = w * ts;
+        _pasteBorder.Height = h * ts;
+        _pasteBorder.IsVisible = true;
+    }
+
+    public void HidePasteRect()
+    {
+        if (_pasteBorder != null) _pasteBorder.IsVisible = false;
+    }
+    
     private void ResetScrollOffset()
     {
         var parent = this.Parent;
@@ -482,7 +552,11 @@ public partial class MapCanvas : UserControl
             _hoverBorder.BorderBrush = new SolidColorBrush(Color.Parse(color));
         }
 
-        if (!isLeft && !isRight) return;
+        if (!isLeft && !isRight)
+        {
+            TileHover?.Invoke(tx, ty);
+            return;
+        }
 
         int idx = tx * _map.Height + ty;
         int tileId = (CurrentLayer == 0) ? _map.Tiles[idx] : _map.Tiles2[idx];
@@ -493,7 +567,21 @@ public partial class MapCanvas : UserControl
     {
         if (_hoverBorder != null) _hoverBorder.IsVisible = false;
     }
+    private void OnCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (_map == null) return;
 
+        var p = e.GetPosition(RootPanel);
+        int ts = TilePx;
+        int tx = (int)(p.X / ts);
+        int ty = (int)(p.Y / ts);
+
+        if (tx < 0 || tx >= _map.Width || ty < 0 || ty >= _map.Height) return;
+
+        bool isLeft = e.InitialPressMouseButton == MouseButton.Left;
+        TileReleased?.Invoke(tx, ty, isLeft);
+    }
+    
     // ══════════════════════════════════════════════
     //   КЛИК ПО КАРТЕ
     // ══════════════════════════════════════════════
