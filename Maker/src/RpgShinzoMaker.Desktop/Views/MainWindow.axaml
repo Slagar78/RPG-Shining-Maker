@@ -629,6 +629,33 @@
                                         HorizontalContentAlignment="Center"
                                         Click="OnAreasClick"/>
 
+                                <!-- Ряд 9: New Map -->
+                                <Button x:Name="NewMapBtn"
+                                        Content="New Map"
+                                        FontSize="12" FontWeight="Bold"
+                                        Height="32" Margin="0,8,0,0"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center"
+                                        Click="OnNewMapClick"/>
+
+                                <!-- Ряд 10: Delete Map -->
+                                <Button x:Name="DeleteMapBtn"
+                                        Content="Delete Map"
+                                        FontSize="12" FontWeight="Bold"
+                                        Height="32" Margin="0,8,0,0"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center"
+                                        Click="OnDeleteMapClick"/>
+
+                                <!-- Ряд 11: Resize Map -->
+                                <Button x:Name="ResizeMapBtn"
+                                        Content="Resize Map"
+                                        FontSize="12" FontWeight="Bold"
+                                        Height="32" Margin="0,8,0,0"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center"
+                                        Click="OnResizeMapClick"/>
+
                             </StackPanel>
                         </DockPanel>
                     </Border>

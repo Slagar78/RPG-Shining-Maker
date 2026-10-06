@@ -868,6 +868,24 @@ public partial class MainWindow : Window
         MapCanvasControl.HidePasteRect();
     }
     
+    // ─── New Map (заглушка) ─────
+    private void OnNewMapClick(object? sender, RoutedEventArgs e)
+    {
+        Debug.WriteLine("[NEW MAP] Кнопка нажата — TODO: реализовать");
+    }
+
+    // ─── Delete Map (заглушка) ─────
+    private void OnDeleteMapClick(object? sender, RoutedEventArgs e)
+    {
+        Debug.WriteLine("[DELETE MAP] Кнопка нажата — TODO: реализовать");
+    }
+
+    // ─── Resize Map (заглушка) ─────
+    private void OnResizeMapClick(object? sender, RoutedEventArgs e)
+    {
+        Debug.WriteLine("[RESIZE MAP] Кнопка нажата — TODO: реализовать");
+    }
+    
     // ─── Открыть диалог Areas ─────
     private void OnAreasClick(object? sender, RoutedEventArgs e)
     {
