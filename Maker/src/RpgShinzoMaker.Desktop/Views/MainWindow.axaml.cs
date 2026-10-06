@@ -870,12 +870,211 @@ public partial class MainWindow : Window
         MapCanvasControl.HidePasteRect();
     }
     
-    // ─── New Map (заглушка) ─────
+    // ─── New Map ─────
     private void OnNewMapClick(object? sender, RoutedEventArgs e)
     {
-        Debug.WriteLine("[NEW MAP] Кнопка нажата — TODO: реализовать");
+        // Автоподбор имени: map00, map01, ...
+        int idx = 0;
+        string candidate = "map00";
+        while (_mapEntries.Any(m => m.Name == candidate))
+        {
+            idx++;
+            candidate = $"map{idx:00}";
+        }
+
+        NewMapName.Text = candidate;
+        NewMapWidth.Value  = 20;
+        NewMapHeight.Value = 15;
+
+        NewMapStatus.IsVisible = false;
+        NewMapOkBtn.IsEnabled = true;
+        NewMapCancelBtn.IsEnabled = true;
+        NewMapOverlay.IsVisible = true;
+    }
+    // ─── Фильтр ввода имени карты (только [A-Za-z0-9_-]) ─────
+    private void OnNewMapNameTextInput(object? sender, TextInputEventArgs e)
+    {
+        if (string.IsNullOrEmpty(e.Text)) return;
+
+        foreach (char c in e.Text)
+        {
+            bool ok = (c >= 'A' && c <= 'Z') ||
+                      (c >= 'a' && c <= 'z') ||
+                      (c >= '0' && c <= '9') ||
+                      c == '_' || c == '-';
+
+            if (!ok)
+            {
+                // Символ не разрешён — гасим событие, он не введётся
+                e.Handled = true;
+                return;
+            }
+        }
+    }
+    private void OnNewMapCancelClick(object? sender, RoutedEventArgs e)
+    {
+        NewMapOverlay.IsVisible = false;
     }
 
+    private void OnNewMapOkClick(object? sender, RoutedEventArgs e)
+    {
+        string name = (NewMapName.Text ?? "").Trim();
+        if (string.IsNullOrEmpty(name))
+        {
+            ShowNewMapStatus("Name cannot be empty", isError: true);
+            return;
+        }
+
+        // Только [A-Za-z0-9_-]
+        if (!System.Text.RegularExpressions.Regex.IsMatch(name, @"^[A-Za-z0-9_\-]+$"))
+        {
+            ShowNewMapStatus("Only English letters, digits, '_' and '-' allowed", isError: true);
+            return;
+        }
+
+        int mapW = (int)(NewMapWidth.Value ?? 20);
+        int mapH = (int)(NewMapHeight.Value ?? 15);
+
+        if (mapW < 4 || mapH < 4)
+        {
+            ShowNewMapStatus("Map size must be at least 4x4", isError: true);
+            return;
+        }
+        if (mapW > 999 || mapH > 999)
+        {
+            ShowNewMapStatus("Map size cannot exceed 999x999", isError: true);
+            return;
+        }
+
+        // Уникальный folder
+        string folder = name;
+        int suffix = 1;
+        var mapsDir = RpgShinzoMaker.Core.Services.ProjectPaths.MapsDir;
+        while (Directory.Exists(Path.Combine(mapsDir, folder)) ||
+               _mapEntries.Any(m => m.Folder == folder))
+        {
+            folder = $"{name}{suffix}";
+            suffix++;
+        }
+
+        try
+        {
+            string defaultTileset = GetDefaultTilesetPath();
+            string defaultMusic   = GetDefaultMusicPath();
+
+            var map = new GameMap
+            {
+                Name        = name,
+                Folder      = folder,
+                Width       = mapW,
+                Height      = mapH,
+                TilesetPath = defaultTileset,
+                MusicFile   = defaultMusic,
+                MusicVolume = 0.8f,
+                AreasPath   = $"data/maps/{folder}/areas.json",
+
+                Tiles    = new int[mapW * mapH],
+                Rot      = new int[mapW * mapH],
+                MirrorX  = new bool[mapW * mapH],
+                MirrorY  = new bool[mapW * mapH],
+
+                Tiles2   = new int[mapW * mapH],
+                Rot2     = new int[mapW * mapH],
+                MirrorX2 = new bool[mapW * mapH],
+                MirrorY2 = new bool[mapW * mapH],
+
+                CellType = new int[mapW * mapH],
+            };
+
+            // Layer 1 = 0, Layer 2 = -1 (пусто)
+            for (int i = 0; i < map.TotalCells; i++)
+            {
+                map.Tiles[i]  = 0;
+                map.Tiles2[i] = -1;
+            }
+
+            // Сохранить layout.json
+            var layoutPath = RpgShinzoMaker.Core.Services.ProjectPaths.LayoutFile(folder);
+            RpgShinzoMaker.Core.Services.MapJsonService.Save(layoutPath, map);
+
+            // Areas = вся карта
+            _areaStartX = 0;
+            _areaStartY = 0;
+            _areaEndX   = mapW - 1;
+            _areaEndY   = mapH - 1;
+            SaveAreasForMap(map);
+
+            // Добавить в entries
+            var entry = new RpgShinzoMaker.Core.Models.MapEntry
+            {
+                Folder      = folder,
+                Name        = name,
+                Music       = defaultMusic,
+                MusicVolume = 0.8f,
+                Areas       = $"data/maps/{folder}/areas.json",
+            };
+            _mapEntries.Add(entry);
+
+            // Сохранить entries.json
+            RpgShinzoMaker.Core.Services.EntriesService.Save(
+                RpgShinzoMaker.Core.Services.ProjectPaths.EntriesFile,
+                _mapEntries);
+
+            // Обновить селектор и выбрать новую карту
+            MapSelector.ItemsSource = null;
+            MapSelector.ItemsSource = _mapEntries.Select(e => e.Name).ToList();
+            MapSelector.SelectedIndex = _mapEntries.Count - 1;
+
+            Debug.WriteLine($"[NEW MAP] '{name}' ({mapW}x{mapH}), folder={folder}");
+
+            // ─── Success + закрыть через 1.2 сек ───
+            ShowNewMapStatus($"Success! Map '{name}' created ({mapW}x{mapH})", isError: false);
+            NewMapOkBtn.IsEnabled = false;
+            NewMapCancelBtn.IsEnabled = false;
+
+            Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+            {
+                await System.Threading.Tasks.Task.Delay(1200);
+                NewMapOverlay.IsVisible = false;
+            });
+        }
+        catch (Exception ex)
+        {
+            ShowNewMapStatus($"Error: {ex.Message}", isError: true);
+            Debug.WriteLine($"[NEW MAP] Ошибка: {ex}");
+        }
+    }
+
+    // ─── Строка статуса New Map ─────
+    private void ShowNewMapStatus(string msg, bool isError)
+    {
+        NewMapStatus.Text = msg;
+        NewMapStatus.Foreground = new SolidColorBrush(
+            Color.Parse(isError ? "#E74C3C" : "#4CAF50"));
+        NewMapStatus.IsVisible = true;
+    }
+
+    // Первый .png в assets/tilesets
+    private string GetDefaultTilesetPath()
+    {
+        var dir = RpgShinzoMaker.Core.Services.ProjectPaths.TilesetsDir;
+        if (Directory.Exists(dir))
+        {
+            var files = Directory.GetFiles(dir, "*.png");
+            if (files.Length > 0)
+                return "assets/tilesets/" + Path.GetFileName(files[0]);
+        }
+        return "assets/tilesets/tileset01.png";
+    }
+
+    // Первый .mp3 в assets/sounds
+    private string GetDefaultMusicPath()
+    {
+        if (_musicFiles.Count > 0)
+            return "assets/sounds/" + _musicFiles[0];
+        return "";
+    }
+    
     // ─── Delete Map (заглушка) ─────
     private void OnDeleteMapClick(object? sender, RoutedEventArgs e)
     {

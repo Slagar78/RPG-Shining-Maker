@@ -19,5 +19,12 @@
     "music": "assets/sounds/SF_Feather.mp3",
     "music_volume": 0.8,
     "areas": "data/maps/map07/areas.json"
+  },
+  {
+    "folder": "RICON",
+    "name": "RICON",
+    "music": "assets/sounds/SF_Feather.mp3",
+    "music_volume": 0.8,
+    "areas": "data/maps/RICON/areas.json"
   }
 ]

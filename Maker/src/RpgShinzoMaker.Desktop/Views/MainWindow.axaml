@@ -810,6 +810,92 @@
                 </StackPanel>
             </Border>
         </Panel>
+                <!-- ═══ Оверлей диалога New Map ═══ -->
+        <Panel x:Name="NewMapOverlay"
+               IsVisible="False"
+               Background="#80000000">
+            <Border Width="420"
+                    Background="#2D2D30"
+                    BorderBrush="#555555"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel Spacing="12">
+
+                    <TextBlock Text="New Map"
+                               FontSize="16" FontWeight="Bold"
+                               Foreground="White"/>
+
+                    <!-- Name -->
+                    <Grid ColumnDefinitions="80,*">
+                        <TextBlock Grid.Column="0"
+                                   Text="Name:"
+                                   Foreground="#CCCCCC"
+                                   VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1"
+                                 x:Name="NewMapName"
+                                 Text="map00"
+                                 TextInput="OnNewMapNameTextInput"/>
+                    </Grid>
+
+                    <!-- Map size -->
+                    <TextBlock Text="Map Size"
+                               FontSize="11" FontWeight="Bold"
+                               Foreground="#888888"
+                               Margin="0,4,0,0"/>
+
+                    <Grid ColumnDefinitions="80,*,20,80,*">
+                        <TextBlock Grid.Column="0"
+                                   Text="Width:"
+                                   Foreground="#CCCCCC"
+                                   VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Column="1"
+                                       x:Name="NewMapWidth"
+                                       Minimum="4" Maximum="999"
+                                       Value="20"
+                                       FormatString="0" Increment="1"/>
+
+                        <TextBlock Grid.Column="3"
+                                   Text="Height:"
+                                   Foreground="#CCCCCC"
+                                   VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Column="4"
+                                       x:Name="NewMapHeight"
+                                       Minimum="4" Maximum="999"
+                                       Value="15"
+                                       FormatString="0" Increment="1"/>
+                    </Grid>
+
+                    <TextBlock Text="Area = размеру карты"
+                               Foreground="#888888"
+                               FontSize="10"
+                               FontStyle="Italic"/>
+
+                    <TextBlock x:Name="NewMapStatus"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               IsVisible="False"/>
+
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="8"
+                                HorizontalAlignment="Right">
+                        <Button x:Name="NewMapCancelBtn"
+                                Content="Cancel"
+                                MinWidth="90"
+                                Click="OnNewMapCancelClick"/>
+                        <Button x:Name="NewMapOkBtn"
+                                Content="OK"
+                                MinWidth="90"
+                                FontWeight="Bold"
+                                Background="#4CAF50"
+                                Foreground="White"
+                                Click="OnNewMapOkClick"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Panel>
 
     </Panel>
 </Window>
