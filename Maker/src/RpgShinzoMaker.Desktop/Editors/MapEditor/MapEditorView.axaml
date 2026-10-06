@@ -356,12 +356,11 @@
             </Border>
 
             <!-- ═══════════════════════════════════════════════════════ -->
-            <!-- РАЗДЕЛИТЕЛЬ 1 -->
+            <!-- РАЗДЕЛИТЕЛЬ 1 (только визуальный, без ресайза) -->
             <!-- ═══════════════════════════════════════════════════════ -->
-            <GridSplitter Grid.Column="1"
-                          Background="#3E3E42"
-                          ResizeDirection="Columns"
-                          Width="4"/>
+            <Border Grid.Column="1"
+                    Background="#3E3E42"
+                    Width="4"/>
 
             <!-- ═══════════════════════════════════════════════════════ -->
             <!-- КОЛОНКА 2: КАНВАС КАРТЫ + НИЖНЯЯ ПАНЕЛЬ -->
@@ -396,12 +395,11 @@
             </Grid>
 
             <!-- ═══════════════════════════════════════════════════════ -->
-            <!-- РАЗДЕЛИТЕЛЬ 2 -->
+            <!-- РАЗДЕЛИТЕЛЬ 2 (только визуальный, без ресайза) -->
             <!-- ═══════════════════════════════════════════════════════ -->
-            <GridSplitter Grid.Column="3"
-                          Background="#3E3E42"
-                          ResizeDirection="Columns"
-                          Width="4"/>
+            <Border Grid.Column="3"
+                    Background="#3E3E42"
+                    Width="4"/>
 
             <!-- ═══════════════════════════════════════════════════════ -->
             <!-- КОЛОНКА 4: ПАНЕЛЬ ИНСТРУМЕНТОВ -->
@@ -585,7 +583,7 @@
                             <!-- Ряд 7: Select -->
                             <ToggleButton x:Name="SelectButton"
                                           FontSize="12" FontWeight="Bold"
-                                          Height="32" Margin="0,4,0,0"
+                                          Height="30" Margin="0,3,0,0"
                                           Padding="0"
                                           HorizontalAlignment="Stretch"
                                           HorizontalContentAlignment="Center"
@@ -611,8 +609,8 @@
                             <!-- Ряд 8: Areas -->
                             <Button x:Name="AreasBtn"
                                     Content="Areas"
-                                    FontSize="11" FontWeight="Bold"
-                                    Height="22" Margin="0,2,0,0"
+                                    FontSize="12" FontWeight="Bold"
+                                    Height="32" Margin="0,4,0,0"
                                     Padding="0"
                                     HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Center"
@@ -621,8 +619,8 @@
                             <!-- Ряд 9: New Map -->
                             <Button x:Name="NewMapBtn"
                                     Content="New Map"
-                                    FontSize="11" FontWeight="Bold"
-                                    Height="22" Margin="0,2,0,0"
+                                    FontSize="12" FontWeight="Bold"
+                                    Height="32" Margin="0,4,0,0"
                                     Padding="0"
                                     HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Center"
@@ -631,8 +629,8 @@
                             <!-- Ряд 10: Rename Map -->
                             <Button x:Name="RenameMapBtn"
                                     Content="Rename Map"
-                                    FontSize="11" FontWeight="Bold"
-                                    Height="22" Margin="0,2,0,0"
+                                    FontSize="12" FontWeight="Bold"
+                                    Height="32" Margin="0,4,0,0"
                                     Padding="0"
                                     HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Center"
@@ -641,8 +639,8 @@
                             <!-- Ряд 11: Delete Map -->
                             <Button x:Name="DeleteMapBtn"
                                     Content="Delete Map"
-                                    FontSize="11" FontWeight="Bold"
-                                    Height="22" Margin="0,2,0,0"
+                                    FontSize="12" FontWeight="Bold"
+                                    Height="32" Margin="0,4,0,0"
                                     Padding="0"
                                     HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Center"
@@ -651,12 +649,13 @@
                             <!-- Ряд 12: Resize Map -->
                             <Button x:Name="ResizeMapBtn"
                                     Content="Resize Map"
-                                    FontSize="11" FontWeight="Bold"
-                                    Height="22" Margin="0,2,0,0"
+                                    FontSize="12" FontWeight="Bold"
+                                    Height="32" Margin="0,4,0,0"
                                     Padding="0"
                                     HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Center"
                                     Click="OnResizeMapClick"/>
+                            
                         </StackPanel>
                     </DockPanel>
                 </Border>
