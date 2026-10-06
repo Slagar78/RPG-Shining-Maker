@@ -617,11 +617,11 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <!-- Ряд 7: Select -->
+                                                                <!-- Ряд 7: Select -->
                                 <ToggleButton x:Name="SelectButton"
                                               Content="Select"
                                               FontSize="12" FontWeight="Bold"
-                                              Height="32" Margin="0,8,0,0"
+                                              Height="28" Margin="0,4,0,0"
                                               HorizontalAlignment="Stretch"
                                               HorizontalContentAlignment="Center"
                                               Background="#3E3E42"
@@ -632,7 +632,7 @@
                                 <Button x:Name="AreasBtn"
                                         Content="Areas"
                                         FontSize="12" FontWeight="Bold"
-                                        Height="32" Margin="0,8,0,0"
+                                        Height="28" Margin="0,4,0,0"
                                         HorizontalAlignment="Stretch"
                                         HorizontalContentAlignment="Center"
                                         Click="OnAreasClick"/>
@@ -641,25 +641,34 @@
                                 <Button x:Name="NewMapBtn"
                                         Content="New Map"
                                         FontSize="12" FontWeight="Bold"
-                                        Height="32" Margin="0,8,0,0"
+                                        Height="28" Margin="0,4,0,0"
                                         HorizontalAlignment="Stretch"
                                         HorizontalContentAlignment="Center"
                                         Click="OnNewMapClick"/>
 
-                                <!-- Ряд 10: Delete Map -->
+                                <!-- Ряд 10: Rename Map -->
+                                <Button x:Name="RenameMapBtn"
+                                        Content="Rename Map"
+                                        FontSize="12" FontWeight="Bold"
+                                        Height="28" Margin="0,4,0,0"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center"
+                                        Click="OnRenameMapClick"/>
+
+                                <!-- Ряд 11: Delete Map -->
                                 <Button x:Name="DeleteMapBtn"
                                         Content="Delete Map"
                                         FontSize="12" FontWeight="Bold"
-                                        Height="32" Margin="0,8,0,0"
+                                        Height="28" Margin="0,4,0,0"
                                         HorizontalAlignment="Stretch"
                                         HorizontalContentAlignment="Center"
                                         Click="OnDeleteMapClick"/>
 
-                                <!-- Ряд 11: Resize Map -->
+                                <!-- Ряд 12: Resize Map -->
                                 <Button x:Name="ResizeMapBtn"
                                         Content="Resize Map"
                                         FontSize="12" FontWeight="Bold"
-                                        Height="32" Margin="0,8,0,0"
+                                        Height="28" Margin="0,4,0,0"
                                         HorizontalAlignment="Stretch"
                                         HorizontalContentAlignment="Center"
                                         Click="OnResizeMapClick"/>
@@ -1006,6 +1015,67 @@
                                 Background="#4CAF50"
                                 Foreground="White"
                                 Click="OnResizeMapOkClick"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Panel>
+        <!-- ═══ Оверлей диалога Rename Map ═══ -->
+        <Panel x:Name="RenameMapOverlay"
+               IsVisible="False"
+               Background="#80000000">
+            <Border Width="420"
+                    Background="#2D2D30"
+                    BorderBrush="#555555"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel Spacing="12">
+
+                    <TextBlock Text="Rename Map"
+                               FontSize="16" FontWeight="Bold"
+                               Foreground="White"/>
+
+                    <TextBlock x:Name="RenameMapCurrent"
+                               Foreground="#888888"
+                               FontSize="11"/>
+
+                    <Grid ColumnDefinitions="90,*">
+                        <TextBlock Grid.Column="0"
+                                   Text="New name:"
+                                   Foreground="#CCCCCC"
+                                   VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1"
+                                 x:Name="RenameMapName"
+                                 TextInput="OnRenameMapNameTextInput"/>
+                    </Grid>
+
+                    <TextBlock Text="Only [A-Za-z0-9_-], max 30 chars. Folder will be renamed too."
+                               Foreground="#888888"
+                               FontSize="10"
+                               FontStyle="Italic"
+                               TextWrapping="Wrap"/>
+
+                    <TextBlock x:Name="RenameMapStatus"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               IsVisible="False"/>
+
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="8"
+                                HorizontalAlignment="Right">
+                        <Button x:Name="RenameMapCancelBtn"
+                                Content="Cancel"
+                                MinWidth="90"
+                                Click="OnRenameMapCancelClick"/>
+                        <Button x:Name="RenameMapOkBtn"
+                                Content="OK"
+                                MinWidth="90"
+                                FontWeight="Bold"
+                                Background="#4CAF50"
+                                Foreground="White"
+                                Click="OnRenameMapOkClick"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

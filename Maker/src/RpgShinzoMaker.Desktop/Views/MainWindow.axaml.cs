@@ -1092,6 +1092,154 @@ public partial class MainWindow : Window
         DeleteMapOverlay.IsVisible = true;
     }
 
+    // ─── Rename Map ─────
+    private void OnRenameMapClick(object? sender, RoutedEventArgs e)
+    {
+        if (_currentMap == null) return;
+        if (MapSelector.SelectedIndex < 0) return;
+
+        RenameMapCurrent.Text = $"Current: {_currentMap.Name}";
+        RenameMapName.Text = _currentMap.Name;
+
+        RenameMapStatus.IsVisible = false;
+        RenameMapOkBtn.IsEnabled = true;
+        RenameMapCancelBtn.IsEnabled = true;
+        RenameMapOverlay.IsVisible = true;
+    }
+
+    private void OnRenameMapCancelClick(object? sender, RoutedEventArgs e)
+    {
+        RenameMapOverlay.IsVisible = false;
+    }
+
+    private void OnRenameMapOkClick(object? sender, RoutedEventArgs e)
+    {
+        if (_currentMap == null) return;
+
+        int idx = MapSelector.SelectedIndex;
+        if (idx < 0 || idx >= _mapEntries.Count) return;
+
+        string newName = (RenameMapName.Text ?? "").Trim();
+
+        // ─── Валидация ─────
+        if (string.IsNullOrEmpty(newName))
+        {
+            ShowRenameMapStatus("Name cannot be empty", isError: true);
+            return;
+        }
+        if (newName.Length > 30)
+        {
+            ShowRenameMapStatus("Name cannot exceed 30 characters", isError: true);
+            return;
+        }
+        if (!System.Text.RegularExpressions.Regex.IsMatch(newName, @"^[A-Za-z0-9_\-]+$"))
+        {
+            ShowRenameMapStatus("Only English letters, digits, '_' and '-' allowed", isError: true);
+            return;
+        }
+        if (newName == _currentMap.Name)
+        {
+            ShowRenameMapStatus("Name is the same as current", isError: true);
+            return;
+        }
+
+        // ─── Проверка на конфликт папок ─────
+        var mapsDir = RpgShinzoMaker.Core.Services.ProjectPaths.MapsDir;
+        string newFolder = newName;
+        string oldFolder = _currentMap.Folder;
+
+        if (newFolder != oldFolder &&
+            Directory.Exists(Path.Combine(mapsDir, newFolder)))
+        {
+            ShowRenameMapStatus($"Folder '{newFolder}' already exists", isError: true);
+            return;
+        }
+
+        string oldName = _currentMap.Name;
+
+        try
+        {
+            var oldPath = Path.Combine(mapsDir, oldFolder);
+            var newPath = Path.Combine(mapsDir, newFolder);
+
+            // 1. Переименовать папку на диске
+            if (Directory.Exists(oldPath))
+                Directory.Move(oldPath, newPath);
+
+            // 2. Обновить поля карты
+            _currentMap.Folder    = newFolder;
+            _currentMap.Name      = newName;
+            _currentMap.AreasPath = $"data/maps/{newFolder}/areas.json";
+
+            // 3. Обновить запись в entries
+            _mapEntries[idx].Folder = newFolder;
+            _mapEntries[idx].Name   = newName;
+            _mapEntries[idx].Areas  = $"data/maps/{newFolder}/areas.json";
+
+            // 4. Сохранить entries.json
+            RpgShinzoMaker.Core.Services.EntriesService.Save(
+                RpgShinzoMaker.Core.Services.ProjectPaths.EntriesFile,
+                _mapEntries);
+
+            // 5. Сохранить layout.json в новую папку
+            var layoutPath = RpgShinzoMaker.Core.Services.ProjectPaths.LayoutFile(newFolder);
+            RpgShinzoMaker.Core.Services.MapJsonService.Save(layoutPath, _currentMap);
+            SaveAreasForMap(_currentMap);
+
+            // 6. Обновить селектор
+            MapSelector.ItemsSource = null;
+            MapSelector.ItemsSource = _mapEntries.Select(e => e.Name).ToList();
+            MapSelector.SelectedIndex = idx;
+
+            Debug.WriteLine($"[RENAME MAP] '{oldName}' -> '{newName}' (folder: {oldFolder} -> {newFolder})");
+
+            // 7. Success + закрыть через 1.2 сек
+            ShowRenameMapStatus($"Success! Renamed to '{newName}'", isError: false);
+            RenameMapOkBtn.IsEnabled = false;
+            RenameMapCancelBtn.IsEnabled = false;
+
+            Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+            {
+                await System.Threading.Tasks.Task.Delay(1200);
+                RenameMapOverlay.IsVisible = false;
+            });
+        }
+        catch (Exception ex)
+        {
+            ShowRenameMapStatus($"Error: {ex.Message}", isError: true);
+            Debug.WriteLine($"[RENAME MAP] Ошибка: {ex}");
+        }
+    }
+
+    // ─── Строка статуса Rename Map ─────
+    private void ShowRenameMapStatus(string msg, bool isError)
+    {
+        RenameMapStatus.Text = msg;
+        RenameMapStatus.Foreground = new SolidColorBrush(
+            Color.Parse(isError ? "#E74C3C" : "#4CAF50"));
+        RenameMapStatus.IsVisible = true;
+    }
+
+    // ─── Фильтр ввода имени (только [A-Za-z0-9_-]) ─────
+    private void OnRenameMapNameTextInput(object? sender, TextInputEventArgs e)
+    {
+        if (string.IsNullOrEmpty(e.Text)) return;
+
+        foreach (char c in e.Text)
+        {
+            bool ok = (c >= 'A' && c <= 'Z') ||
+                      (c >= 'a' && c <= 'z') ||
+                      (c >= '0' && c <= '9') ||
+                       c == '_' || c == '-';
+
+            if (!ok)
+            {
+                e.Handled = true;
+                return;
+            }
+        }
+    }
+    
     private void OnDeleteMapNoClick(object? sender, RoutedEventArgs e)
     {
         DeleteMapOverlay.IsVisible = false;
