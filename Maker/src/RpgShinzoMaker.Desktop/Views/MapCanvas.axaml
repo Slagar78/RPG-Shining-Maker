@@ -7,10 +7,7 @@
         <Panel x:Name="RootPanel"
                Background="Transparent"
                PointerPressed="OnCanvasPointerPressed">
-            <Image x:Name="BgImage" Stretch="None"
-                   RenderOptions.BitmapInterpolationMode="None"
-                   RenderOptions.EdgeMode="Aliased"
-                   IsHitTestVisible="False"/>
+            <Border x:Name="BgBorder" IsHitTestVisible="False"/>
             <Canvas x:Name="Layer1Canvas" IsHitTestVisible="False"/>
             <Canvas x:Name="Layer2Canvas" IsHitTestVisible="False"/>
             <Canvas x:Name="GridOverlayCanvas" IsHitTestVisible="False"/>

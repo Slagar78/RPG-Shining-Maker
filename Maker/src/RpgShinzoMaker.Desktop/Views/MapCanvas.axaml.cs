@@ -6,6 +6,8 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+// (ImageBrush, TileMode, RelativeRect — уже в Avalonia.Media)
+
 using Avalonia.Platform;
 using RpgShinzoMaker.Core.Models;
 
@@ -39,6 +41,10 @@ public partial class MapCanvas : UserControl
 
     private double _zoom = 1.0;
     public double Zoom => _zoom;
+    
+    // Один раз сгенерированный тайл шахматки 48×48.
+    // Тайлится через ImageBrush — не зависит от размера карты.
+    private static readonly ImageBrush CheckerBrush = CreateCheckerBrush();
 
     // Размер тайла на экране = 48 * zoom
     private int TilePx => (int)(GameMap.TileSize * _zoom);
@@ -70,10 +76,10 @@ public partial class MapCanvas : UserControl
         RootPanel.Width  = mapW;
         RootPanel.Height = mapH;
 
-        // Фон
-        BgImage.Source = GenerateCheckerboard(mapW, mapH);
-        BgImage.Width  = mapW;
-        BgImage.Height = mapH;
+        // Фон — один паттерн, тайлится через ImageBrush
+        BgBorder.Width   = mapW;
+        BgBorder.Height  = mapH;
+        BgBorder.Background = CheckerBrush;
 
         Layer1Canvas.Children.Clear();
         Layer2Canvas.Children.Clear();
@@ -217,9 +223,9 @@ public partial class MapCanvas : UserControl
         RootPanel.Width  = mapW;
         RootPanel.Height = mapH;
 
-        BgImage.Source = GenerateCheckerboard(mapW, mapH);
-        BgImage.Width  = mapW;
-        BgImage.Height = mapH;
+        // Фон не пересоздаём — ImageBrush тайлится сам
+        BgBorder.Width   = mapW;
+        BgBorder.Height  = mapH;
 
         // Тайлы — меняем размер и позицию существующих Image
         int i = 0;
@@ -409,12 +415,13 @@ public partial class MapCanvas : UserControl
     }
 
     // ══════════════════════════════════════════════
-    //   ШАХМАТНЫЙ ФОН
+    //   ШАХМАТНЫЙ ФОН (один раз, 48×48, тайлится)
     // ══════════════════════════════════════════════
-    private static WriteableBitmap GenerateCheckerboard(int w, int h)
+    private static ImageBrush CreateCheckerBrush()
     {
+        const int size = 48;    // 2 квадрата по 24px
         var wb = new WriteableBitmap(
-            new PixelSize(w, h),
+            new PixelSize(size, size),
             new Vector(96, 96),
             PixelFormat.Bgra8888,
             AlphaFormat.Premul);
@@ -426,10 +433,10 @@ public partial class MapCanvas : UserControl
                 byte* basePtr = (byte*)fb.Address;
                 int stride = fb.RowBytes;
 
-                for (int y = 0; y < h; y++)
+                for (int y = 0; y < size; y++)
                 {
                     uint* row = (uint*)(basePtr + y * stride);
-                    for (int x = 0; x < w; x++)
+                    for (int x = 0; x < size; x++)
                     {
                         bool light = ((x / 24) + (y / 24)) % 2 == 0;
                         row[x] = light ? 0xFF3A3A3A : 0xFF2A2A2A;
@@ -438,7 +445,12 @@ public partial class MapCanvas : UserControl
             }
         }
 
-        return wb;
+        return new ImageBrush(wb)
+        {
+            TileMode = TileMode.Tile,
+            Stretch = Stretch.Fill,
+            DestinationRect = new RelativeRect(0, 0, size, size, RelativeUnit.Absolute),
+        };
     }
 
     private void OnCanvasPointerMoved(object? sender, PointerEventArgs e)
