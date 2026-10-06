@@ -1342,15 +1342,21 @@ public partial class MainWindow : Window
             int srcIdx = mapX * _currentMap.Height + mapY;
             int dstIdx = dx * h + dy;
 
-            _clipboardTiles[dstIdx]  = _currentMap.Tiles[srcIdx];
-            _clipboardRot[dstIdx]    = _currentMap.Rot[srcIdx];
-            _clipboardMX[dstIdx]     = _currentMap.MirrorX[srcIdx];
-            _clipboardMY[dstIdx]     = _currentMap.MirrorY[srcIdx];
-
-            _clipboardTiles2[dstIdx] = _currentMap.Tiles2[srcIdx];
-            _clipboardRot2[dstIdx]   = _currentMap.Rot2[srcIdx];
-            _clipboardMX2[dstIdx]    = _currentMap.MirrorX2[srcIdx];
-            _clipboardMY2[dstIdx]    = _currentMap.MirrorY2[srcIdx];
+            // Берём ТОЛЬКО активный слой
+            if (_currentLayer == 0)
+            {
+                _clipboardTiles[dstIdx]  = _currentMap.Tiles[srcIdx];
+                _clipboardRot[dstIdx]    = _currentMap.Rot[srcIdx];
+                _clipboardMX[dstIdx]     = _currentMap.MirrorX[srcIdx];
+                _clipboardMY[dstIdx]     = _currentMap.MirrorY[srcIdx];
+            }
+            else
+            {
+                _clipboardTiles2[dstIdx] = _currentMap.Tiles2[srcIdx];
+                _clipboardRot2[dstIdx]   = _currentMap.Rot2[srcIdx];
+                _clipboardMX2[dstIdx]    = _currentMap.MirrorX2[srcIdx];
+                _clipboardMY2[dstIdx]    = _currentMap.MirrorY2[srcIdx];
+            }
         }
 
         _hasClipboard = true;
@@ -1375,15 +1381,20 @@ public partial class MainWindow : Window
             int dstIdx = tx * _currentMap.Height + ty;
             int srcIdx = dx * _clipboardH + dy;
 
-            _currentMap.Tiles[dstIdx]    = _clipboardTiles[srcIdx];
-            _currentMap.Rot[dstIdx]      = _clipboardRot![srcIdx];
-            _currentMap.MirrorX[dstIdx]  = _clipboardMX![srcIdx];
-            _currentMap.MirrorY[dstIdx]  = _clipboardMY![srcIdx];
-
-            _currentMap.Tiles2[dstIdx]   = _clipboardTiles2![srcIdx];
-            _currentMap.Rot2[dstIdx]     = _clipboardRot2![srcIdx];
-            _currentMap.MirrorX2[dstIdx] = _clipboardMX2![srcIdx];
-            _currentMap.MirrorY2[dstIdx] = _clipboardMY2![srcIdx];
+            if (_currentLayer == 0)
+            {
+                _currentMap.Tiles[dstIdx]   = _clipboardTiles![srcIdx];
+                _currentMap.Rot[dstIdx]     = _clipboardRot![srcIdx];
+                _currentMap.MirrorX[dstIdx] = _clipboardMX![srcIdx];
+                _currentMap.MirrorY[dstIdx] = _clipboardMY![srcIdx];
+            }
+            else
+            {
+                _currentMap.Tiles2[dstIdx]   = _clipboardTiles2![srcIdx];
+                _currentMap.Rot2[dstIdx]     = _clipboardRot2![srcIdx];
+                _currentMap.MirrorX2[dstIdx] = _clipboardMX2![srcIdx];
+                _currentMap.MirrorY2[dstIdx] = _clipboardMY2![srcIdx];
+            }
         }
 
         MapCanvasControl.Redraw();
