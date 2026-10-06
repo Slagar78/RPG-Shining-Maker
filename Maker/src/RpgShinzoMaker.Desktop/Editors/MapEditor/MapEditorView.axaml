@@ -598,17 +598,13 @@
                                             VerticalAlignment="Center">
                                     <TextBlock Text="Select"
                                                VerticalAlignment="Center"/>
-                                    <Path Stroke="White"
-                                          StrokeThickness="1.5"
-                                          StrokeDashArray="2,2"
-                                          Width="18"
-                                          Height="18"
-                                          Stretch="None"
-                                          VerticalAlignment="Center">
-                                        <Path.Data>
-                                            <RectangleGeometry Rect="1,1,16,16"/>
-                                        </Path.Data>
-                                    </Path>
+                                    <Image Source="avares://RpgShinzoMaker.Desktop/Assets/icons/select.png"
+                                           Width="18"
+                                           Height="18"
+                                           Stretch="Uniform"
+                                           VerticalAlignment="Center"
+                                           RenderOptions.BitmapInterpolationMode="None"
+                                           RenderOptions.EdgeMode="Aliased"/>
                                 </StackPanel>
                             </ToggleButton>
 
