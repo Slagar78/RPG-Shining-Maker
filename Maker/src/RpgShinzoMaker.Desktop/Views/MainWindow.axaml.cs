@@ -940,9 +940,9 @@ public partial class MainWindow : Window
             ShowNewMapStatus("Map size must be at least 4x4", isError: true);
             return;
         }
-        if (mapW > 999 || mapH > 999)
+        if (mapW > 128 || mapH > 128)
         {
-            ShowNewMapStatus("Map size cannot exceed 999x999", isError: true);
+            ShowNewMapStatus("Map size cannot exceed 128x128", isError: true);
             return;
         }
 
@@ -1143,10 +1143,161 @@ public partial class MainWindow : Window
         DeleteMapOverlay.IsVisible = false;
     }
 
-    // ─── Resize Map (заглушка) ─────
+    // ─── Resize Map ─────
     private void OnResizeMapClick(object? sender, RoutedEventArgs e)
     {
-        Debug.WriteLine("[RESIZE MAP] Кнопка нажата — TODO: реализовать");
+        if (_currentMap == null) return;
+
+        ResizeMapCurrent.Text = $"Current: {_currentMap.Width} x {_currentMap.Height}";
+
+        ResizeMapWidth.Value  = _currentMap.Width;
+        ResizeMapHeight.Value = _currentMap.Height;
+
+        ResizeMapStatus.IsVisible = false;
+        ResizeMapOkBtn.IsEnabled = true;
+        ResizeMapCancelBtn.IsEnabled = true;
+        ResizeMapOverlay.IsVisible = true;
+    }
+
+    private void OnResizeMapCancelClick(object? sender, RoutedEventArgs e)
+    {
+        ResizeMapOverlay.IsVisible = false;
+    }
+
+    private void OnResizeMapOkClick(object? sender, RoutedEventArgs e)
+    {
+        if (_currentMap == null) return;
+
+        int newW = (int)(ResizeMapWidth.Value ?? 4);
+        int newH = (int)(ResizeMapHeight.Value ?? 4);
+
+        if (newW < 4 || newH < 4)
+        {
+            ShowResizeMapStatus("Size must be at least 4x4", isError: true);
+            return;
+        }
+        if (newW > 128 || newH > 128)
+        {
+            ShowResizeMapStatus("Size cannot exceed 128x128", isError: true);
+            return;
+        }
+        
+        if (newW == _currentMap.Width && newH == _currentMap.Height)
+        {
+            ShowResizeMapStatus("Size is the same as current", isError: true);
+            return;
+        }
+
+        try
+        {
+            var oldMap = _currentMap;
+
+            // Создать новую карту
+            var newMap = new GameMap
+            {
+                Name        = oldMap.Name,
+                Folder      = oldMap.Folder,
+                Width       = newW,
+                Height      = newH,
+                TilesetPath = oldMap.TilesetPath,
+                MusicFile   = oldMap.MusicFile,
+                MusicVolume = oldMap.MusicVolume,
+                AreasPath   = oldMap.AreasPath,
+
+                Tiles    = new int[newW * newH],
+                Rot      = new int[newW * newH],
+                MirrorX  = new bool[newW * newH],
+                MirrorY  = new bool[newW * newH],
+
+                Tiles2   = new int[newW * newH],
+                Rot2     = new int[newW * newH],
+                MirrorX2 = new bool[newW * newH],
+                MirrorY2 = new bool[newW * newH],
+
+                CellType = new int[newW * newH],
+            };
+
+            // По умолчанию Layer1 = 0, Layer2 = -1
+            for (int i = 0; i < newMap.TotalCells; i++)
+            {
+                newMap.Tiles[i]  = 0;
+                newMap.Tiles2[i] = -1;
+            }
+
+            // Копируем пересекающуюся область
+            int copyW = Math.Min(oldMap.Width,  newW);
+            int copyH = Math.Min(oldMap.Height, newH);
+
+            for (int x = 0; x < copyW; x++)
+            for (int y = 0; y < copyH; y++)
+            {
+                int oldIdx = x * oldMap.Height + y;
+                int newIdx = x * newMap.Height + y;
+
+                newMap.Tiles[newIdx]   = oldMap.Tiles[oldIdx];
+                newMap.Rot[newIdx]     = oldMap.Rot[oldIdx];
+                newMap.MirrorX[newIdx] = oldMap.MirrorX[oldIdx];
+                newMap.MirrorY[newIdx] = oldMap.MirrorY[oldIdx];
+
+                newMap.Tiles2[newIdx]   = oldMap.Tiles2[oldIdx];
+                newMap.Rot2[newIdx]     = oldMap.Rot2[oldIdx];
+                newMap.MirrorX2[newIdx] = oldMap.MirrorX2[oldIdx];
+                newMap.MirrorY2[newIdx] = oldMap.MirrorY2[oldIdx];
+
+                newMap.CellType[newIdx] = oldMap.CellType[oldIdx];
+            }
+
+            // Обрезать areas, если не влезают
+            if (_areaEndX > newW - 1) _areaEndX = newW - 1;
+            if (_areaEndY > newH - 1) _areaEndY = newH - 1;
+            if (_areaStartX > _areaEndX) _areaStartX = 0;
+            if (_areaStartY > _areaEndY) _areaStartY = 0;
+
+            // Сохранить на диск
+            var layoutPath = RpgShinzoMaker.Core.Services.ProjectPaths.LayoutFile(newMap.Folder);
+            RpgShinzoMaker.Core.Services.MapJsonService.Save(layoutPath, newMap);
+            SaveAreasForMap(newMap);
+
+            // Обновить текущую карту и перерисовать
+            _currentMap = newMap;
+
+            MapSizeText.Text = $"{newMap.Width}×{newMap.Height}";
+
+            // Перезагрузить карту в канвасе (тайлсет тот же)
+            var tilesetName = Path.GetFileName(newMap.TilesetPath);
+            var tilesetPath = Path.Combine(
+                RpgShinzoMaker.Core.Services.ProjectPaths.TilesetsDir, tilesetName);
+            if (File.Exists(tilesetPath))
+                LoadTileset(tilesetPath);
+
+            MapCanvasControl.SetMap(newMap, _tiles.Select(t => t.Image).ToList());
+
+            Debug.WriteLine($"[RESIZE MAP] {newW}x{newH} для '{newMap.Name}'");
+
+            ShowResizeMapStatus($"Success! Map is now {newW}x{newH}", isError: false);
+            ResizeMapOkBtn.IsEnabled = false;
+            ResizeMapCancelBtn.IsEnabled = false;
+
+            Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+            {
+                await System.Threading.Tasks.Task.Delay(1200);
+                ResizeMapOverlay.IsVisible = false;
+            });
+        }
+        catch (Exception ex)
+        {
+            ShowResizeMapStatus($"Error: {ex.Message}", isError: true);
+            Debug.WriteLine($"[RESIZE MAP] Ошибка: {ex}");
+        }
+    }
+
+    // ─── Строка статуса Resize Map ─────
+    private void ShowResizeMapStatus(string msg, bool isError)
+    {
+        ResizeMapStatus.Text = msg;
+        ResizeMapStatus.Foreground = new SolidColorBrush(
+            Color.Parse(isError ? "#E74C3C" : "#4CAF50"));
+        ResizeMapStatus.IsVisible = true;
     }
     
     // ─── Открыть диалог Areas ─────

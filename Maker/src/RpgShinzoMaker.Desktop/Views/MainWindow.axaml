@@ -853,7 +853,7 @@
                                    VerticalAlignment="Center"/>
                         <NumericUpDown Grid.Column="1"
                                        x:Name="NewMapWidth"
-                                       Minimum="4" Maximum="999"
+                                       Minimum="4" Maximum="128"
                                        Value="20"
                                        FormatString="0" Increment="1"/>
 
@@ -863,7 +863,7 @@
                                    VerticalAlignment="Center"/>
                         <NumericUpDown Grid.Column="4"
                                        x:Name="NewMapHeight"
-                                       Minimum="4" Maximum="999"
+                                       Minimum="4" Maximum="128"
                                        Value="15"
                                        FormatString="0" Increment="1"/>
                     </Grid>
@@ -936,6 +936,76 @@
                                 Background="#E74C3C"
                                 Foreground="White"
                                 Click="OnDeleteMapYesClick"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Panel>
+                <!-- ═══ Оверлей диалога Resize Map ═══ -->
+        <Panel x:Name="ResizeMapOverlay"
+               IsVisible="False"
+               Background="#80000000">
+            <Border Width="420"
+                    Background="#2D2D30"
+                    BorderBrush="#555555"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel Spacing="12">
+
+                    <TextBlock Text="Resize Map"
+                               FontSize="16" FontWeight="Bold"
+                               Foreground="White"/>
+
+                    <TextBlock x:Name="ResizeMapCurrent"
+                               Foreground="#888888"
+                               FontSize="11"/>
+
+                    <Grid ColumnDefinitions="80,*,20,80,*">
+                        <TextBlock Grid.Column="0"
+                                   Text="Width:"
+                                   Foreground="#CCCCCC"
+                                   VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Column="1"
+                                       x:Name="ResizeMapWidth"
+                                       Minimum="4" Maximum="128"
+                                       FormatString="0" Increment="1"/>
+
+                        <TextBlock Grid.Column="3"
+                                   Text="Height:"
+                                   Foreground="#CCCCCC"
+                                   VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Column="4"
+                                       x:Name="ResizeMapHeight"
+                                       Minimum="4" Maximum="128"
+                                       FormatString="0" Increment="1"/>
+                    </Grid>
+
+                    <TextBlock Text="Tiles outside the new size will be lost."
+                               Foreground="#888888"
+                               FontSize="10"
+                               FontStyle="Italic"/>
+
+                    <TextBlock x:Name="ResizeMapStatus"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               IsVisible="False"/>
+
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="8"
+                                HorizontalAlignment="Right">
+                        <Button x:Name="ResizeMapCancelBtn"
+                                Content="Cancel"
+                                MinWidth="90"
+                                Click="OnResizeMapCancelClick"/>
+                        <Button x:Name="ResizeMapOkBtn"
+                                Content="OK"
+                                MinWidth="90"
+                                FontWeight="Bold"
+                                Background="#4CAF50"
+                                Foreground="White"
+                                Click="OnResizeMapOkClick"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
