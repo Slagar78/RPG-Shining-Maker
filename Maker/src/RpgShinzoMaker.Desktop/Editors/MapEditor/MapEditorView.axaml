@@ -53,11 +53,40 @@
                         CornerRadius="4">
                     <Grid Margin="8" RowDefinitions="Auto,Auto,Auto,384,Auto,Auto">
 
-                        <TextBlock Grid.Row="0"
-                                   Text="BLOCKSET"
-                                   Foreground="White"
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,8"/>
+                        <Grid Grid.Row="0"
+                              ColumnDefinitions="*,Auto,Auto"
+                              Margin="0,0,0,8">
+                            <TextBlock Grid.Column="0"
+                                       Text="BLOCKSET"
+                                       Foreground="White"
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="1"
+                                    x:Name="UndoBtn"
+                                    Content="↶"
+                                    Width="26" Height="26"
+                                    Margin="0,0,2,0"
+                                    Padding="0"
+                                    FontSize="16"
+                                    FontWeight="Bold"
+                                    Foreground="White"
+                                    IsEnabled="False"
+                                    Opacity="0.4"
+                                    ToolTip.Tip="Отменить (Ctrl+Z)"
+                                    Click="OnUndoClick"/>
+                            <Button Grid.Column="2"
+                                    x:Name="RedoBtn"
+                                    Content="↷"
+                                    Width="26" Height="26"
+                                    Padding="0"
+                                    FontSize="16"
+                                    FontWeight="Bold"
+                                    Foreground="White"
+                                    IsEnabled="False"
+                                    Opacity="0.4"
+                                    ToolTip.Tip="Повторить (Ctrl+Y)"
+                                    Click="OnRedoClick"/>
+                        </Grid>
 
                         <Button Grid.Row="1"
                                 Content="Load Tileset"

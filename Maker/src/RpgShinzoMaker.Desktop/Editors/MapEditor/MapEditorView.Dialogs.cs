@@ -536,6 +536,8 @@ public partial class MapEditorView
                 LoadTileset(tilesetPath);
 
             MapCanvasControl.SetMap(newMap, _tiles.Select(t => t.Image).ToList());
+            // Размеры изменились — индексы ячеек теперь другие, история неактуальна
+            ClearHistory();
 
             Debug.WriteLine($"[RESIZE MAP] {newW}x{newH} для '{newMap.Name}'");
 

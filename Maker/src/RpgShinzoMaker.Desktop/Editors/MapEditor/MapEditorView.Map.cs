@@ -120,6 +120,9 @@ public partial class MapEditorView
             else
                 MapMusicSelector.SelectedIndex = -1;
             _suppressMusicChange = false;
+
+            // Сбросить историю — карта новая
+            ClearHistory();
         }
         catch (Exception ex)
         {
@@ -310,6 +313,10 @@ public partial class MapEditorView
             _currentMap.TilesetPath = "assets/tilesets/" + Path.GetFileName(newPath);
             MapCanvasControl.SetMap(_currentMap, _tiles.Select(t => t.Image).ToList());
             MapTilesetText.Text = Path.GetFileName(newPath);
+
+            // Сменился тайлсет — индексы теперь ссылаются на другие картинки,
+            // старая история undo визуально бессмысленна
+            ClearHistory();
         }
     }
 }

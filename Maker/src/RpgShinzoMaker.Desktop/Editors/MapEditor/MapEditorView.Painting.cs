@@ -8,17 +8,13 @@ namespace RpgShinzoMaker.Desktop.Editors.MapEditor;
 /// <summary>
 /// Часть MapEditorView — РИСОВАНИЕ И КЛИКИ ПО КАРТЕ.
 /// Здесь: реакция на клик/drag/hover по канвасу,
-/// запись тайла в слой, применение трансформаций.
+/// запись тайла в слой, применение трансформаций, запись undo.
 /// </summary>
 public partial class MapEditorView
 {
     // ══════════════════════════════════════════════════════════════
     //   КЛИК ПО КАРТЕ
     // ══════════════════════════════════════════════════════════════
-    /// <summary>
-    /// Логика одного клика по клетке карты.
-    /// Режимы приоритетно: Select → Grid → рисование тайлом → Tile Editor.
-    /// </summary>
     private void OnMapTileClicked(int tx, int ty, int tileId, bool isLeftButton)
     {
         if (_currentMap == null) return;
@@ -26,12 +22,15 @@ public partial class MapEditorView
         int idx = tx * _currentMap.Height + ty;
         if (idx < 0 || idx >= _currentMap.TotalCells) return;
 
+        // Новая операция — завершаем предыдущую (если пользователь кликнул
+        // после drag, который закончился за пределами карты)
+        FinalizeBatch();
+
         // ═══ Select Mode ═══
         if (_selectMode)
         {
             if (!isLeftButton)
             {
-                // ПКМ — сброс clipboard
                 _hasClipboard = false;
                 MapCanvasControl.HideSelectionRect();
                 MapCanvasControl.HidePasteRect();
@@ -40,12 +39,10 @@ public partial class MapEditorView
 
             if (_hasClipboard)
             {
-                // ЛКМ при clipboard — вставка
                 PasteClipboard(tx, ty);
                 return;
             }
 
-            // Начать выделение
             _selecting = true;
             _selStartX = _selEndX = tx;
             _selStartY = _selEndY = ty;
@@ -53,17 +50,17 @@ public partial class MapEditorView
             return;
         }
 
-        // ═══ Grid Mode → назначаем тип тайла под курсором ═══
+        // ═══ Grid Mode ═══
         if (_gridMode)
         {
             AssignTypeToMapTile(idx);
             return;
         }
 
-        // ═══ Tile Editor ВЫКЛЮЧЕН → рисуем тайлом из палитры ═══
+        // ═══ Рисование тайлом ═══
         if (!_tileEditorMode)
         {
-            if (_isModeB) return;  // в режиме типов по карте не рисуем
+            if (_isModeB) return;
 
             int paintTile = isLeftButton ? _leftSelectedIndex : _rightSelectedIndex;
             if (paintTile < 0) return;
@@ -73,7 +70,7 @@ public partial class MapEditorView
             return;
         }
 
-        // ═══ Tile Editor ВКЛЮЧЁН → трансформации ═══
+        // ═══ Tile Editor ═══
         if (_transformMode == 0) return;
 
         ApplyTransform(tx, ty);
@@ -102,13 +99,6 @@ public partial class MapEditorView
     // ══════════════════════════════════════════════════════════════
     //   DRAG ПО КАРТЕ
     // ══════════════════════════════════════════════════════════════
-    /// <summary>
-    /// Непрерывное движение мыши с зажатой кнопкой по карте.
-    /// Select: расширяет рамку выделения.
-    /// Grid:   назначает типы тайлов по пути.
-    /// Рисование: записывает тайл в каждую клетку под курсором.
-    /// TileEditor + Delete: удаляет тайлы по пути.
-    /// </summary>
     private void OnMapTileDragged(int tx, int ty, int tileId, bool isLeftButton)
     {
         if (_currentMap == null) return;
@@ -116,7 +106,6 @@ public partial class MapEditorView
         int idx = tx * _currentMap.Height + ty;
         if (idx < 0 || idx >= _currentMap.TotalCells) return;
 
-        // ═══ Select Mode ═══
         if (_selectMode)
         {
             if (!isLeftButton) return;
@@ -128,14 +117,12 @@ public partial class MapEditorView
             return;
         }
 
-        // ═══ Grid Mode → непрерывно назначаем тип ═══
         if (_gridMode)
         {
             AssignTypeToMapTile(idx);
             return;
         }
 
-        // ═══ Tile Editor ВЫКЛЮЧЕН → непрерывное рисование ═══
         if (!_tileEditorMode)
         {
             if (_isModeB) return;
@@ -143,7 +130,6 @@ public partial class MapEditorView
             int paintTile = isLeftButton ? _leftSelectedIndex : _rightSelectedIndex;
             if (paintTile < 0) return;
 
-            // Уже такой тайл — не перерисовываем (оптимизация)
             int existing = (_currentLayer == 0)
                 ? _currentMap.Tiles[idx]
                 : _currentMap.Tiles2[idx];
@@ -154,7 +140,6 @@ public partial class MapEditorView
             return;
         }
 
-        // ═══ Tile Editor ВКЛЮЧЁН → drag для Delete ═══
         if (_transformMode != 4) return;
 
         int currentTile = (_currentLayer == 0)
@@ -168,12 +153,13 @@ public partial class MapEditorView
     // ══════════════════════════════════════════════════════════════
     //   ОТПУСКАНИЕ КНОПКИ
     // ══════════════════════════════════════════════════════════════
-    /// <summary>
-    /// Отпускание ЛКМ — завершает выделение и копирует его в буфер.
-    /// </summary>
     private void OnMapTileReleased(int tx, int ty, bool isLeftButton)
     {
         if (_currentMap == null) return;
+
+        // Завершить текущий undo-batch: одна линия drag = одна отмена
+        FinalizeBatch();
+
         if (!_selectMode) return;
         if (!isLeftButton) return;
         if (!_selecting) return;
@@ -183,15 +169,10 @@ public partial class MapEditorView
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   HOVER (мышь без нажатой кнопки)
+    //   HOVER
     // ══════════════════════════════════════════════════════════════
-    /// <summary>
-    /// Наведение мыши — обновляет позицию в статус-баре MainWindow
-    /// и рисует призрачную рамку вставки в Select Mode.
-    /// </summary>
     private void OnMapTileHover(int tx, int ty)
     {
-        // Запомнить последнюю позицию и отправить в статус-бар
         _lastHoverX = tx;
         _lastHoverY = ty;
         PushStatusBar();
@@ -205,13 +186,8 @@ public partial class MapEditorView
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   ОБНОВЛЕНИЕ СТАТУС-БАРА
+    //   СТАТУС-БАР
     // ══════════════════════════════════════════════════════════════
-    /// <summary>
-    /// Формирует строку "Позиция: X, Y    Зум: Nx" и отправляет
-    /// её в событие StatusChanged (подписан MainWindow).
-    /// Если курсор вне карты — позиция выводится как "—".
-    /// </summary>
     private void PushStatusBar()
     {
         string pos = (_lastHoverX < 0 || _lastHoverY < 0)
@@ -223,10 +199,6 @@ public partial class MapEditorView
         StatusChanged?.Invoke($"Позиция: {pos}    Зум: {zoom}");
     }
 
-    /// <summary>
-    /// Возвращает текст текущего зума из комбо ZoomSelector
-    /// (например "1x", "2x"). Если контрол ещё не готов — "1x".
-    /// </summary>
     private string CurrentZoomLabel()
     {
         if (ZoomSelector?.SelectedItem is ComboBoxItem item &&
@@ -237,15 +209,14 @@ public partial class MapEditorView
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   ЗАПИСЬ ТАЙЛА В СЛОЙ
+    //   ЗАПИСЬ ТАЙЛА В СЛОЙ (с записью в undo)
     // ══════════════════════════════════════════════════════════════
-    /// <summary>
-    /// Записывает тайл (tileId) в активный слой по индексу idx.
-    /// Сбрасывает rot/mirror у записанной клетки.
-    /// </summary>
     private void PaintTile(int idx, int tileId)
     {
         if (_currentMap == null) return;
+
+        // Снимок "до"
+        var oldSnap = SnapshotCell(idx, _currentLayer);
 
         if (_currentLayer == 0)
         {
@@ -261,18 +232,18 @@ public partial class MapEditorView
             _currentMap.MirrorX2[idx] = false;
             _currentMap.MirrorY2[idx] = false;
         }
+
+        // Снимок "после"
+        var newSnap = SnapshotCell(idx, _currentLayer);
+
+        // Записываем только если реально изменилось
+        if (!SnapshotsEqual(oldSnap, newSnap))
+            RecordChange(idx, _currentLayer, oldSnap, newSnap);
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   ТРАНСФОРМАЦИИ (Tile Editor)
+    //   ТРАНСФОРМАЦИИ (с записью в undo)
     // ══════════════════════════════════════════════════════════════
-    /// <summary>
-    /// Применяет активную трансформацию (_transformMode) к клетке (tx, ty).
-    ///   1 = rotate +90°
-    ///   2 = flip horizontal
-    ///   3 = flip vertical
-    ///   4 = delete (тайл становится -1)
-    /// </summary>
     private void ApplyTransform(int tx, int ty)
     {
         var map = _currentMap;
@@ -280,6 +251,8 @@ public partial class MapEditorView
 
         int idx = tx * map.Height + ty;
         if (idx < 0 || idx >= map.TotalCells) return;
+
+        var oldSnap = SnapshotCell(idx, _currentLayer);
 
         switch (_transformMode)
         {
@@ -306,16 +279,16 @@ public partial class MapEditorView
                 break;
         }
 
+        var newSnap = SnapshotCell(idx, _currentLayer);
+        if (!SnapshotsEqual(oldSnap, newSnap))
+            RecordChange(idx, _currentLayer, oldSnap, newSnap);
+
         MapCanvasControl.RedrawTile(tx, ty);
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   GRID MODE — назначение типа тайлу, который лежит на карте
+    //   GRID MODE — назначение типа
     // ══════════════════════════════════════════════════════════════
-    /// <summary>
-    /// Меняет тип тайла, который находится в клетке idx на карте.
-    /// Обновляет палитру (квадратик типа) и оверлей Grid Mode на канвасе.
-    /// </summary>
     private void AssignTypeToMapTile(int idx)
     {
         if (_currentMap == null) return;
@@ -327,16 +300,13 @@ public partial class MapEditorView
 
         if (tileId < 0 || tileId >= _tileTypes.Length) return;
 
-        // Если тип не меняется — ничего не делаем
         if (_tileTypes[tileId] == _currentTileType) return;
 
         _tileTypes[tileId] = _currentTileType;
 
-        // Обновить квадратик в палитре
         if (tileId < _tiles.Count)
             _tiles[tileId].TileType = _currentTileType;
 
-        // Обновить точки Grid Mode на карте
         MapCanvasControl.UpdateGridOverlay();
     }
 }

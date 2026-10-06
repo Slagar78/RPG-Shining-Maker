@@ -53,9 +53,6 @@
                     <Separator Width="1" Margin="6,2"/>
                     <Button Content="▶ Запустить игру"  ToolTip.Tip="F5"/>
                     <Button Content="⚔ Запустить битву" ToolTip.Tip="F6"/>
-                    <Separator Width="1" Margin="6,2"/>
-                    <Button Content="↩" ToolTip.Tip="Отменить"/>
-                    <Button Content="↪" ToolTip.Tip="Повторить"/>
                 </StackPanel>
             </Border>
 
