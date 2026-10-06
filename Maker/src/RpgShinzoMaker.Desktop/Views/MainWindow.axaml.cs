@@ -96,6 +96,12 @@ public partial class MainWindow : Window
     private GameMap? _currentMap;
     private bool _tileEditorMode = false;
     private int  _transformMode  = 0;   // 0=none 1=rotate 2=flipH 3=flipV 4=delete
+    
+    // Границы основной области карты (из areas.json)
+    private int _areaStartX = 0;
+    private int _areaStartY = 0;
+    private int _areaEndX   = 0;
+    private int _areaEndY   = 0;
 
     public MainWindow()
     {
@@ -175,6 +181,8 @@ public partial class MainWindow : Window
             MapCanvasControl.SetMap(map, _tiles.Select(t => t.Image).ToList());
             _currentMap = map;
             MapCanvasControl.CurrentLayer = _currentLayer;
+            // Читаем areas.json — границы основной области карты
+            LoadAreasForMap(map);
 
             MapSizeText.Text    = $"{map.Width}×{map.Height}";
             MapTilesetText.Text = tilesetName;
@@ -214,12 +222,13 @@ public partial class MainWindow : Window
                 SaveTileTypesForTileset(tilesetAbs);
             }
 
-            // 3. Сохраняем entries.json (музыка, громкость, области)
+            // 3. Сохраняем areas.json (границы основной области карты)
+            SaveAreasForMap(_currentMap);
+
+            // 4. Сохраняем entries.json (музыка, громкость, области)
             RpgShinzoMaker.Core.Services.EntriesService.Save(
                 RpgShinzoMaker.Core.Services.ProjectPaths.EntriesFile,
                 _mapEntries);
-
-            // 4. Обновляем статус-бар
             // (Если у вас есть TextBlock для статуса, раскомментируйте и используйте)
             // StatusText.Text = "Сохранено!";
         }
@@ -693,6 +702,147 @@ public partial class MainWindow : Window
     private void OnToolPickerClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Пипетка"); }
     private void OnToolSelectClick(object? sender, RoutedEventArgs e)  { Debug.WriteLine("Выделение"); }
 
+     // ─── Прочитать areas.json ─────
+    private void LoadAreasForMap(GameMap map)
+    {
+        _areaStartX = 0;
+        _areaStartY = 0;
+        _areaEndX   = map.Width  - 1;
+        _areaEndY   = map.Height - 1;
+
+        if (string.IsNullOrEmpty(map.Folder)) return;
+
+        var file = RpgShinzoMaker.Core.Services.ProjectPaths.AreasFile(map.Folder);
+        if (!File.Exists(file)) return;
+
+        try
+        {
+            var arr = JsonNode.Parse(File.ReadAllText(file))?.AsArray();
+            if (arr == null || arr.Count == 0) return;
+
+            var first = arr[0]?.AsObject();
+            if (first == null) return;
+
+            var start = first["mainLayerStart"]?.AsArray();
+            var end   = first["mainLayerEnd"]?.AsArray();
+
+            if (start != null && start.Count >= 2)
+            {
+                _areaStartX = start[0]?.GetValue<int>() ?? 0;
+                _areaStartY = start[1]?.GetValue<int>() ?? 0;
+            }
+            if (end != null && end.Count >= 2)
+            {
+                _areaEndX = end[0]?.GetValue<int>() ?? (map.Width  - 1);
+                _areaEndY = end[1]?.GetValue<int>() ?? (map.Height - 1);
+            }
+
+            Debug.WriteLine($"[AREAS] Загружено: start=({_areaStartX},{_areaStartY}) end=({_areaEndX},{_areaEndY})");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[AREAS] Ошибка чтения: {ex.Message}");
+        }
+    }
+
+    // ─── Сохранить areas.json ─────
+    private void SaveAreasForMap(GameMap map)
+    {
+        if (string.IsNullOrEmpty(map.Folder)) return;
+
+        var file = RpgShinzoMaker.Core.Services.ProjectPaths.AreasFile(map.Folder);
+
+        try
+        {
+            var dir = Path.GetDirectoryName(file);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+            var areas = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["mainLayerStart"] = new JsonArray { _areaStartX, _areaStartY },
+                    ["mainLayerEnd"]   = new JsonArray { _areaEndX,   _areaEndY   },
+                }
+            };
+
+            File.WriteAllText(file, areas.ToJsonString(new JsonSerializerOptions
+            {
+                WriteIndented = false
+            }));
+
+            Debug.WriteLine($"[AREAS] Сохранено: start=({_areaStartX},{_areaStartY}) end=({_areaEndX},{_areaEndY})");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[AREAS] Ошибка сохранения: {ex.Message}");
+        }
+    }
+
+    // ─── Открыть диалог Areas ─────
+    private void OnAreasClick(object? sender, RoutedEventArgs e)
+    {
+        if (_currentMap == null) return;
+
+        int w = _areaEndX - _areaStartX + 1;
+        int h = _areaEndY - _areaStartY + 1;
+
+        AreaStartX.Value = _areaStartX;
+        AreaStartY.Value = _areaStartY;
+        AreaWidth.Value  = w;
+        AreaHeight.Value = h;
+
+        AreaStartX.Maximum = _currentMap.Width  - 2;
+        AreaStartY.Maximum = _currentMap.Height - 2;
+        AreaWidth.Maximum  = _currentMap.Width;
+        AreaHeight.Maximum = _currentMap.Height;
+
+        AreaError.IsVisible = false;
+        AreasOverlay.IsVisible = true;
+    }
+
+    private void OnAreasCancelClick(object? sender, RoutedEventArgs e)
+    {
+        AreasOverlay.IsVisible = false;
+    }
+
+    private void OnAreasOkClick(object? sender, RoutedEventArgs e)
+    {
+        if (_currentMap == null) return;
+
+        int sx = (int)(AreaStartX.Value ?? 0);
+        int sy = (int)(AreaStartY.Value ?? 0);
+        int w  = (int)(AreaWidth.Value  ?? 2);
+        int h  = (int)(AreaHeight.Value ?? 2);
+
+        string? error = null;
+
+        if (sx < 0 || sy < 0)
+            error = "Start X / Y must be >= 0";
+        else if (w < 2 || h < 2)
+            error = "Width / Height must be at least 2";
+        else if (sx + w > _currentMap.Width)
+            error = $"Start X + Width exceeds map width ({_currentMap.Width})";
+        else if (sy + h > _currentMap.Height)
+            error = $"Start Y + Height exceeds map height ({_currentMap.Height})";
+
+        if (error != null)
+        {
+            AreaError.Text = error;
+            AreaError.IsVisible = true;
+            return;
+        }
+
+        _areaStartX = sx;
+        _areaStartY = sy;
+        _areaEndX   = sx + w - 1;
+        _areaEndY   = sy + h - 1;
+
+        Debug.WriteLine($"[AREAS] Установлено: start=({_areaStartX},{_areaStartY}) end=({_areaEndX},{_areaEndY})");
+
+        AreasOverlay.IsVisible = false;
+    }
+    
     private void PopulateMusicList()
     {
         _musicFiles.Clear();
