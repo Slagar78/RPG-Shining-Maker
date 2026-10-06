@@ -532,9 +532,11 @@ public partial class MapCanvas : UserControl
         int tx = (int)(p.X / ts);
         int ty = (int)(p.Y / ts);
 
+        // Курсор вне клеток карты — прячем рамку и сообщаем наружу
         if (tx < 0 || tx >= _map.Width || ty < 0 || ty >= _map.Height)
         {
             if (_hoverBorder != null) _hoverBorder.IsVisible = false;
+            TileHover?.Invoke(-1, -1);
             return;
         }
 
@@ -566,7 +568,9 @@ public partial class MapCanvas : UserControl
     private void OnCanvasPointerExited(object? sender, PointerEventArgs e)
     {
         if (_hoverBorder != null) _hoverBorder.IsVisible = false;
+        TileHover?.Invoke(-1, -1);
     }
+    
     private void OnCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         if (_map == null) return;

@@ -139,7 +139,6 @@ public partial class MainWindow : Window
     // ─── Загрузка проекта ─────
     private void LoadProject()
     {
-        var logPath = Path.Combine(Environment.CurrentDirectory, "startup_log.txt");
         var log = new System.Text.StringBuilder();
         void L(string s) { log.AppendLine(s); Debug.WriteLine(s); }
 
@@ -147,14 +146,14 @@ public partial class MainWindow : Window
         {
             var root = FindProjectRoot();
             L($"[TEST] root = {root ?? "NULL"}");
-            if (root == null) { L("Корень не найден"); File.WriteAllText(logPath, log.ToString()); return; }
+            if (root == null) { L("Корень не найден"); return; }
 
             RpgShinzoMaker.Core.Services.ProjectPaths.Root = root;
 
             _mapEntries = RpgShinzoMaker.Core.Services.EntriesService.Load(
                 RpgShinzoMaker.Core.Services.ProjectPaths.EntriesFile);
             L($"[TEST] entries: {_mapEntries.Count}");
-            if (_mapEntries.Count == 0) { L("entries пуст"); File.WriteAllText(logPath, log.ToString()); return; }
+            if (_mapEntries.Count == 0) { L("entries пуст"); return; }
 
             MapSelector.ItemsSource = null;
             MapSelector.ItemsSource = _mapEntries.Select(e => e.Name).ToList();
@@ -169,8 +168,6 @@ public partial class MainWindow : Window
         {
             L($"[TEST] Ошибка: {ex.Message}\n{ex.StackTrace}");
         }
-
-        File.WriteAllText(logPath, log.ToString());
     }
 
     // ─── Загрузка конкретной карты ─────
@@ -599,7 +596,12 @@ public partial class MainWindow : Window
         };
 
         MapCanvasControl.SetZoom(zoom);
+
+        // Обновить зум в статус-баре
+        if (StatusInfoText != null)
+            StatusInfoText.Text = $"Позиция: —    Зум: {text}";
     }
+    
     private void UpdateTypeIconSelection()
     {
         var icons = new[] { TypeIcon0, TypeIcon1, TypeIcon2, TypeIcon3 };
@@ -1273,12 +1275,37 @@ public partial class MainWindow : Window
     // ─── Наведение мыши (без зажатой кнопки) ─────
     private void OnMapTileHover(int tx, int ty)
     {
+        // 1) Обновляем статус-бар (позиция курсора на карте)
+        UpdateStatusPosition(tx, ty);
+
+        // 2) Логика превью вставки (Select Mode)
         if (!_selectMode || !_hasClipboard)
         {
             MapCanvasControl.HidePasteRect();
             return;
         }
         MapCanvasControl.ShowPasteRect(tx, ty, _clipboardW, _clipboardH);
+    }
+
+    // ─── Обновить позицию в статус-баре ─────
+    private void UpdateStatusPosition(int tx, int ty)
+    {
+        if (StatusInfoText == null) return;
+
+        string pos = (tx < 0 || ty < 0) ? "—" : $"{tx}, {ty}";
+        string zoom = CurrentZoomLabel();
+
+        StatusInfoText.Text = $"Позиция: {pos}    Зум: {zoom}";
+    }
+
+    // ─── Текущая метка зума ─────
+    private string CurrentZoomLabel()
+    {
+        if (ZoomSelector?.SelectedItem is ComboBoxItem item &&
+            item.Content is string text)
+            return text;
+
+        return "1x";
     }
 
     // ─── Скопировать выделение в буфер ─────

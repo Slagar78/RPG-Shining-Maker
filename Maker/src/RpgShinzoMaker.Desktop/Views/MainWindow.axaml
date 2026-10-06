@@ -89,8 +89,11 @@
             <!-- СТАТУС-БАР -->
             <Border DockPanel.Dock="Bottom" Background="#007ACC" Padding="8,4">
                 <Grid ColumnDefinitions="Auto,*,Auto">
-                    <TextBlock Grid.Column="0" Text="Готово" Foreground="White"/>
-                    <TextBlock Grid.Column="1" Text="Позиция: X:0 Y:0    Зум: 100%"
+                    <TextBlock x:Name="StatusText"
+                               Grid.Column="0" Text="Готово" Foreground="White"/>
+                    <TextBlock x:Name="StatusInfoText"
+                               Grid.Column="1"
+                               Text="Позиция: —    Зум: 1x"
                                Foreground="White" HorizontalAlignment="Center"/>
                     <TextBlock Grid.Column="2" Text="RPG-Shinzo" Foreground="White"/>
                 </Grid>
@@ -108,13 +111,13 @@
                         <Grid Margin="8" RowDefinitions="Auto,Auto,Auto,384,Auto,Auto">
 
                             <TextBlock Grid.Row="0"
-                                       Text="БЛОКСЕТ"
+                                       Text="BLOCKSET"
                                        Foreground="White"
                                        FontWeight="Bold"
                                        Margin="0,0,0,8"/>
 
                             <Button Grid.Row="1"
-                                    Content="Загрузить тайлсет"
+                                    Content="Load Tileset"
                                     HorizontalAlignment="Stretch"
                                     Margin="0,0,0,8"
                                     Click="OnLoadTilesetClick"/>
@@ -458,7 +461,7 @@
                             CornerRadius="4">
                         <DockPanel Margin="8">
                             <TextBlock DockPanel.Dock="Top"
-                                       Text="ИНСТРУМЕНТЫ"
+                                       Text="TOOLS"
                                        Foreground="White"
                                        FontWeight="Bold"
                                        FontSize="12"
@@ -520,12 +523,17 @@
                                             BorderThickness="3" BorderBrush="#3E3E42"
                                             Click="OnRotateClick"/>
 
-                                    <Button x:Name="FlipHBtn"
-                                            Content="↔" FontSize="26"
-                                            Width="72" Height="72" Margin="1"
-                                            IsEnabled="False"
-                                            BorderThickness="3" BorderBrush="#3E3E42"
-                                            Click="OnFlipHClick"/>
+                                        <Button x:Name="FlipHBtn"
+                                                Width="72" Height="72" Margin="1"
+                                                IsEnabled="False"
+                                                BorderThickness="3" BorderBrush="#3E3E42"
+                                                Click="OnFlipHClick">
+                                            <TextBlock Text="↕" FontSize="26">
+                                                <TextBlock.RenderTransform>
+                                                    <RotateTransform Angle="90"/>
+                                                </TextBlock.RenderTransform>
+                                            </TextBlock>
+                                        </Button>
 
                                     <Button x:Name="FlipVBtn"
                                             Content="↕" FontSize="26"
