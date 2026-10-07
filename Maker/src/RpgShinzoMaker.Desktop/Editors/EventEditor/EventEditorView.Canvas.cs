@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
@@ -20,28 +19,50 @@ public partial class EventEditorView
     private Bitmap? _sourceTileset;
     private string? _loadedTilesetPath;
 
+    // ══════════════════════════════════════════════════════════════
+    //   ПОЛНАЯ ПЕРЕРИСОВКА — при загрузке новой карты / смене тайлсета
+    // ══════════════════════════════════════════════════════════════
     /// <summary>
-    /// Перерисовывает канвас: карта + подсветки.
+    /// Полная перерисовка: пересоздаёт все Image-контролы карты.
+    /// Тяжёлая операция — вызывать ТОЛЬКО при смене карты или тайлсета.
+    /// </summary>
+    private void FullRedraw()
+    {
+        if (CanvasControl == null) return;
+        if (_currentMap == null) return;
+
+        EnsureTilesetLoaded();
+
+        CanvasControl.ShowLayer1 = _showLayer1;
+        CanvasControl.ShowLayer2 = _showLayer2;
+        CanvasControl.SetMap(_currentMap, _tileBitmaps);
+        CanvasControl.SetEvents(_events, _currentSection, _selectedIndex);
+        CanvasControl.SetZoom(CurrentZoom());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //   ЛЁГКАЯ ПЕРЕРИСОВКА — при смене раздела, выделения, слоёв
+    // ══════════════════════════════════════════════════════════════
+    /// <summary>
+    /// Быстрая перерисовка: обновляет слои и оверлей, но НЕ пересоздаёт
+    /// Image-контролы карты. Можно звать часто (клик по разделу, выделение).
     /// </summary>
     private void RedrawCanvas()
     {
         if (CanvasControl == null) return;
         if (_currentMap == null) return;
 
-        // 1. Нарезать тайлсет, если он сменился
-        EnsureTilesetLoaded();
+        // Если канвас вообще не показывал никакой карты — нужен полный ремонт
+        if (CanvasControl.CurrentMap != _currentMap)
+        {
+            FullRedraw();
+            return;
+        }
 
-        // 2. Передать карту и тайлы
         CanvasControl.ShowLayer1 = _showLayer1;
         CanvasControl.ShowLayer2 = _showLayer2;
-        CanvasControl.SetMap(_currentMap, _tileBitmaps);
-
-        // 3. Передать события и активный раздел
         CanvasControl.SetEvents(_events, _currentSection, _selectedIndex);
-
-        // 4. Зум
-        double zoom = CurrentZoom();
-        CanvasControl.SetZoom(zoom);
+        CanvasControl.Redraw();
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -55,7 +76,7 @@ public partial class EventEditorView
         string tilesetAbs  = Path.Combine(Core.Services.ProjectPaths.TilesetsDir, tilesetName);
 
         if (_loadedTilesetPath == tilesetAbs && _tileBitmaps.Count > 0)
-            return; // уже загружен
+            return;
 
         _tileBitmaps.Clear();
         _sourceTileset?.Dispose();
@@ -122,11 +143,10 @@ public partial class EventEditorView
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   КЛИК ПО КАНВАСУ — заполнить активное поле координатами
+    //   КЛИК ПО КАНВАСУ
     // ══════════════════════════════════════════════════════════════
     private void OnCanvasTileClicked(int tx, int ty)
     {
-        // Пока просто выводим в Debug. Позже — заполнить активное поле.
         System.Diagnostics.Debug.WriteLine($"[EVENTS] Click at ({tx},{ty})");
         PushStatusBar(tx, ty);
     }

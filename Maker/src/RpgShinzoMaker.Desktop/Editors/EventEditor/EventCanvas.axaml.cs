@@ -23,6 +23,9 @@ public partial class EventCanvas : UserControl
     // ─── Настройки ───
     public bool ShowLayer1 { get; set; } = true;
     public bool ShowLayer2 { get; set; } = true;
+    
+    /// <summary>Текущая карта (для сравнения — когда нужно пересоздать всё, а когда просто перерисовать).</summary>
+    public GameMap? CurrentMap => _map;
 
     /// <summary>Событие: клик по клетке карты. (tx, ty).</summary>
     public event Action<int, int>? TileClicked;

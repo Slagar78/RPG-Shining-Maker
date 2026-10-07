@@ -125,8 +125,8 @@ public partial class EventEditorView
             UpdateSectionButtons();
             UpdatePanelVisibility();
 
-            // 5. Отрисовать карту с подсветками (Canvas.cs — заглушка пока)
-            RedrawCanvas();
+            // 5. Полная перерисовка — создаём все Image для новой карты
+            FullRedraw();
 
             Debug.WriteLine($"[EVENTS] Карта '{entry.Name}' загружена. " +
                             $"Roofs={_events.Roofs.Count}, " +
