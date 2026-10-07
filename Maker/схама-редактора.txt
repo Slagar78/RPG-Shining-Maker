@@ -1,3 +1,5 @@
+Файловая структура
+
 RPG-Shining-Maker/
 │
 ├── Maker/
@@ -9,14 +11,22 @@ RPG-Shining-Maker/
 │   │   │   ├── Models/
 │   │   │   │   ├── GameMap.cs                      (карта: tiles, rot, mirror, layers)
 │   │   │   │   ├── MapEntry.cs                     (запись из entries.json)
-│   │   │   │   └── TileType.cs                     (enum: Passable/Block/Slow/Under)
+│   │   │   │   ├── TileType.cs                     (enum: Passable/Block/Slow/Under)
+│   │   │   │   │
+│   │   │   │   ├── RoofEvent.cs                    ★ НОВЫЙ (крыша: rect + триггеры/выходы)
+│   │   │   │   ├── TileChangeEvent.cs              ★ НОВЫЙ (изменение тайла по триггеру)
+│   │   │   │   ├── StairEvent.cs                   ★ НОВЫЙ (лестница: start→end + dir)
+│   │   │   │   ├── WarpEvent.cs                    ★ НОВЫЙ (телепорт: trigger → target)
+│   │   │   │   ├── NpcEvent.cs                     ★ НОВЫЙ (NPC: id, sprite, behavior…)
+│   │   │   │   └── MapEvents.cs                    ★ НОВЫЙ (контейнер 5 типов событий)
 │   │   │   │
 │   │   │   └── Services/
-│   │   │       ├── ProjectPaths.cs                 (пути: Root, MapsDir, LayoutFile...)
+│   │   │       ├── ProjectPaths.cs                 (+NpcSpritesDir ★)
 │   │   │       ├── MapJsonService.cs               (layout.json: load/save)
 │   │   │       ├── EntriesService.cs               (entries.json: load/save)
-│   │   │       ├── TileTypesService.cs             ★ НОВЫЙ (tile_types/{tileset}.json)
-│   │   │       └── AreasService.cs                 ★ НОВЫЙ (areas.json + класс Areas)
+│   │   │       ├── TileTypesService.cs             (tile_types/{tileset}.json)
+│   │   │       ├── AreasService.cs                 (areas.json + класс Areas)
+│   │   │       └── EventsService.cs                ★ НОВЫЙ (events.json + NPC_events + NPC_script)
 │   │   │
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
 │   │       ├── App.axaml
@@ -24,33 +34,51 @@ RPG-Shining-Maker/
 │   │       ├── Program.cs
 │   │       ├── ViewLocator.cs
 │   │       │
+│   │       ├── Assets/
+│   │       │   ├── avalonia-logo.ico               (заменена на 128×128)
+│   │       │   └── icons/
+│   │       │       └── select.png                  ★ НОВЫЙ (иконка выделения)
+│   │       │
 │   │       ├── ViewModels/                         (пока не используется)
 │   │       │   ├── MainViewModel.cs
 │   │       │   └── ViewModelBase.cs
 │   │       │
 │   │       ├── Views/
-│   │       │   ├── MainWindow.axaml                ★ ПЕРЕПИСАН (оболочка + дерево/свойства)
-│   │       │   ├── MainWindow.axaml.cs             ★ ПЕРЕПИСАН (~90 строк)
-│   │       │   ├── MapCanvas.axaml                 (не трогали — чистый виджет рендера)
-│   │       │   └── MapCanvas.axaml.cs              (не трогали)
+│   │       │   ├── MainWindow.axaml                (оболочка + ASSETS + Свойства)
+│   │       │   ├── MainWindow.axaml.cs             (~90 строк, IEditor-мост)
+│   │       │   ├── MapCanvas.axaml                 (чистый виджет рендера)
+│   │       │   └── MapCanvas.axaml.cs
 │   │       │
 │   │       ├── Shared/
 │   │       │   └── Interfaces/
-│   │       │       └── IEditor.cs                  ★ НОВЫЙ (Save/Reload/OnActivate/OnDeactivate)
+│   │       │       └── IEditor.cs                  (Save/Reload/OnActivate/OnDeactivate)
 │   │       │
 │   │       └── Editors/
-│   │           └── MapEditor/                      ★ НОВАЯ ПАПКА (редактор карт)
-│   │               ├── MapEditorView.axaml         (разметка редактора карт)
-│   │               ├── MapEditorView.axaml.cs      (поля, конструктор, IEditor)
-│   │               ├── MapEditorView.Palette.cs    (блоксет, палитра, Mode A/B)
-│   │               ├── MapEditorView.Map.cs        (загрузка карт, музыка, зум, SAVE)
-│   │               ├── MapEditorView.Painting.cs   (клики, drag, hover, рисование)
-│   │               ├── MapEditorView.Select.cs     (Select Mode, буфер)
-│   │               ├── MapEditorView.GridMode.cs   (Grid Mode toggle)
-│   │               ├── MapEditorView.Layers.cs     (L1 / L2 / Active Layer)
-│   │               ├── MapEditorView.TileEditor.cs (TileEditor + трансформации)
-│   │               ├── MapEditorView.Dialogs.cs    (5 диалогов)
-│   │               └── TileItem.cs                 (модель тайла палитры)
+│   │           │
+│   │           ├── MapEditor/                      ← редактор карт
+│   │           │   ├── MapEditorView.axaml         (разметка: палитра + canvas + TOOLS)
+│   │           │   ├── MapEditorView.axaml.cs      (поля, ctor, IEditor, StatusChanged)
+│   │           │   ├── MapEditorView.Palette.cs    (блоксет, Mode A/B, типы тайлов)
+│   │           │   ├── MapEditorView.Map.cs        (загрузка карт, музыка, зум, SAVE)
+│   │           │   ├── MapEditorView.Painting.cs   (клики, drag, hover, трансформы)
+│   │           │   ├── MapEditorView.Select.cs     (Select Mode, копия/вставка)
+│   │           │   ├── MapEditorView.GridMode.cs   (Grid Mode toggle)
+│   │           │   ├── MapEditorView.Layers.cs     (L1 / L2 / Active Layer)
+│   │           │   ├── MapEditorView.TileEditor.cs (TileEditor + трансформации)
+│   │           │   ├── MapEditorView.Dialogs.cs    (New/Rename/Delete/Resize/Areas)
+│   │           │   ├── MapEditorView.Undo.cs       ★ НОВЫЙ (undo/redo стек + batch)
+│   │           │   └── TileItem.cs                 (модель тайла палитры)
+│   │           │
+│   │           └── EventEditor/                    ★ НОВАЯ ПАПКА (редактор событий)
+│   │               ├── EventEditorView.axaml       (разметка: MAP + SECTIONS + canvas + 7-колон. панель)
+│   │               ├── EventEditorView.axaml.cs    (поля, ctor, IEditor, StatusChanged)
+│   │               ├── EventEditorView.Map.cs      (загрузка карт, слои, зум, SAVE)
+│   │               ├── EventEditorView.Canvas.cs   (мост к EventCanvas, FullRedraw/RedrawCanvas)
+│   │               ├── EventEditorView.Sections.cs (5 разделов: Roof/TileChange/Stair/Warp/Npc)
+│   │               ├── EventEditorView.Fields.cs   (заполнение полей + 30 обработчиков)
+│   │               ├── EventEditorView.Events.cs   (кнопки +/−, добавление/удаление)
+│   │               ├── EventCanvas.axaml           (ScrollViewer + Canvas слои + Overlay)
+│   │               └── EventCanvas.axaml.cs        (рендер карты + подсветки событий)
 │   │
 │   └── assets/
 │
@@ -59,30 +87,34 @@ RPG-Shining-Maker/
     │   ├── entries.json
     │   └── <map_name>/
     │       ├── layout.json
-    │       └── areas.json
+    │       ├── areas.json
+    │       ├── events.json                         ★ НОВЫЙ (roofs/tile_changes/stairs/warps)
+    │       ├── NPC_events.json                     ★ НОВЫЙ (NPC без text_id)
+    │       └── NPC_script.json                     ★ НОВЫЙ (генерация из TextId)
     ├── tile_types/
     │   └── <tileset>.json
     └── ...
 	
-	
-	
-	┌─────────────────────────────────────────────────────────────────┐
+🏛️ Архитектура: оболочка и два редактора
+
+┌─────────────────────────────────────────────────────────────────┐
 │                     MainWindow (Shell)                          │
 │                                                                 │
 │  ┌────────────────────────────────────────────────────────┐     │
-│  │ Тулбар: [SAVE] [▶ Run] [⚔ Battle] [↩ Undo] [↪ Redo]    │     │
+│  │ Тулбар: [SAVE] [▶ Run] [⚔ Battle]                     │     │
 │  ├────────────────────────────────────────────────────────┤     │
 │  │  ┌─── TabControl (EditorTabs) ───────────────────────┐ │     │
 │  │  │ [Maps] [Events] [Battles] [Scenes] [Database]     │ │     │
 │  │  │                                                   │ │     │
-│  │  │  MapEditorView (IEditor)  ← активный редактор     │ │     │
+│  │  │  MapEditorView  (IEditor)  ← вкладка «Карты»      │ │     │
+│  │  │  EventEditorView(IEditor)  ← вкладка «Эвенты»     │ │     │
 │  │  │                                                   │ │     │
 │  │  └───────────────────────────────────────────────────┘ │     │
 │  ├────────────────────────────────────────────────────────┤     │
 │  │  Статус-бар: [Готово] [Позиция: X,Y  Зум: 2x]  [Shinzo]│     │
 │  └────────────────────────────────────────────────────────┘     │
 │                                                                 │
-│  Правый док: [Дерево проекта] / [Свойства]                      │
+│  Правый док: [ASSETS] / [СВОЙСТВА]                              │
 └───────────────────────────────┬─────────────────────────────────┘
                                 │
                                 │  SAVE → editor.Save()
@@ -101,18 +133,20 @@ RPG-Shining-Maker/
         ▼                       ▼                       ▼                   ▼
   ┌───────────┐           ┌───────────┐           ┌───────────┐       ┌───────────┐
   │ MapEditor │           │ EventEdit │           │ BattleEd  │       │  DB Editor│
-  │  ✓ готов  │           │  (план)   │           │  (план)   │       │  (план)   │
-  └─────┬─────┘           └───────────┘           └───────────┘       └───────────┘
-        │
-        │  использует
-        ▼
+  │  ✓ готов  │           │  ✓ готов  │           │  (план)   │       │  (план)   │
+  └─────┬─────┘           └─────┬─────┘           └───────────┘       └───────────┘
+        │                       │
+        │  использует           │  использует
+        ▼                       ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      Core.Services                              │
 │                                                                 │
 │   ProjectPaths      MapJsonService      EntriesService          │
-│   TileTypesService  AreasService                                │
+│   TileTypesService  AreasService        EventsService ★         │
 │                                                                 │
-│   + Core.Models: GameMap, MapEntry, TileType, Areas             │
+│   + Core.Models: GameMap, MapEntry, TileType, Areas,           │
+│                  RoofEvent, TileChangeEvent, StairEvent,        │
+│                  WarpEvent, NpcEvent, MapEvents ★               │
 └──────────────────────────────┬──────────────────────────────────┘
                                │
                                │  читают / пишут
@@ -121,9 +155,9 @@ RPG-Shining-Maker/
                         │   data/     │
                         │  *.json     │
                         └─────────────┘
-						
-						
-						
+
+🧩 Внутреннее устройство MapEditorView (11 файлов = 1 класс)
+
 	                    ┌──────────────────────────┐
                     │ MapEditorView            │
                     │ : UserControl, IEditor   │
@@ -162,8 +196,92 @@ RPG-Shining-Maker/
  │ • L2 toggle  │         │ • взаимоискл.│              │ • 4 кнопки   │
  │ • Active L   │         │ • mode B авто│              │ • RenderPrev │
  └──────────────┘         └──────────────┘              └──────────────┘
+        │
+        ▼
+ ┌──────────────┐
+ │ Undo.cs ★    │
+ │              │
+ │ • стек undo  │
+ │ • стек redo  │
+ │ • batch      │
+ │ • CellSnap   │
+ └──────────────┘
+
+ 🧩 Внутреннее устройство EventEditorView (7 файлов + EventCanvas)
  
-Поток данных: клик по карте
+                     ┌──────────────────────────┐
+                    │ EventEditorView          │
+                    │ : UserControl, IEditor   │
+                    │                          │
+                    │ Один класс — 7 partial   │
+                    └────────────┬─────────────┘
+                                 │
+        ┌────────────────────────┼─────────────────────────────┐
+        │                        │                             │
+        ▼                        ▼                             ▼
+ ┌──────────────┐         ┌──────────────┐              ┌──────────────┐
+ │ axaml.cs     │         │ Map.cs       │              │ Canvas.cs    │
+ │              │         │              │              │              │
+ │ • поля       │         │ • LoadProject│              │ • FullRedraw │
+ │ • ctor       │         │ • LoadMap    │              │ • Redraw     │
+ │ • IEditor    │         │ • SaveEvents │              │ • тайлсет    │
+ │ • StatusChg  │         │ • NpcSprites │              │ • мост       │
+ └──────────────┘         └──────────────┘              └──────────────┘
+        │                        │                             │
+        ▼                        ▼                             ▼
+ ┌──────────────┐         ┌──────────────┐              ┌──────────────┐
+ │ Sections.cs  │         │ Fields.cs    │              │ Events.cs    │
+ │              │         │              │              │              │
+ │ • 5 разделов │         │ • Load в UI  │              │ • OnAdd      │
+ │ • список     │         │ • 30 обработ.│              │ • OnRemove   │
+ │ • переключ.  │         │ • парсеры    │              │ • GetCount   │
+ │ • видимость  │         │ • NPC sprite │              │ • выбор след.│
+ └──────────────┘         └──────────────┘              └──────────────┘
+                                 │
+                                 │  использует
+                                 ▼
+                    ┌──────────────────────────┐
+                    │ EventCanvas              │
+                    │ : UserControl            │
+                    │                          │
+                    │ • SetMap / SetEvents     │
+                    │ • SetZoom / Redraw       │
+                    │ • DrawRoofs/TileChanges  │
+                    │ • DrawStairs/Warps/Npcs  │
+                    │ • TileClicked → событие  │
+                    └──────────────────────────┘
+					
+📊 Раскладка EventEditor (что где на экране)
+
+┌───────────┬───────────────────────────────────────────────────────────────┐
+│ ЛЕВАЯ     │ ЦЕНТР                                                          │
+│ (250px)   │                                                                │
+│           │  ┌───────────────────────────────────────────────────────┐    │
+│ MAP       │  │                                                        │    │
+│ [Granseal]│  │              EventCanvas                               │    │
+│           │  │        (карта + подсветки событий)                    │    │
+│ SECTIONS  │  │                                                        │    │
+│ [Roof  ]  │  │                                                        │    │
+│ [Tile  ]  │  └───────────────────────────────────────────────────────┘    │
+│ [Stair ]  │                                                                │
+│ [Warp  ]  │  ┌────────┬──┬─────────┬──┬────┬──┬───────────────────────┐  │
+│ [NPC   ]  │  │ СПИСОК │  │  ПОЛЯ   │  │ +− │  │  MESSAGE / TEXTS      │  │
+│           │  │ (300)  │4 │ (400)   │4 │ 40 │4 │  (тянется *)          │  │
+│ LAYERS    │  │        │  │         │  │    │  │                       │  │
+│ [L1][L2]  │  │ npc1…  │  │ ID: …   │  │[+] │  │  (заглушка)           │  │
+│           │  │ npc2…  │  │ X,Y: …  │  │[−] │  │                       │  │
+│ ZOOM      │  │ npc3…  │  │ Sprite: │  │    │  │                       │  │
+│ [1x]      │  │        │  │ …       │  │    │  │                       │  │
+│           │  │        │  │         │  │    │  │                       │  │
+│           │  └────────┴──┴─────────┴──┴────┴──┴───────────────────────┘  │
+│           │        ↑           ↑         ↑           ↑                     │
+│           │      300px       400px     40px        тянется                 │
+│           │                                                                │
+│           │  высота нижней панели: 200 px                                 │
+└───────────┴───────────────────────────────────────────────────────────────┘
+
+	🔄 Поток данных: клик по карте (MapEditor)
+
  [мышь клик]
     │
     ▼
@@ -176,30 +294,50 @@ MapEditorView.Painting.cs → OnMapTileClicked()
     ├─→ если Grid Mode:      → AssignTypeToMapTile() → MapCanvas.UpdateGridOverlay()
     ├─→ если просто рисование → PaintTile() → MapCanvas.RedrawTile()
     └─→ если Tile Editor:    → ApplyTransform() → TileEditor.RenderTileWithTransform()
+
+	🔄 Поток данных: клик по карте (EventEditor)
 	
-Поток данных: SAVE
+ [мышь клик]
+    │
+    ▼
+EventCanvas.axaml.cs
+    │  событие TileClicked(tx, ty)
+    ▼
+EventEditorView.Canvas.cs → OnCanvasTileClicked()
+    │
+    ├─→ Debug.WriteLine($"[EVENTS] Click at ({tx},{ty})")
+    └─→ PushStatusBar(tx, ty) → StatusChanged?.Invoke(text)
+
+🔄 Поток данных: SAVE (общий для обоих редакторов)
 
 	[клик по кнопке 💾 SAVE]
     │
     ▼
 MainWindow.axaml.cs → OnSaveClick()
-    │  GetActiveEditor() → IEditor
+    │  GetActiveEditor() → IEditor (тот, что сейчас на вкладке)
     ▼
-editor.Save()   (для MapEditor это → MapEditorView.Map.cs → SaveCurrentMap)
+editor.Save()
     │
-    ├─→ MapJsonService.Save()      → data/maps/<map>/layout.json
-    ├─→ TileTypesService.Save()    → data/tile_types/<tileset>.json
-    ├─→ AreasService.Save()        → data/maps/<map>/areas.json
-    └─→ EntriesService.Save()      → data/maps/entries.json
-	
-Поток данных: статус-бар
+    ├─→ MapEditor:  → MapEditorView.Map.cs → SaveCurrentMap()
+    │       ├─→ MapJsonService.Save()      → data/maps/<map>/layout.json
+    │       ├─→ TileTypesService.Save()    → data/tile_types/<tileset>.json
+    │       ├─→ AreasService.Save()        → data/maps/<map>/areas.json
+    │       └─→ EntriesService.Save()      → data/maps/entries.json
+    │
+    └─→ EventEditor: → EventEditorView.Map.cs → SaveCurrentEvents()
+            └─→ EventsService.Save()       → data/maps/<folder>/events.json
+                                           → data/maps/<folder>/NPC_events.json
+                                           → data/maps/<folder>/NPC_script.json
+										   
+🔄 Поток данных: статус-бар (общий)
+
 	[мышь двигается по карте]
     │
     ▼
-MapCanvas.axaml.cs → TileHover(tx, ty)
-    │
+MapCanvas / EventCanvas
+    │  событие TileHover / TileClicked
     ▼
-MapEditorView.Painting.cs → OnMapTileHover()
+MapEditorView.Painting.cs / EventEditorView.Canvas.cs
     │  запоминает _lastHoverX/Y
     ▼
 PushStatusBar()
@@ -213,17 +351,53 @@ MainWindow.axaml.cs → OnEditorStatusChanged()
     ▼
 StatusInfoText.Text = text
 
+🔄 Поток данных: Undo/Redo (только MapEditor)
 
-📐 Правила, чтобы код не превратился в кашу
+ [клик / drag по карте]
+    │
+    ▼
+MapEditorView.Painting.cs
+    │  FinalizeBatch()  ← закрываем предыдущий batch (если был)
+    │  RecordChange(idx, layer, old, new)  ← добавляем изменение в batch
+    ▼
+ OnMapTileReleased
+    │  FinalizeBatch()
+    │  _undoStack.Add(_currentBatch)  ← весь drag = 1 отмена
+    │  _redoStack.Clear()
+    │  UpdateUndoButtons()  ← включаем/выключаем кнопки ↶ ↷
+    ▼
+ [клик по кнопке ↶]
+    │
+    ▼
+MapEditorView.Undo.cs → OnUndoClick()
+    │  ApplySnapshot(old)  ← откатываем все изменения в batch
+    │  _redoStack.Add(rec)
+    │  Redraw()
+
+	📐 Правила, чтобы код не превратился в кашу
 #	Правило	Как соблюдать
-1	Один редактор — одна папка	Хочешь BattleEditor → Editors/BattleEditor/. Не лезь в MapEditor/.
-2	Partial-файлы для больших редакторов	MapEditorView — не один файл на 3000 строк, а 9 partial по 100–400 строк. Каждый — за свою область.
+1	Один редактор — одна папка	Хочешь BattleEditor → Editors/BattleEditor/. Не лезь в MapEditor/ или EventEditor/.
+2	Partial-файлы для больших редакторов	MapEditorView = 11 partial по 100–400 строк. EventEditorView = 7 partial. Каждый — за свою область.
 3	Core — общий для всех	Модели и сервисы в Core/. Любой редактор их использует.
 4	MainWindow знает только IEditor	Никаких ссылок на конкретные классы редакторов. Только интерфейс.
-5	Общение между редакторами — через Core	Не через прямые ссылки. BattleEditor захочет карту — вызовет MapJsonService.Load.
-6	События для взаимодействия с оболочкой	Не пихать логику MainWindow в редактор. Редактор кидает событие — MainWindow его ловит.
-
-
-
-	
-	
+5	Общение между редакторами — через Core	Не через прямые ссылки. EventEditor захочет карту — вызовет MapJsonService.Load.
+6	События для взаимодействия с оболочкой	Не пихать логику MainWindow в редактор. Редактор кидает StatusChanged — MainWindow его ловит.
+7	Отдельный Canvas — отдельный класс	Если редактор хочет свой рендер — создаёт свой *Canvas.axaml. Не модифицирует чужой.
+8	FullRedraw ≠ RedrawCanvas	FullRedraw — только при смене карты (пересоздание 8192 Image). RedrawCanvas — на каждое изменение UI (только оверлей). Это критично для скорости.
+📈 Что уже готово vs что в планах
+Компонент	Статус
+Core.Models (GameMap, MapEntry, TileType, Areas)	✅
+Core.Models (6 моделей событий)	✅
+Core.Services (6 сервисов)	✅
+IEditor (интерфейс)	✅
+MainWindow (оболочка)	✅
+MapEditor (11 файлов)	✅
+EventEditor (7 файлов + EventCanvas)	✅
+BattleEditor	📋 план
+SceneEditor	📋 план
+DatabaseEditor	📋 план
+ASSETS (живое дерево)	📋 план
+СВОЙСТВА (инфо о выбранном)	📋 план
+MESSAGE / TEXTS (редактор диалогов)	📋 план
+Клик по канвасу → заполнить поле	📋 план
+Undo/Redo в EventEditor	📋 план
