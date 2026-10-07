@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:mapEditor="using:RpgShinzoMaker.Desktop.Editors.MapEditor"
+        xmlns:eventEditor="using:RpgShinzoMaker.Desktop.Editors.EventEditor"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="RpgShinzoMaker.Desktop.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
@@ -83,13 +84,7 @@
                 </TabItem>
 
                 <TabItem Header="Эвенты">
-                    <Border Background="#1E1E1E">
-                        <TextBlock Text="Редактор событий"
-                                   Foreground="Gray"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   FontSize="20"/>
-                    </Border>
+                    <eventEditor:EventEditorView x:Name="EventEditor"/>
                 </TabItem>
 
                 <TabItem Header="Бои">

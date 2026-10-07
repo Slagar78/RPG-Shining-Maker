@@ -1,0 +1,16 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RpgShinzoMaker.Desktop.Editors.EventEditor.EventCanvas"
+             Background="#1E1E1E">
+    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto">
+        <Panel x:Name="RootPanel"
+               Background="Transparent"
+               PointerPressed="OnCanvasPointerPressed">
+            <Border x:Name="BgBorder" IsHitTestVisible="False"/>
+            <Canvas x:Name="Layer1Canvas" IsHitTestVisible="False"/>
+            <Canvas x:Name="Layer2Canvas" IsHitTestVisible="False"/>
+            <Canvas x:Name="OverlayCanvas" IsHitTestVisible="False"/>
+        </Panel>
+    </ScrollViewer>
+</UserControl>

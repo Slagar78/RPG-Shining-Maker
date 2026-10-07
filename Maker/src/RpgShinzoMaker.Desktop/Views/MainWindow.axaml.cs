@@ -17,13 +17,16 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        // Мост для статус-бара: MapEditor отправляет текст — MainWindow его ставит
+        // Мост для статус-бара: каждый редактор отправляет текст — MainWindow его ставит
         if (MapEditor != null)
             MapEditor.StatusChanged += OnEditorStatusChanged;
+
+        if (EventEditor != null)
+            EventEditor.StatusChanged += OnEditorStatusChanged;
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   СТАТУС-БАР — приём текста от редактора
+    //   СТАТУС-БАР — приём текста от редакторов
     // ══════════════════════════════════════════════════════════════
     private void OnEditorStatusChanged(string text)
     {
@@ -71,6 +74,9 @@ public partial class MainWindow : Window
         {
             newEditor.OnActivate();
         }
+
+        // Обновить статус-бар на «Готово»
+        StatusText.Text = "Готово";
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -78,7 +84,6 @@ public partial class MainWindow : Window
     // ══════════════════════════════════════════════════════════════
     private IEditor? GetActiveEditor()
     {
-        // EditorTabs ещё не готов — возвращаем null без обращения к нему
         if (EditorTabs == null) return null;
 
         if (EditorTabs.SelectedItem is TabItem tab &&

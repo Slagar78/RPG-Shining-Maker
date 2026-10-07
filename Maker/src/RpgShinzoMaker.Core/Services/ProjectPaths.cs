@@ -27,4 +27,7 @@ public static class ProjectPaths
 
     private static string SafeName(string s) =>
         s.Replace('\\', '_').Replace('/', '_').Replace(':', '_');
+		
+	public static string NpcSpritesDir =>
+	    Path.Combine(Root ?? "", "assets", "mapsprites_NPC");
 }
