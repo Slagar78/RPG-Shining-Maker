@@ -6,7 +6,7 @@
         xmlns:eventEditor="using:RpgShinzoMaker.Desktop.Editors.EventEditor"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="RpgShinzoMaker.Desktop.Views.MainWindow"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/shinzo.ico"
         Title="RpgShinzoMaker"
         Width="1400" Height="900"
         MinWidth="1280" MinHeight="720"
