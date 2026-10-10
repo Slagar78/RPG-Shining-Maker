@@ -172,14 +172,12 @@ public static class EventsService
     {
         var roof = new RoofEvent
         {
-            TileId = obj["tile_id"]?.GetValue<int>() ?? 0,
             StartX = obj["start_x"]?.GetValue<int>() ?? 0,
             StartY = obj["start_y"]?.GetValue<int>() ?? 0,
             EndX   = obj["end_x"]?.GetValue<int>()   ?? 1,
             EndY   = obj["end_y"]?.GetValue<int>()   ?? 1,
         };
 
-        // triggers — массив массивов: [[x, y], [x2, y2]]
         var triggers = obj["triggers"]?.AsArray();
         if (triggers != null && triggers.Count > 0)
         {
@@ -200,7 +198,6 @@ public static class EventsService
             }
         }
 
-        // exits — массив массивов: [[x, y], [x2, y2]]
         var exits = obj["exits"]?.AsArray();
         if (exits != null && exits.Count > 0)
         {
@@ -321,7 +318,6 @@ public static class EventsService
             root.Add(new JsonObject
             {
                 ["type"]     = "roof",
-                ["tile_id"]  = r.TileId,
                 ["start_x"]  = r.StartX,
                 ["start_y"]  = r.StartY,
                 ["end_x"]    = r.EndX,

@@ -117,7 +117,7 @@ public partial class EventEditorView
         {
             case "roof":
                 foreach (var r in _events.Roofs)
-                    result.Add($"Tile {r.TileId} ({r.StartX},{r.StartY})-({r.EndX},{r.EndY})");
+                    result.Add($"({r.StartX},{r.StartY})-({r.EndX},{r.EndY})");
                 break;
 
             case "tile_change":

@@ -82,10 +82,7 @@ public partial class EventEditorView
         }
 
         var r = _events.Roofs[_selectedIndex];
-
-        // Tile ID — только отображение
-        Roof_TileId.Text = r.TileId.ToString();
-
+        
         // Пары X / Y
         SetPair(Roof_StartX, Roof_StartY, r.StartX,    r.StartY,    allowEmpty: false);
         SetPair(Roof_EndX,   Roof_EndY,   r.EndX,      r.EndY,      allowEmpty: false);
@@ -99,7 +96,6 @@ public partial class EventEditorView
 
     private void ClearRoofFields()
     {
-        Roof_TileId.Text = "0";
         Roof_StartX.Text = ""; Roof_StartY.Text = "";
         Roof_EndX.Text   = ""; Roof_EndY.Text   = "";
         Roof_Trig1X.Text = ""; Roof_Trig1Y.Text = "";
@@ -121,27 +117,7 @@ public partial class EventEditorView
             yBox.Text = y >= 0 ? y.ToString() : "";
         }
     }
-
-    /// <summary>Пересчитывает Tile ID по координатам Start из карты (L1 слой).</summary>
-    private void UpdateRoofTileId()
-    {
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-        if (_currentMap == null) return;
-
-        var r = _events.Roofs[_selectedIndex];
-        if (r.StartX < 0 || r.StartY < 0) return;
-        if (r.StartX >= _currentMap.Width || r.StartY >= _currentMap.Height) return;
-
-        int idx = r.StartX * _currentMap.Height + r.StartY;
-        if (idx < 0 || idx >= _currentMap.TotalCells) return;
-
-        int tileId = _currentMap.Tiles[idx];
-        r.TileId = tileId;
-
-        if (Roof_TileId != null)
-            Roof_TileId.Text = tileId.ToString();
-    }
-
+    
     /// <summary>Exit2 активен только если Trig2 заполнен.</summary>
     private void UpdateRoofExit2Enabled()
     {
@@ -167,7 +143,6 @@ public partial class EventEditorView
         if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
 
         _events.Roofs[_selectedIndex].StartX = ParseCoord(Roof_StartX.Text, fallback: 0);
-        UpdateRoofTileId();
         OnFieldChanged();
     }
 
@@ -177,7 +152,6 @@ public partial class EventEditorView
         if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
 
         _events.Roofs[_selectedIndex].StartY = ParseCoord(Roof_StartY.Text, fallback: 0);
-        UpdateRoofTileId();
         OnFieldChanged();
     }
 

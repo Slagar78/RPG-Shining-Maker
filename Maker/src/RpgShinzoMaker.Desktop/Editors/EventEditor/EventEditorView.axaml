@@ -203,21 +203,10 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled">
                             <Panel>
-
                                                                 <!-- ───── ROOF ───── -->
                                 <StackPanel x:Name="RoofPanel" Spacing="3" IsVisible="False">
 
-                                    <!-- Tile ID — только показываем -->
-                                    <Grid ColumnDefinitions="100,*">
-                                        <TextBlock Grid.Column="0" Text="Tile ID:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1"
-                                                   x:Name="Roof_TileId"
-                                                   Text="0"
-                                                   Foreground="#4CAF50"
-                                                   FontWeight="Bold"
-                                                   VerticalAlignment="Center"/>
-                                    </Grid>
-
+                                    
                                     <!-- Start X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Start X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>

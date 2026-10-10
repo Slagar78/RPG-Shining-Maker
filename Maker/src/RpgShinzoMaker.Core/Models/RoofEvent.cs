@@ -3,11 +3,10 @@ namespace RpgShinzoMaker.Core.Models;
 /// <summary>
 /// Roof Event — прямоугольная крыша, которая перекрывает игрока,
 /// когда он заходит за триггеры, и открывается, когда выходит за exits.
+/// Картинка крыши берётся из слоя 2 карты по координатам Start-End.
 /// </summary>
 public class RoofEvent
 {
-    public int TileId  { get; set; } = 0;
-
     public int StartX { get; set; } = 0;
     public int StartY { get; set; } = 0;
     public int EndX   { get; set; } = 1;

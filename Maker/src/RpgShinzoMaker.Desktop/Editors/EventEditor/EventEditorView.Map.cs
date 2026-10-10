@@ -166,7 +166,10 @@ public partial class EventEditorView
     private void OnZoomChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (CanvasControl == null) return;
-        RedrawCanvas();
+        if (_currentMap == null) return;
+
+        // Передать новый зум в канвас — он сам пересчитает все Image
+        CanvasControl.SetZoom(CurrentZoom());
 
         // Обновить зум в статус-баре
         PushStatusBar();
