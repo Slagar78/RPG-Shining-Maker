@@ -7,7 +7,7 @@ include Raylib
 class GameMap
 	attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas,
 				:roof_events, :tile_events, :stair_events, :roof_offsets, :warp_events, :open_doors,
-				:npc_scripts, :local_text
+				:npc_scripts, :local_text, :sub_areas
 	attr_reader :tileset_path
 	attr_reader :roof_layers
 	attr_reader :layer2, :top_layer, :static_bg
@@ -72,6 +72,15 @@ class GameMap
     else
       @areas = []
     end
+	# Sub-areas (0..9) — опциональное поле в первом элементе areas
+	@sub_areas = []
+	if @areas.is_a?(Array) && !@areas.empty?
+	main = @areas[0]
+	raw_sub = main['subAreas']
+	if raw_sub.is_a?(Array)
+	    @sub_areas = raw_sub.first(10)   # максимум 10 (индексы 0..9)
+	  end
+	end
 
     @roof_events = []
 	@roof_offsets = []
@@ -502,6 +511,17 @@ end
     x.between?(start[0], endp[0]) && y.between?(start[1], endp[1])
   end
 
+	# Проверка: находится ли (x,y) в main area ИЛИ в любой subArea
+	def inside_any_area?(x, y)
+	  return true if inside_area?(x, y)
+
+	  @sub_areas.any? do |a|
+		s = a['start']
+		e = a['end']
+		x.between?(s[0], e[0]) && y.between?(s[1], e[1])
+	  end
+	end
+
   def area_bounds
     return nil if @areas.nil? || @areas.empty?
     area = @areas.first
@@ -514,6 +534,27 @@ end
       bottom: (endp[1] + 1) * @tile_size
     }
   end
+
+	# Возвращает bounds для той area, в которой находится (x, y).
+	# Если в subArea — её bounds, иначе — main bounds.
+	def area_bounds_for(x, y)
+	  # Сначала проверяем subAreas
+	  @sub_areas.each do |a|
+		s = a['start']
+		e = a['end']
+		if x.between?(s[0], e[0]) && y.between?(s[1], e[1])
+		  return {
+			left:   s[0] * @tile_size,
+			top:    s[1] * @tile_size - 16,
+			right:  (e[0] + 1) * @tile_size,
+			bottom: (e[1] + 1) * @tile_size
+		  }
+		end
+	  end
+
+	  # Если не в subArea — main
+	  area_bounds
+	end
 
   def default_spawn
     if @areas && !@areas.empty?

@@ -158,7 +158,7 @@ end
     if @map
     return if new_x < 0 || new_x >= @map.width
     return if new_y < 0 || new_y >= @map.height
-    return unless @map.passable?(new_x, new_y, @x, @y) && @map.inside_area?(new_x, new_y)
+    return unless @map.passable?(new_x, new_y, @x, @y) && @map.inside_any_area?(new_x, new_y)
     return if @map.npc_at?(new_x, new_y)                                          # ← стоящие NPC
     return if @map.npcs.any? { |npc| npc.moving_to?(new_x, new_y) }              # ← движущиеся NPC
     else

@@ -590,6 +590,37 @@ end
   end
     EndMode2D()
 	
+	# ══════════════════════════════════════════════════════
+    # МАСКА: чёрные полосы вокруг активной area
+    # ══════════════════════════════════════════════════════
+    if @game_map
+      bounds = @game_map.area_bounds_for(@player.x, @player.y)
+      if bounds
+        cam = @camera.render_camera
+
+        # Экранные координаты area на canvas 576×480
+        sx = bounds[:left]   - cam.target.x + 288
+        sy = bounds[:top]    - cam.target.y + 240
+        sw = bounds[:right]  - bounds[:left]
+        sh = bounds[:bottom] - bounds[:top]
+
+        # Верхняя полоса
+        DrawRectangle(0, 0, 576, sy.to_i, BLACK) if sy > 0
+
+        # Нижняя полоса
+        bottom_y = sy + sh
+        DrawRectangle(0, bottom_y.to_i, 576, (480 - bottom_y).to_i, BLACK) if bottom_y < 480
+
+        # Левая полоса
+        DrawRectangle(0, sy.to_i, sx.to_i, sh.to_i, BLACK) if sx > 0
+
+        # Правая полоса
+        right_x = sx + sw
+        DrawRectangle(right_x.to_i, sy.to_i, (576 - right_x).to_i, sh.to_i, BLACK) if right_x < 576
+      end
+    end
+
+	
 	if @game_state == :dialog && @dialog_manager
 	  @dialog_manager.draw
 	end

@@ -18,30 +18,42 @@ class Camera
     @half_h = 240.0
   end
 
-  def update(player, game_map)
-    tile_size = game_map.tile_size
-    target_x = player.visual_x + tile_size / 2.0
-    target_y = player.visual_y + tile_size / 2.0
+	def update(player, game_map)
+	  tile_size = game_map.tile_size
+	  target_x = player.visual_x + tile_size / 2.0
+	  target_y = player.visual_y + tile_size / 2.0
 
-    if (bounds = game_map.area_bounds)
-      max_x = bounds[:right] - @half_w
-      max_y = bounds[:bottom] - @half_h
-      min_x = bounds[:left] + @half_w
-      min_y = bounds[:top] + @half_h
-    else
-      max_x = game_map.width * tile_size - @half_w
-      max_y = game_map.height * tile_size - @half_h
-      min_x = @half_w
-      min_y = @half_h
-    end
+	  screen_w = 576.0
+	  screen_h = 480.0
 
-    target_x = clamp(target_x, min_x, max_x) if max_x > min_x
-    target_y = clamp(target_y, min_y, max_y) if max_y > min_y
+	  if (bounds = game_map.area_bounds_for(player.x, player.y))
+		area_w = bounds[:right]  - bounds[:left]
+		area_h = bounds[:bottom] - bounds[:top]
 
-    @target_vec.x = target_x
-    @target_vec.y = target_y
-    @camera.target = @target_vec
-  end
+		# По X
+		if area_w <= screen_w
+		  # Area уже экрана — центрируем её
+		  target_x = (bounds[:left] + bounds[:right]) / 2.0
+		else
+		  min_x = bounds[:left]  + screen_w / 2.0
+		  max_x = bounds[:right] - screen_w / 2.0
+		  target_x = clamp(target_x, min_x, max_x)
+		end
+
+		# По Y
+		if area_h <= screen_h
+		  target_y = (bounds[:top] + bounds[:bottom]) / 2.0
+		else
+		  min_y = bounds[:top]    + screen_h / 2.0
+		  max_y = bounds[:bottom] - screen_h / 2.0
+		  target_y = clamp(target_y, min_y, max_y)
+		end
+	  end
+
+	  @target_vec.x = target_x
+	  @target_vec.y = target_y
+	  @camera.target = @target_vec
+	end
 
   def render_camera
     @snapped.target = @camera.target
