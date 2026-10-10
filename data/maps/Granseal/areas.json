@@ -2,6 +2,6 @@
   "mainLayerStart": [0,0],
   "mainLayerEnd": [50,31],
   "subAreas": [
-    { "start": [53,1], "end": [59,8] }
+    { "start": [53,1], "end": [59,6] }
   ]
 }]

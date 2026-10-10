@@ -1,5 +1,6 @@
 // RpgShinzoMaker.Desktop/Editors/MapEditor/MapEditorView.Dialogs.cs
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -19,6 +20,16 @@ namespace RpgShinzoMaker.Desktop.Editors.MapEditor;
 /// </summary>
 public partial class MapEditorView
 {
+    // ─── Временное состояние диалога Areas ───
+    /// <summary>Рабочая копия subAreas во время открытого диалога.</summary>
+    private List<SubArea> _subAreasTemp = new();
+
+    /// <summary>Индекс выбранной subArea в _subAreasTemp (-1 = ничего).</summary>
+    private int _selectedSubAreaIndex = -1;
+
+    /// <summary>Защита от рекурсии при программном изменении NumericUpDown.</summary>
+    private bool _suppressSubFieldEvents;
+    
     // ══════════════════════════════════════════════════════════════
     //   NEW MAP
     // ══════════════════════════════════════════════════════════════
@@ -567,12 +578,13 @@ public partial class MapEditorView
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   AREAS
+    //   AREAS + SUB AREAS
     // ══════════════════════════════════════════════════════════════
     private void OnAreasClick(object? sender, RoutedEventArgs e)
     {
         if (_currentMap == null) return;
 
+        // ─── Main area → в поля ───
         AreaStartX.Value = _area.StartX;
         AreaStartY.Value = _area.StartY;
         AreaWidth.Value  = _area.Width;
@@ -583,7 +595,29 @@ public partial class MapEditorView
         AreaWidth.Maximum  = _currentMap.Width;
         AreaHeight.Maximum = _currentMap.Height;
 
+        // ─── SubAreas → во временный список (глубокая копия) ───
+        _subAreasTemp = new List<SubArea>();
+        foreach (var s in _area.SubAreas)
+            _subAreasTemp.Add(new SubArea(s.StartX, s.StartY, s.EndX, s.EndY));
+
+        _selectedSubAreaIndex = -1;
+        RefreshSubAreasList();
+        UpdateSubAreaFields();
+
         AreaError.IsVisible = false;
+        // Подписка на фильтр цифр для всех полей диалога Areas
+        AttachDigitOnlyFilter(AreaStartX);
+        AttachDigitOnlyFilter(AreaStartY);
+        AttachDigitOnlyFilter(AreaWidth);
+        AttachDigitOnlyFilter(AreaHeight);
+
+        AttachDigitOnlyFilter(SubAreaStartX);
+        AttachDigitOnlyFilter(SubAreaStartY);
+        AttachDigitOnlyFilter(SubAreaEndX);
+        AttachDigitOnlyFilter(SubAreaEndY);
+
+        AreaError.IsVisible = false;
+        AreasOverlay.IsVisible = true;
         AreasOverlay.IsVisible = true;
     }
 
@@ -619,16 +653,195 @@ public partial class MapEditorView
             return;
         }
 
+        // ─── Сохраняем main ───
         _area.StartX = sx;
         _area.StartY = sy;
         _area.EndX   = sx + w - 1;
         _area.EndY   = sy + h - 1;
 
-        Debug.WriteLine($"[AREAS] Установлено: start=({_area.StartX},{_area.StartY}) end=({_area.EndX},{_area.EndY})");
+        // ─── Сохраняем sub-areas ───
+        _area.SubAreas = _subAreasTemp;
+
+        Debug.WriteLine($"[AREAS] main=({_area.StartX},{_area.StartY})-({_area.EndX},{_area.EndY}), sub={_area.SubAreas.Count}");
 
         AreasOverlay.IsVisible = false;
     }
 
+    // ─── SUB AREAS: список ───
+    private void RefreshSubAreasList()
+    {
+        if (SubAreasList == null) return;
+
+        var labels = new List<string>();
+        for (int i = 0; i < _subAreasTemp.Count; i++)
+        {
+            var s = _subAreasTemp[i];
+            labels.Add($"#{i}   ({s.StartX},{s.StartY}) → ({s.EndX},{s.EndY})");
+        }
+
+        SubAreasList.SelectionChanged -= OnSubAreaSelectionChanged;
+        SubAreasList.ItemsSource = labels;
+        SubAreasList.SelectedIndex = _selectedSubAreaIndex;
+        SubAreasList.SelectionChanged += OnSubAreaSelectionChanged;
+
+        if (SubAreasCountText != null)
+            SubAreasCountText.Text = $"{_subAreasTemp.Count} / 10";
+    }
+
+    // ─── SUB AREAS: показать данные выбранной в поля ───
+    private void UpdateSubAreaFields()
+    {
+        bool has = _selectedSubAreaIndex >= 0 && _selectedSubAreaIndex < _subAreasTemp.Count;
+
+        if (SubAreaStartX != null) SubAreaStartX.IsEnabled = has;
+        if (SubAreaStartY != null) SubAreaStartY.IsEnabled = has;
+        if (SubAreaEndX   != null) SubAreaEndX.IsEnabled   = has;
+        if (SubAreaEndY   != null) SubAreaEndY.IsEnabled   = has;
+        if (SubAreaDeleteBtn != null) SubAreaDeleteBtn.IsEnabled = has;
+
+        _suppressSubFieldEvents = true;
+
+        if (!has)
+        {
+            if (SubAreaStartX != null) SubAreaStartX.Value = 0;
+            if (SubAreaStartY != null) SubAreaStartY.Value = 0;
+            if (SubAreaEndX   != null) SubAreaEndX.Value   = 0;
+            if (SubAreaEndY   != null) SubAreaEndY.Value   = 0;
+        }
+        else
+        {
+            var s = _subAreasTemp[_selectedSubAreaIndex];
+            if (SubAreaStartX != null) SubAreaStartX.Value = s.StartX;
+            if (SubAreaStartY != null) SubAreaStartY.Value = s.StartY;
+            if (SubAreaEndX   != null) SubAreaEndX.Value   = s.EndX;
+            if (SubAreaEndY   != null) SubAreaEndY.Value   = s.EndY;
+        }
+
+        _suppressSubFieldEvents = false;
+    }
+
+    // ─── SUB AREAS: выбор в списке ───
+    private void OnSubAreaSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (SubAreasList == null) return;
+        _selectedSubAreaIndex = SubAreasList.SelectedIndex;
+        UpdateSubAreaFields();
+    }
+
+    // ─── SUB AREAS: добавить ───
+    private void OnSubAreaAddClick(object? sender, RoutedEventArgs e)
+    {
+        if (_currentMap == null) return;
+
+        if (_subAreasTemp.Count >= 10)
+        {
+            AreaError.Text = "Maximum 10 sub areas allowed.";
+            AreaError.IsVisible = true;
+            return;
+        }
+        AreaError.IsVisible = false;
+
+        // Новая subArea 2×2 в центре карты
+        int cx = Math.Max(0, _currentMap.Width  / 2 - 1);
+        int cy = Math.Max(0, _currentMap.Height / 2 - 1);
+        int ex = Math.Min(_currentMap.Width  - 1, cx + 1);
+        int ey = Math.Min(_currentMap.Height - 1, cy + 1);
+
+        _subAreasTemp.Add(new SubArea(cx, cy, ex, ey));
+        _selectedSubAreaIndex = _subAreasTemp.Count - 1;
+
+        RefreshSubAreasList();
+        UpdateSubAreaFields();
+    }
+
+    // ─── SUB AREAS: удалить ───
+    private void OnSubAreaDeleteClick(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedSubAreaIndex < 0 || _selectedSubAreaIndex >= _subAreasTemp.Count) return;
+
+        _subAreasTemp.RemoveAt(_selectedSubAreaIndex);
+
+        if (_selectedSubAreaIndex >= _subAreasTemp.Count)
+            _selectedSubAreaIndex = _subAreasTemp.Count - 1;
+
+        RefreshSubAreasList();
+        UpdateSubAreaFields();
+    }
+
+    // ─── SUB AREAS: изменение полей ───
+    private void OnSubAreaFieldChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+    {
+        if (_suppressSubFieldEvents) return;
+        if (_selectedSubAreaIndex < 0 || _selectedSubAreaIndex >= _subAreasTemp.Count) return;
+        if (_currentMap == null) return;
+
+        var s = _subAreasTemp[_selectedSubAreaIndex];
+
+        int sx = (int)(SubAreaStartX?.Value ?? 0);
+        int sy = (int)(SubAreaStartY?.Value ?? 0);
+        int ex = (int)(SubAreaEndX?.Value   ?? 1);
+        int ey = (int)(SubAreaEndY?.Value   ?? 1);
+
+        // Ограничение по карте
+        sx = Math.Clamp(sx, 0, _currentMap.Width  - 1);
+        sy = Math.Clamp(sy, 0, _currentMap.Height - 1);
+        ex = Math.Clamp(ex, 0, _currentMap.Width  - 1);
+        ey = Math.Clamp(ey, 0, _currentMap.Height - 1);
+
+        // Нормализация: start ≤ end
+        if (ex < sx) { int t = sx; sx = ex; ex = t; }
+        if (ey < sy) { int t = sy; sy = ey; ey = t; }
+
+        s.StartX = sx;
+        s.StartY = sy;
+        s.EndX   = ex;
+        s.EndY   = ey;
+
+        RefreshSubAreasList();
+
+        // Восстановить значения (после clamp/normalize)
+        _suppressSubFieldEvents = true;
+        if (SubAreaStartX != null) SubAreaStartX.Value = sx;
+        if (SubAreaStartY != null) SubAreaStartY.Value = sy;
+        if (SubAreaEndX   != null) SubAreaEndX.Value   = ex;
+        if (SubAreaEndY   != null) SubAreaEndY.Value   = ey;
+        _suppressSubFieldEvents = false;
+    }
+    // ══════════════════════════════════════════════════════════════
+    //   ФИЛЬТР ЦИФР для NumericUpDown
+    // ══════════════════════════════════════════════════════════════
+    /// <summary>
+    /// Подписывает NumericUpDown на фильтр ввода: пропускает только цифры.
+    /// Использует Tunnel-стратегию, чтобы перехватить ДО внутреннего TextBox.
+    /// </summary>
+    private void AttachDigitOnlyFilter(NumericUpDown? upDown)
+    {
+        if (upDown == null) return;
+
+        // Защита от повторной подписки
+        upDown.RemoveHandler(InputElement.TextInputEvent, OnDigitOnlyTextInput);
+        upDown.AddHandler(InputElement.TextInputEvent, OnDigitOnlyTextInput,
+            RoutingStrategies.Tunnel);
+    }
+
+    /// <summary>
+    /// Пропускает только цифры 0-9. Всё остальное (буквы, знаки, пробелы)
+    /// помечается Handled, ввод отменяется.
+    /// </summary>
+    private void OnDigitOnlyTextInput(object? sender, TextInputEventArgs e)
+    {
+        if (string.IsNullOrEmpty(e.Text)) return;
+
+        foreach (char c in e.Text)
+        {
+            if (!char.IsDigit(c))
+            {
+                e.Handled = true;
+                return;
+            }
+        }
+    }
+    
     // ══════════════════════════════════════════════════════════════
     //   ВСПОМОГАТЕЛЬНЫЕ — пути по умолчанию для новой карты
     // ══════════════════════════════════════════════════════════════

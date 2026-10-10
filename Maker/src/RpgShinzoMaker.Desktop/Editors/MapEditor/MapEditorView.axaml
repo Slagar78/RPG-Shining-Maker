@@ -691,13 +691,13 @@
             </Border>
         </Grid>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
+                <!-- ═══════════════════════════════════════════════════════════ -->
         <!-- ОВЕРЛЕЙ: Areas                                              -->
         <!-- ═══════════════════════════════════════════════════════════ -->
         <Panel x:Name="AreasOverlay"
                IsVisible="False"
                Background="#80000000">
-            <Border Width="420"
+            <Border Width="560"
                     Background="#2D2D30"
                     BorderBrush="#555555"
                     BorderThickness="1"
@@ -705,14 +705,24 @@
                     Padding="20"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
-                <StackPanel Spacing="12">
+                <StackPanel Spacing="10">
+
                     <TextBlock Text="Areas"
                                FontSize="16" FontWeight="Bold"
                                Foreground="White"/>
 
-                    <Grid ColumnDefinitions="80,*,80,*"
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <!-- MAIN AREA                                       -->
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <TextBlock Text="MAIN AREA"
+                               FontSize="11" FontWeight="Bold"
+                               Foreground="#888888"
+                               Margin="0,4,0,0"/>
+
+                    <Grid ColumnDefinitions="70,*,20,70,*"
                           RowDefinitions="Auto,Auto"
-                          RowSpacing="10" ColumnSpacing="10">
+                          RowSpacing="6" ColumnSpacing="6">
+
                         <TextBlock Grid.Row="0" Grid.Column="0"
                                    Text="Start X:"
                                    Foreground="#CCCCCC"
@@ -723,11 +733,11 @@
                                        FormatString="0"
                                        Increment="1"/>
 
-                        <TextBlock Grid.Row="0" Grid.Column="2"
+                        <TextBlock Grid.Row="0" Grid.Column="3"
                                    Text="Start Y:"
                                    Foreground="#CCCCCC"
                                    VerticalAlignment="Center"/>
-                        <NumericUpDown Grid.Row="0" Grid.Column="3"
+                        <NumericUpDown Grid.Row="0" Grid.Column="4"
                                        x:Name="AreaStartY"
                                        Minimum="0"
                                        FormatString="0"
@@ -743,23 +753,123 @@
                                        FormatString="0"
                                        Increment="1"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="2"
+                        <TextBlock Grid.Row="1" Grid.Column="3"
                                    Text="Height:"
                                    Foreground="#CCCCCC"
                                    VerticalAlignment="Center"/>
-                        <NumericUpDown Grid.Row="1" Grid.Column="3"
+                        <NumericUpDown Grid.Row="1" Grid.Column="4"
                                        x:Name="AreaHeight"
                                        Minimum="2"
                                        FormatString="0"
                                        Increment="1"/>
                     </Grid>
 
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <!-- SUB AREAS                                       -->
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                        <TextBlock Grid.Column="0"
+                                   Text="SUB AREAS"
+                                   FontSize="11" FontWeight="Bold"
+                                   Foreground="#888888"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1"
+                                   x:Name="SubAreasCountText"
+                                   Text="0 / 10"
+                                   FontSize="11"
+                                   Foreground="#888888"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <ListBox x:Name="SubAreasList"
+                             Height="120"
+                             Background="#1E1E1E"
+                             BorderBrush="#3E3E42"
+                             BorderThickness="1"
+                             SelectionChanged="OnSubAreaSelectionChanged">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="FontSize" Value="12"/>
+                                <Setter Property="MinHeight" Value="0"/>
+                                <Setter Property="Padding" Value="6,3"/>
+                            </Style>
+                        </ListBox.Styles>
+                    </ListBox>
+
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="SubAreaAddBtn"
+                                Content="+ Add"
+                                MinWidth="90"
+                                Click="OnSubAreaAddClick"/>
+                        <Button x:Name="SubAreaDeleteBtn"
+                                Content="− Delete"
+                                MinWidth="90"
+                                Click="OnSubAreaDeleteClick"/>
+                    </StackPanel>
+
+                    <!-- Поля выбранной sub-areas -->
+                    <TextBlock Text="Selected sub area:"
+                               FontSize="11"
+                               Foreground="#888888"
+                               Margin="0,6,0,0"/>
+
+                    <Grid ColumnDefinitions="70,*,20,70,*"
+                          RowDefinitions="Auto,Auto"
+                          RowSpacing="6" ColumnSpacing="6">
+
+                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                   Text="Start X:"
+                                   Foreground="#CCCCCC"
+                                   VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Row="0" Grid.Column="1"
+                                       x:Name="SubAreaStartX"
+                                       Minimum="0"
+                                       FormatString="0"
+                                       Increment="1"
+                                       ValueChanged="OnSubAreaFieldChanged"/>
+
+                        <TextBlock Grid.Row="0" Grid.Column="3"
+                                   Text="Start Y:"
+                                   Foreground="#CCCCCC"
+                                   VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Row="0" Grid.Column="4"
+                                       x:Name="SubAreaStartY"
+                                       Minimum="0"
+                                       FormatString="0"
+                                       Increment="1"
+                                       ValueChanged="OnSubAreaFieldChanged"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                   Text="End X:"
+                                   Foreground="#CCCCCC"
+                                   VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Row="1" Grid.Column="1"
+                                       x:Name="SubAreaEndX"
+                                       Minimum="0"
+                                       FormatString="0"
+                                       Increment="1"
+                                       ValueChanged="OnSubAreaFieldChanged"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="3"
+                                   Text="End Y:"
+                                   Foreground="#CCCCCC"
+                                   VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Row="1" Grid.Column="4"
+                                       x:Name="SubAreaEndY"
+                                       Minimum="0"
+                                       FormatString="0"
+                                       Increment="1"
+                                       ValueChanged="OnSubAreaFieldChanged"/>
+                    </Grid>
+
+                    <!-- Сообщение об ошибке -->
                     <TextBlock x:Name="AreaError"
                                Foreground="#E74C3C"
                                FontSize="11"
                                TextWrapping="Wrap"
                                IsVisible="False"/>
 
+                    <!-- Кнопки OK / Cancel -->
                     <StackPanel Orientation="Horizontal"
                                 Spacing="8"
                                 HorizontalAlignment="Right">
@@ -776,7 +886,7 @@
                 </StackPanel>
             </Border>
         </Panel>
-
+        
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!-- ОВЕРЛЕЙ: New Map                                            -->
         <!-- ═══════════════════════════════════════════════════════════ -->
