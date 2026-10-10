@@ -29,6 +29,8 @@ public partial class EventCanvas : UserControl
 
     /// <summary>Событие: клик по клетке карты. (tx, ty).</summary>
     public event Action<int, int>? TileClicked;
+    /// <summary>Событие: наведение мыши на клетку карты. (-1, -1) если мышь вне карты.</summary>
+    public event Action<int, int>? TileHover;
 
     // ─── Состояние ───
     private GameMap? _map;
@@ -36,7 +38,7 @@ public partial class EventCanvas : UserControl
     private MapEvents? _events;
     private string _currentSection = "roof";
     private int _selectedIndex = -1;
-
+    
     private double _zoom = 1.0;
     private int TilePx => (int)(GameMap.TileSize * _zoom);
 
@@ -481,7 +483,32 @@ public partial class EventCanvas : UserControl
 
         TileClicked?.Invoke(tx, ty);
     }
+    // ══════════════════════════════════════════════════════════════
+    //   HOVER — мышь двигается над канвасом
+    // ══════════════════════════════════════════════════════════════
+    private void OnCanvasPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (_map == null) return;
 
+        int ts = TilePx;
+        var p = e.GetPosition(RootPanel);
+        int tx = (int)(p.X / ts);
+        int ty = (int)(p.Y / ts);
+
+        if (tx < 0 || tx >= _map.Width || ty < 0 || ty >= _map.Height)
+        {
+            TileHover?.Invoke(-1, -1);
+            return;
+        }
+
+        TileHover?.Invoke(tx, ty);
+    }
+
+    private void OnCanvasPointerExited(object? sender, PointerEventArgs e)
+    {
+        TileHover?.Invoke(-1, -1);
+    }
+    
     // ══════════════════════════════════════════════════════════════
     //   ШАХМАТНЫЙ ФОН
     // ══════════════════════════════════════════════════════════════

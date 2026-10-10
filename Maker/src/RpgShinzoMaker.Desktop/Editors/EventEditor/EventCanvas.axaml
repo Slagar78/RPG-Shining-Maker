@@ -6,7 +6,9 @@
                   VerticalScrollBarVisibility="Auto">
         <Panel x:Name="RootPanel"
                Background="Transparent"
-               PointerPressed="OnCanvasPointerPressed">
+               PointerPressed="OnCanvasPointerPressed"
+               PointerMoved="OnCanvasPointerMoved"
+               PointerExited="OnCanvasPointerExited">
             <Border x:Name="BgBorder" IsHitTestVisible="False"/>
             <Canvas x:Name="Layer1Canvas" IsHitTestVisible="False"/>
             <Canvas x:Name="Layer2Canvas" IsHitTestVisible="False"/>

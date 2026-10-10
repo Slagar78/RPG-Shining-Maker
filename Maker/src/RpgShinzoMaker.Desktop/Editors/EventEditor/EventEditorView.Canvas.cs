@@ -141,19 +141,42 @@ public partial class EventEditorView
         }
         return 1.0;
     }
-
     // ══════════════════════════════════════════════════════════════
     //   КЛИК ПО КАНВАСУ
     // ══════════════════════════════════════════════════════════════
     private void OnCanvasTileClicked(int tx, int ty)
     {
         System.Diagnostics.Debug.WriteLine($"[EVENTS] Click at ({tx},{ty})");
-        PushStatusBar(tx, ty);
+        // Позже: заполнение координат в активное поле
     }
 
-    private void PushStatusBar(int tx, int ty)
+    // ══════════════════════════════════════════════════════════════
+    //   HOVER ПО КАНВАСУ → СТАТУС-БАР
+    // ══════════════════════════════════════════════════════════════
+    private void OnCanvasTileHover(int tx, int ty)
     {
-        string pos = (tx < 0 || ty < 0) ? "—" : $"{tx}, {ty}";
-        StatusChanged?.Invoke($"Позиция: {pos}");
+        _lastHoverX = tx;
+        _lastHoverY = ty;
+        PushStatusBar();
+    }
+
+    private void PushStatusBar()
+    {
+        string pos = (_lastHoverX < 0 || _lastHoverY < 0)
+            ? "—"
+            : $"{_lastHoverX}, {_lastHoverY}";
+
+        string zoom = CurrentZoomLabel();
+
+        StatusChanged?.Invoke($"Позиция: {pos}    Зум: {zoom}");
+    }
+
+    private string CurrentZoomLabel()
+    {
+        if (ZoomSelector?.SelectedItem is ComboBoxItem item &&
+            item.Content is string text)
+            return text;
+
+        return "1x";
     }
 }

@@ -167,6 +167,9 @@ public partial class EventEditorView
     {
         if (CanvasControl == null) return;
         RedrawCanvas();
+
+        // Обновить зум в статус-баре
+        PushStatusBar();
     }
 
     // ══════════════════════════════════════════════════════════════

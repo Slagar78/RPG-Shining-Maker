@@ -37,10 +37,15 @@
         <!-- Поля: TextBox внутри StackPanel секций — селектор специфичнее темы -->
         <Style Selector="StackPanel TextBox">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Height" Value="22"/>
+            <Setter Property="Height" Value="24"/>
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="Padding" Value="4,0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="Foreground" Value="White"/>
         </Style>
 
         <Style Selector="StackPanel ComboBox">
@@ -199,51 +204,146 @@
                                       HorizontalScrollBarVisibility="Disabled">
                             <Panel>
 
-                                <!-- ───── ROOF ───── -->
+                                                                <!-- ───── ROOF ───── -->
                                 <StackPanel x:Name="RoofPanel" Spacing="3" IsVisible="False">
+
+                                    <!-- Tile ID — только показываем -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Tile ID:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Roof_TileId" TextChanged="OnRoofTileIdChanged"/>
+                                        <TextBlock Grid.Column="1"
+                                                   x:Name="Roof_TileId"
+                                                   Text="0"
+                                                   Foreground="#4CAF50"
+                                                   FontWeight="Bold"
+                                                   VerticalAlignment="Center"/>
                                     </Grid>
+
+                                    <!-- Start X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Start X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Roof_StartXY" TextChanged="OnRoofStartXYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="Roof_StartX" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofStartXChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="Roof_StartY" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofStartYChanged"/>
+                                        </StackPanel>
                                     </Grid>
+
+                                    <!-- End X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="End X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Roof_EndXY" TextChanged="OnRoofEndXYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="Roof_EndX" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofEndXChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="Roof_EndY" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofEndYChanged"/>
+                                        </StackPanel>
                                     </Grid>
+
+                                    <!-- Trig1 X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Trig1 X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Roof_Trig1XY" TextChanged="OnRoofTrig1XYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="Roof_Trig1X" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofTrig1XChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="Roof_Trig1Y" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofTrig1YChanged"/>
+                                        </StackPanel>
                                     </Grid>
+
+                                    <!-- Trig2 X,Y (может быть пустым) -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Trig2 X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Roof_Trig2XY" TextChanged="OnRoofTrig2XYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="Roof_Trig2X" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofTrig2XChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="Roof_Trig2Y" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofTrig2YChanged"/>
+                                        </StackPanel>
                                     </Grid>
+
+                                    <!-- Exit1 X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Exit1 X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Roof_Exit1XY" TextChanged="OnRoofExit1XYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="Roof_Exit1X" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofExit1XChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="Roof_Exit1Y" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofExit1YChanged"/>
+                                        </StackPanel>
                                     </Grid>
+
+                                    <!-- Exit2 X,Y (disabled, если Trig2 пустой) -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Exit2 X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Roof_Exit2XY" TextChanged="OnRoofExit2XYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="Roof_Exit2X" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofExit2XChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="Roof_Exit2Y" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnRoofExit2YChanged"/>
+                                        </StackPanel>
                                     </Grid>
                                 </StackPanel>
 
-                                <!-- ───── TILE CHANGE ───── -->
+                                                                <!-- ───── TILE CHANGE ───── -->
                                 <StackPanel x:Name="TileChangePanel" Spacing="3" IsVisible="False">
+
+                                    <!-- Trigger X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Trigger X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="TC_TriggerXY" TextChanged="OnTCTriggerXYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="TC_TriggerX" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnTCTriggerXChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="TC_TriggerY" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnTCTriggerYChanged"/>
+                                        </StackPanel>
                                     </Grid>
+
+                                    <!-- New Tile (max 5) -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="New Tile:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="TC_NewTile" TextChanged="OnTCNewTileChanged"/>
+                                        <TextBox Grid.Column="1"
+                                                 x:Name="TC_NewTile"
+                                                 Width="70"
+                                                 MaxLength="5"
+                                                 HorizontalAlignment="Left"
+                                                 TextInput="OnCoordTextInput"
+                                                 TextChanged="OnTCNewTileChanged"/>
                                     </Grid>
+
+                                    <!-- Close X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Close X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="TC_CloseXY" TextChanged="OnTCCloseXYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="TC_CloseX" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnTCCloseXChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="TC_CloseY" Width="45" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnTCCloseYChanged"/>
+                                        </StackPanel>
                                     </Grid>
                                 </StackPanel>
 

@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using RpgShinzoMaker.Core.Services;
@@ -18,10 +19,6 @@ public partial class EventEditorView
     // ══════════════════════════════════════════════════════════════
     //   ЗАГРУЗКА ВЫБРАННОГО СОБЫТИЯ В ПОЛЯ
     // ══════════════════════════════════════════════════════════════
-    /// <summary>
-    /// Копирует данные выбранного события в текстовые поля.
-    /// Блокирует TextChanged, чтобы не было рекурсии.
-    /// </summary>
     private void LoadSelectedIntoFields()
     {
         _suppressFieldEvents = true;
@@ -43,7 +40,39 @@ public partial class EventEditorView
         }
     }
 
-    // ─── Roof ───
+    // ══════════════════════════════════════════════════════════════
+    //   ОБЩИЙ ФИЛЬТР ВВОДА — только цифры, макс 3 символа
+    // ══════════════════════════════════════════════════════════════
+    private void OnCoordTextInput(object? sender, TextInputEventArgs e)
+    {
+        if (string.IsNullOrEmpty(e.Text)) return;
+
+        // Только цифры
+        foreach (char c in e.Text)
+        {
+            if (!char.IsDigit(c))
+            {
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Ограничение длины по MaxLength TextBox
+        if (sender is TextBox tb)
+        {
+            int maxLen = tb.MaxLength > 0 ? tb.MaxLength : 3;
+            int currentLen = tb.Text?.Length ?? 0;
+            int selLen = Math.Abs(tb.SelectionEnd - tb.SelectionStart);
+            int effectiveLen = currentLen - selLen;
+
+            if (effectiveLen + e.Text.Length > maxLen)
+                e.Handled = true;
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //   ROOF — загрузка в поля
+    // ══════════════════════════════════════════════════════════════
     private void LoadRoof()
     {
         if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count)
@@ -53,44 +82,293 @@ public partial class EventEditorView
         }
 
         var r = _events.Roofs[_selectedIndex];
-        Roof_TileId.Text   = r.TileId.ToString();
-        Roof_StartXY.Text  = $"{r.StartX},{r.StartY}";
-        Roof_EndXY.Text    = $"{r.EndX},{r.EndY}";
-        Roof_Trig1XY.Text  = r.TriggerX  >= 0 ? $"{r.TriggerX},{r.TriggerY}"   : "-";
-        Roof_Trig2XY.Text  = r.Trigger2X >= 0 ? $"{r.Trigger2X},{r.Trigger2Y}" : "-";
-        Roof_Exit1XY.Text  = r.ExitX     >= 0 ? $"{r.ExitX},{r.ExitY}"         : "-";
-        Roof_Exit2XY.Text  = r.Exit2X    >= 0 ? $"{r.Exit2X},{r.Exit2Y}"       : "-";
+
+        // Tile ID — только отображение
+        Roof_TileId.Text = r.TileId.ToString();
+
+        // Пары X / Y
+        SetPair(Roof_StartX, Roof_StartY, r.StartX,    r.StartY,    allowEmpty: false);
+        SetPair(Roof_EndX,   Roof_EndY,   r.EndX,      r.EndY,      allowEmpty: false);
+        SetPair(Roof_Trig1X, Roof_Trig1Y, r.TriggerX,  r.TriggerY,  allowEmpty: true);
+        SetPair(Roof_Trig2X, Roof_Trig2Y, r.Trigger2X, r.Trigger2Y, allowEmpty: true);
+        SetPair(Roof_Exit1X, Roof_Exit1Y, r.ExitX,     r.ExitY,     allowEmpty: true);
+        SetPair(Roof_Exit2X, Roof_Exit2Y, r.Exit2X,    r.Exit2Y,    allowEmpty: true);
+
+        UpdateRoofExit2Enabled();
     }
 
     private void ClearRoofFields()
     {
-        Roof_TileId.Text  = "0";
-        Roof_StartXY.Text = "0,0";
-        Roof_EndXY.Text   = "1,1";
-        Roof_Trig1XY.Text = "-";
-        Roof_Trig2XY.Text = "-";
-        Roof_Exit1XY.Text = "-";
-        Roof_Exit2XY.Text = "-";
+        Roof_TileId.Text = "0";
+        Roof_StartX.Text = ""; Roof_StartY.Text = "";
+        Roof_EndX.Text   = ""; Roof_EndY.Text   = "";
+        Roof_Trig1X.Text = ""; Roof_Trig1Y.Text = "";
+        Roof_Trig2X.Text = ""; Roof_Trig2Y.Text = "";
+        Roof_Exit1X.Text = ""; Roof_Exit1Y.Text = "";
+        Roof_Exit2X.Text = ""; Roof_Exit2Y.Text = "";
     }
 
-    // ─── Tile Change ───
+    private static void SetPair(TextBox xBox, TextBox yBox, int x, int y, bool allowEmpty)
+    {
+        if (allowEmpty && (x < 0 || y < 0))
+        {
+            xBox.Text = "";
+            yBox.Text = "";
+        }
+        else
+        {
+            xBox.Text = x >= 0 ? x.ToString() : "";
+            yBox.Text = y >= 0 ? y.ToString() : "";
+        }
+    }
+
+    /// <summary>Пересчитывает Tile ID по координатам Start из карты (L1 слой).</summary>
+    private void UpdateRoofTileId()
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+        if (_currentMap == null) return;
+
+        var r = _events.Roofs[_selectedIndex];
+        if (r.StartX < 0 || r.StartY < 0) return;
+        if (r.StartX >= _currentMap.Width || r.StartY >= _currentMap.Height) return;
+
+        int idx = r.StartX * _currentMap.Height + r.StartY;
+        if (idx < 0 || idx >= _currentMap.TotalCells) return;
+
+        int tileId = _currentMap.Tiles[idx];
+        r.TileId = tileId;
+
+        if (Roof_TileId != null)
+            Roof_TileId.Text = tileId.ToString();
+    }
+
+    /// <summary>Exit2 активен только если Trig2 заполнен.</summary>
+    private void UpdateRoofExit2Enabled()
+    {
+        if (Roof_Exit2X == null || Roof_Exit2Y == null) return;
+
+        bool trig2Filled = !string.IsNullOrEmpty(Roof_Trig2X.Text)
+                        || !string.IsNullOrEmpty(Roof_Trig2Y.Text);
+
+        Roof_Exit2X.IsEnabled = trig2Filled;
+        Roof_Exit2Y.IsEnabled = trig2Filled;
+
+        if (!trig2Filled)
+        {
+            Roof_Exit2X.Text = "";
+            Roof_Exit2Y.Text = "";
+        }
+    }
+
+    // ─── ROOF — обработчики Start ───
+    private void OnRoofStartXChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        _events.Roofs[_selectedIndex].StartX = ParseCoord(Roof_StartX.Text, fallback: 0);
+        UpdateRoofTileId();
+        OnFieldChanged();
+    }
+
+    private void OnRoofStartYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        _events.Roofs[_selectedIndex].StartY = ParseCoord(Roof_StartY.Text, fallback: 0);
+        UpdateRoofTileId();
+        OnFieldChanged();
+    }
+
+    // ─── ROOF — обработчики End ───
+    private void OnRoofEndXChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        _events.Roofs[_selectedIndex].EndX = ParseCoord(Roof_EndX.Text, fallback: 1);
+        OnFieldChanged();
+    }
+
+    private void OnRoofEndYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        _events.Roofs[_selectedIndex].EndY = ParseCoord(Roof_EndY.Text, fallback: 1);
+        OnFieldChanged();
+    }
+
+    // ─── ROOF — обработчики Trig1 ───
+    private void OnRoofTrig1XChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        var r = _events.Roofs[_selectedIndex];
+        int oldX = r.TriggerX;
+        r.TriggerX = ParseCoord(Roof_Trig1X.Text, fallback: -1);
+
+        if (r.TriggerX < 0) r.TriggerY = -1;
+        else if (oldX < 0 && r.TriggerY < 0) r.TriggerY = 0;
+
+        OnFieldChanged();
+    }
+
+    private void OnRoofTrig1YChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        var r = _events.Roofs[_selectedIndex];
+        r.TriggerY = ParseCoord(Roof_Trig1Y.Text, fallback: -1);
+
+        if (r.TriggerY < 0) r.TriggerX = -1;
+        else if (r.TriggerX < 0) r.TriggerX = 0;
+
+        OnFieldChanged();
+    }
+
+    // ─── ROOF — обработчики Trig2 ───
+    private void OnRoofTrig2XChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        var r = _events.Roofs[_selectedIndex];
+        int oldX = r.Trigger2X;
+        r.Trigger2X = ParseCoord(Roof_Trig2X.Text, fallback: -1);
+
+        if (r.Trigger2X < 0) r.Trigger2Y = -1;
+        else if (oldX < 0 && r.Trigger2Y < 0) r.Trigger2Y = 0;
+
+        UpdateRoofExit2Enabled();
+        OnFieldChanged();
+    }
+
+    private void OnRoofTrig2YChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        var r = _events.Roofs[_selectedIndex];
+        r.Trigger2Y = ParseCoord(Roof_Trig2Y.Text, fallback: -1);
+
+        if (r.Trigger2Y < 0) r.Trigger2X = -1;
+        else if (r.Trigger2X < 0) r.Trigger2X = 0;
+
+        UpdateRoofExit2Enabled();
+        OnFieldChanged();
+    }
+
+    // ─── ROOF — обработчики Exit1 ───
+    private void OnRoofExit1XChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        var r = _events.Roofs[_selectedIndex];
+        int oldX = r.ExitX;
+        r.ExitX = ParseCoord(Roof_Exit1X.Text, fallback: -1);
+
+        if (r.ExitX < 0) r.ExitY = -1;
+        else if (oldX < 0 && r.ExitY < 0) r.ExitY = 0;
+
+        OnFieldChanged();
+    }
+
+    private void OnRoofExit1YChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        var r = _events.Roofs[_selectedIndex];
+        r.ExitY = ParseCoord(Roof_Exit1Y.Text, fallback: -1);
+
+        if (r.ExitY < 0) r.ExitX = -1;
+        else if (r.ExitX < 0) r.ExitX = 0;
+
+        OnFieldChanged();
+    }
+
+    // ─── ROOF — обработчики Exit2 ───
+    private void OnRoofExit2XChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        var r = _events.Roofs[_selectedIndex];
+        int oldX = r.Exit2X;
+        r.Exit2X = ParseCoord(Roof_Exit2X.Text, fallback: -1);
+
+        if (r.Exit2X < 0) r.Exit2Y = -1;
+        else if (oldX < 0 && r.Exit2Y < 0) r.Exit2Y = 0;
+
+        OnFieldChanged();
+    }
+
+    private void OnRoofExit2YChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        var r = _events.Roofs[_selectedIndex];
+        r.Exit2Y = ParseCoord(Roof_Exit2Y.Text, fallback: -1);
+
+        if (r.Exit2Y < 0) r.Exit2X = -1;
+        else if (r.Exit2X < 0) r.Exit2X = 0;
+
+        OnFieldChanged();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //   TILE CHANGE — загрузка в поля
+    // ══════════════════════════════════════════════════════════════
     private void LoadTileChange()
     {
         if (_selectedIndex < 0 || _selectedIndex >= _events.TileChanges.Count)
         {
-            TC_TriggerXY.Text = "-";
-            TC_NewTile.Text   = "0";
-            TC_CloseXY.Text   = "-";
+            TC_TriggerX.Text = "";
+            TC_TriggerY.Text = "";
+            TC_NewTile.Text  = "0";
+            TC_CloseX.Text   = "";
+            TC_CloseY.Text   = "";
             return;
         }
 
         var tc = _events.TileChanges[_selectedIndex];
-        TC_TriggerXY.Text = tc.TriggerX >= 0 ? $"{tc.TriggerX},{tc.TriggerY}" : "-";
-        TC_NewTile.Text   = tc.NewTileId.ToString();
-        TC_CloseXY.Text   = tc.CloseX   >= 0 ? $"{tc.CloseX},{tc.CloseY}"     : "-";
+
+        // Trigger
+        if (tc.TriggerX >= 0 && tc.TriggerY >= 0)
+        {
+            TC_TriggerX.Text = tc.TriggerX.ToString();
+            TC_TriggerY.Text = tc.TriggerY.ToString();
+        }
+        else
+        {
+            TC_TriggerX.Text = "";
+            TC_TriggerY.Text = "";
+        }
+
+        TC_NewTile.Text = tc.NewTileId.ToString();
+
+        // Close
+        if (tc.CloseX >= 0 && tc.CloseY >= 0)
+        {
+            TC_CloseX.Text = tc.CloseX.ToString();
+            TC_CloseY.Text = tc.CloseY.ToString();
+        }
+        else
+        {
+            TC_CloseX.Text = "";
+            TC_CloseY.Text = "";
+        }
     }
 
-    // ─── Stair ───
+    // ══════════════════════════════════════════════════════════════
+    //   STAIR — загрузка в поля
+    // ══════════════════════════════════════════════════════════════
     private void LoadStair()
     {
         if (_selectedIndex < 0 || _selectedIndex >= _events.Stairs.Count)
@@ -107,7 +385,9 @@ public partial class EventEditorView
         St_Direction.Text = st.Direction.ToString();
     }
 
-    // ─── Warp ───
+    // ══════════════════════════════════════════════════════════════
+    //   WARP — загрузка в поля
+    // ══════════════════════════════════════════════════════════════
     private void LoadWarp()
     {
         if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count)
@@ -126,7 +406,9 @@ public partial class EventEditorView
         W_Facing.Text    = w.Facing.ToString();
     }
 
-    // ─── NPC ───
+    // ══════════════════════════════════════════════════════════════
+    //   NPC — загрузка в поля
+    // ══════════════════════════════════════════════════════════════
     private void LoadNpc()
     {
         if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count)
@@ -163,7 +445,7 @@ public partial class EventEditorView
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   ПАРСЕРЫ
+    //   ХЕЛПЕРЫ
     // ══════════════════════════════════════════════════════════════
     private static int? ParseInt(string s)
     {
@@ -184,136 +466,42 @@ public partial class EventEditorView
     private static bool IsDash(string s) =>
         string.IsNullOrEmpty(s) || s.Trim() == "-";
 
-    // ══════════════════════════════════════════════════════════════
-    //   ОБРАБОТЧИКИ ROOF
-    // ══════════════════════════════════════════════════════════════
-    private void OnRoofTileIdChanged(object? sender, TextChangedEventArgs e)
+    /// <summary>Парсит текст как целое. Пустая строка = fallback.</summary>
+    private static int ParseCoord(string? text, int fallback)
     {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-
-        var v = ParseInt(Roof_TileId.Text ?? "");
-        if (v.HasValue) _events.Roofs[_selectedIndex].TileId = v.Value;
-    }
-
-    private void OnRoofStartXYChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-
-        var p = ParsePair(Roof_StartXY.Text ?? "");
-        if (p.HasValue)
-        {
-            _events.Roofs[_selectedIndex].StartX = p.Value.x;
-            _events.Roofs[_selectedIndex].StartY = p.Value.y;
-            OnFieldChanged();
-        }
-    }
-
-    private void OnRoofEndXYChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-
-        var p = ParsePair(Roof_EndXY.Text ?? "");
-        if (p.HasValue)
-        {
-            _events.Roofs[_selectedIndex].EndX = p.Value.x;
-            _events.Roofs[_selectedIndex].EndY = p.Value.y;
-            OnFieldChanged();
-        }
-    }
-
-    private void OnRoofTrig1XYChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-
-        var r = _events.Roofs[_selectedIndex];
-        if (IsDash(Roof_Trig1XY.Text ?? ""))
-        {
-            r.TriggerX = r.TriggerY = -1;
-        }
-        else
-        {
-            var p = ParsePair(Roof_Trig1XY.Text ?? "");
-            if (p.HasValue) { r.TriggerX = p.Value.x; r.TriggerY = p.Value.y; }
-        }
-        OnFieldChanged();
-    }
-
-    private void OnRoofTrig2XYChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-
-        var r = _events.Roofs[_selectedIndex];
-        if (IsDash(Roof_Trig2XY.Text ?? ""))
-        {
-            r.Trigger2X = r.Trigger2Y = -1;
-        }
-        else
-        {
-            var p = ParsePair(Roof_Trig2XY.Text ?? "");
-            if (p.HasValue) { r.Trigger2X = p.Value.x; r.Trigger2Y = p.Value.y; }
-        }
-        OnFieldChanged();
-    }
-
-    private void OnRoofExit1XYChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-
-        var r = _events.Roofs[_selectedIndex];
-        if (IsDash(Roof_Exit1XY.Text ?? ""))
-        {
-            r.ExitX = r.ExitY = -1;
-        }
-        else
-        {
-            var p = ParsePair(Roof_Exit1XY.Text ?? "");
-            if (p.HasValue) { r.ExitX = p.Value.x; r.ExitY = p.Value.y; }
-        }
-        OnFieldChanged();
-    }
-
-    private void OnRoofExit2XYChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-
-        var r = _events.Roofs[_selectedIndex];
-        if (IsDash(Roof_Exit2XY.Text ?? ""))
-        {
-            r.Exit2X = r.Exit2Y = -1;
-        }
-        else
-        {
-            var p = ParsePair(Roof_Exit2XY.Text ?? "");
-            if (p.HasValue) { r.Exit2X = p.Value.x; r.Exit2Y = p.Value.y; }
-        }
-        OnFieldChanged();
+        if (string.IsNullOrWhiteSpace(text)) return fallback;
+        return int.TryParse(text.Trim(), out int v) ? v : fallback;
     }
 
     // ══════════════════════════════════════════════════════════════
     //   ОБРАБОТЧИКИ TILE CHANGE
     // ══════════════════════════════════════════════════════════════
-    private void OnTCTriggerXYChanged(object? sender, TextChangedEventArgs e)
+        private void OnTCTriggerXChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.TileChanges.Count) return;
 
         var tc = _events.TileChanges[_selectedIndex];
-        if (IsDash(TC_TriggerXY.Text ?? ""))
-        {
-            tc.TriggerX = tc.TriggerY = -1;
-        }
-        else
-        {
-            var p = ParsePair(TC_TriggerXY.Text ?? "");
-            if (p.HasValue) { tc.TriggerX = p.Value.x; tc.TriggerY = p.Value.y; }
-        }
+        int oldX = tc.TriggerX;
+        tc.TriggerX = ParseCoord(TC_TriggerX.Text, fallback: -1);
+
+        if (tc.TriggerX < 0) tc.TriggerY = -1;
+        else if (oldX < 0 && tc.TriggerY < 0) tc.TriggerY = 0;
+
+        OnFieldChanged();
+    }
+
+    private void OnTCTriggerYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.TileChanges.Count) return;
+
+        var tc = _events.TileChanges[_selectedIndex];
+        tc.TriggerY = ParseCoord(TC_TriggerY.Text, fallback: -1);
+
+        if (tc.TriggerY < 0) tc.TriggerX = -1;
+        else if (tc.TriggerX < 0) tc.TriggerX = 0;
+
         OnFieldChanged();
     }
 
@@ -326,21 +514,32 @@ public partial class EventEditorView
         if (v.HasValue) _events.TileChanges[_selectedIndex].NewTileId = v.Value;
     }
 
-    private void OnTCCloseXYChanged(object? sender, TextChangedEventArgs e)
+    private void OnTCCloseXChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.TileChanges.Count) return;
 
         var tc = _events.TileChanges[_selectedIndex];
-        if (IsDash(TC_CloseXY.Text ?? ""))
-        {
-            tc.CloseX = tc.CloseY = -1;
-        }
-        else
-        {
-            var p = ParsePair(TC_CloseXY.Text ?? "");
-            if (p.HasValue) { tc.CloseX = p.Value.x; tc.CloseY = p.Value.y; }
-        }
+        int oldX = tc.CloseX;
+        tc.CloseX = ParseCoord(TC_CloseX.Text, fallback: -1);
+
+        if (tc.CloseX < 0) tc.CloseY = -1;
+        else if (oldX < 0 && tc.CloseY < 0) tc.CloseY = 0;
+
+        OnFieldChanged();
+    }
+
+    private void OnTCCloseYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.TileChanges.Count) return;
+
+        var tc = _events.TileChanges[_selectedIndex];
+        tc.CloseY = ParseCoord(TC_CloseY.Text, fallback: -1);
+
+        if (tc.CloseY < 0) tc.CloseX = -1;
+        else if (tc.CloseX < 0) tc.CloseX = 0;
+
         OnFieldChanged();
     }
 
@@ -550,7 +749,6 @@ public partial class EventEditorView
         int next = (cur + delta + _npcSpriteNames.Count) % _npcSpriteNames.Count;
         string newName = _npcSpriteNames[next];
 
-        // Обновляем текстовое поле (это триггерит TextChanged → OnNpcSpriteChanged)
         Npc_Sprite.Text = newName;
     }
 
@@ -573,7 +771,6 @@ public partial class EventEditorView
                 return;
             }
 
-            // Лист 96×144 = 2×3 клетки 48×48. Берём нижний левый кадр.
             var full = new Bitmap(path);
 
             if (full.PixelSize.Width  >= 48 &&
@@ -585,7 +782,6 @@ public partial class EventEditorView
             }
             else
             {
-                // На всякий случай — просто целиком
                 Npc_SpritePreview.Source = full;
             }
         }
@@ -597,21 +793,15 @@ public partial class EventEditorView
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   ОБЩИЙ ХУК — ПЕРЕРИСОВКА КАНВАСА И СПИСКА ПОСЛЕ ПРАВКИ ПОЛЯ
+    //   ОБЩИЙ ХУК
     // ══════════════════════════════════════════════════════════════
-    /// <summary>
-    /// Вызывается из любого TextChanged, когда изменение координат/типа
-    /// влияет на вид на карте. Обновляет подсветки и заголовок в списке.
-    /// </summary>
     private void OnFieldChanged()
     {
-        // Обновить подсветки на канвасе
         if (CanvasControl != null && _currentMap != null)
         {
             CanvasControl.SetEvents(_events, _currentSection, _selectedIndex);
         }
 
-        // Обновить строку в списке (без сброса выделения)
         int keepIndex = _selectedIndex;
         RefreshEventList();
         EventList.SelectedIndex = keepIndex;

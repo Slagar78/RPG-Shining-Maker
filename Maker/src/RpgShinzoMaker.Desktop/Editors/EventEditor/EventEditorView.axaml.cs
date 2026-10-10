@@ -41,6 +41,10 @@ public partial class EventEditorView : UserControl, IEditor
 
     /// <summary>Индекс выбранного события в текущем разделе (-1 = нет).</summary>
     private int _selectedIndex = -1;
+    
+    /// <summary>Последняя позиция курсора на карте (-1 = вне карты).</summary>
+    private int _lastHoverX = -1;
+    private int _lastHoverY = -1;
 
     // ─── Слои ───
     private bool _showLayer1 = true;
@@ -67,7 +71,7 @@ public partial class EventEditorView : UserControl, IEditor
 
         // Подписка на клик по канвасу
         CanvasControl.TileClicked += OnCanvasTileClicked;
-
+        CanvasControl.TileHover   += OnCanvasTileHover;
         // Загрузить проект (метод из Map.cs)
         LoadProject();
     }
