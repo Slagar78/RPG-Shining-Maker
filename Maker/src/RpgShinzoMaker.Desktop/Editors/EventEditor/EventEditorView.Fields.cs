@@ -5,6 +5,7 @@ using System.IO;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;   // ← для SolidColorBrush / Color
 using Avalonia.Media.Imaging;
 using RpgShinzoMaker.Core.Services;
 
@@ -347,16 +348,20 @@ public partial class EventEditorView
     {
         if (_selectedIndex < 0 || _selectedIndex >= _events.Stairs.Count)
         {
-            St_StartXY.Text   = "0,0";
-            St_EndXY.Text     = "1,1";
-            St_Direction.Text = "0";
+            St_StartX.Text = "0";
+            St_StartY.Text = "0";
+            St_EndX.Text   = "1";
+            St_EndY.Text   = "1";
+            SetStairDirectionUI(0);
             return;
         }
 
         var st = _events.Stairs[_selectedIndex];
-        St_StartXY.Text   = $"{st.StartX},{st.StartY}";
-        St_EndXY.Text     = $"{st.EndX},{st.EndY}";
-        St_Direction.Text = st.Direction.ToString();
+        St_StartX.Text = st.StartX.ToString();
+        St_StartY.Text = st.StartY.ToString();
+        St_EndX.Text   = st.EndX.ToString();
+        St_EndY.Text   = st.EndY.ToString();
+        SetStairDirectionUI(st.Direction);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -518,45 +523,85 @@ public partial class EventEditorView
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   ОБРАБОТЧИКИ STAIR
+    //   ОБРАБОТЧИКИ STAIR — координаты
     // ══════════════════════════════════════════════════════════════
-    private void OnStStartXYChanged(object? sender, TextChangedEventArgs e)
+    private void OnStStartXChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.Stairs.Count) return;
 
-        var p = ParsePair(St_StartXY.Text ?? "");
-        if (p.HasValue)
-        {
-            _events.Stairs[_selectedIndex].StartX = p.Value.x;
-            _events.Stairs[_selectedIndex].StartY = p.Value.y;
-            OnFieldChanged();
-        }
-    }
-
-    private void OnStEndXYChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Stairs.Count) return;
-
-        var p = ParsePair(St_EndXY.Text ?? "");
-        if (p.HasValue)
-        {
-            _events.Stairs[_selectedIndex].EndX = p.Value.x;
-            _events.Stairs[_selectedIndex].EndY = p.Value.y;
-            OnFieldChanged();
-        }
-    }
-
-    private void OnStDirectionChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Stairs.Count) return;
-
-        var v = ParseInt(St_Direction.Text ?? "");
-        if (v.HasValue && (v.Value == 0 || v.Value == 1))
-            _events.Stairs[_selectedIndex].Direction = v.Value;
+        _events.Stairs[_selectedIndex].StartX = ParseCoord(St_StartX.Text, fallback: 0);
         OnFieldChanged();
+    }
+
+    private void OnStStartYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Stairs.Count) return;
+
+        _events.Stairs[_selectedIndex].StartY = ParseCoord(St_StartY.Text, fallback: 0);
+        OnFieldChanged();
+    }
+
+    private void OnStEndXChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Stairs.Count) return;
+
+        _events.Stairs[_selectedIndex].EndX = ParseCoord(St_EndX.Text, fallback: 1);
+        OnFieldChanged();
+    }
+
+    private void OnStEndYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Stairs.Count) return;
+
+        _events.Stairs[_selectedIndex].EndY = ParseCoord(St_EndY.Text, fallback: 1);
+        OnFieldChanged();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //   ОБРАБОТЧИКИ STAIR — направление (0 = влево, 1 = вправо)
+    // ══════════════════════════════════════════════════════════════
+    private void OnStDirLeftClick(object? sender, RoutedEventArgs e)  => SetStairDirection(0);
+    private void OnStDirRightClick(object? sender, RoutedEventArgs e) => SetStairDirection(1);
+
+    private void SetStairDirection(int direction)
+    {
+        // Сначала обновляем вид — даже если события подавлены
+        SetStairDirectionUI(direction);
+
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Stairs.Count) return;
+
+        _events.Stairs[_selectedIndex].Direction = direction;
+        OnFieldChanged();
+    }
+
+    /// <summary>Обновляет подсветку кнопок ← → и подпись «влево» / «вправо».</summary>
+    private void SetStairDirectionUI(int direction)
+    {
+        if (St_DirLeftBtn  == null) return;
+        if (St_DirRightBtn == null) return;
+        if (St_DirLabel    == null) return;
+
+        bool isLeft = direction == 0;
+
+        St_DirLeftBtn.IsChecked  = isLeft;
+        St_DirRightBtn.IsChecked = !isLeft;
+
+        St_DirLeftBtn.Background = new SolidColorBrush(
+            Color.Parse(isLeft ? "#3E5F8A" : "#3E3E42"));
+        St_DirRightBtn.Background = new SolidColorBrush(
+            Color.Parse(!isLeft ? "#3E5F8A" : "#3E3E42"));
+
+        St_DirLeftBtn.Foreground = new SolidColorBrush(
+            Color.Parse(isLeft ? "#FFFFFF" : "#CCCCCC"));
+        St_DirRightBtn.Foreground = new SolidColorBrush(
+            Color.Parse(!isLeft ? "#FFFFFF" : "#CCCCCC"));
+
+        St_DirLabel.Text = isLeft ? "left" : "right";
     }
 
     // ══════════════════════════════════════════════════════════════

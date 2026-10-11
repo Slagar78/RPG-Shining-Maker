@@ -336,20 +336,63 @@
                                     </Grid>
                                 </StackPanel>
 
-                                <!-- ───── STAIR ───── -->
+                                                                <!-- ───── STAIR ───── -->
                                 <StackPanel x:Name="StairPanel" Spacing="3" IsVisible="False">
+
+                                    <!-- Start X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Start X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="St_StartXY" TextChanged="OnStStartXYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="St_StartX" Width="40" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnStStartXChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="St_StartY" Width="40" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnStStartYChanged"/>
+                                        </StackPanel>
                                     </Grid>
+
+                                    <!-- End X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="End X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="St_EndXY" TextChanged="OnStEndXYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="St_EndX" Width="40" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnStEndXChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="St_EndY" Width="40" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnStEndYChanged"/>
+                                        </StackPanel>
                                     </Grid>
+
+                                    <!-- Direction: две ToggleButton + подпись -->
                                     <Grid ColumnDefinitions="100,*">
-                                        <TextBlock Grid.Column="0" Text="Direction (0/1):" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="St_Direction" TextChanged="OnStDirectionChanged"/>
+                                        <TextBlock Grid.Column="0" Text="Direction:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <ToggleButton x:Name="St_DirLeftBtn"
+                                                          Content="←"
+                                                          Width="32" Height="24" Padding="0"
+                                                          FontSize="14" FontWeight="Bold"
+                                                          HorizontalContentAlignment="Center"
+                                                          VerticalContentAlignment="Center"
+                                                          Click="OnStDirLeftClick"/>
+                                            <ToggleButton x:Name="St_DirRightBtn"
+                                                          Content="→"
+                                                          Width="32" Height="24" Padding="0"
+                                                          FontSize="14" FontWeight="Bold"
+                                                          HorizontalContentAlignment="Center"
+                                                          VerticalContentAlignment="Center"
+                                                          Click="OnStDirRightClick"/>
+                                            <TextBlock x:Name="St_DirLabel"
+                                                       Text="left"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="#CCCCCC"
+                                                       Margin="6,0,0,0"/>
+                                        </StackPanel>
                                     </Grid>
+
                                 </StackPanel>
 
                                 <!-- ───── WARP ───── -->
