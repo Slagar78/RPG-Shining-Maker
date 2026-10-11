@@ -52,7 +52,8 @@ class Game
     @audio.set_sfx_volume(:confirm, 1.0)
     @audio.set_sfx_volume(:cancel,  1.0)
     @audio.load_sfx(:block, "assets/sounds/buttons/block_button.ogg")
-	@audio.load_sfx(:door, "assets/sounds/opening-closing-door.ogg")
+	@audio.load_sfx(:door_open,  "assets/sounds/door_open.ogg")
+	@audio.load_sfx(:door_close, "assets/sounds/door_close.ogg")
     @audio.set_sfx_volume(:block, 1.0)
     $audio = @audio
 
@@ -341,7 +342,7 @@ class Game
                 }
                 @game_map.replace_tile(tx, ty, ev['new_tile_id'])
                 door_volume = (char == @player) ? 1.0 : 0.5
-                @audio.play_sfx(:door, door_volume)
+                @audio.play_sfx(:door_open, door_volume)
               end
             end
 
@@ -353,7 +354,7 @@ class Game
                 original = @game_map.open_doors.delete(door_key)[:original_tile]
                 @game_map.replace_tile(tx, ty, original)
                 door_volume = (char == @player) ? 1.0 : 0.5
-                @audio.play_sfx(:door, door_volume)
+                @audio.play_sfx(:door_close, door_volume)
               end
             end
           end
@@ -410,7 +411,18 @@ class Game
 
  if @game_map && @game_map.roof_events.any?
   @game_map.roof_events.each_with_index do |ev, idx|
-    # Проверка триггеров (скрыть крышу) – уже работало, но для единообразия тоже обновим
+    # ─── АВТОМАТИКА: игрок внутри прямоугольника крыши → скрыть ───
+    # Работает при любой ходьбе: обычный шаг, варп, старт игры, скрипт-телепорт.
+    x1 = [ev['start_x'], ev['end_x']].min
+    x2 = [ev['start_x'], ev['end_x']].max
+    y1 = [ev['start_y'], ev['end_y']].min
+    y2 = [ev['start_y'], ev['end_y']].max
+
+    if @player.x.between?(x1, x2) && @player.y.between?(y1, y2)
+      @zone_hidden[idx] = true
+    end
+
+    # ─── ТРИГГЕРЫ (скрыть крышу) — оставляем как было, для явных случаев ───
     triggered = false
     if ev['triggers']
       triggered = ev['triggers'].any? { |t| @player.x == t[0] && @player.y == t[1] }
@@ -422,7 +434,7 @@ class Game
       @zone_hidden[idx] = true
     end
 
-    # Проверка выходов (показать крышу) – раньше было только ev['exit_x'], теперь массив exits
+    # ─── ВЫХОДЫ (показать крышу) — идут ПОСЛЕДНИМИ, чтобы иметь приоритет ───
     exited = false
     if ev['exits']
       exited = ev['exits'].any? { |e| @player.x == e[0] && @player.y == e[1] }
