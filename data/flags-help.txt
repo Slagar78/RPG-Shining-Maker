@@ -174,3 +174,33 @@ start_battle    → ставит __start_battle__, диалог завершае
 false / nil / 0 / отсутствие ключа = выключен.
 
 ==========================================================
+
+events_v00.json(events_v01.json,events_v02.json итд) можно указывать в ...\mapsetup\pointertable.json
+
+Пример: город с версиями------
+data/maps/Granseal/
+├── layout.json
+├── areas.json
+├── text.txt
+├── events.json              ← общий (не меняется)
+└── mapsetups/
+    ├── pointertable.json
+    ├── NPC_events_v00.json
+    ├── NPC_events_v01.json
+    ├── NPC_script_v00.json
+    └── NPC_script_v01.json
+    
+    
+Пример: сюжетная карта с полным контролем----
+    data/maps/ThroneRoom/
+├── layout.json
+├── areas.json
+├── text.txt
+└── mapsetups/
+    ├── pointertable.json
+    ├── events_v00.json
+    ├── events_v01.json
+    ├── NPC_events_v00.json
+    ├── NPC_events_v01.json
+    ├── NPC_script_v00.json
+    └── NPC_script_v01.json

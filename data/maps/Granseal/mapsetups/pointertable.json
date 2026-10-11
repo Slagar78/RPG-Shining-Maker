@@ -1,12 +1,10 @@
 {
   "v00": {
     "npcs":    "NPC_events_v00.json",
-    "scripts": "NPC_script_v00.json",
-    "events":  "events_v00.json"
+    "scripts": "NPC_script_v00.json"
   },
   "v01": {
     "npcs":    "NPC_events_v01.json",
-    "scripts": "NPC_script_v00.json",
-    "events":  "events_v00.json"
+    "scripts": "NPC_script_v01.json"
   }
 }

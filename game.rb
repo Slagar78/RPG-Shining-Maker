@@ -411,6 +411,12 @@ class Game
         # Загружаем новую карту (экран уже чёрный)
         pending = @warp_pending
         same_map = (pending[:map_id].to_s.strip == @current_map_id.to_s.strip)
+        
+        # ── ВЫГРУЖАЕМ СТАРУЮ КАРТУ ─────────────────────────────
+        @game_map.unload if @game_map                              # tileset, anim, static_bg, roof_layers
+        UnloadRenderTexture(@top_layer) if @top_layer              # top_layer живёт в Game, не в GameMap
+        UnloadRenderTexture(@layer2)    if @layer2                 # layer2 тоже в Game
+        # ────────────────────────────────────────────────────────
 
         @audio.stop unless same_map
         @game_map = GameMap.new(pending[:map_id], @flags)

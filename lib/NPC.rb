@@ -170,6 +170,13 @@ class NPC
     dest = Raylib::Rectangle.create(visual_x, visual_y - 16, frame_w, frame_h)
     Raylib.DrawTexturePro(texture, src, dest, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
   end
+  
+  def unload
+    Raylib.UnloadTexture(@tex_left)  if @tex_left
+    Raylib.UnloadTexture(@tex_right) if @tex_right
+    @tex_left  = nil
+    @tex_right = nil
+  end
 
   private
 

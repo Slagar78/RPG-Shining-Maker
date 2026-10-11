@@ -735,6 +735,7 @@ end
     UnloadRenderTexture(@static_bg)  if @static_bg
     UnloadRenderTexture(@top_layer)  if @top_layer
     UnloadRenderTexture(@layer2)     if @layer2
+    @npcs.each { |npc| npc.unload if npc.respond_to?(:unload) } if @npcs
     @roof_layers.each { |l| UnloadRenderTexture(l) if l } if @roof_layers
   end
 end
