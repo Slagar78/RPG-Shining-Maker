@@ -1,0 +1,23 @@
+data/maps/
+├── mapsetups.json                    ← ГЛОБАЛЬНЫЙ: карты + условия
+├── entries.json
+├── Granseal/
+│   └── mapsetups/
+│       ├── pointertable.json         ← ЛОКАЛЬНЫЙ: версия → файлы
+│       ├── NPC_events_v00.json
+│       ├── NPC_events_v01.json
+│       ├── NPC_events_v02.json
+│       ├── NPC_script_v00.json
+│       ├── NPC_script_v01.json
+│       ├── NPC_script_v02.json
+│       ├── events_v00.json
+│       └── events_v02.json
+└── Ribble/
+    └── mapsetups/
+        ├── pointertable.json
+        ├── NPC_events_v00.json
+        ├── NPC_events_v01.json
+        └── NPC_script_v00.json
+        
+        
+id = 0, 1, 2, ... по порядку. Никогда не меняется. карты ищем по id        

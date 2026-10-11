@@ -88,7 +88,7 @@ class GameMap
     @stair_events = []
     @warp_events = []
 
-    load_section(entry['folder'], "events", "events.json").each do |ev|
+    load_section(entry, "events", "events.json").each do |ev|
       type = ev['type'] || 'roof'
       if type == 'roof'
         @roof_events << ev
@@ -137,11 +137,11 @@ class GameMap
     end
 
     @npcs = []
-    load_section(entry['folder'], "npcs", "NPC_events.json").each do |npc_def|
+    load_section(entry, "npcs", "NPC_events.json").each do |npc_def|
       @npcs << NPC.new(npc_def)
     end
 
-    @npc_scripts = load_section(entry['folder'], "scripts", "NPC_script.json")
+    @npc_scripts = load_section(entry, "scripts", "NPC_script.json")
 
     # Загрузка локального text.txt (всегда)
     @local_text = {}
@@ -202,26 +202,37 @@ class GameMap
 	  @open_doors = {}   # { [x,y] => { original_tile: id, event: event_hash } }
   end
   
-  # Универсальная загрузка одной секции карты.
-  # folder       — папка карты (из entries.json)
-  # section      — имя секции в pointertable.json ("npcs", "scripts", "events")
-  # fallback     — старый файл, если mapsetups нет
-  def load_section(folder, section, fallback)
-    dir = "data/maps/#{folder}/mapsetups"
-    pt  = "#{dir}/pointertable.json"
+  def load_section(entry, section, fallback)
+    folder      = entry['folder']
+    map_id      = entry['id'].to_s
+    dir         = "data/maps/#{folder}/mapsetups"
+    global_path = "data/maps/mapsetups.json"
+    local_path  = "#{dir}/pointertable.json"
 
-    if File.exist?(pt)
+    # Если есть оба файла — работаем через версии
+    if File.exist?(global_path) && File.exist?(local_path)
       begin
-        pointer = JSON.parse(File.read(pt))
-        versions = pointer.dig("sections", section)
+        global   = JSON.parse(File.read(global_path))
+        versions = global.dig(map_id, "versions")
 
         if versions.is_a?(Array) && versions.any?
-          chosen = versions.find { |v| (v["conditions"] || []).all? { |f| @flags[f] } }
-          chosen ||= versions.last
+          # Берём ПОСЛЕДНЮЮ подходящую (порядок = сюжет: v00, v01, v02...)
+          chosen = nil
+          versions.each do |v|
+            if (v["conditions"] || []).all? { |f| @flags[f] }
+              chosen = v
+            end
+          end
+          chosen ||= versions.first
 
-          if chosen && chosen["file"]
-            path = "#{dir}/#{chosen['file']}"
-            return JSON.parse(File.read(path)) if File.exist?(path)
+          if chosen && chosen["id"]
+            pointer = JSON.parse(File.read(local_path))
+            file = pointer.dig(chosen["id"], section)
+
+            if file
+              path = "#{dir}/#{file}"
+              return JSON.parse(File.read(path)) if File.exist?(path)
+            end
           end
         end
       rescue => e
@@ -229,6 +240,7 @@ class GameMap
       end
     end
 
+    # Fallback — старый файл
     path = "data/maps/#{folder}/#{fallback}"
     return [] unless File.exist?(path)
     JSON.parse(File.read(path))

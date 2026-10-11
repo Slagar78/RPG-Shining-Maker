@@ -1,5 +1,6 @@
 [
   {
+    "id": 0,
     "folder": "Granseal",
     "name": "Granseal",
     "music": "assets/sounds/Track1.mp3",
@@ -7,6 +8,7 @@
     "areas": "data/maps/Granseal/areas.json"
   },
   {
+    "id": 1,
     "folder": "map00",
     "name": "map00",
     "music": "assets/sounds/Track1.mp3",
@@ -14,6 +16,7 @@
     "areas": "data/maps/map00/areas.json"
   },
   {
+    "id": 2,
     "folder": "Expraito",
     "name": "Expraito",
     "music": "assets/sounds/SF_Feather.mp3",
