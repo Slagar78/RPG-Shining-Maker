@@ -1,0 +1,10 @@
+{
+  "sections": {
+    "npcs": [
+      { "file": "NPC_events_v00.json", "conditions": [] }
+    ],
+    "scripts": [
+      { "file": "NPC_script_v00.json", "conditions": [] }
+    ]
+  }
+}

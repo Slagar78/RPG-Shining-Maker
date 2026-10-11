@@ -25,7 +25,8 @@ class Game
 	SetTextureFilter(@canvas.texture, TEXTURE_FILTER_POINT)
 
     @db = Database.new
-    @game_map = GameMap.new(@db.globals["start_map"] || "Granseal")
+    @flags = {}
+    @game_map = GameMap.new(@db.globals["start_map"] || "Granseal", @flags)
 
     @game_text = {}
     if File.exist?("data/text/gamescript.txt")
@@ -382,7 +383,7 @@ class Game
         # Загружаем новую карту (экран уже чёрный)
         pending = @warp_pending
         @audio.stop
-        @game_map = GameMap.new(pending[:map_id])
+        @game_map = GameMap.new(pending[:map_id], @flags)
         @top_layer = @game_map.build_top_layer
         SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
         @layer2 = @game_map.build_layer2

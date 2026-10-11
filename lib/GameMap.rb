@@ -13,7 +13,8 @@ class GameMap
 	attr_reader :layer2, :top_layer, :static_bg
 	attr_reader :npcs
 
-  def initialize(map_id = "Granseal")
+  def initialize(map_id = "Granseal", flags = {})
+    @flags = flags
     @src_rect_cache = {}
 	@animated_indices = []
     @open_doors = {}
@@ -83,28 +84,21 @@ class GameMap
 	end
 
     @roof_events = []
-	@roof_offsets = []
+    @roof_offsets = []
     @tile_events = []
-	@stair_events = []
-	@warp_events = []
-    events_path = "data/maps/#{entry['folder']}/events.json"
-    if File.exist?(events_path)
-      begin
-        events_data = JSON.parse(File.read(events_path))
-        events_data.each do |ev|
-          type = ev['type'] || 'roof'
-          if type == 'roof'
-            @roof_events << ev
-          elsif type == 'tile_change'
-            @tile_events << ev
-			elsif type == 'stairs'
-            @stair_events << ev
-			elsif type == 'warp'
-            @warp_events << ev
-          end
-        end
-      rescue
-        # оставляем пустыми
+    @stair_events = []
+    @warp_events = []
+
+    load_section(entry['folder'], "events", "events.json").each do |ev|
+      type = ev['type'] || 'roof'
+      if type == 'roof'
+        @roof_events << ev
+      elsif type == 'tile_change'
+        @tile_events << ev
+      elsif type == 'stairs'
+        @stair_events << ev
+      elsif type == 'warp'
+        @warp_events << ev
       end
     end
 
@@ -144,18 +138,11 @@ class GameMap
     end
 
     @npcs = []
-    npc_file = File.join("data/maps", entry['folder'], "NPC_events.json")
-    if File.exist?(npc_file)
-      npc_data = JSON.parse(File.read(npc_file))
-      npc_data.each { |npc_def| @npcs << NPC.new(npc_def) }
+    load_section(entry['folder'], "npcs", "NPC_events.json").each do |npc_def|
+      @npcs << NPC.new(npc_def)
     end
 
-    # Загрузка NPC_script.json (всегда)
-    @npc_scripts = []
-    script_path = "data/maps/#{entry['folder']}/NPC_script.json"
-    if File.exist?(script_path)
-      @npc_scripts = JSON.parse(File.read(script_path))
-    end
+    @npc_scripts = load_section(entry['folder'], "scripts", "NPC_script.json")
 
     # Загрузка локального text.txt (всегда)
     @local_text = {}
@@ -215,6 +202,38 @@ class GameMap
 	@roof_offsets = []
 	@npcs = []
 	@open_doors = {}   # { [x,y] => { original_tile: id, event: event_hash } }
+  end
+  
+  # Универсальная загрузка одной секции карты.
+  # folder       — папка карты (из entries.json)
+  # section      — имя секции в pointertable.json ("npcs", "scripts", "events")
+  # fallback     — старый файл, если mapsetups нет
+  def load_section(folder, section, fallback)
+    dir = "data/maps/#{folder}/mapsetups"
+    pt  = "#{dir}/pointertable.json"
+
+    if File.exist?(pt)
+      begin
+        pointer = JSON.parse(File.read(pt))
+        versions = pointer.dig("sections", section)
+
+        if versions.is_a?(Array) && versions.any?
+          chosen = versions.find { |v| (v["conditions"] || []).all? { |f| @flags[f] } }
+          chosen ||= versions.last
+
+          if chosen && chosen["file"]
+            path = "#{dir}/#{chosen['file']}"
+            return JSON.parse(File.read(path)) if File.exist?(path)
+          end
+        end
+      rescue => e
+        puts "[mapsetups] #{folder}/#{section}: #{e.message}"
+      end
+    end
+
+    path = "data/maps/#{folder}/#{fallback}"
+    return [] unless File.exist?(path)
+    JSON.parse(File.read(path))
   end
 
   def tile_src_rect(tile_id)
