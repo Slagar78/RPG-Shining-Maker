@@ -395,24 +395,74 @@
 
                                 </StackPanel>
 
-                                <!-- ───── WARP ───── -->
+                                                                <!-- ───── WARP ───── -->
                                 <StackPanel x:Name="WarpPanel" Spacing="3" IsVisible="False">
+
+                                    <!-- Trigger X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Trigger X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="W_TriggerXY" TextChanged="OnWTriggerXYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="W_TriggerX" Width="40" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnWTriggerXChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="W_TriggerY" Width="40" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnWTriggerYChanged"/>
+                                        </StackPanel>
                                     </Grid>
+
+                                    <!-- Target Map (ComboBox) -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Target Map:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="W_TargetMap" TextChanged="OnWTargetMapChanged"/>
+                                        <ComboBox Grid.Column="1"
+                                                  x:Name="W_TargetMapCombo"
+                                                  HorizontalAlignment="Stretch"
+                                                  SelectionChanged="OnWTargetMapChanged"/>
                                     </Grid>
+
+                                    <!-- Target X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Target X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="W_TargetXY" TextChanged="OnWTargetXYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="W_TargetX" Width="40" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnWTargetXChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="W_TargetY" Width="40" MaxLength="3"
+                                                     TextInput="OnCoordTextInput"
+                                                     TextChanged="OnWTargetYChanged"/>
+                                        </StackPanel>
                                     </Grid>
+
+                                    <!-- Facing: 4 кнопки-стрелки + подпись -->
                                     <Grid ColumnDefinitions="100,*">
-                                        <TextBlock Grid.Column="0" Text="Facing (0-3):" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="W_Facing" TextChanged="OnWFacingChanged"/>
+                                        <TextBlock Grid.Column="0" Text="Facing:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3">
+                                            <ToggleButton x:Name="W_FacingDownBtn"  Content="↓"
+                                                          Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold"
+                                                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                          Click="OnWFacingDownClick"/>
+                                            <ToggleButton x:Name="W_FacingLeftBtn"  Content="←"
+                                                          Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold"
+                                                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                          Click="OnWFacingLeftClick"/>
+                                            <ToggleButton x:Name="W_FacingRightBtn" Content="→"
+                                                          Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold"
+                                                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                          Click="OnWFacingRightClick"/>
+                                            <ToggleButton x:Name="W_FacingUpBtn"    Content="↑"
+                                                          Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold"
+                                                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                          Click="OnWFacingUpClick"/>
+                                            <TextBlock x:Name="W_FacingLabel"
+                                                       Text="down"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="#CCCCCC"
+                                                       Margin="6,0,0,0"/>
+                                        </StackPanel>
                                     </Grid>
+
                                 </StackPanel>
 
                                 <!-- ───── NPC ───── -->

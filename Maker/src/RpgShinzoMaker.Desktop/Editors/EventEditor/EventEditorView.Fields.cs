@@ -1,8 +1,10 @@
 // RpgShinzoMaker.Desktop/Editors/EventEditor/EventEditorView.Fields.cs
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;   // ← для SolidColorBrush / Color
@@ -371,18 +373,58 @@ public partial class EventEditorView
     {
         if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count)
         {
-            W_TriggerXY.Text = "-";
-            W_TargetMap.Text = "";
-            W_TargetXY.Text  = "0,0";
-            W_Facing.Text    = "0";
+            W_TriggerX.Text = "";
+            W_TriggerY.Text = "";
+            PopulateTargetMapCombo(null);
+            W_TargetX.Text  = "0";
+            W_TargetY.Text  = "0";
+            SetWarpFacingUI(0);
             return;
         }
 
         var w = _events.Warps[_selectedIndex];
-        W_TriggerXY.Text = w.TriggerX >= 0 ? $"{w.TriggerX},{w.TriggerY}" : "-";
-        W_TargetMap.Text = w.TargetMap;
-        W_TargetXY.Text  = $"{w.TargetX},{w.TargetY}";
-        W_Facing.Text    = w.Facing.ToString();
+
+        // Trigger (может быть пустой = нет триггера)
+        if (w.TriggerX >= 0 && w.TriggerY >= 0)
+        {
+            W_TriggerX.Text = w.TriggerX.ToString();
+            W_TriggerY.Text = w.TriggerY.ToString();
+        }
+        else
+        {
+            W_TriggerX.Text = "";
+            W_TriggerY.Text = "";
+        }
+
+        PopulateTargetMapCombo(w.TargetMap);
+        W_TargetX.Text = w.TargetX.ToString();
+        W_TargetY.Text = w.TargetY.ToString();
+        SetWarpFacingUI(w.Facing);
+    }
+
+    /// <summary>
+    /// Заполняет ComboBox Target Map названиями карт из entries.json.
+    /// Выбирает нужную (или -1, если current пустой / не найден).
+    /// </summary>
+    private void PopulateTargetMapCombo(string? current)
+    {
+        if (W_TargetMapCombo == null) return;
+
+        // Временно снимаем подписку, чтобы не было рекурсии при заполнении
+        W_TargetMapCombo.SelectionChanged -= OnWTargetMapChanged;
+
+        var names = new List<string>();
+        foreach (var e in _mapEntries) names.Add(e.Name);
+
+        W_TargetMapCombo.ItemsSource = names;
+
+        int idx = -1;
+        if (!string.IsNullOrEmpty(current))
+            idx = names.IndexOf(current);
+
+        W_TargetMapCombo.SelectedIndex = idx;
+
+        W_TargetMapCombo.SelectionChanged += OnWTargetMapChanged;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -605,58 +647,121 @@ public partial class EventEditorView
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   ОБРАБОТЧИКИ WARP
+    //   ОБРАБОТЧИКИ WARP — Trigger X/Y
     // ══════════════════════════════════════════════════════════════
-    private void OnWTriggerXYChanged(object? sender, TextChangedEventArgs e)
+    private void OnWTriggerXChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
 
         var w = _events.Warps[_selectedIndex];
-        if (IsDash(W_TriggerXY.Text ?? ""))
-        {
-            w.TriggerX = w.TriggerY = -1;
-        }
-        else
-        {
-            var p = ParsePair(W_TriggerXY.Text ?? "");
-            if (p.HasValue) { w.TriggerX = p.Value.x; w.TriggerY = p.Value.y; }
-        }
+        int oldX = w.TriggerX;
+        w.TriggerX = ParseCoord(W_TriggerX.Text, fallback: -1);
+
+        if (w.TriggerX < 0) w.TriggerY = -1;
+        else if (oldX < 0 && w.TriggerY < 0) w.TriggerY = 0;
+
         OnFieldChanged();
     }
 
-    private void OnWTargetMapChanged(object? sender, TextChangedEventArgs e)
+    private void OnWTriggerYChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
 
-        _events.Warps[_selectedIndex].TargetMap = (W_TargetMap.Text ?? "").Trim();
+        var w = _events.Warps[_selectedIndex];
+        w.TriggerY = ParseCoord(W_TriggerY.Text, fallback: -1);
+
+        if (w.TriggerY < 0) w.TriggerX = -1;
+        else if (w.TriggerX < 0) w.TriggerX = 0;
+
+        OnFieldChanged();
     }
 
-    private void OnWTargetXYChanged(object? sender, TextChangedEventArgs e)
+    // ══════════════════════════════════════════════════════════════
+    //   ОБРАБОТЧИКИ WARP — Target Map (ComboBox)
+    // ══════════════════════════════════════════════════════════════
+    private void OnWTargetMapChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
 
-        var p = ParsePair(W_TargetXY.Text ?? "");
-        if (p.HasValue)
-        {
-            _events.Warps[_selectedIndex].TargetX = p.Value.x;
-            _events.Warps[_selectedIndex].TargetY = p.Value.y;
-        }
+        string name = (W_TargetMapCombo?.SelectedItem as string) ?? "";
+        _events.Warps[_selectedIndex].TargetMap = name;
     }
 
-    private void OnWFacingChanged(object? sender, TextChangedEventArgs e)
+    // ══════════════════════════════════════════════════════════════
+    //   ОБРАБОТЧИКИ WARP — Target X/Y
+    // ══════════════════════════════════════════════════════════════
+    private void OnWTargetXChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
 
-        var v = ParseInt(W_Facing.Text ?? "");
-        if (v.HasValue && v.Value >= 0 && v.Value <= 3)
+        _events.Warps[_selectedIndex].TargetX = ParseCoord(W_TargetX.Text, fallback: 0);
+    }
+
+    private void OnWTargetYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
+
+        _events.Warps[_selectedIndex].TargetY = ParseCoord(W_TargetY.Text, fallback: 0);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //   ОБРАБОТЧИКИ WARP — Facing (0=down, 1=left, 2=right, 3=up)
+    // ══════════════════════════════════════════════════════════════
+    private void OnWFacingDownClick(object? sender, RoutedEventArgs e)  => SetWarpFacing(0);
+    private void OnWFacingLeftClick(object? sender, RoutedEventArgs e)  => SetWarpFacing(1);
+    private void OnWFacingRightClick(object? sender, RoutedEventArgs e) => SetWarpFacing(2);
+    private void OnWFacingUpClick(object? sender, RoutedEventArgs e)    => SetWarpFacing(3);
+
+    private void SetWarpFacing(int facing)
+    {
+        SetWarpFacingUI(facing);
+
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
+
+        _events.Warps[_selectedIndex].Facing = facing;
+        OnFieldChanged();
+    }
+
+    private void SetWarpFacingUI(int facing)
+    {
+        if (W_FacingDownBtn  == null) return;
+        if (W_FacingLeftBtn  == null) return;
+        if (W_FacingRightBtn == null) return;
+        if (W_FacingUpBtn    == null) return;
+        if (W_FacingLabel    == null) return;
+
+        var activeBg = new SolidColorBrush(Color.Parse("#3E5F8A"));
+        var idleBg   = new SolidColorBrush(Color.Parse("#3E3E42"));
+        var activeFg = new SolidColorBrush(Color.Parse("#FFFFFF"));
+        var idleFg   = new SolidColorBrush(Color.Parse("#CCCCCC"));
+
+        // Сброс всех
+        W_FacingDownBtn.IsChecked  = false;  W_FacingDownBtn.Background  = idleBg;   W_FacingDownBtn.Foreground  = idleFg;
+        W_FacingLeftBtn.IsChecked  = false;  W_FacingLeftBtn.Background  = idleBg;   W_FacingLeftBtn.Foreground  = idleFg;
+        W_FacingRightBtn.IsChecked = false;  W_FacingRightBtn.Background = idleBg;   W_FacingRightBtn.Foreground = idleFg;
+        W_FacingUpBtn.IsChecked    = false;  W_FacingUpBtn.Background    = idleBg;   W_FacingUpBtn.Foreground    = idleFg;
+
+        string label;
+        ToggleButton? active;
+        switch (facing)
         {
-            _events.Warps[_selectedIndex].Facing = v.Value;
-            OnFieldChanged();
+            case 1:  active = W_FacingLeftBtn;  label = "left";  break;
+            case 2:  active = W_FacingRightBtn; label = "right"; break;
+            case 3:  active = W_FacingUpBtn;    label = "up";    break;
+            default: active = W_FacingDownBtn;  label = "down";  break;
         }
+
+        active.IsChecked  = true;
+        active.Background = activeBg;
+        active.Foreground = activeFg;
+
+        W_FacingLabel.Text = label;
     }
 
     // ══════════════════════════════════════════════════════════════
