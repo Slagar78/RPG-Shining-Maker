@@ -1,0 +1,10 @@
+[
+  {
+    "id": "npc1",
+    "x": 7,
+    "y": 10,
+    "sprite": "mapsprite193",
+    "behavior": "static",
+    "direction": "down"
+  }
+]
