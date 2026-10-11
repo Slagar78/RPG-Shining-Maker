@@ -659,6 +659,13 @@ public partial class MapEditorView
         _area.EndX   = sx + w - 1;
         _area.EndY   = sy + h - 1;
 
+        // ─── Нормализуем sub-areas: start ≤ end ───
+        foreach (var s in _subAreasTemp)
+        {
+            if (s.EndX < s.StartX) { int t = s.StartX; s.StartX = s.EndX; s.EndX = t; }
+            if (s.EndY < s.StartY) { int t = s.StartY; s.StartY = s.EndY; s.EndY = t; }
+        }
+
         // ─── Сохраняем sub-areas ───
         _area.SubAreas = _subAreasTemp;
 
@@ -687,7 +694,32 @@ public partial class MapEditorView
         if (SubAreasCountText != null)
             SubAreasCountText.Text = $"{_subAreasTemp.Count} / 10";
     }
+    /// <summary>
+    /// Перестраивает список subAreas, сохраняя текущее выделение.
+    /// Не трогает поля ввода — используется при живом редактировании.
+    /// </summary>
+    private void RefreshSubAreasListWithoutSelectionReset()
+    {
+        if (SubAreasList == null) return;
 
+        int keep = _selectedSubAreaIndex;
+
+        var labels = new List<string>();
+        for (int i = 0; i < _subAreasTemp.Count; i++)
+        {
+            var s = _subAreasTemp[i];
+            labels.Add($"#{i}   ({s.StartX},{s.StartY}) → ({s.EndX},{s.EndY})");
+        }
+
+        SubAreasList.SelectionChanged -= OnSubAreaSelectionChanged;
+        SubAreasList.ItemsSource = labels;
+        SubAreasList.SelectedIndex = keep;
+        SubAreasList.SelectionChanged += OnSubAreaSelectionChanged;
+
+        if (SubAreasCountText != null)
+            SubAreasCountText.Text = $"{_subAreasTemp.Count} / 10";
+    }
+    
     // ─── SUB AREAS: показать данные выбранной в поля ───
     private void UpdateSubAreaFields()
     {
@@ -768,7 +800,7 @@ public partial class MapEditorView
         UpdateSubAreaFields();
     }
 
-    // ─── SUB AREAS: изменение полей ───
+        // ─── SUB AREAS: изменение полей ───
     private void OnSubAreaFieldChanged(object? sender, NumericUpDownValueChangedEventArgs e)
     {
         if (_suppressSubFieldEvents) return;
@@ -777,36 +809,64 @@ public partial class MapEditorView
 
         var s = _subAreasTemp[_selectedSubAreaIndex];
 
-        int sx = (int)(SubAreaStartX?.Value ?? 0);
-        int sy = (int)(SubAreaStartY?.Value ?? 0);
-        int ex = (int)(SubAreaEndX?.Value   ?? 1);
-        int ey = (int)(SubAreaEndY?.Value   ?? 1);
+        int maxX = _currentMap.Width  - 1;
+        int maxY = _currentMap.Height - 1;
 
-        // Ограничение по карте
-        sx = Math.Clamp(sx, 0, _currentMap.Width  - 1);
-        sy = Math.Clamp(sy, 0, _currentMap.Height - 1);
-        ex = Math.Clamp(ex, 0, _currentMap.Width  - 1);
-        ey = Math.Clamp(ey, 0, _currentMap.Height - 1);
+        // Обновляем ТОЛЬКО то поле, которое реально изменилось.
+        // Остальные не трогаем — не перезаписываем и не свапаем.
+        if (sender == SubAreaStartX)
+        {
+            int v = Math.Clamp((int)(SubAreaStartX.Value ?? 0), 0, maxX);
+            s.StartX = v;
+            if ((int)(SubAreaStartX.Value ?? 0) != v)
+            {
+                _suppressSubFieldEvents = true;
+                SubAreaStartX.Value = v;
+                _suppressSubFieldEvents = false;
+            }
+        }
+        else if (sender == SubAreaStartY)
+        {
+            int v = Math.Clamp((int)(SubAreaStartY.Value ?? 0), 0, maxY);
+            s.StartY = v;
+            if ((int)(SubAreaStartY.Value ?? 0) != v)
+            {
+                _suppressSubFieldEvents = true;
+                SubAreaStartY.Value = v;
+                _suppressSubFieldEvents = false;
+            }
+        }
+        else if (sender == SubAreaEndX)
+        {
+            int v = Math.Clamp((int)(SubAreaEndX.Value ?? 0), 0, maxX);
+            s.EndX = v;
+            if ((int)(SubAreaEndX.Value ?? 0) != v)
+            {
+                _suppressSubFieldEvents = true;
+                SubAreaEndX.Value = v;
+                _suppressSubFieldEvents = false;
+            }
+        }
+        else if (sender == SubAreaEndY)
+        {
+            int v = Math.Clamp((int)(SubAreaEndY.Value ?? 0), 0, maxY);
+            s.EndY = v;
+            if ((int)(SubAreaEndY.Value ?? 0) != v)
+            {
+                _suppressSubFieldEvents = true;
+                SubAreaEndY.Value = v;
+                _suppressSubFieldEvents = false;
+            }
+        }
+        else
+        {
+            return;
+        }
 
-        // Нормализация: start ≤ end
-        if (ex < sx) { int t = sx; sx = ex; ex = t; }
-        if (ey < sy) { int t = sy; sy = ey; ey = t; }
-
-        s.StartX = sx;
-        s.StartY = sy;
-        s.EndX   = ex;
-        s.EndY   = ey;
-
-        RefreshSubAreasList();
-
-        // Восстановить значения (после clamp/normalize)
-        _suppressSubFieldEvents = true;
-        if (SubAreaStartX != null) SubAreaStartX.Value = sx;
-        if (SubAreaStartY != null) SubAreaStartY.Value = sy;
-        if (SubAreaEndX   != null) SubAreaEndX.Value   = ex;
-        if (SubAreaEndY   != null) SubAreaEndY.Value   = ey;
-        _suppressSubFieldEvents = false;
+        // Только обновить текст в списке — без сброса выделения и без записи в поля
+        RefreshSubAreasListWithoutSelectionReset();
     }
+    
     // ══════════════════════════════════════════════════════════════
     //   ФИЛЬТР ЦИФР для NumericUpDown
     // ══════════════════════════════════════════════════════════════

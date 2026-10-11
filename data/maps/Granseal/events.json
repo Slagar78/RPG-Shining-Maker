@@ -261,5 +261,23 @@
     "target_x": 4,
     "target_y": 4,
     "facing": 0
+  },
+  {
+    "type": "warp",
+    "trigger_x": 46,
+    "trigger_y": 7,
+    "target_map": "Granseal",
+    "target_x": 58,
+    "target_y": 13,
+    "facing": 1
+  },
+  {
+    "type": "warp",
+    "trigger_x": 0,
+    "trigger_y": 12,
+    "target_map": "Granseal",
+    "target_x": 45,
+    "target_y": 7,
+    "facing": 1
   }
 ]
