@@ -5,18 +5,18 @@ require_relative 'NPC'
 include Raylib
 
 class GameMap
-	attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas,
-				:roof_events, :tile_events, :stair_events, :roof_offsets, :warp_events, :open_doors,
-				:npc_scripts, :local_text, :sub_areas
-	attr_reader :tileset_path
-	attr_reader :roof_layers
-	attr_reader :layer2, :top_layer, :static_bg
-	attr_reader :npcs
+  attr_reader :width, :height, :tile_size, :tileset_texture, :music_file, :music_volume, :areas,
+    :roof_events, :tile_events, :stair_events, :roof_offsets, :warp_events, :open_doors,
+    :npc_scripts, :local_text, :sub_areas
+  attr_reader :tileset_path
+  attr_reader :roof_layers
+  attr_reader :layer2, :top_layer, :static_bg
+  attr_reader :npcs
 
   def initialize(map_id = "Granseal", flags = {})
     @flags = flags
     @src_rect_cache = {}
-	@animated_indices = []
+    @animated_indices = []
     @open_doors = {}
     entries_path = "data/maps/entries.json"
     unless File.exist?(entries_path)
@@ -44,7 +44,6 @@ class GameMap
 
     @width  = data['width']
     @height = data['height']
-
     @tiles    = data['tiles']
     @rot      = data['rot']      || Array.new(@width) { Array.new(@height, 0) }
     @mirror_x = data['mirror_x'] || Array.new(@width) { Array.new(@height, false) }
@@ -156,27 +155,26 @@ class GameMap
       end
     end
 	
-	@roof_layers = []
-    @roof_events.each_index do |idx|
-      layer = build_roof_layer_for_zone(idx)
-      SetTextureFilter(layer.texture, TEXTURE_FILTER_POINT) if layer
-      @roof_layers << layer
-    end
+  @roof_layers = []
+  @roof_events.each_index do |idx|
+  layer = build_roof_layer_for_zone(idx)
+  SetTextureFilter(layer.texture, TEXTURE_FILTER_POINT) if layer
+  @roof_layers << layer
+  end
 
-    @static_bg = build_static_background
-    SetTextureFilter(@static_bg.texture, TEXTURE_FILTER_POINT) if @static_bg
+  @static_bg = build_static_background
+  SetTextureFilter(@static_bg.texture, TEXTURE_FILTER_POINT) if @static_bg
+  @anim_texture = nil
 
-    @anim_texture = nil
+  base = File.basename(@tileset_path, ".*")
+  anim_png  = "assets/tilesets/Animation_tiles/#{base}_animation.png"
+  anim_json = "assets/tilesets/Animation_tiles/#{base}_animation.json"
 
-    base = File.basename(@tileset_path, ".*")
-    anim_png  = "assets/tilesets/Animation_tiles/#{base}_animation.png"
-    anim_json = "assets/tilesets/Animation_tiles/#{base}_animation.json"
-
-    if File.exist?(anim_png) && File.exist?(anim_json)
-      @anim_texture = LoadTexture(anim_png)
-      SetTextureFilter(@anim_texture, TEXTURE_FILTER_POINT)
-      @animated_indices = JSON.parse(File.read(anim_json))
-      puts "Animation loaded for #{@tileset_path}: #{@animated_indices}"
+  if File.exist?(anim_png) && File.exist?(anim_json)
+    @anim_texture = LoadTexture(anim_png)
+    SetTextureFilter(@anim_texture, TEXTURE_FILTER_POINT)
+    @animated_indices = JSON.parse(File.read(anim_json))
+    puts "Animation loaded for #{@tileset_path}: #{@animated_indices}"
     end
   end
 
@@ -197,11 +195,11 @@ class GameMap
     @music_file   = ""
     @music_volume = 0.8
     @areas = []
-	@stair_events = []
-	@warp_events = []
-	@roof_offsets = []
-	@npcs = []
-	@open_doors = {}   # { [x,y] => { original_tile: id, event: event_hash } }
+	  @stair_events = []
+	  @warp_events = []
+	  @roof_offsets = []
+	  @npcs = []
+	  @open_doors = {}   # { [x,y] => { original_tile: id, event: event_hash } }
   end
   
   # Универсальная загрузка одной секции карты.
@@ -259,8 +257,8 @@ class GameMap
   end
 
 
-def passable?(x, y, from_x = nil, from_y = nil)
-  return false if x < 0 || x >= @width || y < 0 || y >= @height
+  def passable?(x, y, from_x = nil, from_y = nil)
+    return false if x < 0 || x >= @width || y < 0 || y >= @height
 
   # Если клетка принадлежит лестнице
   if from_x && from_y && stairs_at(x, y)
@@ -312,62 +310,62 @@ end
     end
   end
 
-def build_roof_layer_for_zone(zone_index)
-  return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
-  ev = @roof_events[zone_index]
-  return nil unless ev
+  def build_roof_layer_for_zone(zone_index)
+    return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
+    ev = @roof_events[zone_index]
+    return nil unless ev
 
-  x1 = [ev['start_x'], ev['end_x']].min
-  x2 = [ev['start_x'], ev['end_x']].max
-  y1 = [ev['start_y'], ev['end_y']].min
-  y2 = [ev['start_y'], ev['end_y']].max
+    x1 = [ev['start_x'], ev['end_x']].min
+    x2 = [ev['start_x'], ev['end_x']].max
+    y1 = [ev['start_y'], ev['end_y']].min
+    y2 = [ev['start_y'], ev['end_y']].max
 
-  zone_w = (x2 - x1 + 1) * @tile_size
-  zone_h = (y2 - y1 + 1) * @tile_size
-  return nil if zone_w <= 0 || zone_h <= 0
+    zone_w = (x2 - x1 + 1) * @tile_size
+    zone_h = (y2 - y1 + 1) * @tile_size
+    return nil if zone_w <= 0 || zone_h <= 0
 
-  rt = LoadRenderTexture(zone_w, zone_h)
-  SetTextureFilter(rt.texture, TEXTURE_FILTER_POINT)
+    rt = LoadRenderTexture(zone_w, zone_h)
+    SetTextureFilter(rt.texture, TEXTURE_FILTER_POINT)
 
-  # Сохраним смещение в сам объект RenderTexture (через instance_variable)
-  # или вернём хеш/структуру, но проще хранить отдельно.
-  # Запомним offset для этого слоя
-  @roof_offsets ||= []
-  @roof_offsets[zone_index] = { x: x1 * @tile_size, y: y1 * @tile_size }
+    # Сохраним смещение в сам объект RenderTexture (через instance_variable)
+    # или вернём хеш/структуру, но проще хранить отдельно.
+    # Запомним offset для этого слоя
+    @roof_offsets ||= []
+    @roof_offsets[zone_index] = { x: x1 * @tile_size, y: y1 * @tile_size }
 
-  BeginTextureMode(rt)
-    ClearBackground(BLANK)
-    half = @tile_size / 2.0
-    center = Vector2.create(half, half)
-    dst = Rectangle.create(0, 0, @tile_size, @tile_size)
+    BeginTextureMode(rt)
+      ClearBackground(BLANK)
+      half = @tile_size / 2.0
+      center = Vector2.create(half, half)
+      dst = Rectangle.create(0, 0, @tile_size, @tile_size)
 
-    (x1..x2).each do |x|
-      (y1..y2).each do |y|
-        tile_id = @tiles2[x][y]
-        next if tile_id.nil? || tile_id < 0
-        src_rect = tile_src_rect(tile_id)
-        next unless src_rect
+      (x1..x2).each do |x|
+        (y1..y2).each do |y|
+          tile_id = @tiles2[x][y]
+          next if tile_id.nil? || tile_id < 0
+          src_rect = tile_src_rect(tile_id)
+          next unless src_rect
 
-        rot    = @rot2[x][y] || 0
-        flip_x = @mirror_x2[x][y] || false
-        flip_y = @mirror_y2[x][y] || false
+          rot    = @rot2[x][y] || 0
+          flip_x = @mirror_x2[x][y] || false
+          flip_y = @mirror_y2[x][y] || false
 
-        # координаты внутри текстуры крыши (смещённые на x1,y1)
-        local_cx = (x - x1) * @tile_size + half
-        local_cy = (y - y1) * @tile_size + half
+          # координаты внутри текстуры крыши (смещённые на x1,y1)
+          local_cx = (x - x1) * @tile_size + half
+          local_cy = (y - y1) * @tile_size + half
 
-        dst.x = local_cx
-        dst.y = local_cy
-        dst.width  = flip_x ? -@tile_size : @tile_size
-        dst.height = flip_y ? -@tile_size : @tile_size
+          dst.x = local_cx
+          dst.y = local_cy
+          dst.width  = flip_x ? -@tile_size : @tile_size
+          dst.height = flip_y ? -@tile_size : @tile_size
 
-        angle = rot * 90.0
-        DrawTexturePro(@tileset_texture, src_rect, dst, center, angle, WHITE)
+          angle = rot * 90.0
+          DrawTexturePro(@tileset_texture, src_rect, dst, center, angle, WHITE)
+        end
       end
-    end
-  EndTextureMode()
-  rt
-end
+    EndTextureMode()
+    rt
+  end
 
   def build_static_background
     return nil if @tileset_texture.nil? || @width.nil? || @height.nil?
@@ -665,54 +663,53 @@ end
     EndTextureMode()
   end
   
-def stairs_at(x, y)
-  @stair_events.each do |ev|
-    x1 = ev['start_x']; y1 = ev['start_y']
-    x2 = ev['end_x'];   y2 = ev['end_y']
-    dir = ev['direction']
+  def stairs_at(x, y)
+    @stair_events.each do |ev|
+      x1 = ev['start_x']; y1 = ev['start_y']
+      x2 = ev['end_x'];   y2 = ev['end_y']
+      dir = ev['direction']
 
-    if dir == 0   # диагональ '/'
-      if (x - y) == (x1 - y1) &&
-         x.between?(*[x1, x2].sort) &&
-         y.between?(*[y1, y2].sort)
-        return ev
-      end
-    else          # диагональ '\'
-      if (x + y) == (x1 + y1) &&
-         x.between?(*[x1, x2].sort) &&
-         y.between?(*[y1, y2].sort)
-        return ev
+      if dir == 0   # диагональ '/'
+        if (x - y) == (x1 - y1) &&
+           x.between?(*[x1, x2].sort) &&
+           y.between?(*[y1, y2].sort)
+          return ev
+        end
+      else          # диагональ '\'
+        if (x + y) == (x1 + y1) &&
+           x.between?(*[x1, x2].sort) &&
+           y.between?(*[y1, y2].sort)
+          return ev
+        end
       end
     end
-  end
-  nil
-end
-
-def stairs_direction(x, y, input_dx, input_dy)
-  ev = stairs_at(x, y)
-  return nil unless ev
-
-  x1 = ev['start_x']; y1 = ev['start_y']
-  x2 = ev['end_x'];   y2 = ev['end_y']
-
-  # Определяем цель в зависимости от текущего положения
-  if x == x1 && y == y1
-    target_x, target_y = x2, y2
-  elsif x == x2 && y == y2
-    target_x, target_y = x1, y1
-  else
-    # Промежуточная клетка – по умолчанию к конечной
-    target_x, target_y = x2, y2
+    nil
   end
 
-  dx = (target_x - x) <=> 0
-  dy = (target_y - y) <=> 0
+  def stairs_direction(x, y, input_dx, input_dy)
+    ev = stairs_at(x, y)
+    return nil unless ev
 
-  # Движение начнётся, если нажатое направление совпадает по горизонтали или вертикали
-  if (dx != 0 && input_dx == dx) || (dy != 0 && input_dy == dy)
-    return [dx, dy, target_x, target_y]
+    x1 = ev['start_x']; y1 = ev['start_y']
+    x2 = ev['end_x'];   y2 = ev['end_y']
+
+    # Определяем цель в зависимости от текущего положения
+    if x == x1 && y == y1
+      target_x, target_y = x2, y2
+    elsif x == x2 && y == y2
+      target_x, target_y = x1, y1
+    else
+      # Промежуточная клетка – по умолчанию к конечной
+      target_x, target_y = x2, y2
+    end
+
+    dx = (target_x - x) <=> 0
+    dy = (target_y - y) <=> 0
+
+    # Движение начнётся, если нажатое направление совпадает по горизонтали или вертикали
+    if (dx != 0 && input_dx == dx) || (dy != 0 && input_dy == dy)
+      return [dx, dy, target_x, target_y]
+    end
+    nil
   end
-  nil
-end
-  
 end
