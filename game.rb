@@ -411,18 +411,7 @@ class Game
 
  if @game_map && @game_map.roof_events.any?
   @game_map.roof_events.each_with_index do |ev, idx|
-    # ─── АВТОМАТИКА: игрок внутри прямоугольника крыши → скрыть ───
-    # Работает при любой ходьбе: обычный шаг, варп, старт игры, скрипт-телепорт.
-    x1 = [ev['start_x'], ev['end_x']].min
-    x2 = [ev['start_x'], ev['end_x']].max
-    y1 = [ev['start_y'], ev['end_y']].min
-    y2 = [ev['start_y'], ev['end_y']].max
-
-    if @player.x.between?(x1, x2) && @player.y.between?(y1, y2)
-      @zone_hidden[idx] = true
-    end
-
-    # ─── ТРИГГЕРЫ (скрыть крышу) — оставляем как было, для явных случаев ───
+    # ─── ТРИГГЕР (скрыть крышу) ───
     triggered = false
     if ev['triggers']
       triggered = ev['triggers'].any? { |t| @player.x == t[0] && @player.y == t[1] }
@@ -434,7 +423,7 @@ class Game
       @zone_hidden[idx] = true
     end
 
-    # ─── ВЫХОДЫ (показать крышу) — идут ПОСЛЕДНИМИ, чтобы иметь приоритет ───
+    # ─── EXIT (показать крышу) ───
     exited = false
     if ev['exits']
       exited = ev['exits'].any? { |e| @player.x == e[0] && @player.y == e[1] }

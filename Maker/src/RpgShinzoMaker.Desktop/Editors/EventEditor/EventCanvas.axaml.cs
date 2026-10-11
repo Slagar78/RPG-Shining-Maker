@@ -285,33 +285,25 @@ public partial class EventCanvas : UserControl
             bool selected = i == _selectedIndex;
             byte alpha = (byte)(selected ? 255 : 140);
 
-            // Прямоугольник крыши — зелёный
             int x1 = Math.Min(r.StartX, r.EndX);
             int y1 = Math.Min(r.StartY, r.EndY);
             int x2 = Math.Max(r.StartX, r.EndX);
             int y2 = Math.Max(r.StartY, r.EndY);
 
+            // Прямоугольник крыши
             AddRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1,
                 Color.FromArgb(alpha, 0, 255, 0),
                 selected ? Color.FromArgb(60, 0, 255, 0) : null,
                 thickness: 4);
 
-            // Триггеры — красные
-            if (r.TriggerX >= 0 && r.TriggerY >= 0)
-                AddRect(r.TriggerX, r.TriggerY, 1, 1,
+            // Все триггеры — красные
+            foreach (var t in r.Triggers)
+                AddRect(t.X, t.Y, 1, 1,
                     Color.FromArgb(alpha, 255, 0, 0), null, thickness: 4);
 
-            if (r.Trigger2X >= 0 && r.Trigger2Y >= 0)
-                AddRect(r.Trigger2X, r.Trigger2Y, 1, 1,
-                    Color.FromArgb(alpha, 255, 0, 0), null, thickness: 4);
-
-            // Выходы — голубые
-            if (r.ExitX >= 0 && r.ExitY >= 0)
-                AddRect(r.ExitX, r.ExitY, 1, 1,
-                    Color.FromArgb(alpha, 0, 150, 255), null, thickness: 4);
-
-            if (r.Exit2X >= 0 && r.Exit2Y >= 0)
-                AddRect(r.Exit2X, r.Exit2Y, 1, 1,
+            // Все выходы — голубые
+            foreach (var e in r.Exits)
+                AddRect(e.X, e.Y, 1, 1,
                     Color.FromArgb(alpha, 0, 150, 255), null, thickness: 4);
         }
     }

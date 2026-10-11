@@ -9,6 +9,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;   // ← для SolidColorBrush / Color
 using Avalonia.Media.Imaging;
+using RpgShinzoMaker.Core.Models;
 using RpgShinzoMaker.Core.Services;
 
 namespace RpgShinzoMaker.Desktop.Editors.EventEditor;
@@ -77,35 +78,146 @@ public partial class EventEditorView
     //   ROOF — загрузка в поля
     // ══════════════════════════════════════════════════════════════
     private void LoadRoof()
+{
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count)
     {
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count)
-        {
-            ClearRoofFields();
-            return;
-        }
-
-        var r = _events.Roofs[_selectedIndex];
-        
-        // Пары X / Y
-        SetPair(Roof_StartX, Roof_StartY, r.StartX,    r.StartY,    allowEmpty: false);
-        SetPair(Roof_EndX,   Roof_EndY,   r.EndX,      r.EndY,      allowEmpty: false);
-        SetPair(Roof_Trig1X, Roof_Trig1Y, r.TriggerX,  r.TriggerY,  allowEmpty: true);
-        SetPair(Roof_Trig2X, Roof_Trig2Y, r.Trigger2X, r.Trigger2Y, allowEmpty: true);
-        SetPair(Roof_Exit1X, Roof_Exit1Y, r.ExitX,     r.ExitY,     allowEmpty: true);
-        SetPair(Roof_Exit2X, Roof_Exit2Y, r.Exit2X,    r.Exit2Y,    allowEmpty: true);
-
-        UpdateRoofExit2Enabled();
+        ClearRoofFields();
+        return;
     }
 
-    private void ClearRoofFields()
+    var r = _events.Roofs[_selectedIndex];
+
+    SetPair(Roof_StartX, Roof_StartY, r.StartX, r.StartY, allowEmpty: false);
+    SetPair(Roof_EndX,   Roof_EndY,   r.EndX,   r.EndY,   allowEmpty: false);
+
+    // Сбросить выделения списков
+    _selectedRoofTriggerIndex = r.Triggers.Count > 0 ? 0 : -1;
+    _selectedRoofExitIndex    = r.Exits.Count    > 0 ? 0 : -1;
+
+    RefreshRoofTriggerList();
+    RefreshRoofExitList();
+    UpdateRoofTriggerFields();
+    UpdateRoofExitFields();
+}
+
+/// <summary>Пересобирает список триггеров, сохраняя выделение.</summary>
+private void RefreshRoofTriggerList()
+{
+    if (Roof_TriggersList == null) return;
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+    var r = _events.Roofs[_selectedIndex];
+    var labels = new List<string>();
+    for (int i = 0; i < r.Triggers.Count; i++)
     {
-        Roof_StartX.Text = ""; Roof_StartY.Text = "";
-        Roof_EndX.Text   = ""; Roof_EndY.Text   = "";
-        Roof_Trig1X.Text = ""; Roof_Trig1Y.Text = "";
-        Roof_Trig2X.Text = ""; Roof_Trig2Y.Text = "";
-        Roof_Exit1X.Text = ""; Roof_Exit1Y.Text = "";
-        Roof_Exit2X.Text = ""; Roof_Exit2Y.Text = "";
+        var t = r.Triggers[i];
+        labels.Add($"#{i}   ({t.X},{t.Y})");
     }
+
+    Roof_TriggersList.SelectionChanged -= OnRoofTriggerSelected;
+    Roof_TriggersList.ItemsSource = labels;
+    Roof_TriggersList.SelectedIndex = _selectedRoofTriggerIndex;
+    Roof_TriggersList.SelectionChanged += OnRoofTriggerSelected;
+
+    if (Roof_TriggersCount != null)
+        Roof_TriggersCount.Text = $"{r.Triggers.Count} / 10";
+}
+
+/// <summary>Пересобирает список выходов, сохраняя выделение.</summary>
+private void RefreshRoofExitList()
+{
+    if (Roof_ExitsList == null) return;
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+    var r = _events.Roofs[_selectedIndex];
+    var labels = new List<string>();
+    for (int i = 0; i < r.Exits.Count; i++)
+    {
+        var e = r.Exits[i];
+        labels.Add($"#{i}   ({e.X},{e.Y})");
+    }
+
+    Roof_ExitsList.SelectionChanged -= OnRoofExitSelected;
+    Roof_ExitsList.ItemsSource = labels;
+    Roof_ExitsList.SelectedIndex = _selectedRoofExitIndex;
+    Roof_ExitsList.SelectionChanged += OnRoofExitSelected;
+
+    if (Roof_ExitsCount != null)
+        Roof_ExitsCount.Text = $"{r.Exits.Count} / 10";
+}
+
+/// <summary>Заполняет X/Y триггера для выбранного элемента.</summary>
+private void UpdateRoofTriggerFields()
+{
+    if (Roof_TriggerX == null || Roof_TriggerY == null) return;
+
+    bool has = _selectedIndex >= 0 && _selectedIndex < _events.Roofs.Count
+            && _selectedRoofTriggerIndex >= 0
+            && _selectedRoofTriggerIndex < _events.Roofs[_selectedIndex].Triggers.Count;
+
+    Roof_TriggerX.IsEnabled = has;
+    Roof_TriggerY.IsEnabled = has;
+
+    _suppressFieldEvents = true;
+    if (!has)
+    {
+        Roof_TriggerX.Text = "";
+        Roof_TriggerY.Text = "";
+    }
+    else
+    {
+        var t = _events.Roofs[_selectedIndex].Triggers[_selectedRoofTriggerIndex];
+        Roof_TriggerX.Text = t.X.ToString();
+        Roof_TriggerY.Text = t.Y.ToString();
+    }
+    _suppressFieldEvents = false;
+}
+
+/// <summary>Заполняет X/Y выхода для выбранного элемента.</summary>
+private void UpdateRoofExitFields()
+{
+    if (Roof_ExitX == null || Roof_ExitY == null) return;
+
+    bool has = _selectedIndex >= 0 && _selectedIndex < _events.Roofs.Count
+            && _selectedRoofExitIndex >= 0
+            && _selectedRoofExitIndex < _events.Roofs[_selectedIndex].Exits.Count;
+
+    Roof_ExitX.IsEnabled = has;
+    Roof_ExitY.IsEnabled = has;
+
+    _suppressFieldEvents = true;
+    if (!has)
+    {
+        Roof_ExitX.Text = "";
+        Roof_ExitY.Text = "";
+    }
+    else
+    {
+        var e = _events.Roofs[_selectedIndex].Exits[_selectedRoofExitIndex];
+        Roof_ExitX.Text = e.X.ToString();
+        Roof_ExitY.Text = e.Y.ToString();
+    }
+    _suppressFieldEvents = false;
+}
+
+private void ClearRoofFields()
+{
+    _selectedRoofTriggerIndex = -1;
+    _selectedRoofExitIndex = -1;
+
+    Roof_StartX.Text = ""; Roof_StartY.Text = "";
+    Roof_EndX.Text   = ""; Roof_EndY.Text   = "";
+
+    if (Roof_TriggersList != null) Roof_TriggersList.ItemsSource = null;
+    if (Roof_ExitsList    != null) Roof_ExitsList.ItemsSource = null;
+    if (Roof_TriggersCount != null) Roof_TriggersCount.Text = "0 / 10";
+    if (Roof_ExitsCount    != null) Roof_ExitsCount.Text = "0 / 10";
+
+    if (Roof_TriggerX != null) { Roof_TriggerX.Text = ""; Roof_TriggerX.IsEnabled = false; }
+    if (Roof_TriggerY != null) { Roof_TriggerY.Text = ""; Roof_TriggerY.IsEnabled = false; }
+    if (Roof_ExitX    != null) { Roof_ExitX.Text    = ""; Roof_ExitX.IsEnabled    = false; }
+    if (Roof_ExitY    != null) { Roof_ExitY.Text    = ""; Roof_ExitY.IsEnabled    = false; }
+}
 
     private static void SetPair(TextBox xBox, TextBox yBox, int x, int y, bool allowEmpty)
     {
@@ -121,24 +233,6 @@ public partial class EventEditorView
         }
     }
     
-    /// <summary>Exit2 активен только если Trig2 заполнен.</summary>
-    private void UpdateRoofExit2Enabled()
-    {
-        if (Roof_Exit2X == null || Roof_Exit2Y == null) return;
-
-        bool trig2Filled = !string.IsNullOrEmpty(Roof_Trig2X.Text)
-                        || !string.IsNullOrEmpty(Roof_Trig2Y.Text);
-
-        Roof_Exit2X.IsEnabled = trig2Filled;
-        Roof_Exit2Y.IsEnabled = trig2Filled;
-
-        if (!trig2Filled)
-        {
-            Roof_Exit2X.Text = "";
-            Roof_Exit2Y.Text = "";
-        }
-    }
-
     // ─── ROOF — обработчики Start ───
     private void OnRoofStartXChanged(object? sender, TextChangedEventArgs e)
     {
@@ -176,128 +270,140 @@ public partial class EventEditorView
         _events.Roofs[_selectedIndex].EndY = ParseCoord(Roof_EndY.Text, fallback: 1);
         OnFieldChanged();
     }
+    // ══════════════════════════════════════════════════════════════
+//   ROOF — выбранный триггер / выход
+// ══════════════════════════════════════════════════════════════
+private void OnRoofTriggerSelected(object? sender, SelectionChangedEventArgs e)
+{
+    if (_suppressFieldEvents) return;
+    _selectedRoofTriggerIndex = Roof_TriggersList.SelectedIndex;
+    UpdateRoofTriggerFields();
+}
 
-    // ─── ROOF — обработчики Trig1 ───
-    private void OnRoofTrig1XChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+private void OnRoofExitSelected(object? sender, SelectionChangedEventArgs e)
+{
+    if (_suppressFieldEvents) return;
+    _selectedRoofExitIndex = Roof_ExitsList.SelectedIndex;
+    UpdateRoofExitFields();
+}
 
-        var r = _events.Roofs[_selectedIndex];
-        int oldX = r.TriggerX;
-        r.TriggerX = ParseCoord(Roof_Trig1X.Text, fallback: -1);
+// ══════════════════════════════════════════════════════════════
+//   ROOF — Add / Delete триггеров и выходов
+// ══════════════════════════════════════════════════════════════
+private void OnRoofTriggerAdd(object? sender, RoutedEventArgs e)
+{
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+    var r = _events.Roofs[_selectedIndex];
+    if (r.Triggers.Count >= 10) return;
 
-        if (r.TriggerX < 0) r.TriggerY = -1;
-        else if (oldX < 0 && r.TriggerY < 0) r.TriggerY = 0;
+    r.Triggers.Add(new TriggerPoint(0, 0));
+    _selectedRoofTriggerIndex = r.Triggers.Count - 1;
+    RefreshRoofTriggerList();
+    UpdateRoofTriggerFields();
+    OnFieldChanged();
+}
 
-        OnFieldChanged();
-    }
+private void OnRoofTriggerDelete(object? sender, RoutedEventArgs e)
+{
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+    var r = _events.Roofs[_selectedIndex];
+    if (_selectedRoofTriggerIndex < 0 || _selectedRoofTriggerIndex >= r.Triggers.Count) return;
 
-    private void OnRoofTrig1YChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+    r.Triggers.RemoveAt(_selectedRoofTriggerIndex);
+    if (_selectedRoofTriggerIndex >= r.Triggers.Count)
+        _selectedRoofTriggerIndex = r.Triggers.Count - 1;
 
-        var r = _events.Roofs[_selectedIndex];
-        r.TriggerY = ParseCoord(Roof_Trig1Y.Text, fallback: -1);
+    RefreshRoofTriggerList();
+    UpdateRoofTriggerFields();
+    OnFieldChanged();
+}
 
-        if (r.TriggerY < 0) r.TriggerX = -1;
-        else if (r.TriggerX < 0) r.TriggerX = 0;
+private void OnRoofExitAdd(object? sender, RoutedEventArgs e)
+{
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+    var r = _events.Roofs[_selectedIndex];
+    if (r.Exits.Count >= 10) return;
 
-        OnFieldChanged();
-    }
+    r.Exits.Add(new TriggerPoint(0, 0));
+    _selectedRoofExitIndex = r.Exits.Count - 1;
+    RefreshRoofExitList();
+    UpdateRoofExitFields();
+    OnFieldChanged();
+}
 
-    // ─── ROOF — обработчики Trig2 ───
-    private void OnRoofTrig2XChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+private void OnRoofExitDelete(object? sender, RoutedEventArgs e)
+{
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+    var r = _events.Roofs[_selectedIndex];
+    if (_selectedRoofExitIndex < 0 || _selectedRoofExitIndex >= r.Exits.Count) return;
 
-        var r = _events.Roofs[_selectedIndex];
-        int oldX = r.Trigger2X;
-        r.Trigger2X = ParseCoord(Roof_Trig2X.Text, fallback: -1);
+    r.Exits.RemoveAt(_selectedRoofExitIndex);
+    if (_selectedRoofExitIndex >= r.Exits.Count)
+        _selectedRoofExitIndex = r.Exits.Count - 1;
 
-        if (r.Trigger2X < 0) r.Trigger2Y = -1;
-        else if (oldX < 0 && r.Trigger2Y < 0) r.Trigger2Y = 0;
+    RefreshRoofExitList();
+    UpdateRoofExitFields();
+    OnFieldChanged();
+}
 
-        UpdateRoofExit2Enabled();
-        OnFieldChanged();
-    }
+// ══════════════════════════════════════════════════════════════
+//   ROOF — изменение X/Y выбранного триггера / выхода
+// ══════════════════════════════════════════════════════════════
+private void OnRoofTriggerXChanged(object? sender, TextChangedEventArgs e)
+{
+    if (_suppressFieldEvents) return;
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+    if (_selectedRoofTriggerIndex < 0) return;
 
-    private void OnRoofTrig2YChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+    var r = _events.Roofs[_selectedIndex];
+    if (_selectedRoofTriggerIndex >= r.Triggers.Count) return;
 
-        var r = _events.Roofs[_selectedIndex];
-        r.Trigger2Y = ParseCoord(Roof_Trig2Y.Text, fallback: -1);
+    r.Triggers[_selectedRoofTriggerIndex].X = ParseCoord(Roof_TriggerX.Text, fallback: 0);
+    RefreshRoofTriggerList();
+    OnFieldChanged();
+}
 
-        if (r.Trigger2Y < 0) r.Trigger2X = -1;
-        else if (r.Trigger2X < 0) r.Trigger2X = 0;
+private void OnRoofTriggerYChanged(object? sender, TextChangedEventArgs e)
+{
+    if (_suppressFieldEvents) return;
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+    if (_selectedRoofTriggerIndex < 0) return;
 
-        UpdateRoofExit2Enabled();
-        OnFieldChanged();
-    }
+    var r = _events.Roofs[_selectedIndex];
+    if (_selectedRoofTriggerIndex >= r.Triggers.Count) return;
 
-    // ─── ROOF — обработчики Exit1 ───
-    private void OnRoofExit1XChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+    r.Triggers[_selectedRoofTriggerIndex].Y = ParseCoord(Roof_TriggerY.Text, fallback: 0);
+    RefreshRoofTriggerList();
+    OnFieldChanged();
+}
 
-        var r = _events.Roofs[_selectedIndex];
-        int oldX = r.ExitX;
-        r.ExitX = ParseCoord(Roof_Exit1X.Text, fallback: -1);
+private void OnRoofExitXChanged(object? sender, TextChangedEventArgs e)
+{
+    if (_suppressFieldEvents) return;
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+    if (_selectedRoofExitIndex < 0) return;
 
-        if (r.ExitX < 0) r.ExitY = -1;
-        else if (oldX < 0 && r.ExitY < 0) r.ExitY = 0;
+    var r = _events.Roofs[_selectedIndex];
+    if (_selectedRoofExitIndex >= r.Exits.Count) return;
 
-        OnFieldChanged();
-    }
+    r.Exits[_selectedRoofExitIndex].X = ParseCoord(Roof_ExitX.Text, fallback: 0);
+    RefreshRoofExitList();
+    OnFieldChanged();
+}
 
-    private void OnRoofExit1YChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
+{
+    if (_suppressFieldEvents) return;
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+    if (_selectedRoofExitIndex < 0) return;
 
-        var r = _events.Roofs[_selectedIndex];
-        r.ExitY = ParseCoord(Roof_Exit1Y.Text, fallback: -1);
+    var r = _events.Roofs[_selectedIndex];
+    if (_selectedRoofExitIndex >= r.Exits.Count) return;
 
-        if (r.ExitY < 0) r.ExitX = -1;
-        else if (r.ExitX < 0) r.ExitX = 0;
-
-        OnFieldChanged();
-    }
-
-    // ─── ROOF — обработчики Exit2 ───
-    private void OnRoofExit2XChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-
-        var r = _events.Roofs[_selectedIndex];
-        int oldX = r.Exit2X;
-        r.Exit2X = ParseCoord(Roof_Exit2X.Text, fallback: -1);
-
-        if (r.Exit2X < 0) r.Exit2Y = -1;
-        else if (oldX < 0 && r.Exit2Y < 0) r.Exit2Y = 0;
-
-        OnFieldChanged();
-    }
-
-    private void OnRoofExit2YChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-
-        var r = _events.Roofs[_selectedIndex];
-        r.Exit2Y = ParseCoord(Roof_Exit2Y.Text, fallback: -1);
-
-        if (r.Exit2Y < 0) r.Exit2X = -1;
-        else if (r.Exit2X < 0) r.Exit2X = 0;
-
-        OnFieldChanged();
-    }
+    r.Exits[_selectedRoofExitIndex].Y = ParseCoord(Roof_ExitY.Text, fallback: 0);
+    RefreshRoofExitList();
+    OnFieldChanged();
+}
 
     // ══════════════════════════════════════════════════════════════
     //   TILE CHANGE — загрузка в поля

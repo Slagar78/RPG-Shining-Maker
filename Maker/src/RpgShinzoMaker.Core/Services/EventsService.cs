@@ -179,42 +179,36 @@ public static class EventsService
         };
 
         var triggers = obj["triggers"]?.AsArray();
-        if (triggers != null && triggers.Count > 0)
+        if (triggers != null)
         {
-            var t0 = triggers[0]?.AsArray();
-            if (t0 != null && t0.Count >= 2)
+            foreach (var item in triggers)
             {
-                roof.TriggerX = t0[0]?.GetValue<int>() ?? -1;
-                roof.TriggerY = t0[1]?.GetValue<int>() ?? -1;
-            }
-        }
-        if (triggers != null && triggers.Count > 1)
-        {
-            var t1 = triggers[1]?.AsArray();
-            if (t1 != null && t1.Count >= 2)
-            {
-                roof.Trigger2X = t1[0]?.GetValue<int>() ?? -1;
-                roof.Trigger2Y = t1[1]?.GetValue<int>() ?? -1;
+                var pair = item?.AsArray();
+                if (pair == null || pair.Count < 2) continue;
+
+                int x = pair[0]?.GetValue<int>() ?? -1;
+                int y = pair[1]?.GetValue<int>() ?? -1;
+                if (x < 0 || y < 0) continue;
+
+                roof.Triggers.Add(new TriggerPoint(x, y));
+                if (roof.Triggers.Count >= 10) break;
             }
         }
 
         var exits = obj["exits"]?.AsArray();
-        if (exits != null && exits.Count > 0)
+        if (exits != null)
         {
-            var e0 = exits[0]?.AsArray();
-            if (e0 != null && e0.Count >= 2)
+            foreach (var item in exits)
             {
-                roof.ExitX = e0[0]?.GetValue<int>() ?? -1;
-                roof.ExitY = e0[1]?.GetValue<int>() ?? -1;
-            }
-        }
-        if (exits != null && exits.Count > 1)
-        {
-            var e1 = exits[1]?.AsArray();
-            if (e1 != null && e1.Count >= 2)
-            {
-                roof.Exit2X = e1[0]?.GetValue<int>() ?? -1;
-                roof.Exit2Y = e1[1]?.GetValue<int>() ?? -1;
+                var pair = item?.AsArray();
+                if (pair == null || pair.Count < 2) continue;
+
+                int x = pair[0]?.GetValue<int>() ?? -1;
+                int y = pair[1]?.GetValue<int>() ?? -1;
+                if (x < 0 || y < 0) continue;
+
+                roof.Exits.Add(new TriggerPoint(x, y));
+                if (roof.Exits.Count >= 10) break;
             }
         }
 
@@ -304,16 +298,12 @@ public static class EventsService
         foreach (var r in events.Roofs)
         {
             var triggers = new JsonArray();
-            if (r.TriggerX  != -1 || r.TriggerY  != -1)
-                triggers.Add(new JsonArray { r.TriggerX, r.TriggerY });
-            if (r.Trigger2X != -1 || r.Trigger2Y != -1)
-                triggers.Add(new JsonArray { r.Trigger2X, r.Trigger2Y });
+            foreach (var t in r.Triggers)
+                triggers.Add(new JsonArray { t.X, t.Y });
 
             var exits = new JsonArray();
-            if (r.ExitX  != -1 || r.ExitY  != -1)
-                exits.Add(new JsonArray { r.ExitX, r.ExitY });
-            if (r.Exit2X != -1 || r.Exit2Y != -1)
-                exits.Add(new JsonArray { r.Exit2X, r.Exit2Y });
+            foreach (var e in r.Exits)
+                exits.Add(new JsonArray { e.X, e.Y });
 
             root.Add(new JsonObject
             {
