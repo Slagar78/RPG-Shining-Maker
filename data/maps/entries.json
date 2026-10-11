@@ -22,5 +22,13 @@
     "music": "assets/sounds/SF_Feather.mp3",
     "music_volume": 0.8,
     "areas": "data/maps/Expraito/areas.json"
+  },
+  {
+    "id": 3,
+    "folder": "Alcaran",
+    "name": "Alcaran",
+    "music": "assets/sounds/SF_Feather.mp3",
+    "music_volume": 0.8,
+    "areas": "data/maps/Alcaran/areas.json"
   }
 ]

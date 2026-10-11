@@ -168,10 +168,15 @@ public partial class MapEditorView
                 EndY   = mapH - 1,
             };
             AreasService.Save(map, newArea);
-
+            
+            // Найти свободный id = max(существующих) + 1
+            int newId = _mapEntries.Count > 0 
+                ? _mapEntries.Max(m => m.Id) + 1 
+                : 0;
             // Добавить в entries
             var entry = new MapEntry
             {
+                Id          = newId,
                 Folder      = folder,
                 Name        = name,
                 Music       = defaultMusic,

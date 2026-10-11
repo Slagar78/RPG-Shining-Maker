@@ -24,6 +24,7 @@ public static class EntriesService
             if (n is not JsonObject o) continue;
             list.Add(new MapEntry
             {
+                Id          = o["id"]?.GetValue<int>() ?? 0,
                 Folder      = o["folder"]?.GetValue<string>() ?? "",
                 Name        = o["name"]?.GetValue<string>() ?? "",
                 Music       = o["music"]?.GetValue<string>() ?? "",
@@ -48,6 +49,7 @@ public static class EntriesService
         {
             arr.Add(new JsonObject
             {
+                ["id"]           = e.Id,
                 ["folder"]       = e.Folder,
                 ["name"]         = e.Name,
                 ["music"]        = e.Music,
