@@ -119,6 +119,8 @@ public partial class EventEditorView
 
             // 3. Сбросить выделение
             _selectedIndex = -1;
+            _selectedRoofTriggerIndex = -1;
+            _selectedRoofExitIndex = -1;
 
             // 4. Обновить список событий и панель полей (Sections.cs + Fields.cs)
             RefreshEventList();

@@ -152,25 +152,33 @@ private void UpdateRoofTriggerFields()
     if (Roof_TriggerX == null || Roof_TriggerY == null) return;
 
     bool has = _selectedIndex >= 0 && _selectedIndex < _events.Roofs.Count
-            && _selectedRoofTriggerIndex >= 0
-            && _selectedRoofTriggerIndex < _events.Roofs[_selectedIndex].Triggers.Count;
+                                   && _selectedRoofTriggerIndex >= 0
+                                   && _selectedRoofTriggerIndex < _events.Roofs[_selectedIndex].Triggers.Count;
 
     Roof_TriggerX.IsEnabled = has;
     Roof_TriggerY.IsEnabled = has;
 
+    // ─── Save/Restore: если снаружи уже подавлено — оставляем подавленным ───
+    bool saved = _suppressFieldEvents;
     _suppressFieldEvents = true;
-    if (!has)
+    try
     {
-        Roof_TriggerX.Text = "";
-        Roof_TriggerY.Text = "";
+        if (!has)
+        {
+            Roof_TriggerX.Text = "";
+            Roof_TriggerY.Text = "";
+        }
+        else
+        {
+            var t = _events.Roofs[_selectedIndex].Triggers[_selectedRoofTriggerIndex];
+            Roof_TriggerX.Text = t.X.ToString();
+            Roof_TriggerY.Text = t.Y.ToString();
+        }
     }
-    else
+    finally
     {
-        var t = _events.Roofs[_selectedIndex].Triggers[_selectedRoofTriggerIndex];
-        Roof_TriggerX.Text = t.X.ToString();
-        Roof_TriggerY.Text = t.Y.ToString();
+        _suppressFieldEvents = saved;
     }
-    _suppressFieldEvents = false;
 }
 
 /// <summary>Заполняет X/Y выхода для выбранного элемента.</summary>
@@ -179,25 +187,33 @@ private void UpdateRoofExitFields()
     if (Roof_ExitX == null || Roof_ExitY == null) return;
 
     bool has = _selectedIndex >= 0 && _selectedIndex < _events.Roofs.Count
-            && _selectedRoofExitIndex >= 0
-            && _selectedRoofExitIndex < _events.Roofs[_selectedIndex].Exits.Count;
+                                   && _selectedRoofExitIndex >= 0
+                                   && _selectedRoofExitIndex < _events.Roofs[_selectedIndex].Exits.Count;
 
     Roof_ExitX.IsEnabled = has;
     Roof_ExitY.IsEnabled = has;
 
+    // ─── Save/Restore: если снаружи уже подавлено — оставляем подавленным ───
+    bool saved = _suppressFieldEvents;
     _suppressFieldEvents = true;
-    if (!has)
+    try
     {
-        Roof_ExitX.Text = "";
-        Roof_ExitY.Text = "";
+        if (!has)
+        {
+            Roof_ExitX.Text = "";
+            Roof_ExitY.Text = "";
+        }
+        else
+        {
+            var e = _events.Roofs[_selectedIndex].Exits[_selectedRoofExitIndex];
+            Roof_ExitX.Text = e.X.ToString();
+            Roof_ExitY.Text = e.Y.ToString();
+        }
     }
-    else
+    finally
     {
-        var e = _events.Roofs[_selectedIndex].Exits[_selectedRoofExitIndex];
-        Roof_ExitX.Text = e.X.ToString();
-        Roof_ExitY.Text = e.Y.ToString();
+        _suppressFieldEvents = saved;
     }
-    _suppressFieldEvents = false;
 }
 
 private void ClearRoofFields()

@@ -615,9 +615,7 @@ public partial class MapEditorView
         AttachDigitOnlyFilter(SubAreaStartY);
         AttachDigitOnlyFilter(SubAreaEndX);
         AttachDigitOnlyFilter(SubAreaEndY);
-
-        AreaError.IsVisible = false;
-        AreasOverlay.IsVisible = true;
+        
         AreasOverlay.IsVisible = true;
     }
 
