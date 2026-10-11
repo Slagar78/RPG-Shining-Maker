@@ -1,0 +1,176 @@
+==========================================================
+  ФЛАГИ В RPG-SHINING-MAKER — ШПАРГАЛКА
+==========================================================
+
+Все флаги живут в lib/flags.rb → class Flags
+Хранятся в Hash: { "ключ" => значение }
+Значение: true / false / число
+"Включён" = true ИЛИ число > 0
+
+----------------------------------------------------------
+1. ФЛАГИ БИТВ (готовые методы)
+----------------------------------------------------------
+
+Максимум 99 битв, индексы 0..98 (MAX_BATTLES = 99).
+
+  @flags.battle_unlocked?(n)   # открыта ли битва n?
+  @flags.battle_completed?(n)  # пройдена ли битва n?
+  @flags.unlock_battle(n)      # открыть битву n
+  @flags.complete_battle(n)    # отметить как пройденную
+  @flags.reset_battle(n)       # сбросить оба флага
+
+Внутри это ключи вида:
+  battle_0_unlocked
+  battle_0_completed
+  battle_1_unlocked
+  ...
+  battle_98_completed
+
+Выход за пределы 0..98 → ArgumentError.
+
+----------------------------------------------------------
+2. УНИВЕРСАЛЬНЫЕ МЕТОДЫ (для любых флагов)
+----------------------------------------------------------
+
+  @flags["key"]             # получить значение или nil
+  @flags.on?("key")         # true, если true или число > 0
+  @flags.off?("key")        # !on?
+  @flags.set("key", true)   # установить (по умолчанию true)
+  @flags.set("key", 5)      # можно число
+  @flags.unset("key")       # удалить
+  @flags.toggle("key")      # инвертировать
+
+Пример:
+  @flags.set("met_king")
+  @flags.set("chapter", 2)
+  @flags.set("gold_found", 500)
+
+  if @flags.on?("met_king")
+    # ...
+  end
+
+----------------------------------------------------------
+3. СЛУЖЕБНЫЙ ФЛАГ: __start_battle__
+----------------------------------------------------------
+
+Используется, чтобы запустить бой ПОСЛЕ диалога.
+
+В dialog_manager.rb:
+  when 'start_battle'
+    @flags&.set("__start_battle__", cmd['battle'])
+    @finished = true
+
+В game.rb:
+  if @flags["__start_battle__"]
+    battle_id = @flags["__start_battle__"]
+    @flags.unset("__start_battle__")
+    launch_battle(battle_id)
+    return
+  end
+
+Прямо в коде игры этот флаг ставить НЕ надо.
+Только через команду диалога.
+
+----------------------------------------------------------
+4. КОМАНДЫ ДЛЯ ДИАЛОГОВ (уже работают)
+----------------------------------------------------------
+
+В script.json (NPC_script.json) можно писать:
+
+  { "type": "unlock_battle",   "battle": 3 }
+  { "type": "complete_battle", "battle": 3 }
+  { "type": "start_battle",    "battle": 3 }
+
+unlock_battle   → @flags.unlock_battle(3)
+complete_battle → @flags.complete_battle(3)
+start_battle    → ставит __start_battle__, диалог завершается,
+                  игра подхватывает и запускает бой 3.
+
+----------------------------------------------------------
+5. КОМАНДЫ ДЛЯ ДИАЛОГОВ (которых ПОКА НЕТ)
+----------------------------------------------------------
+
+Если добавить в DialogManager#update — можно будет:
+
+  { "type": "set_flag",   "key": "met_king", "value": true }
+  { "type": "unset_flag", "key": "met_king" }
+  { "type": "if_flag",    "key": "met_king",
+    "then": 10, "else": 20 }
+
+Пока их нет — сюжетные флаги можно ставить только из кода.
+
+----------------------------------------------------------
+6. НОМЕР БИТВЫ — ОТКУДА БЕРЁТСЯ
+----------------------------------------------------------
+
+Индекс = позиция в data/battles/entries.json
+
+  battle_id = 0 → первая запись в entries.json
+  battle_id = 1 → вторая
+  ...
+
+В game.rb:
+  def battle_id_for_map(map_id)
+    entries = JSON.parse(File.read("data/battles/entries.json"))
+    idx = entries.index { |e| e["map_id"] == map_id }
+    idx
+  end
+
+Автозапуск битвы на карте:
+  - при входе на карту проверяется battle_id_for_map
+  - если флаг battle_N_unlocked ВКЛЮЧЁН
+  - и battle_N_completed ВЫКЛЮЧЕН
+  → launch_battle(N)
+
+----------------------------------------------------------
+7. ТИПИЧНЫЕ СЦЕНАРИИ
+----------------------------------------------------------
+
+А. Открыть битву после разговора с NPC:
+   В script.json:
+     { "type": "say", "text_id": "..." }
+     { "type": "unlock_battle", "battle": 2 }
+     { "type": "end" }
+
+Б. Запустить битву сразу из диалога:
+   { "type": "start_battle", "battle": 2 }
+
+В. Проверить, пройдена ли битва (в игре):
+   if @flags.battle_completed?(2)
+     # открыть новую зону
+   end
+
+Г. Сюжетный флаг для квеста:
+   @flags.set("quest_sword_started")
+   if @flags.on?("quest_sword_started")
+     # ...
+   end
+
+Д. Счётчик (например, сколько раз поговорил):
+   @flags.set("npc_talks", @flags["npc_talks"].to_i + 1)
+
+----------------------------------------------------------
+8. СЕРИАЛИЗАЦИЯ (сохранения)
+----------------------------------------------------------
+
+  @flags.to_h         # → Hash (копия)
+  @flags.save(path)   # сохранить в JSON
+  Flags.load(path)    # загрузить из JSON
+
+Пример:
+  @flags.save("save/slot1.json")
+  loaded = Flags.load("save/slot1.json")
+
+----------------------------------------------------------
+9. ШПАРГАЛКА ПО КЛЮЧАМ
+----------------------------------------------------------
+
+  battle_N_unlocked      ← @flags.unlock_battle(N)
+  battle_N_completed     ← @flags.complete_battle(N)
+  __start_battle__       ← служебный, ставится из диалога
+  *любой другой ключ*    ← @flags.set("ключ", значение)
+
+"Включён" = true ИЛИ число > 0.
+false / nil / 0 / отсутствие ключа = выключен.
+
+==========================================================
