@@ -1107,6 +1107,14 @@ class Profile
     spell = spells.find { |s| s["name"].casecmp?(name) && s["level"] == level }
     spell ? spell["icon"] : nil
   end
+  
+  def unload
+    UnloadTexture(@right_panel_tex) if @right_panel_tex
+    UnloadTexture(@sub_panel_tex)   if @sub_panel_tex
+    UnloadTexture(@frame_tex)       if @frame_tex
+    @icon_cache.each_value      { |t| UnloadTexture(t) if t } if @icon_cache
+    @mapsprite_cache.each_value { |t| UnloadTexture(t) if t } if @mapsprite_cache
+  end
 end
 
 # ============================================

@@ -7,7 +7,7 @@ class DialogManager
   
   REVEAL_SPEED = 1.0 / 30.0   # секунд на символ (было 2 кадра при 60 FPS)
 
-  def initialize(script, npc, player, game_map, local_text, global_text, message_panel_tex, font, leader_name, original_npc_direction)
+  def initialize(script, npc, player, game_map, local_text, global_text, message_panel_tex, font, leader_name, original_npc_direction, flags = nil)
     @script = script
     @npc = npc
     @player = player
@@ -18,6 +18,7 @@ class DialogManager
     @font = font
     @leader_name = leader_name || ''
     @original_npc_direction = original_npc_direction
+    @flags = flags
 
     @index = 0
     @finished = false
@@ -51,7 +52,17 @@ class DialogManager
       when 'turn_player_to_npc'
         @player.direction = direction_to_player(@player, @npc)
         @index += 1
+      when 'unlock_battle'
+        @flags&.unlock_battle(cmd['battle'])
+        @index += 1
+      when 'complete_battle'
+        @flags&.complete_battle(cmd['battle'])
+        @index += 1
       when 'end'
+        @finished = true
+        break
+      when 'start_battle'
+        @flags&.set("__start_battle__", cmd['battle'])
         @finished = true
         break
       else

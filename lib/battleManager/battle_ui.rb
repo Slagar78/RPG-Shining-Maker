@@ -518,4 +518,24 @@ end
     spell = spells.find { |s| s["name"].casecmp?(name) && s["level"] == level }
     spell ? spell["icon"] : nil
   end
+  
+  def unload
+    @textures.each do |t|
+      UnloadTexture(t[:normal]) if t[:normal]
+      UnloadTexture(t[:anim])   if t[:anim]
+    end if @textures
+
+    @item_textures.each do |t|
+      UnloadTexture(t[:normal]) if t[:normal]
+      UnloadTexture(t[:anim])   if t[:anim]
+    end if @item_textures
+
+    UnloadTexture(@commands_tex)    if @commands_tex
+    UnloadTexture(@magic_panel_tex) if @magic_panel_tex
+    UnloadTexture(@empty_item_tex)  if @empty_item_tex
+    UnloadTexture(@empty_magic_tex) if @empty_magic_tex
+
+    @magic_icon_cache.each_value { |t| UnloadTexture(t) if t } if @magic_icon_cache
+    @item_icons.each_value       { |t| UnloadTexture(t) if t } if @item_icons
+  end
 end

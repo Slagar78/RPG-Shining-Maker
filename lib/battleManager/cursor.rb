@@ -54,4 +54,8 @@ class BattleCursor
     @y = (pixel_y / @tile_size).floor
     @visible = true
   end
+
+  def unload
+    UnloadTexture(@tex) if @tex
+  end
 end

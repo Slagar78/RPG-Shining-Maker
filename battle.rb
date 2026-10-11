@@ -1,4 +1,4 @@
-# battle.rb (корень проекта, автономный)
+# battle.rb (корень проекта)
 require 'json'
 require 'raylib'
 require_relative 'lib/battleManager/hp_mp_panel'
@@ -95,17 +95,18 @@ def recalc_current_unit_stats
   apply_equipment_bonuses(unit, inventory_items)
 end
 
-  def initialize(db = nil, font = nil, game_text = {})
+  def initialize(db = nil, font = nil, game_text = {}, battle_id = 0)
     @db = db
     @font = font
     @game_text = game_text
     @audio = nil
+    @battle_id = battle_id.to_i
 
     entries_path = "data/battles/entries.json"
     if File.exist?(entries_path)
       entries = JSON.parse(File.read(entries_path))
       if entries.any?
-        @battle_entry = entries.first
+        @battle_entry = entries[@battle_id] || entries.first
       else
         raise "No battles found in data/battles/entries.json"
       end
@@ -1472,127 +1473,68 @@ def open_profile_for_ally(ally_unit)
   @profile.open(ally_unit[:actor]["name"], party, class_names, classes_data, @portrait_cache, @start_inventory)
 end
 
-def open_profile_for_enemy(enemy_unit)
-  @enemy_profile.open(enemy_unit[:enemy], @portrait_cache)
-end
+  def open_profile_for_enemy(enemy_unit)
+    @enemy_profile.open(enemy_unit[:enemy], @portrait_cache)
+  end
 
  def unload
+    # ── Карта боя (тайлсет + статика + слои) ──
+    @game_map.unload if @game_map.respond_to?(:unload)
     UnloadRenderTexture(@static_bg) if @static_bg
     UnloadRenderTexture(@top_layer) if @top_layer
     UnloadRenderTexture(@layer2) if @layer2
-    UnloadTexture(@highlight_tex) if @highlight_tex
-  end
-end
 
-if __FILE__ == $0
-  SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE)
-  InitWindow(576, 480, "Battle")
-  $canvas = LoadRenderTexture(576, 480)
-  SetTextureFilter($canvas.texture, TEXTURE_FILTER_POINT)
-  InitAudioDevice()
+    # ── Простые текстуры ──
+    UnloadTexture(@message_panel_tex) if @message_panel_tex
+    UnloadTexture(@info_cursor_tex) if @info_cursor_tex
 
-  db = Database.new
-
-game_text = {}
-begin
-  File.readlines("data/text/gamescript.txt", encoding: 'UTF-8').each do |line|
-    line.strip!
-    next if line.empty? || line.start_with?('#')
-    if line =~ /^(\d+)=(.+)$/
-      game_text[$1] = $2.strip
+    # ── Кеши спрайтов ──
+    if defined?(@mapsprite_cache) && @mapsprite_cache
+      @mapsprite_cache.each_value { |t| UnloadTexture(t) if t }
     end
-  end
-rescue
-  puts "WARNING: gamescript.txt not loaded"
-end
-  
-  $spells = db.spells if db && db.spells
-  DamageCalculator.movetypes = db.movetypes
-
-  # Загрузка шрифтов
-  codepoints = []
-  (32..126).each { |cp| codepoints << cp }
-  (0x0400..0x04FF).each { |cp| codepoints << cp }
-  cp_ptr = FFI::MemoryPointer.new(:int, codepoints.size)
-  cp_ptr.write_array_of_int(codepoints)
-
-  # Основной шрифт (20px)
-  battle_font = LoadFontEx("assets/ui/fonts/main.ttf", 20, cp_ptr, codepoints.size)
-  SetTextureFilter(battle_font.texture, TEXTURE_FILTER_POINT)
-
-  # Шрифт для боевых сцен (18px)
-  battle_scene_font = LoadFontEx("assets/ui/fonts/Pic.ttf", 18, cp_ptr, codepoints.size)
-  SetTextureFilter(battle_scene_font.texture, TEXTURE_FILTER_POINT)
-
-  # Шрифт для меню (30px, чёткий)
-  menu_font = LoadFontEx("assets/ui/fonts/main.ttf", 30, cp_ptr, codepoints.size)
-  SetTextureFilter(menu_font.texture, TEXTURE_FILTER_POINT)
-
-  battle = BattleManager.new(db, battle_font, game_text)
-  battle.battle_scene_font = battle_scene_font
-  battle.battle_menu.font = menu_font   # заменяем шрифт в меню на 30px
-  battle.battle_scene.message_font = menu_font
-
-  audio = AudioManager.new
-  battle.audio = audio
-
-  audio.load_sfx("confirm",     "assets/sounds/buttons/button_menu.ogg")
-  audio.load_sfx("cancel_menu", "assets/sounds/buttons/Cancel.ogg")
-  audio.load_sfx("cursor",      "assets/sounds/buttons/Cursor.ogg")
-  audio.load_sfx("error",       "assets/sounds/buttons/Error.ogg")
-  audio.load_sfx("attack", "assets/sounds/sounds_BattleScenes/Attack.mp3")
-  audio.load_sfx("block",  "assets/sounds/buttons/block_button.ogg")
-  
-if battle.music_file && !battle.music_file.empty?
-  audio.play(battle.music_file, battle.music_volume)
-end
-
-  until WindowShouldClose()
-    battle.handle_input
-    battle.update
-    audio.update
-
-    # ШАГ 1: Рендерим боевую сцену в ЕЁ СОБСТВЕННЫЙ холст.
-    # Это делается СНАРУЖИ $canvas — никакой вложенности.
-    if battle.battle_scene && battle.battle_scene.active?
-      battle.battle_scene.render_to_internal_rt
+    if defined?(@enemy_mapsprite_cache) && @enemy_mapsprite_cache
+      @enemy_mapsprite_cache.each_value { |t| UnloadTexture(t) if t }
     end
 
-    # ШАГ 2: Всё рисуем в $canvas (576×480).
-    # battle.draw → BattleRenderer#draw → BattleScene#draw_to_target
-    # (просто выводит готовый холст, ничего не рендерит заново)
-	BeginTextureMode($canvas)
-	  ClearBackground(BLACK)
-	  battle.draw
-	EndTextureMode()
+    # ── AoE ──
+    if defined?(@aoe_textures) && @aoe_textures
+      @aoe_textures.each_value { |t| UnloadTexture(t) if t }
+    end
 
-	BeginDrawing()
-	  ClearBackground(BLACK)
-	  sw = GetScreenWidth()
-	  sh = GetScreenHeight()
-	  scale = [sw / 576, sh / 480].min
-	  scale = 1 if scale < 1
-	  dw = 576 * scale
-	  dh = 480 * scale
-	  dx = (sw - dw) / 2
-	  dy = (sh - dh) / 2
-	  BeginBlendMode(BLEND_ALPHA)
-	  DrawTexturePro(
-		$canvas.texture,
-		Rectangle.create(0, 0, 576, -480),
-		Rectangle.create(dx, dy, dw, dh),
-		Vector2.create(0, 0), 0, WHITE
-	  )
-	  EndBlendMode()
-	EndDrawing()
+    # ── Спрайты бойцов (главная утечка) ──
+    seen_tex = {}
+    ([@allies, @enemies].compact.flatten).each do |u|
+      anim = u[:battle_anim]
+      next unless anim
+      [:idle, :attack, :dodge].each do |key|
+        data = anim.send(key) rescue nil
+        next unless data && data[:frames]
+        data[:frames].each do |f|
+          next unless f && f[:tex]
+          next if seen_tex[f[:tex].object_id]
+          UnloadTexture(f[:tex])
+          seen_tex[f[:tex].object_id] = true
+        end
+      end
+    end
+
+    # ── Делегируем в подсистемы ──
+    @battle_scene.send(:unload)       if @battle_scene.respond_to?(:unload, true)
+    @battle_menu.send(:unload)        if @battle_menu.respond_to?(:unload, true)
+    @hp_mp_panel.send(:unload)        if @hp_mp_panel.respond_to?(:unload, true)
+    @target_hp_panel.send(:unload)    if @target_hp_panel.respond_to?(:unload, true)
+    @cursor.send(:unload)             if @cursor.respond_to?(:unload, true)
+    @profile.send(:unload)            if @profile.respond_to?(:unload, true)
+    @enemy_profile.send(:unload)      if @enemy_profile.respond_to?(:unload, true)
+
+    # Общий кеш портретов — выгружаем один раз
+    @portrait_cache.each_value { |t| UnloadTexture(t) if t } if @portrait_cache
   end
 
-  battle.unload
-  UnloadFont(battle_font) if battle_font
-  UnloadFont(battle_scene_font) if battle_scene_font
-  UnloadFont(menu_font) if menu_font    # выгружаем и этот шрифт
-  audio.stop
-  CloseAudioDevice()
-  UnloadRenderTexture($canvas) if $canvas
-  CloseWindow()
+  # Бой завершён? — одна из сторон полностью мертва
+  def battle_over?
+    return false unless @allies && @enemies
+    return false if @battle_state == :death_animation
+    @allies.empty? || @enemies.empty?
+  end
 end

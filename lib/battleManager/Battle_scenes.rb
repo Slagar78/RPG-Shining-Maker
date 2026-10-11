@@ -172,10 +172,12 @@ class BattleScene
   end
 
   def start(attacker_unit, defender_unit, damage = 0, exp_amount = 0)
+    UnloadTexture(@panel_tex) if @panel_tex
+    @panel_tex = nil
     @attacker = attacker_unit
     @defender = defender_unit
     @damage = damage
-	@exp_amount = exp_amount
+	  @exp_amount = exp_amount
     @damage_applied = false
     @timer = DELAY_DURATION
 	
@@ -969,4 +971,19 @@ end
     Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, color)
   end
   
+  def unload
+    UnloadTexture(@background_tex)   if @background_tex
+    UnloadTexture(@ground_tex)       if @ground_tex
+    UnloadTexture(@message_panel_tex) if @message_panel_tex
+    UnloadTexture(@panel_tex)        if @panel_tex
+    UnloadTexture(@edging_tex)       if @edging_tex
+    UnloadTexture(@edging_tex_1)     if @edging_tex_1
+
+    @stick_textures.each { |t| UnloadTexture(t) if t } if @stick_textures
+
+    if @render_texture
+      UnloadRenderTexture(@render_texture)
+      @render_texture = nil
+    end
+  end
 end

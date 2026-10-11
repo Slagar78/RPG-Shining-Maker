@@ -231,7 +231,7 @@ class HpMpPanel
     draw_hpmp_bar(x, y, panel_width, tx, ty + LINE_HEIGHT, "HP", hp, max_hp, label_w)
     draw_hpmp_bar(x, y, panel_width, tx, ty + LINE_HEIGHT * 2, "MP", mp, max_mp, label_w)
   end
-
+  
   private
 
   def draw_hpmp_bar(panel_x, panel_y, panel_width, base_x, base_y, label, current, maximum, label_w)
@@ -344,5 +344,14 @@ end
     else
       DrawText(text, x, y, FONT_SIZE, color)
     end
+  end
+
+  def unload
+    UnloadTexture(@texture)        if @texture
+    UnloadTexture(@stick_tex)      if @stick_tex
+    UnloadTexture(@stick_tex_lvl1) if @stick_tex_lvl1
+    UnloadTexture(@stick_tex_lvl2) if @stick_tex_lvl2
+    UnloadTexture(@stick_tex_lvl3) if @stick_tex_lvl3
+    UnloadTexture(@edging_tex)     if @edging_tex
   end
 end

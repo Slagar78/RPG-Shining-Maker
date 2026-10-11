@@ -728,4 +728,13 @@ end
     end
     nil
   end
+  
+  def unload
+    UnloadTexture(@tileset_texture)  if @tileset_texture
+    UnloadTexture(@anim_texture)     if @anim_texture
+    UnloadRenderTexture(@static_bg)  if @static_bg
+    UnloadRenderTexture(@top_layer)  if @top_layer
+    UnloadRenderTexture(@layer2)     if @layer2
+    @roof_layers.each { |l| UnloadRenderTexture(l) if l } if @roof_layers
+  end
 end

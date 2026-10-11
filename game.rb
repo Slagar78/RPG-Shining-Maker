@@ -11,7 +11,9 @@ require_relative 'lib/AudioManager'
 require_relative 'lib/item_actions_ui'
 require_relative 'lib/GameMap'
 require_relative 'lib/dialog_manager'
+require_relative 'battle'   # ← BattleManager доступен как класс
 require 'json'
+require 'open3'   # ← для запуска battle.rb как subprocess
 
 shared_lib_path = Gem::Specification.find_by_name('raylib-bindings').full_gem_path + '/lib/'
 Raylib.load_lib(shared_lib_path + 'libraylib.dll')
@@ -25,7 +27,8 @@ class Game
 	SetTextureFilter(@canvas.texture, TEXTURE_FILTER_POINT)
 
     @db = Database.new
-    @flags = {}
+    require_relative 'lib/flags'
+    @flags = Flags.new
     @game_map = GameMap.new(@db.globals["start_map"] || "Granseal", @flags)
     @current_map_id = @game_map.map_id
 
@@ -54,9 +57,15 @@ class Game
     @audio.set_sfx_volume(:confirm, 1.0)
     @audio.set_sfx_volume(:cancel,  1.0)
     @audio.load_sfx(:block, "assets/sounds/buttons/block_button.ogg")
-	@audio.load_sfx(:door_open,  "assets/sounds/door_open.ogg")
-	@audio.load_sfx(:door_close, "assets/sounds/door_close.ogg")
+	  @audio.load_sfx(:door_open,  "assets/sounds/door_open.ogg")
+	  @audio.load_sfx(:door_close, "assets/sounds/door_close.ogg")
     @audio.set_sfx_volume(:block, 1.0)
+
+    # Звуки для битвы (ключи — строки, как использует BattleManager)
+    @audio.load_sfx("cursor", "assets/sounds/buttons/Cursor.ogg")
+    @audio.load_sfx("error",  "assets/sounds/buttons/Error.ogg")
+    @audio.load_sfx("attack", "assets/sounds/sounds_BattleScenes/Attack.mp3")
+
     $audio = @audio
 
     @player = Player.new(@game_map)
@@ -142,6 +151,9 @@ class Game
     @pending_items_close = false
     @pending_menu_request = false
     @menu_delay = 0
+
+    @battle_manager = nil
+    @current_battle_id = nil
   end
 
   def run
@@ -180,6 +192,13 @@ class Game
     SetMouseScale(1.0 / scale, 1.0 / scale)
     SetMouseOffset(-dx, -dy)
     play_ui_sounds
+
+    # Если идёт бой — управление уходит ему
+    if @game_state == :battle && @battle_manager
+      @battle_manager.handle_input
+      return
+    end
+
     case @game_state
 	
 	when :warping
@@ -310,6 +329,14 @@ class Game
   def update
     dt = GetFrameTime()
     @audio.update
+
+    # Если идёт бой — обновляем только бой
+    if @game_state == :battle && @battle_manager
+      @battle_manager.update
+      end_battle if @battle_manager.battle_over?
+      return
+    end
+
     @player.update_animation(dt)
     @player.update_movement(dt) if @game_state == :playing
 	# dt передаётся. Внутри player.rb он копится в fixed-timestep аккумулятор,
@@ -467,6 +494,15 @@ end
   end
 end
 
+    # Автозапуск битвы при входе на карту битвы
+    if @game_state == :playing && @game_map && !@player.moving
+      battle_id = battle_id_for_map(@game_map.map_id)
+      if battle_id && @flags.battle_unlocked?(battle_id) && !@flags.battle_completed?(battle_id)
+        launch_battle(battle_id)
+        return
+      end
+    end
+
     if @pending_menu_request
       if !@player.moving
         @menu_delay += dt
@@ -527,10 +563,17 @@ end
 	  # теперь идёт со скоростью REVEAL_SPEED = 1/30 сек на символ
 	  # (было 2 кадра при 60fps). Скорость печати одна на любом мониторе.	  
 	  if @dialog_manager.finished?
-		@dialog_manager = nil
-		@game_state = :playing
+    @dialog_manager = nil
+    @game_state = :playing
 	  end
 	end
+  
+    if @flags["__start_battle__"]
+      battle_id = @flags["__start_battle__"]
+      @flags.unset("__start_battle__")
+      launch_battle(battle_id)
+      return
+    end
 
     if @pending_items_close && @active_item_action && !@active_item_action.visible
       @game_state = :items
@@ -545,6 +588,12 @@ end
   end
 
   def draw
+    # Если идёт бой — рисуем бой
+    if @game_state == :battle && @battle_manager
+      draw_battle
+      return
+    end
+
     BeginTextureMode(@canvas)
     ClearBackground(RAYWHITE)
     BeginMode2D(@camera.render_camera)
@@ -668,18 +717,92 @@ end
     EndDrawing()
   end
 
-def change_map(map_id, target_x, target_y, facing = nil)
-  @warp_pending = {
+  def change_map(map_id, target_x, target_y, facing = nil)
+    @warp_pending = {
     map_id: map_id,
     target_x: target_x,
     target_y: target_y,
     facing: facing
   }
-  @game_state = :warping
-  @warp_delay = 10        # ждём ~10 кадров (0.16 сек при 60 FPS, через dt * 60)
-  # ^ 10 "кадров при 60fps" = ~0.16 сек. Ниже в update() вычитается через dt * 60.0.
-  #   Если переписывать в секунды: @warp_delay = 0.16 и @warp_delay -= dt.
-end
+    @game_state = :warping
+    @warp_delay = 10        # ждём ~10 кадров (0.16 сек при 60 FPS, через dt * 60)
+    # ^ 10 "кадров при 60fps" = ~0.16 сек. Ниже в update() вычитается через dt * 60.0.
+    #   Если переписывать в секунды: @warp_delay = 0.16 и @warp_delay -= dt.
+  end
+
+  def draw_battle
+    # 1. Рендер боевой сцены в её собственный холст (если активна)
+    if @battle_manager.battle_scene && @battle_manager.battle_scene.active?
+      @battle_manager.battle_scene.render_to_internal_rt
+    end
+
+    # 2. Всё рисуем в @canvas
+    BeginTextureMode(@canvas)
+    ClearBackground(BLACK)
+    @battle_manager.draw
+    EndTextureMode()
+
+    # 3. @canvas на экран с целочисленным масштабированием
+    BeginDrawing()
+    ClearBackground(BLACK)
+    sw = GetScreenWidth()
+    sh = GetScreenHeight()
+    scale = [sw / 576, sh / 480].min
+    scale = 1 if scale < 1
+    dw = 576 * scale
+    dh = 480 * scale
+    dx = (sw - dw) / 2
+    dy = (sh - dh) / 2
+    DrawTexturePro(
+      @canvas.texture,
+      Rectangle.create(0, 0, 576, -480),
+      Rectangle.create(dx, dy, dw, dh),
+      Vector2.create(0, 0), 0, WHITE
+    )
+    EndDrawing()
+  end
+
+  def launch_battle(battle_id)
+    @audio.stop
+    @current_battle_id = battle_id
+
+    @battle_manager = BattleManager.new(@db, @font, @game_text, battle_id)
+    @battle_manager.audio = @audio
+    @battle_manager.battle_menu.font = @large_font
+    @battle_manager.battle_scene.message_font = @large_font
+    @battle_manager.battle_scene_font = @font
+
+    if @battle_manager.music_file && !@battle_manager.music_file.empty?
+      @audio.play(@battle_manager.music_file, @battle_manager.music_volume)
+    end
+
+    @game_state = :battle
+  end
+  
+  def end_battle
+    won = @battle_manager.enemies.empty? && !@battle_manager.allies.empty?
+
+    @battle_manager.unload
+    @battle_manager = nil
+
+    @audio.stop
+    if won && @current_battle_id
+      @flags.complete_battle(@current_battle_id)
+    end
+    @current_battle_id = nil
+
+    @audio.play(@game_map.music_file, @game_map.music_volume)
+    @game_state = :playing
+  end
+  
+  def battle_id_for_map(map_id)
+    return nil if map_id.nil?
+    entries_path = "data/battles/entries.json"
+    return nil unless File.exist?(entries_path)
+    entries = JSON.parse(File.read(entries_path))
+    idx = entries.index { |e| e["map_id"] == map_id }   # ← ищем по map_id
+    idx   # если не найдено → nil
+  end
 
 def try_start_interaction
   npc = @game_map.npcs.find { |n| (n.x - @player.x).abs <= 1 && (n.y - @player.y).abs <= 1 }
@@ -701,7 +824,8 @@ def try_start_interaction
     @message_panel_tex,
     @large_font,
     leader_name,
-    npc.direction
+    npc.direction,
+    @flags
   )
   @game_state = :dialog
 end
