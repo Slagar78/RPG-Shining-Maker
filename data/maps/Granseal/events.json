@@ -273,7 +273,7 @@
   },
   {
     "type": "warp",
-    "trigger_x": 0,
+    "trigger_x": 59,
     "trigger_y": 12,
     "target_map": "Granseal",
     "target_x": 45,

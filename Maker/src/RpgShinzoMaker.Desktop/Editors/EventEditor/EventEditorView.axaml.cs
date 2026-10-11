@@ -56,6 +56,9 @@ public partial class EventEditorView : UserControl, IEditor
     // ─── Защита от рекурсии при обновлении полей ───
     private bool _suppressFieldEvents;
 
+    // ─── Защита от сброса выделения в списке событий ───
+    private bool _suppressListSelection;
+
     // ══════════════════════════════════════════════════════════════
     //   КОНСТРУКТОР
     // ══════════════════════════════════════════════════════════════

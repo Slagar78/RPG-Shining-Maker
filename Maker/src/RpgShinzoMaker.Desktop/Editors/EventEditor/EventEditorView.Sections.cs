@@ -149,6 +149,10 @@ public partial class EventEditorView
     // ══════════════════════════════════════════════════════════════
     private void OnEventListSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        // Пока идёт OnFieldChanged — игнорируем сбросы выделения,
+        // иначе LoadSelectedIntoFields затрёт поля, которые редактирует пользователь.
+        if (_suppressListSelection) return;
+
         _selectedIndex = EventList.SelectedIndex;
 
         // Заполнить поля (Fields.cs)

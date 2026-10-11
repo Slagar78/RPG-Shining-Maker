@@ -926,8 +926,21 @@ public partial class EventEditorView
             CanvasControl.SetEvents(_events, _currentSection, _selectedIndex);
         }
 
+        // Обновляем список, НО замораживаем обработчик выделения.
+        // Иначе EventList.ItemsSource = ... сбросит SelectedIndex → вызовется
+        // OnEventListSelectionChanged → LoadSelectedIntoFields() → перезапишет
+        // все поля из модели, включая те, что пользователь сейчас не трогал.
         int keepIndex = _selectedIndex;
-        RefreshEventList();
-        EventList.SelectedIndex = keepIndex;
+
+        _suppressListSelection = true;
+        try
+        {
+            RefreshEventList();
+            EventList.SelectedIndex = keepIndex;
+        }
+        finally
+        {
+            _suppressListSelection = false;
+        }
     }
 }
