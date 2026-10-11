@@ -27,6 +27,7 @@ class Game
     @db = Database.new
     @flags = {}
     @game_map = GameMap.new(@db.globals["start_map"] || "Granseal", @flags)
+    @current_map_id = @game_map.map_id
 
     @game_text = {}
     if File.exist?("data/text/gamescript.txt")
@@ -382,8 +383,11 @@ class Game
       elsif @fade_state == :hold
         # Загружаем новую карту (экран уже чёрный)
         pending = @warp_pending
-        @audio.stop
+        same_map = (pending[:map_id].to_s.strip == @current_map_id.to_s.strip)
+
+        @audio.stop unless same_map
         @game_map = GameMap.new(pending[:map_id], @flags)
+        @current_map_id = @game_map.map_id
         @top_layer = @game_map.build_top_layer
         SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
         @layer2 = @game_map.build_layer2
@@ -397,7 +401,7 @@ class Game
         @player.moving = false
         @player.pattern = 0
         @zone_hidden = Array.new(@game_map.roof_events.size, false)
-        @audio.play(@game_map.music_file, @game_map.music_volume)
+        @audio.play(@game_map.music_file, @game_map.music_volume) unless same_map
         @fade_state = :in
       elsif @fade_state == :in
         @fade_alpha -= 8 * dt * 60.0

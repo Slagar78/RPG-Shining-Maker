@@ -12,6 +12,7 @@ class GameMap
   attr_reader :roof_layers
   attr_reader :layer2, :top_layer, :static_bg
   attr_reader :npcs
+  attr_reader :map_id
 
   def initialize(map_id = "Granseal", flags = {})
     @flags = flags
@@ -32,6 +33,8 @@ class GameMap
       create_fallback_map
       return
     end
+    
+    @map_id = entry['folder']
 
     layout_path = "data/maps/#{entry['folder']}/layout.json"
     unless File.exist?(layout_path)
@@ -179,6 +182,7 @@ class GameMap
   end
 
   def create_fallback_map
+    @map_id = nil
     @width  = 20
     @height = 15
     @tiles    = Array.new(@width) { Array.new(@height, 0) }
