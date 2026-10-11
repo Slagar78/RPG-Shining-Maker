@@ -8,3 +8,6 @@ cd /c/SHINZO/RPG-Shining-Maker/Constructor
 cd /c/SHINZO/RPG-Shining-Maker/BattleScenes
 cd /c/SHINZO/RPG-Shining-Maker/Tiles
 cd /c/SHINZO/RPG-Shining-Maker/MapEvent
+
+
+программы должны лежать в корне проекта
