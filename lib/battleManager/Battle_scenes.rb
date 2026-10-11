@@ -145,13 +145,16 @@ class BattleScene
 
   # ---------- Загрузка земли (ground) ----------
   def load_ground
+    UnloadTexture(@ground_tex) if @ground_tex
+    @ground_tex = nil
+
     ground_path = @battle_manager.battle_entry["ground"]
     return unless ground_path && !ground_path.empty? && File.exist?(ground_path)
     img = Raylib.LoadImage(ground_path)
     @ground_tex = Raylib.LoadTextureFromImage(img)
     Raylib.UnloadImage(img)
     Raylib.SetTextureFilter(@ground_tex, Raylib::TEXTURE_FILTER_POINT)
-  rescue => e
+    rescue => e
     puts "Failed to load ground texture: #{e.message}"
   end
 
@@ -305,7 +308,10 @@ def update
     # Очистка ресурсов
     Raylib.UnloadRenderTexture(@render_texture) if @render_texture
     @render_texture = nil
+    UnloadTexture(@ground_tex) if @ground_tex
     @ground_tex = nil
+
+    UnloadTexture(@panel_tex) if @panel_tex
     @panel_tex = nil
     @phase = nil
     @active = false

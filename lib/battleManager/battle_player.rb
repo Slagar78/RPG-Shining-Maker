@@ -1,16 +1,16 @@
 # lib/battleManager/battle_player.rb
 
-TILE_SIZE = 48
-FRAMES_PER_TILE = 14
-FIXED_DT = 1.0 / 60.0
-ANIM_SPEED  = 12
-
-DIR_DOWN  = 2
-DIR_LEFT  = 4
-DIR_RIGHT = 6
-DIR_UP    = 8
-
 class BattlePlayer
+  TILE_SIZE = 48
+  FRAMES_PER_TILE = 14
+  FIXED_DT = 1.0 / 60.0
+  ANIM_SPEED  = 12
+
+  DIR_DOWN  = 2
+  DIR_LEFT  = 4
+  DIR_RIGHT = 6
+  DIR_UP    = 8
+
   attr_reader :direction, :moving
   attr_accessor :blinking; attr_reader :blink_alpha
   attr_accessor :x, :y, :map_width, :map_height
