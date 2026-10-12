@@ -4,10 +4,12 @@ include Raylib
 
 class DialogManager
   attr_reader :finished
-  
+
   REVEAL_SPEED = 1.0 / 30.0   # секунд на символ (было 2 кадра при 60 FPS)
 
-  def initialize(script, npc, player, game_map, local_text, global_text, message_panel_tex, font, leader_name, original_npc_direction, flags = nil)
+  def initialize(script, npc, player, game_map, local_text, global_text,
+                 message_panel_tex, font, leader_name, original_npc_direction,
+                 flags = nil, shop_menu = nil, shops = nil)
     @script = script
     @npc = npc
     @player = player
@@ -19,6 +21,11 @@ class DialogManager
     @leader_name = leader_name || ''
     @original_npc_direction = original_npc_direction
     @flags = flags
+
+    # ── магазины ──
+    @shop_menu = shop_menu
+    @shops     = shops
+    @waiting_for_shop = false
 
     @index = 0
     @finished = false
@@ -39,6 +46,16 @@ class DialogManager
   def update(dt = 1.0 / 60.0)
     return if @finished
 
+    # ── Ждём закрытия магазина ──
+    # Пока магазин открыт, диалог не двигается и не перехватывает ввод.
+    if @waiting_for_shop
+      if @shop_menu && !@shop_menu.visible
+        @waiting_for_shop = false
+        @index += 1
+      end
+      return
+    end
+
     while @index < @script.length && !@waiting_for_input
       cmd = @script[@index]
       case cmd['type']
@@ -58,6 +75,9 @@ class DialogManager
       when 'complete_battle'
         @flags&.complete_battle(cmd['battle'])
         @index += 1
+      when 'open_shop'
+        handle_shop(cmd)
+        break if @waiting_for_shop   # выходим из цикла, дальше — ждём магазин
       when 'end'
         @finished = true
         break
@@ -72,7 +92,7 @@ class DialogManager
 
     handle_input(dt) if @waiting_for_input
 
-    if @index >= @script.length && !@waiting_for_input
+    if @index >= @script.length && !@waiting_for_input && !@waiting_for_shop
       @finished = true
     end
 
@@ -82,6 +102,8 @@ class DialogManager
   end
 
   def draw
+    # Пока магазин открыт — диалог не рисуется, магазин сам себя рисует.
+    return if @waiting_for_shop
     return unless @waiting_for_input || @finished
     return if @finished
 
@@ -95,7 +117,6 @@ class DialogManager
     end
 
     if @current_text && !@choices
-      # Разбор видимого текста с тегами
       raw_display = @current_text[0, @reveal_index]
       lines = split_display_lines(raw_display)
 
@@ -120,14 +141,35 @@ class DialogManager
     @finished
   end
 
+  # Публичный геттер — Game по нему понимает, рисовать ли магазин.
+  def waiting_for_shop?
+    @waiting_for_shop
+  end
+
   private
+
+  def handle_shop(cmd)
+    shop_id = cmd['shop_id']
+
+    if @shop_menu.nil? || @shops.nil?
+      puts "WARNING: open_shop, но shop_menu/shops не переданы в DialogManager."
+      @index += 1
+      return
+    end
+
+    if @shop_menu.open_by_id(@shops, shop_id)
+      @waiting_for_shop = true
+    else
+      # Магазин не найден — пропускаем команду, чтобы не застрять.
+      @index += 1
+    end
+  end
 
   def handle_say(cmd)
     text_id = cmd['text_id']
     text = get_text(text_id)
     return unless text
 
-    # Заменяем только служебные плейсхолдеры, теги управления ({N}, {WAIT}...) оставляем
     text = text.gsub('{LEADER}', @leader_name)
     text = text.gsub('{NPC_NAME}', @npc.id || 'NPC')
 
@@ -146,17 +188,13 @@ class DialogManager
 
   def handle_input(dt = 1.0 / 60.0)
     if @current_text && !@choices
-      # Режим say – посимвольный вывод с пропуском тегов
       unless @full_text_shown
         if @reveal_index < @current_text.length
-          # Если на текущей позиции начинается тег {XXX}
           if @current_text[@reveal_index] == '{'
             closing = @current_text.index('}', @reveal_index)
             if closing
-              # Пропускаем весь тег целиком, ничего не показывая
               @reveal_index = closing + 1
             else
-              # Некорректный тег (нет закрывающей скобки) – пропускаем один символ
               @reveal_index += 1
             end
           else
@@ -171,13 +209,11 @@ class DialogManager
         end
       end
 
-      # Пропуск всего текста по пробелу
       if IsKeyPressed(KEY_SPACE) && !@full_text_shown
         @reveal_index = @current_text.length
         @full_text_shown = true
       end
 
-      # Переход к следующей команде после полного показа текста
       if @full_text_shown && (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_S) || IsKeyPressed(KEY_DOWN))
         @waiting_for_input = false
         @index += 1
@@ -197,8 +233,6 @@ class DialogManager
     end
   end
 
-  # Разбивает сырую строку с тегами на массив видимых строк.
-  # {N} – перенос строки, остальные теги (напр. {WAIT}) – просто удаляются.
   def split_display_lines(raw)
     lines = []
     current_line = ""
@@ -209,15 +243,11 @@ class DialogManager
         if closing
           tag = raw[i..closing]
           if tag == '{N}'
-            # Перенос строки
             lines << current_line
             current_line = ""
-          else
-            # Любой другой тег игнорируется (не добавляется к тексту)
           end
           i = closing + 1
         else
-          # Нет закрывающей скобки – считаем как обычный символ
           current_line << raw[i]
           i += 1
         end

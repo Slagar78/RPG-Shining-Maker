@@ -11,6 +11,7 @@ require_relative 'lib/AudioManager'
 require_relative 'lib/item_actions_ui'
 require_relative 'lib/GameMap'
 require_relative 'lib/dialog_manager'
+require_relative 'lib/shop_ui'
 require_relative 'battle'   # ← BattleManager доступен как класс
 require 'json'
 require 'open3'   # ← для запуска battle.rb как subprocess
@@ -130,7 +131,9 @@ class Game
     @magic_overlay = MagicOverlay.new(@font, @db, @start_inventory, @party, @classes_data, @class_names)
     @profile = Profile.new(@font, @db, @start_inventory)
     @search_overlay = SearchOverlay.new(@large_font, @game_text, @party)
-	@dialog_manager = nil
+    @shop_menu = ShopMenu.new(@font)
+    @shops = ShopMenu.load_all
+    @dialog_manager = nil
 
     @anim_timer = 0.0
     @anim_delay = 0.33
@@ -567,7 +570,14 @@ end
 	  @dialog_manager.update(dt)
 	  # dt передаётся. Внутри dialog_manager.rb посимвольный вывод текста
 	  # теперь идёт со скоростью REVEAL_SPEED = 1/30 сек на символ
-	  # (было 2 кадра при 60fps). Скорость печати одна на любом мониторе.	  
+	  # (было 2 кадра при 60fps). Скорость печати одна на любом мониторе.
+    
+  # Магазин сам себя обновляет и ловит ввод, пока диалог его ждёт
+  if @shop_menu.visible
+    @shop_menu.handle_input
+    @shop_menu.update(dt)
+  end
+  
 	  if @dialog_manager.finished?
     @dialog_manager = nil
     @game_state = :playing
@@ -684,6 +694,7 @@ end
 	
 	if @game_state == :dialog && @dialog_manager
 	  @dialog_manager.draw
+    @shop_menu.draw if @shop_menu.visible
 	end
 
     case @game_state
@@ -831,7 +842,9 @@ def try_start_interaction
     @large_font,
     leader_name,
     npc.direction,
-    @flags
+    @flags,
+    @shop_menu,
+    @shops
   )
   @game_state = :dialog
 end

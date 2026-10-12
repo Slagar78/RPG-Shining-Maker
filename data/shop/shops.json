@@ -1,0 +1,26 @@
+{
+  "shops": [
+    {
+      "id": 0,
+      "name": "Granseal Weapons",
+      "type": "weapon",
+      "items": [
+        "Short Sword",
+        "Axe",
+        "Black Ring"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "Granseal Items",
+      "type": "item",
+      "items": [
+        "Medical Herb",
+        "Healing Seed",
+        "Healing Drop",
+        "Antidote",
+        "Angel Wing"
+      ]
+    }
+  ]
+}

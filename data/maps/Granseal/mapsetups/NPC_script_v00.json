@@ -5,7 +5,7 @@
       { "type": "turn_to_player" },
       { "type": "turn_player_to_npc" },
       { "type": "say", "text_id": "0001" },
-      { "type": "unlock_battle", "battle": 0 },
+      { "type": "open_shop", "shop_id": 0 },
       { "type": "end", "wait_for_input": true }
     ]
   },
