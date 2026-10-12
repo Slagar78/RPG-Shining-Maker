@@ -1,15 +1,13 @@
 # lib/shop_ui.rb
 #
-# Меню магазина — крест из 4 плиток, как BottomMenu в ui.rb.
+# Меню магазина — крест из 4 плиток (Buy / Sell / Repair / Deals) снизу,
+# а при выборе действия сверху появляется панель shop_panel.png,
+# на которой рисуются иконки предметов магазина.
+#
 # Открывается НЕ по клавише на карте, а из скрипта (DialogManager),
-# когда игрок взаимодействует с NPC-торговцем или другим объектом.
+# когда игрок взаимодействует с NPC-торговцем.
 #
-# Состояния:
-#   :main   — только крест из 4 плиток (Buy / Sell / Repair / Deals)
-#   :sub    — сверху панель shop_panel.png (480×64), снизу крест
-#
-# На данном этапе — только сам факт открытия подменю (панель).
-# Списки товаров и покупка/продажа будут отдельными подменю позже.
+# shops.json — массив магазинов, у каждого числовой "id".
 
 require 'raylib'
 require 'json'
@@ -17,13 +15,20 @@ require 'json'
 class ShopMenu
   TILE_SIZE      = 48
   OFFSET         = 48
-  ANIM_INTERVAL  = 24   # кадров на половину цикла анимации
+  ANIM_INTERVAL  = 24
 
   # Панель подменю (Buy / Sell / Repair / Deals)
-  PANEL_W        = 480
+  PANEL_W        = 512
   PANEL_H        = 64
-  PANEL_X        = 24   # отступ слева
-  PANEL_Y        = 16   # отступ сверху
+  PANEL_X        = (576 - PANEL_W) / 2   # = 32, автоматическое центрирование
+  PANEL_Y        = 16
+
+  # Раскладка иконок предметов на панели
+  ICON_W         = 32
+  ICON_H         = 48
+  ICON_GAP       = 32
+  ICON_LEFT_PAD  = 16
+  ICON_MAX       = 6
 
   attr_reader :visible, :selected_index, :current_shop, :sub_state
 
@@ -49,8 +54,9 @@ class ShopMenu
   # Инстанс
   # ─────────────────────────────────────────────────────────
 
-  def initialize(font = nil)
+  def initialize(font = nil, db = nil)
     @font           = font
+    @db             = db
     @visible        = false
     @selected_index = 0
     @anim_timer     = 0.0
@@ -58,7 +64,13 @@ class ShopMenu
 
     # :main — только крест. :sub — сверху панель подменю.
     @sub_state      = :main
-    @sub_action     = nil   # "buy" / "sell" / "repair" / "deals"
+    @sub_action     = nil
+
+    # Кеш иконок предметов (общий для всех магазинов)
+    @icon_cache     = {}
+
+    # Иконки предметов текущего магазина (массив текстур, до ICON_MAX штук)
+    @shop_icons     = []
 
     @tiles = [
       { "id" => 0, "name" => "buy",    "icon" => "assets/ui/menu/Buy.png",    "icon_anim" => "assets/ui/menu/Buy_Anim.png" },
@@ -80,7 +92,6 @@ class ShopMenu
       @textures << { normal: normal, anim: anim }
     end
 
-    # Панель подменю (Buy / Sell / Repair / Deals)
     @panel_tex = nil
     if File.exist?("assets/ui/shop_panel.png")
       @panel_tex = Raylib.LoadTexture("assets/ui/shop_panel.png")
@@ -98,6 +109,10 @@ class ShopMenu
     @anim_timer     = 0.0
     @sub_state      = :main
     @sub_action     = nil
+
+    # Загружаем иконки предметов магазина (до ICON_MAX штук)
+    item_names = (shop_data["items"] || []).first(ICON_MAX)
+    @shop_icons = item_names.map { |name| load_item_icon(name) }
   end
 
   def open_by_id(shops, shop_id)
@@ -116,6 +131,7 @@ class ShopMenu
     @current_shop = nil
     @sub_state    = :main
     @sub_action   = nil
+    @shop_icons   = []
   end
 
   def handle_input
@@ -167,14 +183,37 @@ class ShopMenu
   def draw
     return unless @visible
 
-    # 1. Панель подменю (только в состоянии :sub)
     draw_panel if @sub_state == :sub
-
-    # 2. Крест из плиток (всегда, пока магазин открыт)
     draw_tiles
   end
 
   private
+
+  # ─────────────────────────────────────────────────────────
+  # Иконки предметов
+  # ─────────────────────────────────────────────────────────
+
+  def load_item_icon(item_name)
+    return @icon_cache[item_name] if @icon_cache.key?(item_name)
+
+    item_data = @db ? @db.find_by_name(item_name) : nil
+    path = item_data ? item_data["icon"] : nil
+
+    tex = nil
+    if path && File.exist?(path)
+      img = Raylib.LoadImage(path)
+      tex = Raylib.LoadTextureFromImage(img)
+      Raylib.UnloadImage(img)
+      Raylib.SetTextureFilter(tex, Raylib::TEXTURE_FILTER_POINT)
+    end
+
+    @icon_cache[item_name] = tex
+    tex
+  end
+
+  # ─────────────────────────────────────────────────────────
+  # Рисование
+  # ─────────────────────────────────────────────────────────
 
   def draw_panel
     if @panel_tex
@@ -182,9 +221,26 @@ class ShopMenu
       dst = Raylib::Rectangle.create(PANEL_X, PANEL_Y, PANEL_W, PANEL_H)
       Raylib::DrawTexturePro(@panel_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
     else
-      # Fallback, если PNG ещё нет
       Raylib::DrawRectangle(PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Raylib::GRAY)
       Raylib::DrawRectangleLines(PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Raylib::DARKGRAY)
+    end
+
+    draw_panel_items
+  end
+
+  # Иконки предметов магазина: слева 16px, потом иконки через 32px,
+  # справа 16px, максимум 6 штук.
+  def draw_panel_items
+    return if @shop_icons.empty?
+
+    icon_y = PANEL_Y + (PANEL_H - ICON_H) / 2
+
+    @shop_icons.each_with_index do |tex, i|
+      next unless tex
+      x = PANEL_X + ICON_LEFT_PAD + i * (ICON_W + ICON_GAP)
+      src = Raylib::Rectangle.create(0, 0, ICON_W, ICON_H)
+      dst = Raylib::Rectangle.create(x, icon_y, ICON_W, ICON_H)
+      Raylib::DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
     end
   end
 
@@ -237,6 +293,11 @@ class ShopMenu
       Raylib::UnloadTexture(t[:anim])   if t[:anim]
     end
     @textures = []
+
+    @icon_cache.each_value { |t| Raylib::UnloadTexture(t) if t }
+    @icon_cache = {}
+    @shop_icons = []
+
     Raylib::UnloadTexture(@panel_tex) if @panel_tex
     @panel_tex = nil
   end
