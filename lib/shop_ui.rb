@@ -19,16 +19,28 @@ class ShopMenu
 
   # Панель подменю (Buy / Sell / Repair / Deals)
   PANEL_W        = 512
-  PANEL_H        = 64
+  PANEL_H        = 96
   PANEL_X        = (576 - PANEL_W) / 2   # = 32, автоматическое центрирование
   PANEL_Y        = 16
 
-  # Раскладка иконок предметов на панели
-  ICON_W         = 32
-  ICON_H         = 48
-  ICON_GAP       = 32
-  ICON_LEFT_PAD  = 16
-  ICON_MAX       = 6
+  # ─────────────────────────────────────────────────────────
+  # Раскладка иконок предметов на панели магазина
+  # ─────────────────────────────────────────────────────────
+  #
+  # Панель: 512 px шириной.
+  # Формула раскладки:
+  #   pad + N×ICON_W + (N-1)×ICON_GAP + pad = PANEL_W
+  #   36  + 7×32     + 6×36           + 36  = 512  ✓
+  #
+  # Внутри каждого ICON_GAP = 36:
+  #   24 px — место под ценник
+  #   12 px — разделитель до следующей иконки
+
+  ICON_W         = 32   # ширина одной иконки предмета
+  ICON_H         = 48   # высота одной иконки предмета (равна высоте тайла)
+  ICON_GAP       = 36   # промежуток между иконками (24 цена + 12 разделитель)
+  ICON_LEFT_PAD  = 36   # отступ от левого и правого края панели до крайних иконок
+  ICON_MAX       = 7    # максимум иконок на панели (влезает ровно 7)
 
   attr_reader :visible, :selected_index, :current_shop, :sub_state
 
@@ -69,8 +81,18 @@ class ShopMenu
     # Кеш иконок предметов (общий для всех магазинов)
     @icon_cache     = {}
 
-    # Иконки предметов текущего магазина (массив текстур, до ICON_MAX штук)
+    # Иконки предметов текущего магазина
     @shop_icons     = []
+
+    # Индекс выбранной иконки товара в :sub
+    @selected_item_index = 0
+
+    # Индекс первой ВИДИМОЙ иконки в окне (для скролла)
+    @shop_scroll_index   = 0
+
+    # Автоповтор стрелок ←/→
+    @input_timer_left    = 0
+    @input_timer_right   = 0
 
     @tiles = [
       { "id" => 0, "name" => "buy",    "icon" => "assets/ui/menu/Buy.png",    "icon_anim" => "assets/ui/menu/Buy_Anim.png" },
@@ -110,9 +132,12 @@ class ShopMenu
     @sub_state      = :main
     @sub_action     = nil
 
-    # Загружаем иконки предметов магазина (до ICON_MAX штук)
-    item_names = (shop_data["items"] || []).first(ICON_MAX)
+    item_names = shop_data["items"] || []
     @shop_icons = item_names.map { |name| load_item_icon(name) }
+    @selected_item_index = 0
+    @shop_scroll_index   = 0
+    @input_timer_left    = 0
+    @input_timer_right   = 0
   end
 
   def open_by_id(shops, shop_id)
@@ -132,9 +157,13 @@ class ShopMenu
     @sub_state    = :main
     @sub_action   = nil
     @shop_icons   = []
+    @selected_item_index = 0
+    @shop_scroll_index   = 0
+    @input_timer_left    = 0
+    @input_timer_right   = 0
   end
 
-  def handle_input
+  def handle_input(dt = 1.0 / 60.0)
     return unless @visible
 
     case @sub_state
@@ -167,6 +196,50 @@ class ShopMenu
       if Raylib.IsKeyPressed(Raylib::KEY_S)
         @sub_state  = :main
         @sub_action = nil
+        return
+      end
+
+      # Навигация по иконкам товаров + сдвиг окна (с автоповтором)
+      # БЕЗ wrap-around — на первом и последнем останавливаемся.
+      count = @shop_icons.size
+      if count > 0
+        # ── ВЛЕВО ──
+        if Raylib.IsKeyPressed(Raylib::KEY_LEFT)
+          if @selected_item_index > 0
+            @selected_item_index -= 1
+            adjust_shop_scroll
+          end
+          @input_timer_left = 0
+        elsif Raylib.IsKeyDown(Raylib::KEY_LEFT)
+          @input_timer_left += dt * 60.0
+          if @input_timer_left > 20 && ((@input_timer_left - 20) % 5) < 1
+            if @selected_item_index > 0
+              @selected_item_index -= 1
+              adjust_shop_scroll
+            end
+          end
+        else
+          @input_timer_left = 0
+        end
+
+        # ── ВПРАВО ──
+        if Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+          if @selected_item_index < count - 1
+            @selected_item_index += 1
+            adjust_shop_scroll
+          end
+          @input_timer_right = 0
+        elsif Raylib.IsKeyDown(Raylib::KEY_RIGHT)
+          @input_timer_right += dt * 60.0
+          if @input_timer_right > 20 && ((@input_timer_right - 20) % 5) < 1
+            if @selected_item_index < count - 1
+              @selected_item_index += 1
+              adjust_shop_scroll
+            end
+          end
+        else
+          @input_timer_right = 0
+        end
       end
     end
   end
@@ -228,19 +301,80 @@ class ShopMenu
     draw_panel_items
   end
 
-  # Иконки предметов магазина: слева 16px, потом иконки через 32px,
-  # справа 16px, максимум 6 штук.
   def draw_panel_items
     return if @shop_icons.empty?
 
     icon_y = PANEL_Y + (PANEL_H - ICON_H) / 2
+    cy     = PANEL_Y + PANEL_H / 2
 
-    @shop_icons.each_with_index do |tex, i|
+    alpha = (Math.sin(@anim_timer * 0.2) * 0.4 + 0.6) * 255
+    color = Raylib.Fade(Raylib::WHITE, alpha / 255.0)
+
+    # ═══════════════════════════════════════════════════════════
+    # СТРЕЛКИ — рисуются ДО цикла иконок, чтобы `next unless tex`
+    # не мог их пропустить.
+    #
+    # ВАЖНО: Raylib отсекает треугольники, обход вершин которых
+    # идёт ПО часовой стрелке. Поэтому у ЛЕВОЙ стрелки вершины
+    # идут против часовой: (острие) → (низ) → (верх).
+    # ═══════════════════════════════════════════════════════════
+    if @shop_icons.size > ICON_MAX
+
+      # Левая стрелка — если ОКНО сдвинулось вправо (есть что листать влево)
+      if @shop_scroll_index > 0
+        cx = PANEL_X + 14
+        Raylib.DrawTriangle(
+          Raylib::Vector2.create(cx - 6, cy),       # острие слева
+          Raylib::Vector2.create(cx + 6, cy + 9),   # нижний правый
+          Raylib::Vector2.create(cx + 6, cy - 9),   # верхний правый
+          color
+        )
+      end
+
+      # Правая стрелка — если окно не дошло до конца (есть что листать вправо)
+      if @shop_scroll_index + ICON_MAX < @shop_icons.size
+        cx = PANEL_X + PANEL_W - 14
+        Raylib.DrawTriangle(
+          Raylib::Vector2.create(cx + 6, cy),       # острие справа
+          Raylib::Vector2.create(cx - 6, cy - 9),   # верхний левый
+          Raylib::Vector2.create(cx - 6, cy + 9),   # нижний левый
+          color
+        )
+      end
+    end
+
+    # ═══════════════════════════════════════════════════════════
+    # ИКОНКИ ТОВАРОВ
+    # ═══════════════════════════════════════════════════════════
+    ICON_MAX.times do |slot|
+      icon_index = @shop_scroll_index + slot
+      break if icon_index >= @shop_icons.size
+
+      tex = @shop_icons[icon_index]
       next unless tex
-      x = PANEL_X + ICON_LEFT_PAD + i * (ICON_W + ICON_GAP)
+
+      x = PANEL_X + ICON_LEFT_PAD + slot * (ICON_W + ICON_GAP)
       src = Raylib::Rectangle.create(0, 0, ICON_W, ICON_H)
       dst = Raylib::Rectangle.create(x, icon_y, ICON_W, ICON_H)
       Raylib::DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+
+      # Пульсирующая рамка на ВЫБРАННОЙ иконке
+      if icon_index == @selected_item_index
+        frame = Raylib::Rectangle.create(x - 2, icon_y - 2, ICON_W + 4, ICON_H + 4)
+        Raylib::DrawRectangleLinesEx(frame, 2, color)
+      end
+    end
+  end
+
+  # Держим выбранную иконку внутри видимого окна ICON_MAX.
+  def adjust_shop_scroll
+    count = @shop_icons.size
+    return if count == 0
+
+    if @selected_item_index < @shop_scroll_index
+      @shop_scroll_index = @selected_item_index
+    elsif @selected_item_index >= @shop_scroll_index + ICON_MAX
+      @shop_scroll_index = @selected_item_index - ICON_MAX + 1
     end
   end
 

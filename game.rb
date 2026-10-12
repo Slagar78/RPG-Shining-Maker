@@ -574,7 +574,7 @@ end
     
   # Магазин сам себя обновляет и ловит ввод, пока диалог его ждёт
   if @shop_menu.visible
-    @shop_menu.handle_input
+    @shop_menu.handle_input(dt)
     @shop_menu.update(dt)
   end
   
