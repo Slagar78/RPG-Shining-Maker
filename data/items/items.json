@@ -83,7 +83,7 @@
 			"id":	5,
 			"name":	"Short Sword",
 			"category":	"Weapon",
-			"price":	140,
+			"price":	59,
 			"range":	[1, 1],
 			"use_spell":	"NOTHING",
 			"spell_level":	1,

@@ -131,7 +131,7 @@ class Game
     @magic_overlay = MagicOverlay.new(@font, @db, @start_inventory, @party, @classes_data, @class_names)
     @profile = Profile.new(@font, @db, @start_inventory)
     @search_overlay = SearchOverlay.new(@large_font, @game_text, @party)
-    @shop_menu = ShopMenu.new(@font, @db)
+    @shop_menu = ShopMenu.new(@font, @db, @large_font)
     @shops = ShopMenu.load_all
     @dialog_manager = nil
 

@@ -48,6 +48,20 @@ class ShopMenu
   SELECTION_H      = 80
   SELECTION_PAD_X  = 6    # сдвиг обводки от x
   SELECTION_PAD_Y  = 28   # сдвиг обводки от icon_y (учитывает шнурок сверху)
+  
+  # Панель сообщения снизу
+  PANEL_MSG_W        = 480
+  PANEL_MSG_H        = 128
+  PANEL_MSG_X        = (576 - PANEL_MSG_W) / 2      # = 48
+  PANEL_MSG_TARGET_Y = 480 - PANEL_MSG_H - 24       # = 328
+  PANEL_MSG_HIDDEN_Y = 480                          # за экраном снизу
+  PANEL_MSG_SPEED    = 38                           # px за кадр при 60 FPS
+  
+  # Позиция "за экраном сверху" для shop_panel
+  PANEL_HIDDEN_TOP_Y = -PANEL_H    # = -128
+
+  # Скорость печати текста (кадров на символ, как в SearchOverlay)
+  TEXT_REVEAL_SPEED  = 2
 
   attr_reader :visible, :selected_index, :current_shop, :sub_state
 
@@ -73,8 +87,9 @@ class ShopMenu
   # Инстанс
   # ─────────────────────────────────────────────────────────
 
-  def initialize(font = nil, db = nil)
+  def initialize(font = nil, db = nil, large_font = nil)
     @font           = font
+    @large_font     = large_font || font
     @db             = db
     @visible        = false
     @selected_index = 0
@@ -90,6 +105,9 @@ class ShopMenu
 
     # Иконки предметов текущего магазина
     @shop_icons     = []
+    
+    # Цены предметов текущего магазина (параллельно @shop_icons)
+    @shop_prices    = []
 
     # Индекс выбранной иконки товара в :sub
     @selected_item_index = 0
@@ -110,6 +128,15 @@ class ShopMenu
       { "id" => 2, "name" => "repair", "icon" => "assets/ui/menu/Repair.png", "icon_anim" => "assets/ui/menu/Repair_Anim.png" },
       { "id" => 3, "name" => "deals",  "icon" => "assets/ui/menu/Deals.png",  "icon_anim" => "assets/ui/menu/Deals_Anim.png" }
     ]
+
+    # Анимация панели сообщения (выезд из низа)
+    @panel_anim_y = PANEL_MSG_HIDDEN_Y
+    # Анимация shop_panel (выезд из верха)
+    @top_panel_anim_y = PANEL_HIDDEN_TOP_Y
+    # Печать текста
+    @text_reveal_index = 0
+    @text_reveal_timer = 0
+    @text_full_shown   = false
 
     load_textures
   end
@@ -159,6 +186,15 @@ class ShopMenu
     else
       puts "WARNING: #{price_path} not found."
     end
+
+    @message_panel_tex = nil
+    mp_path = "assets/ui/message_panel.png"
+    if File.exist?(mp_path)
+      @message_panel_tex = Raylib.LoadTexture(mp_path)
+      Raylib.SetTextureFilter(@message_panel_tex, Raylib::TEXTURE_FILTER_POINT)
+    else
+      puts "WARNING: #{mp_path} not found."
+    end
   end
 
   def open(shop_data)
@@ -173,10 +209,19 @@ class ShopMenu
 
     item_names = shop_data["items"] || []
     @shop_icons = item_names.map { |name| load_item_icon(name) }
+    @shop_prices = item_names.map do |name|
+      data = @db ? @db.find_by_name(name) : nil
+      data ? (data["price"] || 0).to_i : 0
+    end
     @selected_item_index = 0
     @shop_scroll_index   = 0
     @input_timer_left    = 0
     @input_timer_right   = 0
+    @panel_anim_y        = PANEL_MSG_HIDDEN_Y
+    @top_panel_anim_y    = PANEL_HIDDEN_TOP_Y
+    @text_reveal_index   = 0
+    @text_reveal_timer   = 0
+    @text_full_shown     = false
   end
 
   def open_by_id(shops, shop_id)
@@ -196,11 +241,16 @@ class ShopMenu
     @sub_state    = :main
     @sub_action   = nil
     @shop_icons   = []
+    @shop_prices  = []
     @selected_item_index = 0
     @shop_scroll_index   = 0
     @input_timer_left    = 0
     @input_timer_right   = 0
     @selection_blink_timer = 0
+    @top_panel_anim_y    = PANEL_HIDDEN_TOP_Y
+    @text_reveal_index   = 0
+    @text_reveal_timer   = 0
+    @text_full_shown     = false
   end
 
   def handle_input(dt = 1.0 / 60.0)
@@ -229,15 +279,33 @@ class ShopMenu
       if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
         @sub_action = @tiles[@selected_index]["name"]
         @sub_state  = :sub
+
+        # Сброс всей анимации на начало
+        @panel_anim_y      = PANEL_MSG_HIDDEN_Y
+        @top_panel_anim_y  = PANEL_HIDDEN_TOP_Y
+        @text_reveal_index = 0
+        @text_reveal_timer = 0
+        @text_full_shown   = false
       end
 
     when :sub
-      # Возврат из подменю в крест
+      # Возврат из подменю в крест.
       if Raylib.IsKeyPressed(Raylib::KEY_S)
-        @sub_state  = :main
-        @sub_action = nil
+        @sub_state = :main
+        @input_timer_left  = 0
+        @input_timer_right = 0
         return
       end
+
+      # ── ПРОПУСК ПЕЧАТИ: A или D мгновенно допечатывают текст ──
+      if !@text_full_shown && (Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D))
+        @text_reveal_index = message_for_action.length
+        @text_full_shown   = true
+        return
+      end
+
+      # Навигация работает только когда панель уже доехала и текст допечатан
+      return unless @text_full_shown && @top_panel_anim_y >= PANEL_Y
 
       # Навигация по иконкам товаров + сдвиг окна (с автоповтором)
       # БЕЗ wrap-around — на первом и последнем останавливаемся.
@@ -288,6 +356,51 @@ class ShopMenu
     return unless @visible
     @anim_timer += dt * 60.0
     @selection_blink_timer += dt * 60.0
+
+    speed = PANEL_MSG_SPEED * dt * 60.0
+
+    if @sub_state == :sub
+      # ── ФАЗА 1: снизу выезжает message_panel ──
+      if @panel_anim_y > PANEL_MSG_TARGET_Y
+        @panel_anim_y -= speed
+        @panel_anim_y = PANEL_MSG_TARGET_Y if @panel_anim_y < PANEL_MSG_TARGET_Y
+
+      # ── ФАЗА 2: печатается текст ──
+      elsif !@text_full_shown
+        full_text = message_for_action
+        @text_reveal_timer += dt * 60.0
+        while @text_reveal_timer >= TEXT_REVEAL_SPEED &&
+              @text_reveal_index < full_text.length
+          @text_reveal_timer -= TEXT_REVEAL_SPEED
+          @text_reveal_index += 1
+        end
+        @text_full_shown = true if @text_reveal_index >= full_text.length
+
+      # ── ФАЗА 3: сверху выезжает shop_panel с иконками ──
+      elsif @top_panel_anim_y < PANEL_Y
+        @top_panel_anim_y += speed
+        @top_panel_anim_y = PANEL_Y if @top_panel_anim_y > PANEL_Y
+      end
+
+    else
+      # ── ЗАКРЫТИЕ: сначала уезжает наверх shop_panel ──
+      if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y
+        @top_panel_anim_y -= speed
+        @top_panel_anim_y = PANEL_HIDDEN_TOP_Y if @top_panel_anim_y < PANEL_HIDDEN_TOP_Y
+
+      # ── Потом уезжает вниз message_panel ──
+      elsif @panel_anim_y < PANEL_MSG_HIDDEN_Y
+        @panel_anim_y += speed
+        @panel_anim_y = PANEL_MSG_HIDDEN_Y if @panel_anim_y > PANEL_MSG_HIDDEN_Y
+
+      # ── Когда всё спряталось — сбрасываем состояние ──
+      elsif @sub_action
+        @sub_action        = nil
+        @text_reveal_index = 0
+        @text_reveal_timer = 0
+        @text_full_shown   = false
+      end
+    end
   end
 
   def selected_action
@@ -297,8 +410,17 @@ class ShopMenu
   def draw
     return unless @visible
 
-    draw_panel if @sub_state == :sub
-    draw_tiles
+    # shop_panel — видна, когда выезжает/уже выехала
+    draw_panel if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y
+
+    # message_panel — видна, когда выезжает/уже выехала
+    draw_message_panel if @panel_anim_y < PANEL_MSG_HIDDEN_Y
+
+    # Крест — только когда панели полностью спрятаны и мы в :main
+    fully_closed = @sub_state == :main &&
+                   @top_panel_anim_y <= PANEL_HIDDEN_TOP_Y &&
+                   @panel_anim_y >= PANEL_MSG_HIDDEN_Y
+    draw_tiles if fully_closed
   end
 
   private
@@ -330,29 +452,68 @@ class ShopMenu
   # ─────────────────────────────────────────────────────────
 
   def draw_panel
+    y = @top_panel_anim_y
+
     if @panel_tex
       src = Raylib::Rectangle.create(0, 0, PANEL_W, PANEL_H)
-      dst = Raylib::Rectangle.create(PANEL_X, PANEL_Y, PANEL_W, PANEL_H)
+      dst = Raylib::Rectangle.create(PANEL_X, y, PANEL_W, PANEL_H)
       Raylib::DrawTexturePro(@panel_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
     else
-      Raylib::DrawRectangle(PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Raylib::GRAY)
-      Raylib::DrawRectangleLines(PANEL_X, PANEL_Y, PANEL_W, PANEL_H, Raylib::DARKGRAY)
+      Raylib::DrawRectangle(PANEL_X, y, PANEL_W, PANEL_H, Raylib::GRAY)
+      Raylib::DrawRectangleLines(PANEL_X, y, PANEL_W, PANEL_H, Raylib::DARKGRAY)
     end
 
     draw_panel_items
   end
 
+  # ─────────────────────────────────────────────────────────
+  # Панель сообщения снизу (выезжает при :sub)
+  # ─────────────────────────────────────────────────────────
+  def draw_message_panel
+    return unless @message_panel_tex
+    return if @panel_anim_y >= PANEL_MSG_HIDDEN_Y
+
+    dst = Raylib::Rectangle.create(PANEL_MSG_X, @panel_anim_y, PANEL_MSG_W, PANEL_MSG_H)
+    src = Raylib::Rectangle.create(0, 0, @message_panel_tex.width, @message_panel_tex.height)
+    Raylib::DrawTexturePro(@message_panel_tex, src, dst,
+                           Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+
+    full_text = message_for_action
+    # Пока печатаем — только видимая часть. Когда допечатано — весь текст.
+    display_text = full_text[0, @text_reveal_index] || ""
+    return if display_text.empty?
+
+    if @large_font
+      Raylib.DrawTextEx(@large_font, display_text,
+                        Raylib::Vector2.create(PANEL_MSG_X + 20, @panel_anim_y + 42),
+                        30, 1, Raylib::WHITE)
+    end
+  end
+
+  # Текст на панели зависит от действия
+  def message_for_action
+    case @sub_action
+    when "buy"    then "Что вы хотите купить?"
+    when "sell"   then "What do you want to sell?"
+    when "repair" then "What do you want to repair?"
+    when "deals"  then "What do you want to deal?"
+    else "What do you want to do?"
+    end
+  end
+
   def draw_panel_items
     return if @shop_icons.empty?
+
+    base_y = @top_panel_anim_y
 
     # Ценник 24×64, иконка 32×48.
     # Верх строки = верх ценника, центрируем 64px в панели.
     tag_h   = 64
-    row_top = PANEL_Y + (PANEL_H - tag_h) / 2   # = 16 + (128−64)/2 = 48
+    row_top = base_y + (PANEL_H - tag_h) / 2
     tag_y   = row_top
-    icon_y  = row_top + (tag_h - ICON_H)        # = 48 + 16 = 64 (низ совпадает)
+    icon_y  = row_top + (tag_h - ICON_H)
 
-    cy     = PANEL_Y + PANEL_H / 2
+    cy     = base_y + PANEL_H / 2
 
     toggle = ((@anim_timer / 20).to_i % 2) == 1
     sel_tex = toggle ? @selection_tex_red : @selection_tex_dark
@@ -392,10 +553,40 @@ class ShopMenu
                                Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
       end
 
-      # 3. Иконка предмета — САМАЯ ПОСЛЕДНЯЯ, поверх всего
+      # 3. Иконка предмета — поверх всего
       src = Raylib::Rectangle.create(0, 0, ICON_W, ICON_H)
       dst = Raylib::Rectangle.create(x, icon_y, ICON_W, ICON_H)
       Raylib::DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+
+      # 4. Цена на бирке — ПОВЁРНУТА на 90° (как в SF2).
+      price = @shop_prices[icon_index]
+      if price && price > 0
+        text = price.to_s
+        # Ограничение: максимум 7 цифр (до 9 999 999)
+        text = text[0, 7] if text.length > 7
+
+        tag_center_x = x + 46
+        tag_center_y = tag_y_png + 43
+
+        size = case text.length
+               when 1, 2 then 20
+               when 3    then 20
+               when 4    then 20
+               when 5    then 17
+               when 6    then 14
+               when 7    then 14
+               else 9
+               end
+
+        vec = Raylib.MeasureTextEx(@font, text, size, 1)
+        tw = vec.x
+        th = vec.y
+
+        origin = Raylib::Vector2.create(tw / 2, th / 2)
+        pos    = Raylib::Vector2.create(tag_center_x, tag_center_y)
+
+        Raylib.DrawTextPro(@font, text, pos, origin, 90.0, size, 1, DARKGREEN)
+      end
     end
 
     # ═══════════════════════════════════════════════════════════
@@ -505,7 +696,11 @@ class ShopMenu
     Raylib::UnloadTexture(@selection_tex_dark) if @selection_tex_dark
     @selection_tex_red  = nil
     @selection_tex_dark = nil
+    
     Raylib::UnloadTexture(@price_tag_tex) if @price_tag_tex
     @price_tag_tex = nil
+    
+    Raylib::UnloadTexture(@message_panel_tex) if @message_panel_tex
+    @message_panel_tex = nil
   end
 end
