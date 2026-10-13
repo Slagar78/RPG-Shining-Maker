@@ -19,7 +19,7 @@ class ShopMenu
 
   # Панель подменю (Buy / Sell / Repair / Deals)
   PANEL_W        = 512
-  PANEL_H        = 96
+  PANEL_H        = 128
   PANEL_X        = (576 - PANEL_W) / 2   # = 32, автоматическое центрирование
   PANEL_Y        = 16
 
@@ -39,7 +39,7 @@ class ShopMenu
   ICON_W         = 32   # ширина одной иконки предмета
   ICON_H         = 48   # высота одной иконки предмета (равна высоте тайла)
   ICON_GAP       = 36   # промежуток между иконками (24 цена + 12 разделитель)
-  ICON_LEFT_PAD  = 36   # отступ от левого и правого края панели до крайних иконок
+  ICON_LEFT_PAD  = 24   # отступ
   ICON_MAX       = 7    # максимум иконок на панели (влезает ровно 7)
   
   # Обводка выбранного предмета: иконка+ценник (56×48) + по 4 px с каждой стороны
@@ -148,6 +148,14 @@ class ShopMenu
       Raylib.SetTextureFilter(@selection_tex_dark, Raylib::TEXTURE_FILTER_POINT)
     else
       puts "WARNING: #{dark_path} not found."
+    end
+    @price_tag_tex = nil
+    price_path = "assets/ui/menu/price_tag.png"
+    if File.exist?(price_path)
+      @price_tag_tex = Raylib.LoadTexture(price_path)
+      Raylib.SetTextureFilter(@price_tag_tex, Raylib::TEXTURE_FILTER_POINT)
+    else
+      puts "WARNING: #{price_path} not found."
     end
   end
 
@@ -335,17 +343,57 @@ class ShopMenu
   def draw_panel_items
     return if @shop_icons.empty?
 
-    icon_y = PANEL_Y + (PANEL_H - ICON_H) / 2
+    # Ценник 24×64, иконка 32×48.
+    # Верх строки = верх ценника, центрируем 64px в панели.
+    tag_h   = 64
+    row_top = PANEL_Y + (PANEL_H - tag_h) / 2   # = 16 + (128−64)/2 = 48
+    tag_y   = row_top
+    icon_y  = row_top + (tag_h - ICON_H)        # = 48 + 16 = 64 (низ совпадает)
+
     cy     = PANEL_Y + PANEL_H / 2
 
-    # Переключение каждые ~20 кадров (≈0.33 сек при 60 FPS).
-    # Никакой пульсации — только два состояния: яркая / тёмная.
     toggle = ((@anim_timer / 20).to_i % 2) == 1
     sel_tex = toggle ? @selection_tex_red : @selection_tex_dark
 
     # ═══════════════════════════════════════════════════════════
-    # СТРЕЛКИ — рисуются ДО цикла иконок, чтобы `next unless tex`
-    # не мог их пропустить.
+    # ИКОНКИ ТОВАРОВ (ценник → обводка → иконка)
+    # ═══════════════════════════════════════════════════════════
+    ICON_MAX.times do |slot|
+      icon_index = @shop_scroll_index + slot
+      break if icon_index >= @shop_icons.size
+
+      tex = @shop_icons[icon_index]
+      next unless tex
+
+      x = PANEL_X + ICON_LEFT_PAD + slot * (ICON_W + ICON_GAP)
+
+      # 1. Ценник — САМЫЙ ПЕРВЫЙ, значит сзади всего
+      if @price_tag_tex
+        tag_x   = x + ICON_W
+        tag_src = Raylib::Rectangle.create(0, 0, 24, 64)
+        tag_dst = Raylib::Rectangle.create(tag_x, tag_y, 24, 64)
+        Raylib::DrawTexturePro(@price_tag_tex, tag_src, tag_dst,
+                               Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+      end
+
+      # 2. Обводка выбора (поверх ценника)
+      if icon_index == @selected_item_index && sel_tex
+        sx   = x - SELECTION_PAD
+        sy   = icon_y - SELECTION_PAD
+        ssrc = Raylib::Rectangle.create(0, 0, SELECTION_W, SELECTION_H)
+        sdst = Raylib::Rectangle.create(sx, sy, SELECTION_W, SELECTION_H)
+        Raylib::DrawTexturePro(sel_tex, ssrc, sdst,
+                               Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+      end
+
+      # 3. Иконка предмета — САМАЯ ПОСЛЕДНЯЯ, поверх всего
+      src = Raylib::Rectangle.create(0, 0, ICON_W, ICON_H)
+      dst = Raylib::Rectangle.create(x, icon_y, ICON_W, ICON_H)
+      Raylib::DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+    end
+
+    # ═══════════════════════════════════════════════════════════
+    # СТРЕЛКИ ПРОКРУТКИ — ПОСЛЕ иконок, значит поверх всего.
     #
     # ВАЖНО: Raylib отсекает треугольники, обход вершин которых
     # идёт ПО часовой стрелке. Поэтому у ЛЕВОЙ стрелки вершины
@@ -357,7 +405,7 @@ class ShopMenu
       arrow_color = Raylib.Fade(Raylib::WHITE, pulse)
 
       if @shop_scroll_index > 0
-        cx = PANEL_X + 14
+       cx = PANEL_X + 8
         Raylib.DrawTriangle(
           Raylib::Vector2.create(cx - 6, cy),
           Raylib::Vector2.create(cx + 6, cy + 5),
@@ -367,7 +415,7 @@ class ShopMenu
       end
 
       if @shop_scroll_index + ICON_MAX < @shop_icons.size
-        cx = PANEL_X + PANEL_W - 14
+        cx = PANEL_X + PANEL_W - 8
         Raylib.DrawTriangle(
           Raylib::Vector2.create(cx + 6, cy),
           Raylib::Vector2.create(cx - 6, cy - 5),
@@ -375,35 +423,6 @@ class ShopMenu
           arrow_color
         )
       end
-    end
-
-    # ═══════════════════════════════════════════════════════════
-    # ИКОНКИ ТОВАРОВ
-    # ═══════════════════════════════════════════════════════════
-    ICON_MAX.times do |slot|
-      icon_index = @shop_scroll_index + slot
-      break if icon_index >= @shop_icons.size
-
-      tex = @shop_icons[icon_index]
-      next unless tex
-
-      x = PANEL_X + ICON_LEFT_PAD + slot * (ICON_W + ICON_GAP)
-
-      if icon_index == @selected_item_index
-        if sel_tex
-          sx = x - SELECTION_PAD
-          sy = icon_y - SELECTION_PAD
-          ssrc = Raylib::Rectangle.create(0, 0, SELECTION_W, SELECTION_H)
-          sdst = Raylib::Rectangle.create(sx, sy, SELECTION_W, SELECTION_H)
-          Raylib::DrawTexturePro(sel_tex, ssrc, sdst,
-                                 Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-        end
-      end
-
-      # ── Иконка предмета (поверх обводки) ──
-      src = Raylib::Rectangle.create(0, 0, ICON_W, ICON_H)
-      dst = Raylib::Rectangle.create(x, icon_y, ICON_W, ICON_H)
-      Raylib::DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
     end
   end
 
@@ -480,5 +499,7 @@ class ShopMenu
     Raylib::UnloadTexture(@selection_tex_dark) if @selection_tex_dark
     @selection_tex_red  = nil
     @selection_tex_dark = nil
+    Raylib::UnloadTexture(@price_tag_tex) if @price_tag_tex
+    @price_tag_tex = nil
   end
 end
