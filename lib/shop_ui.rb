@@ -41,6 +41,11 @@ class ShopMenu
   ICON_GAP       = 36   # промежуток между иконками (24 цена + 12 разделитель)
   ICON_LEFT_PAD  = 36   # отступ от левого и правого края панели до крайних иконок
   ICON_MAX       = 7    # максимум иконок на панели (влезает ровно 7)
+  
+  # Обводка выбранного предмета: иконка+ценник (56×48) + по 4 px с каждой стороны
+  SELECTION_W    = 64
+  SELECTION_H    = 56
+  SELECTION_PAD  = 4
 
   attr_reader :visible, :selected_index, :current_shop, :sub_state
 
@@ -120,6 +125,26 @@ class ShopMenu
       Raylib.SetTextureFilter(@panel_tex, Raylib::TEXTURE_FILTER_POINT)
     else
       puts "WARNING: assets/ui/shop_panel.png not found."
+    end
+
+    @selection_tex_red  = nil
+    @selection_tex_dark = nil
+
+    red_path  = "assets/ui/menu/shop_selection_red.png"
+    dark_path = "assets/ui/menu/shop_selection_dark.png"
+
+    if File.exist?(red_path)
+      @selection_tex_red = Raylib.LoadTexture(red_path)
+      Raylib.SetTextureFilter(@selection_tex_red, Raylib::TEXTURE_FILTER_POINT)
+    else
+      puts "WARNING: #{red_path} not found."
+    end
+
+    if File.exist?(dark_path)
+      @selection_tex_dark = Raylib.LoadTexture(dark_path)
+      Raylib.SetTextureFilter(@selection_tex_dark, Raylib::TEXTURE_FILTER_POINT)
+    else
+      puts "WARNING: #{dark_path} not found."
     end
   end
 
@@ -307,8 +332,10 @@ class ShopMenu
     icon_y = PANEL_Y + (PANEL_H - ICON_H) / 2
     cy     = PANEL_Y + PANEL_H / 2
 
-    alpha = (Math.sin(@anim_timer * 0.2) * 0.4 + 0.6) * 255
-    color = Raylib.Fade(Raylib::WHITE, alpha / 255.0)
+    # Переключение каждые ~20 кадров (≈0.33 сек при 60 FPS).
+    # Никакой пульсации — только два состояния: яркая / тёмная.
+    toggle = ((@anim_timer / 20).to_i % 2) == 1
+    sel_tex = toggle ? @selection_tex_red : @selection_tex_dark
 
     # ═══════════════════════════════════════════════════════════
     # СТРЕЛКИ — рисуются ДО цикла иконок, чтобы `next unless tex`
@@ -320,25 +347,23 @@ class ShopMenu
     # ═══════════════════════════════════════════════════════════
     if @shop_icons.size > ICON_MAX
 
-      # Левая стрелка — если ОКНО сдвинулось вправо (есть что листать влево)
       if @shop_scroll_index > 0
         cx = PANEL_X + 14
         Raylib.DrawTriangle(
-          Raylib::Vector2.create(cx - 6, cy),       # острие слева
-          Raylib::Vector2.create(cx + 6, cy + 9),   # нижний правый
-          Raylib::Vector2.create(cx + 6, cy - 9),   # верхний правый
-          color
+          Raylib::Vector2.create(cx - 6, cy),
+          Raylib::Vector2.create(cx + 6, cy + 9),
+          Raylib::Vector2.create(cx + 6, cy - 9),
+          Raylib::WHITE
         )
       end
 
-      # Правая стрелка — если окно не дошло до конца (есть что листать вправо)
       if @shop_scroll_index + ICON_MAX < @shop_icons.size
         cx = PANEL_X + PANEL_W - 14
         Raylib.DrawTriangle(
-          Raylib::Vector2.create(cx + 6, cy),       # острие справа
-          Raylib::Vector2.create(cx - 6, cy - 9),   # верхний левый
-          Raylib::Vector2.create(cx - 6, cy + 9),   # нижний левый
-          color
+          Raylib::Vector2.create(cx + 6, cy),
+          Raylib::Vector2.create(cx - 6, cy - 9),
+          Raylib::Vector2.create(cx - 6, cy + 9),
+          Raylib::WHITE
         )
       end
     end
@@ -354,15 +379,22 @@ class ShopMenu
       next unless tex
 
       x = PANEL_X + ICON_LEFT_PAD + slot * (ICON_W + ICON_GAP)
+
+      if icon_index == @selected_item_index
+        if sel_tex
+          sx = x - SELECTION_PAD
+          sy = icon_y - SELECTION_PAD
+          ssrc = Raylib::Rectangle.create(0, 0, SELECTION_W, SELECTION_H)
+          sdst = Raylib::Rectangle.create(sx, sy, SELECTION_W, SELECTION_H)
+          Raylib::DrawTexturePro(sel_tex, ssrc, sdst,
+                                 Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+        end
+      end
+
+      # ── Иконка предмета (поверх обводки) ──
       src = Raylib::Rectangle.create(0, 0, ICON_W, ICON_H)
       dst = Raylib::Rectangle.create(x, icon_y, ICON_W, ICON_H)
       Raylib::DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-
-      # Пульсирующая рамка на ВЫБРАННОЙ иконке
-      if icon_index == @selected_item_index
-        frame = Raylib::Rectangle.create(x - 2, icon_y - 2, ICON_W + 4, ICON_H + 4)
-        Raylib::DrawRectangleLinesEx(frame, 2, color)
-      end
     end
   end
 
@@ -434,5 +466,10 @@ class ShopMenu
 
     Raylib::UnloadTexture(@panel_tex) if @panel_tex
     @panel_tex = nil
+    
+    Raylib::UnloadTexture(@selection_tex_red)  if @selection_tex_red
+    Raylib::UnloadTexture(@selection_tex_dark) if @selection_tex_dark
+    @selection_tex_red  = nil
+    @selection_tex_dark = nil
   end
 end
