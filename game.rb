@@ -519,6 +519,7 @@ end
           @pending_menu_request = false
           @menu_delay = 0
           @game_state = :menu
+          @audio.play_sfx(:confirm)
           @menu.open
         end
       else
@@ -874,6 +875,7 @@ end
     when :profile
       @profile.instance_variable_get(:@anim_phase) == 2
     when :item_action
+      return false if @active_item_action&.block_button_sounds?
       @active_item_action&.anim_phase == 2
     else
       false

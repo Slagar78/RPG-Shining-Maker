@@ -760,6 +760,13 @@ end
 
   def confirm_action(item_entry, actor)
   end
+
+  # Пока true — звуки кнопок A/D/S не играют.
+  # Нужно для окон, которые после действия показывают сообщение
+  # и не принимают ввод, но анимация панелей ещё в phase 2.
+  def block_button_sounds?
+    false
+  end
 end
 
 # ============================================================
@@ -830,6 +837,10 @@ class GiveMenu < ItemSubMenuBase
   def filter_items(items)
     # Всегда показываем ровно 4 слота, пустые остаются пустыми
     fill_to_four(items)
+  end
+
+  def block_button_sounds?
+    @give_state == :result_message
   end
 
   def handle_input(dt = 1.0 / 60.0)
