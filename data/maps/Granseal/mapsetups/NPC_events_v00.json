@@ -20,6 +20,14 @@
   },
   {
     "id": "npc3",
+    "x": 2,
+    "y": 26,
+    "sprite": "mapsprite193",
+    "behavior": "static",
+    "direction": "right"
+  },
+  {
+    "id": "npc4",
     "x": 32,
     "y": 11,
     "sprite": "mapsprite192",
