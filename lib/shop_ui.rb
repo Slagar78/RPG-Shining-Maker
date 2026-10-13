@@ -42,10 +42,12 @@ class ShopMenu
   ICON_LEFT_PAD  = 24   # отступ
   ICON_MAX       = 7    # максимум иконок на панели (влезает ровно 7)
   
-  # Обводка выбранного предмета: иконка+ценник (56×48) + по 4 px с каждой стороны
-  SELECTION_W    = 64
-  SELECTION_H    = 56
-  SELECTION_PAD  = 4
+  # Обводка выбранного предмета: ценник-бирка 56×72 + по краям.
+  # Обводка 68×76 → запас 6 px по горизонтали и 2 px по вертикали.
+  SELECTION_W      = 68
+  SELECTION_H      = 80
+  SELECTION_PAD_X  = 6    # сдвиг обводки от x
+  SELECTION_PAD_Y  = 28   # сдвиг обводки от icon_y (учитывает шнурок сверху)
 
   attr_reader :visible, :selected_index, :current_shop, :sub_state
 
@@ -367,19 +369,23 @@ class ShopMenu
 
       x = PANEL_X + ICON_LEFT_PAD + slot * (ICON_W + ICON_GAP)
 
-      # 1. Ценник — САМЫЙ ПЕРВЫЙ, значит сзади всего
+      # 1. Ценник — САМЫЙ ПЕРВЫЙ, значит сзади всего.
+      #    PNG 56×72: слева сверху шнурок, слева снизу прозрачно,
+      #    справа бирка. Левый край PNG совпадает с иконкой,
+      #    низ PNG = низ иконки → tag_y = icon_y - 24.
       if @price_tag_tex
-        tag_x   = x + ICON_W
-        tag_src = Raylib::Rectangle.create(0, 0, 24, 64)
-        tag_dst = Raylib::Rectangle.create(tag_x, tag_y, 24, 64)
+        tag_x   = x
+        tag_y_png = icon_y - 24
+        tag_src = Raylib::Rectangle.create(0, 0, 56, 72)
+        tag_dst = Raylib::Rectangle.create(tag_x, tag_y_png, 56, 72)
         Raylib::DrawTexturePro(@price_tag_tex, tag_src, tag_dst,
                                Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
       end
 
       # 2. Обводка выбора (поверх ценника)
       if icon_index == @selected_item_index && sel_tex
-        sx   = x - SELECTION_PAD
-        sy   = icon_y - SELECTION_PAD
+        sx   = x - SELECTION_PAD_X
+        sy   = icon_y - SELECTION_PAD_Y
         ssrc = Raylib::Rectangle.create(0, 0, SELECTION_W, SELECTION_H)
         sdst = Raylib::Rectangle.create(sx, sy, SELECTION_W, SELECTION_H)
         Raylib::DrawTexturePro(sel_tex, ssrc, sdst,
