@@ -98,6 +98,9 @@ class ShopMenu
     # Автоповтор стрелок ←/→
     @input_timer_left    = 0
     @input_timer_right   = 0
+    
+    # Таймер пульсации стрелок прокрутки
+    @selection_blink_timer = 0
 
     @tiles = [
       { "id" => 0, "name" => "buy",    "icon" => "assets/ui/menu/Buy.png",    "icon_anim" => "assets/ui/menu/Buy_Anim.png" },
@@ -154,6 +157,7 @@ class ShopMenu
     @visible        = true
     @selected_index = 0
     @anim_timer     = 0.0
+    @selection_blink_timer = 0
     @sub_state      = :main
     @sub_action     = nil
 
@@ -186,6 +190,7 @@ class ShopMenu
     @shop_scroll_index   = 0
     @input_timer_left    = 0
     @input_timer_right   = 0
+    @selection_blink_timer = 0
   end
 
   def handle_input(dt = 1.0 / 60.0)
@@ -272,6 +277,7 @@ class ShopMenu
   def update(dt = 1.0 / 60.0)
     return unless @visible
     @anim_timer += dt * 60.0
+    @selection_blink_timer += dt * 60.0
   end
 
   def selected_action
@@ -347,13 +353,16 @@ class ShopMenu
     # ═══════════════════════════════════════════════════════════
     if @shop_icons.size > ICON_MAX
 
+      pulse = Math.sin(@selection_blink_timer * 0.2) * 0.4 + 0.6
+      arrow_color = Raylib.Fade(Raylib::WHITE, pulse)
+
       if @shop_scroll_index > 0
         cx = PANEL_X + 14
         Raylib.DrawTriangle(
           Raylib::Vector2.create(cx - 6, cy),
-          Raylib::Vector2.create(cx + 6, cy + 9),
-          Raylib::Vector2.create(cx + 6, cy - 9),
-          Raylib::WHITE
+          Raylib::Vector2.create(cx + 6, cy + 5),
+          Raylib::Vector2.create(cx + 6, cy - 5),
+          arrow_color
         )
       end
 
@@ -361,9 +370,9 @@ class ShopMenu
         cx = PANEL_X + PANEL_W - 14
         Raylib.DrawTriangle(
           Raylib::Vector2.create(cx + 6, cy),
-          Raylib::Vector2.create(cx - 6, cy - 9),
-          Raylib::Vector2.create(cx - 6, cy + 9),
-          Raylib::WHITE
+          Raylib::Vector2.create(cx - 6, cy - 5),
+          Raylib::Vector2.create(cx - 6, cy + 5),
+          arrow_color
         )
       end
     end
