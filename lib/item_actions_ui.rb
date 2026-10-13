@@ -652,7 +652,7 @@ def draw_character_list(mode: 0, item_bonus_atk: 0, item_bonus_df: 0)
     draw_text_custom("DEFENSE", @lower_x + 290, header_y, 20, WHITE)
   end
 
-  blink_visible = ((@selection_blink_timer / 15) % 2 == 0) if mode == 2
+  blink_visible = ((@selection_blink_timer.to_i / 15) % 2 == 0) if mode == 2
 
   5.times do |i|
     list_index = @list_top_index + i
@@ -1145,7 +1145,9 @@ def draw_lower_content
       y = @lower_y + 71 + i * 34
 
       if member["name"] == @current_actor
-        highlight = Raylib.Fade(Raylib::BLUE, 0.5)
+        pulse = Math.sin(@selection_blink_timer * 0.2) * 0.4 + 0.6
+        alpha = (pulse * 255).to_i
+        highlight = Raylib.Fade(Raylib::BLUE, alpha / 255.0)
         Raylib.DrawRectangle(@lower_x + 38, y - 4, 138, 28, highlight)
       end
       if @ruby_tex
@@ -1166,7 +1168,8 @@ def draw_lower_content
       delta_def = give_def - cur_def_bonus
 
       # Мигание только для выбранного персонажа
-      blink_visible = (member["name"] == @current_actor) && ((@selection_blink_timer / 15) % 2 == 0)
+      blink_visible = (member["name"] == @current_actor) &&
+                ((@selection_blink_timer.to_i / 15) % 2 == 0)
 
       draw_stats_comparison(member, delta_atk, delta_def, y, blink_visible)
     end
@@ -1229,7 +1232,7 @@ end
     @blink_timer = 0
     @blink_duration = 0
     @selection_blink_timer = 0
-	@status_view_mode = 0   # сброс режима отображения
+	  @status_view_mode = 0   # сброс режима отображения
     update_current_actor
   end
 end
@@ -2123,7 +2126,7 @@ class DropMenu < ItemSubMenuBase
     @blink_timer = 0
     @blink_duration = 0
     @selection_blink_timer = 0
-	@status_view_mode = 0   # сброс режима отображения
+	  @status_view_mode = 0   # сброс режима отображения
     update_current_actor
   end
 end
