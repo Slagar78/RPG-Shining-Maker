@@ -244,6 +244,14 @@
     "direction": 0
   },
   {
+    "type": "stairs",
+    "start_x": 58,
+    "start_y": 13,
+    "end_x": 59,
+    "end_y": 12,
+    "direction": 1
+  },
+  {
     "type": "warp",
     "trigger_x": 3,
     "trigger_y": 3,
