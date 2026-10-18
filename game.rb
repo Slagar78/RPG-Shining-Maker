@@ -432,7 +432,10 @@ class Game
         @player.x = pending[:target_x]
         @player.y = pending[:target_y]
         @player.last_x = @player.x
-        @player.last_y = @player.y		
+        @player.last_y = @player.y
+        
+        @camera.snap_to(@player, @game_map)
+        
         @player.direction = pending[:facing] if pending[:facing]
         @player.moving = false
         @player.pattern = 0
@@ -737,15 +740,19 @@ end
 
   def change_map(map_id, target_x, target_y, facing = nil)
     @warp_pending = {
-    map_id: map_id,
-    target_x: target_x,
-    target_y: target_y,
-    facing: facing
-  }
+      map_id: map_id,
+      target_x: target_x,
+      target_y: target_y,
+      facing: facing
+    }
     @game_state = :warping
-    @warp_delay = 10        # ждём ~10 кадров (0.16 сек при 60 FPS, через dt * 60)
-    # ^ 10 "кадров при 60fps" = ~0.16 сек. Ниже в update() вычитается через dt * 60.0.
-    #   Если переписывать в секунды: @warp_delay = 0.16 и @warp_delay -= dt.
+    
+    # Проверяем: если ID новой карты совпадает с текущей, значит это дверь/варп внутри локации
+    if map_id.to_s.strip == @current_map_id.to_s.strip
+      @warp_delay = 5         # Короткая задержка (5 кадров) для дверей
+    else
+      @warp_delay = 10        # Стандартная задержка (10 кадров) для смены карты
+    end
   end
 
   def draw_battle
