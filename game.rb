@@ -515,21 +515,6 @@ end
       end
     end
 
-    if @pending_menu_request
-      if !@player.moving
-        @menu_delay += dt
-        if @menu_delay >= 3.0 / 60.0
-          @pending_menu_request = false
-          @menu_delay = 0
-          @game_state = :menu
-          @audio.play_sfx(:confirm)
-          @menu.open
-        end
-      else
-        @menu_delay = 0
-      end
-    end
-
     @menu.update(dt) if @game_state == :menu
     @items_submenu.update(dt) if @game_state == :items
     @status_overlay.update(dt) if @game_state == :status
@@ -568,7 +553,29 @@ end
       @game_state = :status
     end
 
+    # Запоминаем позицию камеры ДО её обновления
+    prev_cam_x = @camera.cam_x
+    prev_cam_y = @camera.cam_y
+
     @camera.update(@player, @game_map) if @game_state == :playing
+
+    # --- ОТЛОЖЕННОЕ ОТКРЫТИЕ МЕНЮ (с ожиданием камеры) ---
+    if @pending_menu_request
+      # Ждем, пока игрок остановится И камера перестанет двигаться
+      if !@player.moving && @camera.cam_x == prev_cam_x && @camera.cam_y == prev_cam_y
+        @menu_delay += dt
+        if @menu_delay >= 3.0 / 60.0
+          @pending_menu_request = false
+          @menu_delay = 0
+          @game_state = :menu
+          @audio.play_sfx(:confirm)
+          @menu.open
+        end
+      else
+        # Если игрок или камера все еще в движении, сбрасываем таймер
+        @menu_delay = 0
+      end
+    end
 	
 	if @game_state == :dialog && @dialog_manager
 	  @dialog_manager.update(dt)

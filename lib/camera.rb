@@ -3,6 +3,7 @@ require 'raylib'
 include Raylib
 
 class Camera
+  attr_reader :cam_x, :cam_y
   def initialize
     @camera = Camera2D.new
     @camera.zoom = 1.0
