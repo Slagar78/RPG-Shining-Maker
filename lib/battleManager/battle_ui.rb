@@ -217,21 +217,23 @@ class BattleMenu
   end
 
   # --- Обработка ввода ---
-  def handle_input
-    return unless @visible
+def handle_input
+  return unless @visible
 
-    if @item_menu_mode
-      if Raylib.IsKeyPressed(Raylib::KEY_UP)
-        @item_menu_selected = 0
-      elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
-        @item_menu_selected = 1
-      elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
-        @item_menu_selected = 2
-      elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
-        @item_menu_selected = 3
-      end
-      return
+  if @item_menu_mode
+    old_index = @item_menu_selected
+    if Raylib.IsKeyPressed(Raylib::KEY_UP)
+      @item_menu_selected = 0
+    elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
+      @item_menu_selected = 1
+    elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+      @item_menu_selected = 2
+    elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
+      @item_menu_selected = 3
     end
+    @anim_timer = 0 if @item_menu_selected != old_index
+    return
+  end
 
     if @magic_mode
       if Raylib.IsKeyPressed(Raylib::KEY_UP)
@@ -273,17 +275,19 @@ class BattleMenu
       return
     end
 
-    # Основное меню
-    if Raylib.IsKeyPressed(Raylib::KEY_UP)
-      @selected_index = 0
-    elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
-      @selected_index = 1
-    elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
-      @selected_index = 2
-    elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
-      @selected_index = 3
-    end
+  # Основное меню
+  old_index = @selected_index
+  if Raylib.IsKeyPressed(Raylib::KEY_UP)
+    @selected_index = 0
+  elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
+    @selected_index = 1
+  elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+    @selected_index = 2
+  elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
+    @selected_index = 3
   end
+  @anim_timer = 0 if @selected_index != old_index
+end
 
   def update(dt = 1.0 / 60.0)
     return unless @visible
