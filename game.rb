@@ -208,35 +208,41 @@ class Game
       # во время варпа управление отключено
       return
 	
-	when :playing
-	  if IsKeyPressed(KEY_A)
-		# Меню по A (как было)
-		if @player.moving
-		  @pending_menu_request = true
-		else
-		  @game_state = :menu
-		  @audio.play_sfx(:confirm)
-		  @menu.open
-		end
-	  elsif IsKeyPressed(KEY_D) && @game_state != :dialog
-		# Сначала проверяем, есть ли рядом NPC
-		npc = @game_map.npcs.find { |n| (n.x - @player.x).abs <= 1 && (n.y - @player.y).abs <= 1 }
-		if npc
-		  # Есть NPC – запускаем диалог
-		  try_start_interaction
-		else
-		  # Нет NPC – меню (как раньше)
-		  if @player.moving
-			@pending_menu_request = true
-		  else
-			@game_state = :menu
-			@audio.play_sfx(:confirm)
-			@menu.open
-		  end
-		end
-	  else
-		@player.handle_input
-	  end
+when :playing
+  # Как только меню запрошено — блокируем ВСЁ до его появления.
+  # Pending снимается только в update, когда игрок стоит, камера доехала
+  # и меню реально открылось. До этого момента — полный игнор ввода.
+  return if @pending_menu_request
+
+  # Открывать меню мгновенно можно только если персонаж не шагает
+  # И камера уже доехала до своей целевой позиции (4 тайла от края).
+  # Иначе — ставим pending и ждём, пока всё успокоится.
+  can_open_now = !@player.moving && @camera.arrived?
+
+  if IsKeyPressed(KEY_A)
+    if can_open_now
+      @game_state = :menu
+      @audio.play_sfx(:confirm)
+      @menu.open
+    else
+      @pending_menu_request = true
+    end
+  elsif IsKeyPressed(KEY_D) && @game_state != :dialog
+    npc = @game_map.npcs.find { |n| (n.x - @player.x).abs <= 1 && (n.y - @player.y).abs <= 1 }
+    if npc
+      try_start_interaction
+    else
+      if can_open_now
+        @game_state = :menu
+        @audio.play_sfx(:confirm)
+        @menu.open
+      else
+        @pending_menu_request = true
+      end
+    end
+  else
+    @player.handle_input
+  end
 
 	when :dialog
 	  # Ничего не делаем — диалог управляется внутри DialogManager

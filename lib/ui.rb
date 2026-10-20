@@ -54,19 +54,24 @@ class BottomMenu
     @visible = false
   end
   
-  def handle_input
-    return unless @visible
-    
-    if Raylib.IsKeyPressed(Raylib::KEY_UP)
-      @selected_index = 0
-    elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
-      @selected_index = 1
-    elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
-      @selected_index = 2
-    elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
-      @selected_index = 3
-    end
+def handle_input
+  return unless @visible
+
+  old_index = @selected_index
+
+  if Raylib.IsKeyPressed(Raylib::KEY_UP)
+    @selected_index = 0
+  elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
+    @selected_index = 1
+  elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+    @selected_index = 2
+  elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
+    @selected_index = 3
   end
+
+  # Сброс фазы анимации — реакция на смену выбора мгновенная
+  @anim_timer = 0 if @selected_index != old_index
+end
   
   def update(dt = 1.0 / 60.0)
     return unless @visible

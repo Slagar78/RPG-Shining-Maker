@@ -20,6 +20,10 @@ class Camera
     
     @cam_speed = 4.0 
     @initialized = false
+
+    # Флаги «камера ровно на целевой позиции по этой оси в текущем кадре»
+    @cam_at_target_x = false
+    @cam_at_target_y = false
   end
 
   def update(player, game_map)
@@ -118,17 +122,21 @@ class Camera
       end
     end
 
-    # Плавное движение камеры (постоянная скорость, как в Фортране)
+    # Плавное движение камеры (постоянная скорость)
     if (target_x - @cam_x).abs > @cam_speed
       @cam_x += (target_x > @cam_x) ? @cam_speed : -@cam_speed
+      @cam_at_target_x = false
     else
       @cam_x = target_x
+      @cam_at_target_x = true
     end
 
     if (target_y - @cam_y).abs > @cam_speed
       @cam_y += (target_y > @cam_y) ? @cam_speed : -@cam_speed
+      @cam_at_target_y = false
     else
       @cam_y = target_y
+      @cam_at_target_y = true
     end
 
     # Передаем в Raylib ЦЕНТР экрана
@@ -163,12 +171,20 @@ class Camera
 
     @camera.target = Vector2.create(@cam_x + 288.0, @cam_y + 240.0)
     @initialized = true
+    @cam_at_target_x = true
+    @cam_at_target_y = true
   end
 
   def render_camera
     @snapped.target = @camera.target
     @snapped.zoom = @camera.zoom
     @snapped
+  end
+
+  # true, если в последнем update камера стояла ровно на целевой позиции
+  # по обеим осям (т.е. больше не двигается к цели).
+  def arrived?
+    @cam_at_target_x && @cam_at_target_y
   end
 
   private
