@@ -7,13 +7,18 @@ require 'json'
 class BottomMenu
   attr_reader :selected_index
 
-  def initialize(tiles_data = nil)
+  def initialize(tiles_data = nil, font = nil, large_font = nil)
+    @font = font
+    @large_font = large_font || font
     load_tiles(tiles_data)
     @visible = false
     @selected_index = 0
     @anim_timer = 0
     @tile_size = 48
     @offset = 48
+    @commands_tex = nil
+    @commands_w = 0
+    @commands_h = 0
     load_textures
   end
 
@@ -42,6 +47,15 @@ class BottomMenu
       Raylib.SetTextureFilter(anim, 0)
       @textures << { normal: normal, anim: anim }
     end
+
+    # --- ДОБАВЛЕНО: Загрузка панели названий ---
+    path = "assets/ui/Commands.png"
+    if File.exist?(path)
+      @commands_tex = Raylib.LoadTexture(path)
+      Raylib.SetTextureFilter(@commands_tex, 0)
+      @commands_w = @commands_tex.width
+      @commands_h = @commands_tex.height
+    end
   end
   
   def open
@@ -54,24 +68,24 @@ class BottomMenu
     @visible = false
   end
   
-def handle_input
-  return unless @visible
+  def handle_input
+    return unless @visible
 
-  old_index = @selected_index
+    old_index = @selected_index
 
-  if Raylib.IsKeyPressed(Raylib::KEY_UP)
-    @selected_index = 0
-  elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
-    @selected_index = 1
-  elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
-    @selected_index = 2
-  elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
-    @selected_index = 3
+    if Raylib.IsKeyPressed(Raylib::KEY_UP)
+      @selected_index = 0
+    elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
+      @selected_index = 1
+    elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+      @selected_index = 2
+    elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
+      @selected_index = 3
+    end
+
+    # Сброс фазы анимации — реакция на смену выбора мгновенная
+    @anim_timer = 0 if @selected_index != old_index
   end
-
-  # Сброс фазы анимации — реакция на смену выбора мгновенная
-  @anim_timer = 0 if @selected_index != old_index
-end
   
   def update(dt = 1.0 / 60.0)
     return unless @visible
@@ -105,6 +119,42 @@ end
       dst = Raylib::Rectangle.create(pos[:x] - @tile_size/2, pos[:y] - @tile_size/2, @tile_size, @tile_size)
       src = Raylib::Rectangle.create(0, 0, @tile_size, @tile_size)
       Raylib.DrawTexturePro(texture, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+    end
+
+    # ═══ ДОБАВЛЕНО: ПАНЕЛЬ С НАЗВАНИЕМ ВЫБРАННОГО ПУНКТА ═══
+    if @commands_tex
+      panel_x = center_x + @offset + @tile_size / 2 + 16
+      panel_y = center_y - @commands_h / 2 + 24
+
+      src = Raylib::Rectangle.create(0, 0, @commands_w, @commands_h)
+      dst = Raylib::Rectangle.create(panel_x, panel_y, @commands_w, @commands_h)
+      Raylib::DrawTexturePro(@commands_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+
+      if @large_font
+        name_map = {
+          "status" => "Member",  # Твой запрос
+          "magic"  => "Magic",   # Твой запрос
+          "items"  => "Item",    # Твой запрос
+          "event"  => "Search",  # Твой запрос
+          "use"    => "Use",
+          "give"   => "Give",
+          "equip"  => "Equip",
+          "drop"   => "Drop"
+        }
+        
+        tech_name = @tiles[@selected_index]["name"]
+        display_name = name_map[tech_name] || tech_name.capitalize
+
+        font_size = 30
+        text_size = Raylib.MeasureTextEx(@large_font, display_name, font_size, 1)
+        
+        # Текст прижат влево с отступом 20px
+        text_x = panel_x + 20
+        # По вертикали оставляем по центру
+        text_y = panel_y + (@commands_h - text_size.y) / 2
+        
+        Raylib.DrawTextEx(@large_font, display_name, Raylib::Vector2.create(text_x, text_y), font_size, 1, Raylib::WHITE)
+      end
     end
   end
 end

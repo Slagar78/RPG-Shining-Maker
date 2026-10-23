@@ -81,14 +81,6 @@ class Game
     @camera = Camera.new
     @fixed_dt = 1.0 / 60.0
 
-    @menu = BottomMenu.new
-    @items_submenu = BottomMenu.new([
-      { "id" => 0, "name" => "use",   "icon" => "assets/ui/menu/Use.png",   "icon_anim" => "assets/ui/menu/Use_anim.png" },
-      { "id" => 1, "name" => "give",  "icon" => "assets/ui/menu/Give.png",  "icon_anim" => "assets/ui/menu/Give_anim.png" },
-      { "id" => 2, "name" => "equip", "icon" => "assets/ui/menu/Equip.png", "icon_anim" => "assets/ui/menu/Equip_anim.png" },
-      { "id" => 3, "name" => "drop",  "icon" => "assets/ui/menu/Drop.png",  "icon_anim" => "assets/ui/menu/Drop_anim.png" }
-    ])
-
     codepoints = []
     (32..126).each { |cp| codepoints << cp }
     (0x0400..0x04FF).each { |cp| codepoints << cp }
@@ -108,6 +100,15 @@ class Game
     large_cp_ptr.write_array_of_int(large_codepoints)
     @large_font = LoadFontEx("assets/ui/fonts/main.ttf", 30, large_cp_ptr, large_codepoints.size)
     Raylib.SetTextureFilter(@large_font.texture, TEXTURE_FILTER_POINT)
+
+    # ТЕПЕРЬ СОЗДАЕМ МЕНЮ (после загрузки шрифтов) и передаем шрифты!
+    @menu = BottomMenu.new(nil, @font, @large_font)
+    @items_submenu = BottomMenu.new([
+      { "id" => 0, "name" => "use",   "icon" => "assets/ui/menu/Use.png",   "icon_anim" => "assets/ui/menu/Use_anim.png" },
+      { "id" => 1, "name" => "give",  "icon" => "assets/ui/menu/Give.png",  "icon_anim" => "assets/ui/menu/Give_anim.png" },
+      { "id" => 2, "name" => "equip", "icon" => "assets/ui/menu/Equip.png", "icon_anim" => "assets/ui/menu/Equip_anim.png" },
+      { "id" => 3, "name" => "drop",  "icon" => "assets/ui/menu/Drop.png",  "icon_anim" => "assets/ui/menu/Drop_anim.png" }
+    ], @font, @large_font)
 	
 	@message_panel_tex = nil
     path = "assets/ui/message_panel.png"
