@@ -96,10 +96,11 @@ class ShopMenu
   # Инстанс
   # ─────────────────────────────────────────────────────────
 
-  def initialize(font = nil, db = nil, large_font = nil)
+  def initialize(font = nil, db = nil, large_font = nil, game_text = {})
     @font           = font
     @large_font     = large_font || font
     @db             = db
+    @game_text      = game_text || {}
     @visible        = false
     @selected_index = 0
     @anim_timer     = 0.0
@@ -397,6 +398,11 @@ class ShopMenu
               @text_reveal_index < full_text.length
           @text_reveal_timer -= TEXT_REVEAL_SPEED
           @text_reveal_index += 1
+          
+          # Пропускаем тег {N} целиком, чтобы он не мигал по буквам
+          while full_text[@text_reveal_index, 3] == "{N}"
+            @text_reveal_index += 3
+          end
         end
         @text_full_shown = true if @text_reveal_index >= full_text.length
 
@@ -519,14 +525,22 @@ class ShopMenu
                            Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
 
     full_text = message_for_action
-    # Пока печатаем — только видимая часть. Когда допечатано — весь текст.
     display_text = full_text[0, @text_reveal_index] || ""
     return if display_text.empty?
 
     if @large_font
-      Raylib.DrawTextEx(@large_font, display_text,
-                        Raylib::Vector2.create(PANEL_MSG_X + 20, @panel_anim_y + 42),
-                        30, 1, Raylib::WHITE)
+      # Разбиваем текст по тегу {N}
+      lines = display_text.split("{N}", -1)
+      
+      # Начинаем с panel_y + 10, как в GiveMenu / DropMenu
+      y_offset = @panel_anim_y + 10
+      
+      lines.each do |line|
+        Raylib.DrawTextEx(@large_font, line,
+                          Raylib::Vector2.create(PANEL_MSG_X + 20, y_offset),
+                          30, 1, Raylib::WHITE)
+        y_offset += 38 # Межстрочный интервал
+      end
     end
   end
 
@@ -561,15 +575,15 @@ class ShopMenu
   end
 
   # Текст на панели зависит от действия
-  def message_for_action
-    case @sub_action
-    when "buy"    then "Что вы хотите купить?"
-    when "sell"   then "What do you want to sell?"
-    when "repair" then "What do you want to repair?"
-    when "deals"  then "What do you want to deal?"
-    else "What do you want to do?"
-    end
+def message_for_action
+  case @sub_action
+  when "buy"    then @game_text["0009"] || "Что вы хотите купить?"
+  when "sell"   then @game_text["0010"] || "What do you want to sell?"
+  when "repair" then @game_text["0011"] || "What do you want to repair?"
+  when "deals"  then @game_text["0012"] || "What do you want to deal?"
+  else "What do you want to do?"
   end
+end
 
   def draw_panel_items
     return if @shop_icons.empty?
