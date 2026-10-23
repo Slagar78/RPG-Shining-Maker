@@ -235,7 +235,8 @@ when :playing
       @pending_menu_request = true
     end
   elsif IsKeyPressed(KEY_D) && @game_state != :dialog
-    npc = @game_map.npcs.find { |n| (n.x - @player.x).abs <= 1 && (n.y - @player.y).abs <= 1 }
+    # Ищем NPC строго по вертикали или горизонтали
+    npc = @game_map.npcs.find { |n| (n.x - @player.x).abs + (n.y - @player.y).abs == 1 }
     if npc
       try_start_interaction
     else
@@ -853,7 +854,8 @@ end
   end
 
 def try_start_interaction
-  npc = @game_map.npcs.find { |n| (n.x - @player.x).abs <= 1 && (n.y - @player.y).abs <= 1 }
+  # строгая проверка на 4 стороны
+  npc = @game_map.npcs.find { |n| (n.x - @player.x).abs + (n.y - @player.y).abs == 1 }
   return if npc.nil?
 
   script_entry = @game_map.npc_scripts.find { |s| s["npc_id"] == npc.id || (s["x"] == npc.x && s["y"] == npc.y) }
