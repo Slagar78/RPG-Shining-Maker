@@ -679,7 +679,7 @@ class Profile
     @right_panel_w = 346
     @right_panel_h = 448
     @sub_panel_w = 134
-    @sub_panel_h = 240
+    @sub_panel_h = 168
 
     @portrait_target_x = 48
     @portrait_target_y = 16
@@ -691,6 +691,12 @@ class Profile
     @portrait_y = @portrait_target_y
     @frame_x = @frame_start_x
     @frame_y = @frame_target_y
+    
+    # --- Переменные для панели золота ---
+    @gold_target_x = 48
+    @gold_target_y = 224 + 168 # = 392 (ровно под sub_panel)
+    @gold_hidden_x = -390      # Скрыта за левым краем
+    @gold_panel_x = @gold_hidden_x
 
     load_textures
   end
@@ -698,9 +704,11 @@ class Profile
   def load_textures
     @right_panel_tex = Raylib.LoadTexture("assets/ui/right_panel.png")
     @sub_panel_tex   = Raylib.LoadTexture("assets/ui/sub_panel.png")
+    @gold_panel_tex  = Raylib.LoadTexture("assets/ui/gold_panel.png")
     @frame_tex       = Raylib.LoadTexture("assets/ui/portrait_frame.png")
     Raylib.SetTextureFilter(@right_panel_tex, 0) if @right_panel_tex
     Raylib.SetTextureFilter(@sub_panel_tex, 0)   if @sub_panel_tex
+    Raylib.SetTextureFilter(@gold_panel_tex, 0)  if @gold_panel_tex
     Raylib.SetTextureFilter(@frame_tex, 0)       if @frame_tex
   end
 
@@ -732,6 +740,7 @@ class Profile
     @sub_panel_y = @sub_panel_start_y
     @portrait_x = @portrait_start_x
     @frame_x = @frame_start_x
+    @gold_panel_x = @gold_hidden_x
   end
 
   # Теперь поиск предметов идёт через центральную базу @db
@@ -811,10 +820,15 @@ class Profile
       @sub_panel_y -= speed
       @sub_panel_y = @sub_panel_target_y if @sub_panel_y < @sub_panel_target_y
 
+      # Вылет золота слева
+      @gold_panel_x += speed
+      @gold_panel_x = @gold_target_x if @gold_panel_x > @gold_target_x
+
       if @portrait_x >= @portrait_target_x &&
          @frame_x >= @frame_target_x &&
          @right_panel_x <= @right_panel_target_x &&
-         @sub_panel_y <= @sub_panel_target_y
+         @sub_panel_y <= @sub_panel_target_y &&
+         @gold_panel_x >= @gold_target_x # <--- Добавили проверку
         @anim_phase = 2
       end
 
@@ -829,8 +843,13 @@ class Profile
 
       @sub_panel_y += speed
       @sub_panel_y = @sub_panel_start_y if @sub_panel_y > @sub_panel_start_y
+      
+      # Улет золота влево
+      @gold_panel_x -= speed
+      @gold_panel_x = @gold_hidden_x if @gold_panel_x < @gold_hidden_x
 
-      if @portrait_x <= @portrait_start_x
+      # Ждём, пока самая длинная панель (правая) полностью уедет за экран
+      if @right_panel_x >= @right_panel_start_x
         @visible = false
         @anim_phase = 0
         @ready_to_close = true
@@ -879,6 +898,32 @@ class Profile
     dst = Raylib::Rectangle.create(@sub_panel_x, @sub_panel_y, @sub_panel_w, @sub_panel_h)
     src = Raylib::Rectangle.create(0, 0, @sub_panel_w, @sub_panel_h)
     Raylib.DrawTexturePro(@sub_panel_tex, src, dst, origin, 0, Raylib::WHITE)
+
+    # ─── ПАНЕЛЬ ЗОЛОТА ───
+    if @gold_panel_tex
+      dst = Raylib::Rectangle.create(@gold_panel_x, @gold_target_y, 134, 72)
+      src = Raylib::Rectangle.create(0, 0, 134, 72)
+      Raylib::DrawTexturePro(@gold_panel_tex, src, dst, origin, 0, Raylib::WHITE)
+
+      if @gold
+        # 1. Рисуем надпись "GOLD"
+        label_text = "GOLD"
+        label_w = Raylib.MeasureTextEx(@font, label_text, 20, 1).x
+        label_x = @gold_panel_x + (134 - label_w) / 2
+        label_y = @gold_target_y + 16  # <--- Опустили вниз
+        
+        draw_text_custom(label_text, label_x, label_y, 20, WHITE)
+
+        # 2. Рисуем цифры
+        gold_digits = [@gold, 9999999999].min.to_s.chars.join(' ')
+        gold_val_width = Raylib.MeasureTextEx(@font, gold_digits, 20, 1).x
+        
+        val_x = @gold_panel_x + (134 - gold_val_width) / 2
+        val_y = @gold_target_y + 40  # <--- Опустили вниз
+        
+        draw_text_custom(gold_digits, val_x, val_y, 20, YELLOW)
+      end
+    end
 
     # Портрет
     if @portrait_tex
@@ -1041,14 +1086,6 @@ class Profile
       draw_text_custom("DEFEAT", text_x, text_y + 25, 18, WHITE)
       draw_text_custom([defeats, 9999].min.to_s.rjust(4), text_x + 70, text_y + 25, 18, RED)
 
-      gold_y = text_y + 76
-      draw_text_custom("GOLD", text_x + 28, gold_y, 20, WHITE)
-      gold_digits = [@gold, 9999999999].min.to_s.chars.join(' ')
-      gold_header_width = Raylib.MeasureTextEx(@font, "GOLD", 18, 1).x
-      gold_center_x = (text_x + 28) + gold_header_width / 2
-      gold_val_width = Raylib.MeasureTextEx(@font, gold_digits, 20, 1).x
-      val_x = gold_center_x - gold_val_width / 2
-      draw_text_custom(gold_digits, val_x, gold_y + 20, 20, YELLOW)
     end
   end
 
