@@ -1977,10 +1977,10 @@ class EquipMenu < ItemSubMenuBase
   end
 end
 # ----------------------------------------------------------------
-# class DropMenu
+# class DropMenu (Выбрасывание + Продажа в магазине)
 # ----------------------------------------------------------------
 class DropMenu < ItemSubMenuBase
-  SHOW_DURATION = 180   # больше не используется для автоудаления
+  SHOW_DURATION = 180
   RESULT_DURATION = 120
 
   def initialize(font, large_font, db, party, classes_data, class_names, start_inventory, game_text)
@@ -1994,6 +1994,11 @@ class DropMenu < ItemSubMenuBase
     @message_panel_tex = nil
     @confirm_index = 0
     @confirm_anim_timer = 0
+
+    # ─── ДОБАВЛЕНО ДЛЯ ПРОДАЖИ ───
+    @sell_mode = false       # Работаем как магазин?
+    @intro_timer = 0         # Таймер интро-текста
+    @sell_price = 0          # Сколько золота дадут
 
     # Загружаем статические текстуры подтверждения
     @yes_tex = nil
@@ -2019,6 +2024,13 @@ class DropMenu < ItemSubMenuBase
       Raylib.SetTextureFilter(@no_anim_tex, 0) if @no_anim_tex
     end
 
+    # Панелька для текста Yes/No
+    @yes_no_panel_tex = nil
+    if File.exist?("assets/ui/yes-no_panel.png")
+      @yes_no_panel_tex = Raylib.LoadTexture("assets/ui/yes-no_panel.png")
+      Raylib.SetTextureFilter(@yes_no_panel_tex, 0) if @yes_no_panel_tex
+    end
+
     load_message_texture
   end
 
@@ -2027,6 +2039,7 @@ class DropMenu < ItemSubMenuBase
     Raylib.SetTextureFilter(@message_panel_tex, 0) if @message_panel_tex
   end
 
+  # Обычное открытие (из меню предметов)
   def open(actor_name = nil)
     super
     @drop_state = :select_item
@@ -2036,10 +2049,43 @@ class DropMenu < ItemSubMenuBase
     @confirm_index = 0
     @confirm_anim_timer = 0
     @focus = :party
+    @sell_mode = false
+  end
+
+  # Открытие из магазина (режим продажи)
+  def open_for_shop_sell
+    @sell_mode = true
+    @visible = true
+    @anim_phase = 1
+    @ready_to_close = false
+    
+    @upper_x = @upper_start_x
+    @lower_y = @lower_start_y
+    @portrait_x = @portrait_start_x
+    @frame_x = @frame_start_x
+    
+    @focus = :party
+    @blink_timer = 0
+    @blink_duration = 0
+    @selection_blink_timer = 0
+    @drop_state = :intro     # Начинаем с текста
+    @intro_timer = 0
+    @selected_drop_item = nil
+    @selected_drop_actor = nil
+    @confirm_index = 0
+    @confirm_anim_timer = 0
+    
+    update_current_actor
   end
 
   def handle_input(dt = 1.0 / 60.0)
     case @drop_state
+    when :intro
+      # Пропускаем интро по кнопке
+      if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D) || Raylib.IsKeyPressed(Raylib::KEY_S)
+        @drop_state = :select_item
+        @focus = :party
+      end
     when :select_item
       super(dt)
     when :show_message
@@ -2047,21 +2093,37 @@ class DropMenu < ItemSubMenuBase
         @confirm_index = 1 - @confirm_index
       elsif Raylib.IsKeyPressed(Raylib::KEY_S)
         @drop_state = :select_item
-        @selected_drop_item = nil
-        @selected_drop_actor = nil
         @focus = :party
         reopen_for_selection
       elsif Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
-        if @confirm_index == 0   # Yes
+        if @confirm_index == 0
           perform_drop
           @drop_state = :result_message
           @message_timer = 0
-        else                    # No
+        else
           @drop_state = :select_item
-          @selected_drop_item = nil
-          @selected_drop_actor = nil
           @focus = :party
           reopen_for_selection
+        end
+      end
+    when :confirm_sell
+      if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+        @confirm_index = 1 - @confirm_index
+      elsif Raylib.IsKeyPressed(Raylib::KEY_S)
+        @drop_state = :select_item
+        @focus = :party
+        @confirm_index = 0
+        @confirm_anim_timer = 0
+      elsif Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
+        if @confirm_index == 0 # YES
+          perform_drop
+          @drop_state = :result_message
+          @message_timer = 0
+        else # NO
+          @drop_state = :select_item
+          @focus = :party
+          @confirm_index = 0
+          @confirm_anim_timer = 0
         end
       end
     when :result_message
@@ -2072,7 +2134,16 @@ class DropMenu < ItemSubMenuBase
   def update(dt = 1.0 / 60.0)
     super(dt)
     case @drop_state
+    when :intro
+      @intro_timer += dt * 60.0
+      # Если прошло 2 секунды (120 кадров) — переходим к выбору
+      if @intro_timer >= 120
+        @drop_state = :select_item
+        @focus = :party
+      end
     when :show_message
+      @confirm_anim_timer += dt * 60.0
+    when :confirm_sell
       @confirm_anim_timer += dt * 60.0
     when :result_message
       @message_timer += dt * 60.0
@@ -2089,8 +2160,16 @@ class DropMenu < ItemSubMenuBase
 
   def draw
     case @drop_state
-    when :select_item then super
-    when :show_message, :result_message then draw_message
+    when :intro
+      draw_intro_message
+    when :select_item 
+      super
+    when :show_message 
+      draw_message
+    when :confirm_sell 
+      draw_sell_message
+    when :result_message 
+      draw_message
     end
   end
 
@@ -2098,11 +2177,32 @@ class DropMenu < ItemSubMenuBase
     return if item_entry["item"] == "NOTHING"
     @selected_drop_item = item_entry
     @selected_drop_actor = actor
-    @drop_state = :show_message
-    @message_timer = 0
-    @confirm_index = 0
-    @confirm_anim_timer = 0
-    force_close
+    
+    if @sell_mode
+      # Считаем цену
+      item_data = find_item_by_name(item_entry["item"])
+      base_price = item_data ? (item_data["price"] || 0).to_i : 0
+      
+      multiplier = case item_data["category"]
+                   when "Weapon" then 0.6
+                   when "Ring"   then 0.7
+                   else 0.5
+                   end
+                   
+      # Твоя формула: 1.1-1.5 вниз, 1.6-1.9 вверх (.round(half: :down))
+      @sell_price = (base_price * multiplier).round(half: :down)
+      
+      @drop_state = :confirm_sell
+      @confirm_index = 0
+      @confirm_anim_timer = 0
+      # Панели НЕ закрываем!
+    else
+      @drop_state = :show_message
+      @message_timer = 0
+      @confirm_index = 0
+      @confirm_anim_timer = 0
+      force_close
+    end
   end
 
   private
@@ -2126,6 +2226,26 @@ class DropMenu < ItemSubMenuBase
       end
     end
     inv_entry["items"] = items
+
+    # НАЧИСЛЯЕМ ЗОЛОТО ЕСЛИ ПРОДАЕМ
+    if @sell_mode && @sell_price > 0
+      @db.globals["gold"] = (@db.globals["gold"] || 0) + @sell_price
+    end
+  end
+
+  # ─── ОТРИСОВКА ТЕКСТОВ ───
+
+  def draw_intro_message
+    # текст берется из gamescript.txt (строка 0019)
+    text = @game_text["0019"] || "Whose and which item{N}do you want to sell?"
+    draw_common_message_panel(text, 0)
+  end
+
+  def draw_sell_message
+    # текст берется из gamescript.txt (строка 0020) и подставляется цена
+    template = @game_text["0020"] || "I'll pay {PRICE} gold coins for it, OK?"
+    text = template.gsub("{PRICE}", @sell_price.to_s)
+    draw_common_message_panel(text, 0, true)
   end
 
   def draw_message
@@ -2133,15 +2253,25 @@ class DropMenu < ItemSubMenuBase
                when :show_message
                  @game_text["0003"] || "The {ITEM} {N}will be discarded. OK ?"
                when :result_message
-                 @game_text["0004"] || "The {ITEM} {N}is discarded."
+                 if @sell_mode
+                   "Thank you!"
+                 else
+                   @game_text["0004"] || "The {ITEM} {N}is discarded."
+                 end
                else
                  ""
                end
 
     item_name = @selected_drop_item ? @selected_drop_item["item"] : "???"
     text = template.gsub("{ITEM}", item_name)
-    lines = text.split("{N}")
+    
+    show_yes_no = (@drop_state == :show_message)
+    draw_common_message_panel(text, @confirm_anim_timer, show_yes_no)
+  end
 
+  # Общий метод для отрисовки панели сообщения (убирает дублирование кода)
+  def draw_common_message_panel(text, anim_timer, show_yes_no = false)
+    lines = text.split("{N}")
     panel_w = 480
     panel_h = 128
     panel_x = (576 - panel_w) / 2
@@ -2150,59 +2280,68 @@ class DropMenu < ItemSubMenuBase
     if @message_panel_tex
       dst = Raylib::Rectangle.create(panel_x, panel_y, panel_w, panel_h)
       src = Raylib::Rectangle.create(0, 0, @message_panel_tex.width, @message_panel_tex.height)
-      Raylib.DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+      Raylib::DrawTexturePro(@message_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
     else
-      Raylib.DrawRectangle(panel_x, panel_y, panel_w, panel_h, Raylib::GRAY)
-      Raylib.DrawRectangleLines(panel_x, panel_y, panel_w, panel_h, Raylib::DARKGRAY)
+      Raylib::DrawRectangle(panel_x, panel_y, panel_w, panel_h, Raylib::GRAY)
+      Raylib::DrawRectangleLines(panel_x, panel_y, panel_w, panel_h, Raylib::DARKGRAY)
     end
 
     y_offset = panel_y + 10
     lines.each do |line_text|
-      Raylib.DrawTextEx(@large_font, line_text, Raylib::Vector2.create(panel_x + 40, y_offset), 30, 1, Raylib::WHITE)
+      Raylib::DrawTextEx(@large_font, line_text, Raylib::Vector2.create(panel_x + 40, y_offset), 30, 1, Raylib::WHITE)
       y_offset += 38
     end
 
-    # Иконки Yes/No только в состоянии подтверждения
-    if @drop_state == :show_message
+    # Рисуем иконки Yes/No и панельку
+    if show_yes_no
       icon_size = 48
-      spacing = 20
-      total_width = icon_size * 2 + spacing
+      spacing = 36
+      panel_w_small = 64
+      gap_to_panel = 18
+      
+      total_width = (icon_size * 2) + spacing + gap_to_panel + panel_w_small
       start_x = panel_x + (panel_w - total_width) / 2
-      icon_y = panel_y - icon_size - 10
+      icon_y = panel_y - icon_size + 10
 
       # --- YES ---
       if @yes_tex
         tex_to_draw = @yes_tex
         if @confirm_index == 0 && @yes_anim_tex
-          if (@confirm_anim_timer % 24) < 12
-            tex_to_draw = @yes_anim_tex
-          end
+          tex_to_draw = @yes_anim_tex if (anim_timer % 24) < 12
         end
         src = Raylib::Rectangle.create(0, 0, tex_to_draw.width, tex_to_draw.height)
         dst = Raylib::Rectangle.create(start_x, icon_y, icon_size, icon_size)
         color = (@confirm_index == 0) ? Raylib::WHITE : Raylib::GRAY
-        Raylib.DrawTexturePro(tex_to_draw, src, dst, Raylib::Vector2.create(0,0), 0, color)
-        # Рамка только если нет анимационной текстуры или всегда? Оставим для наглядности, но если есть анимация, рамка может быть лишней.
-        # Поэтому рисуем рамку только если нет анимированной текстуры
-        if @confirm_index == 0 && !@yes_anim_tex
-          Raylib.DrawRectangleLinesEx(dst, 2, Raylib::GREEN)
-        end
+        Raylib::DrawTexturePro(tex_to_draw, src, dst, Raylib::Vector2.create(0,0), 0, color)
       end
 
       # --- NO ---
+      no_icon_x = start_x + icon_size + spacing
       if @no_tex
         tex_to_draw = @no_tex
         if @confirm_index == 1 && @no_anim_tex
-          if (@confirm_anim_timer % 24) < 12
-            tex_to_draw = @no_anim_tex
-          end
+          tex_to_draw = @no_anim_tex if (anim_timer % 24) < 12
         end
         src = Raylib::Rectangle.create(0, 0, tex_to_draw.width, tex_to_draw.height)
-        dst = Raylib::Rectangle.create(start_x + icon_size + spacing, icon_y, icon_size, icon_size)
+        dst = Raylib::Rectangle.create(no_icon_x, icon_y, icon_size, icon_size)
         color = (@confirm_index == 1) ? Raylib::WHITE : Raylib::GRAY
-        Raylib.DrawTexturePro(tex_to_draw, src, dst, Raylib::Vector2.create(0,0), 0, color)
-        if @confirm_index == 1 && !@no_anim_tex
-          Raylib.DrawRectangleLinesEx(dst, 2, Raylib::GREEN)
+        Raylib::DrawTexturePro(tex_to_draw, src, dst, Raylib::Vector2.create(0,0), 0, color)
+      end
+      
+      # --- ПАНЕЛЬКА YES/NO ---
+      if @yes_no_panel_tex
+        panel_x_small = no_icon_x + icon_size + gap_to_panel
+        src = Raylib::Rectangle.create(0, 0, @yes_no_panel_tex.width, @yes_no_panel_tex.height)
+        dst = Raylib::Rectangle.create(panel_x_small, icon_y, panel_w_small, icon_size)
+        Raylib::DrawTexturePro(@yes_no_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+
+        text_yes_no = (@confirm_index == 0) ? "Yes" : "No"
+        if @font
+          font_size = 20
+          text_size = Raylib.MeasureTextEx(@font, text_yes_no, font_size, 1)
+          text_x = panel_x_small + (panel_w_small - text_size.x) / 2
+          text_y = icon_y + (icon_size - text_size.y) / 2
+          Raylib.DrawTextEx(@font, text_yes_no, Raylib::Vector2.create(text_x, text_y), font_size, 1, Raylib::WHITE)
         end
       end
     end
@@ -2218,7 +2357,7 @@ class DropMenu < ItemSubMenuBase
     @blink_timer = 0
     @blink_duration = 0
     @selection_blink_timer = 0
-	  @status_view_mode = 0   # сброс режима отображения
+    @status_view_mode = 0
     update_current_actor
   end
 end

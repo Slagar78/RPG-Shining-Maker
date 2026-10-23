@@ -17,3 +17,5 @@
 0016=Oops! {TARGET}'s hands{N}are full! To anybody else?
 0017=Equip it now?
 0018=You don't have enough gold{N}to buy this item.
+0019=Whose and which item do you{N}want to sell?
+0020=I'll pay {PRICE} gold coins for it, OK?

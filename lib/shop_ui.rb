@@ -109,6 +109,9 @@ class ShopMenu
     
     # Создаем меню выбора персонажа (оно уже есть в item_actions_ui.rb)
     @target_menu = GiveMenu.new(@font, @large_font, @db, @party, @classes_data, @class_names, @start_inventory, @game_text)
+
+    # Создаем меню продажи
+    @sell_menu = DropMenu.new(@font, @large_font, @db, @party, @classes_data, @class_names, @start_inventory, @game_text)
     
     @visible        = false
     @selected_index = 0
@@ -343,6 +346,7 @@ def handle_input(dt = 1.0 / 60.0)
   return unless @visible
 
   case @sub_state
+
   when :main
     if Raylib.IsKeyPressed(Raylib::KEY_S)
       close
@@ -362,13 +366,19 @@ def handle_input(dt = 1.0 / 60.0)
     
     if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
       @sub_action = @tiles[@selected_index]["name"]
-      @sub_state  = :sub
-      @panel_anim_y      = PANEL_MSG_HIDDEN_Y
-      @top_panel_anim_y  = PANEL_HIDDEN_TOP_Y
-      @gold_panel_x      = GOLD_HIDDEN_X
-      @text_reveal_index = 0
-      @text_reveal_timer = 0
-      @text_full_shown   = false
+
+      if @sub_action == "sell"
+        @sub_state = :sell
+        @sell_menu.open_for_shop_sell
+      else
+        @sub_state = :sub
+        @panel_anim_y      = PANEL_MSG_HIDDEN_Y
+        @top_panel_anim_y  = PANEL_HIDDEN_TOP_Y
+        @gold_panel_x      = GOLD_HIDDEN_X
+        @text_reveal_index = 0
+        @text_reveal_timer = 0
+        @text_full_shown   = false
+      end
     end
 
   when :sub
@@ -427,6 +437,12 @@ def handle_input(dt = 1.0 / 60.0)
     end
 
     if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
+      if @sub_action == "sell"
+        @sub_state = :sell
+        @sell_menu.open_for_shop_sell
+        return
+      end
+
       if @shop_icons.any? && @selected_item_index < @shop_icons.size
         @buy_item_name = @current_shop["items"][@selected_item_index]
         item_data = @db ? @db.find_by_name(@buy_item_name) : nil
@@ -434,8 +450,8 @@ def handle_input(dt = 1.0 / 60.0)
         @sub_state = :confirm_buy
         @text_reveal_index = 0
         @text_full_shown = false
-        @confirm_index = 0        # <--- СБРАСЫВАЕМ НА YES
-        @confirm_anim_timer = 0   # <--- СБРАСЫВАЕМ АНИМАЦИЮ
+        @confirm_index = 0        
+        @confirm_anim_timer = 0   
         return
       end
     end
@@ -492,6 +508,15 @@ def handle_input(dt = 1.0 / 60.0)
 
   when :select_target
     @target_menu.handle_input(dt)
+  when :sell
+    @sell_menu.handle_input(dt)
+    unless @sell_menu.visible
+      @sub_state = :main       # Возвращаемся к кресту
+      @sub_action = nil
+      @panel_anim_y      = PANEL_MSG_HIDDEN_Y
+      @top_panel_anim_y  = PANEL_HIDDEN_TOP_Y
+      @gold_panel_x      = GOLD_HIDDEN_X
+    end
   end
 end
 
@@ -501,7 +526,10 @@ def update(dt = 1.0 / 60.0)
   @selection_blink_timer += dt * 60.0
 
   speed = PANEL_MSG_SPEED * dt * 60.0
-
+    if @sub_state == :sell
+      @sell_menu.update(dt)
+      return
+    end
   # 1. РЕЖИМ ВЫБОРА ПЕРСОНАЖА
   if @sub_state == :select_target
     @target_menu.update(dt)
@@ -603,7 +631,11 @@ end
 
   def draw
     return unless @visible
-
+    # Если мы в режиме продажи, рисуем меню продажи
+    if @sub_state == :sell
+      @sell_menu.draw
+      return
+    end
     # Если мы выбираем персонажа, рисуем ТОЛЬКО меню выбора
     if @sub_state == :select_target
       @target_menu.draw
