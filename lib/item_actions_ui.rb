@@ -2053,6 +2053,9 @@ class DropMenu < ItemSubMenuBase
     @confirm_anim_timer = 0
     @focus = :party
     @sell_mode = false
+    @text_reveal_index = 0
+    @text_reveal_timer = 0
+    @text_full_shown = false
   end
 
   # Открытие из магазина (режим продажи)
@@ -2105,20 +2108,28 @@ class DropMenu < ItemSubMenuBase
       
     when :show_message
       if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
-        @confirm_index = 1 - @confirm_index
+        # Переключать Да/Нет можно только когда текст допечатан
+        @confirm_index = 1 - @confirm_index if @text_full_shown
       elsif Raylib.IsKeyPressed(Raylib::KEY_S)
         @drop_state = :select_item
         @focus = :party
         reopen_for_selection
       elsif Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
-        if @confirm_index == 0
-          perform_drop
-          @drop_state = :result_message
-          @message_timer = 0
+        if !@text_full_shown
+          # Первое нажатие - показываем весь текст
+          @text_reveal_index = 999
+          @text_full_shown = true
         else
-          @drop_state = :select_item
-          @focus = :party
-          reopen_for_selection
+          # Второе нажатие - выполняем действие
+          if @confirm_index == 0
+            perform_drop
+            @drop_state = :result_message
+            @message_timer = 0
+          else
+            @drop_state = :select_item
+            @focus = :party
+            reopen_for_selection
+          end
         end
       end
       
@@ -2184,6 +2195,21 @@ class DropMenu < ItemSubMenuBase
       end
     when :show_message
       @confirm_anim_timer += dt * 60.0
+      unless @text_full_shown
+        template = @game_text["0003"] || "The {ITEM} {N}will be discarded. OK ?"
+        item_name = @selected_drop_item ? @selected_drop_item["item"] : "???"
+        full_text = template.gsub("{ITEM}", item_name)
+        
+        @text_reveal_timer += dt * 60.0
+        while @text_reveal_timer >= 2 && @text_reveal_index < full_text.length
+          @text_reveal_timer -= 2
+          @text_reveal_index += 1
+          while full_text[@text_reveal_index, 3] == "{N}"
+            @text_reveal_index += 3
+          end
+        end
+        @text_full_shown = true if @text_reveal_index >= full_text.length
+      end
     when :confirm_sell
       @confirm_anim_timer += dt * 60.0
       unless @text_full_shown
@@ -2319,8 +2345,15 @@ class DropMenu < ItemSubMenuBase
     item_name = @selected_drop_item ? @selected_drop_item["item"] : "???"
     text = template.gsub("{ITEM}", item_name)
     
+    # Для результата показываем сразу весь, для вопроса - по буквам
+    if @drop_state == :result_message
+      display_text = text
+    else
+      display_text = text[0, @text_reveal_index] || ""
+    end
+    
     show_yes_no = (@drop_state == :show_message)
-    draw_common_message_panel(text, @confirm_anim_timer, show_yes_no)
+    draw_common_message_panel(display_text, @confirm_anim_timer, show_yes_no)
   end
 
   # Общий метод для отрисовки панели сообщения (убирает дублирование кода)
