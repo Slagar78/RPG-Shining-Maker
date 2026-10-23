@@ -534,22 +534,29 @@ class ShopMenu
     return unless @gold_panel_tex
     return if @gold_panel_x >= GOLD_HIDDEN_X
 
-    # Двигаем по X, Y фиксирован
+    # Двигаем по X, Y фиксирован (справа внизу панели сообщения)
     dst = Raylib::Rectangle.create(@gold_panel_x, GOLD_TARGET_Y, GOLD_PANEL_W, GOLD_PANEL_H)
     src = Raylib::Rectangle.create(0, 0, @gold_panel_tex.width, @gold_panel_tex.height)
     Raylib::DrawTexturePro(@gold_panel_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
 
-    # Отрисовка суммы золота (если нужно, берем из @db.globals)
     gold_amount = @db&.globals ? (@db.globals["gold"] || 0) : 0
-    gold_text = gold_amount.to_s
 
     if @font
-      # Центрируем текст по нижней части панели
-      text_w = Raylib.MeasureTextEx(@font, gold_text, 20, 1).x
-      text_x = @gold_panel_x + (GOLD_PANEL_W - text_w) / 2
-      text_y = GOLD_TARGET_Y + 38
+      # 1. Рисуем надпись "GOLD"
+      label_text = "GOLD"
+      label_w = Raylib.MeasureTextEx(@font, label_text, 20, 1).x
+      label_x = @gold_panel_x + (GOLD_PANEL_W - label_w) / 2
+      label_y = GOLD_TARGET_Y + 16
       
-      Raylib.DrawTextEx(@font, gold_text, Raylib::Vector2.create(text_x, text_y), 20, 1, Raylib::YELLOW)
+      Raylib.DrawTextEx(@font, label_text, Raylib::Vector2.create(label_x, label_y), 20, 1, Raylib::WHITE)
+
+      # 2. Рисуем цифры (с пробелами)
+      gold_digits = [gold_amount, 9999999999].min.to_s.chars.join(' ')
+      gold_val_width = Raylib.MeasureTextEx(@font, gold_digits, 20, 1).x
+      val_x = @gold_panel_x + (GOLD_PANEL_W - gold_val_width) / 2
+      val_y = GOLD_TARGET_Y + 40
+      
+      Raylib.DrawTextEx(@font, gold_digits, Raylib::Vector2.create(val_x, val_y), 20, 1, Raylib::YELLOW)
     end
   end
 
