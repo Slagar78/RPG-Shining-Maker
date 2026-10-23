@@ -911,17 +911,17 @@ class Profile
       if @gold
         # 1. Рисуем надпись "GOLD"
         label_text = "GOLD"
-        label_w = Raylib.MeasureTextEx(@font_gold, label_text, 25, 1).x
+        label_w = Raylib.MeasureTextEx(@font_gold, label_text, 18, 1).x
         label_x = @gold_panel_x + (134 - label_w) / 2
-        label_y = @gold_target_y + 12
+        label_y = @gold_target_y + 16
         
-        Raylib.DrawTextEx(@font_gold, label_text, Raylib::Vector2.create(label_x, label_y), 25, 1, Raylib::WHITE)
+        Raylib.DrawTextEx(@font_gold, label_text, Raylib::Vector2.create(label_x, label_y), 18, 1, Raylib::WHITE)
 
         # 2. Рисуем цифры
         gold_digits = [@gold, 9999999999].min.to_s.chars.join(' ')
         
-        # Выбираем размер: 20, если от миллиона, иначе 25
-        val_size = @gold >= 1_000_000 ? 20 : 25
+        # Размер шрифта цифр всегда 18
+        val_size = 18
         
         gold_val_width = Raylib.MeasureTextEx(@font_gold, gold_digits, val_size, 1).x
         

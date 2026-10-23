@@ -98,7 +98,7 @@ class Game
     @font = LoadFontEx("assets/ui/fonts/main.ttf", 20, cp_ptr, codepoints.size)
     Raylib.SetTextureFilter(@font.texture, TEXTURE_FILTER_POINT)
     
-    @font_gold = LoadFontEx("assets/ui/fonts/main.ttf", 25, cp_ptr, codepoints.size)
+    @font_gold = LoadFontEx("assets/ui/fonts/main.ttf", 18, cp_ptr, codepoints.size)
     Raylib.SetTextureFilter(@font_gold.texture, TEXTURE_FILTER_POINT)
 
     large_codepoints = []
