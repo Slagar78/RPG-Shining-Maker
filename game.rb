@@ -141,11 +141,12 @@ class Game
 
     @game_state = :playing
 	
-	@warp_pending = nil      # данные варпа, ожидающие перехода
+	  @warp_pending = nil      # данные варпа, ожидающие перехода
     @fade_alpha = 0          # 0..255, 0 = прозрачный, 255 = чёрный
     @fade_state = nil        # :out, :in, nil
     @fade_timer = 0          # для задержки на чёрном экране
-	@warp_delay = 0          # задержка перед началом fade (кадры)
+	  @warp_delay = 0          # задержка перед началом fade (кадры)
+    @warp_is_same_map = nil
 	
     @pending_profile_open = false
     @pending_status_open = false
@@ -403,6 +404,9 @@ when :playing
 	
 	# Fade-логика для варпа (стиль Sega RPG)
     if @game_state == :warping
+      # 60 для дверей (быстро, ~150 мс), 8 для смены карты (плавно, ~1.1 сек)
+      fade_speed = @warp_is_same_map ? 60.0 : 8.0
+
       if @warp_delay > 0
         @warp_delay -= dt * 60.0
       elsif @fade_state.nil?
@@ -411,7 +415,8 @@ when :playing
       end
 
       if @fade_state == :out
-        @fade_alpha += 8 * dt * 60.0
+        # ← БЫЛО: @fade_alpha += 8 * dt * 60.0
+        @fade_alpha += fade_speed * dt * 60.0
         if @fade_alpha >= 255
           @fade_alpha = 255
           @fade_state = :hold
@@ -422,9 +427,9 @@ when :playing
         same_map = (pending[:map_id].to_s.strip == @current_map_id.to_s.strip)
         
         # ── ВЫГРУЖАЕМ СТАРУЮ КАРТУ ─────────────────────────────
-        @game_map.unload if @game_map                              # tileset, anim, static_bg, roof_layers
-        UnloadRenderTexture(@top_layer) if @top_layer              # top_layer живёт в Game, не в GameMap
-        UnloadRenderTexture(@layer2)    if @layer2                 # layer2 тоже в Game
+        @game_map.unload if @game_map
+        UnloadRenderTexture(@top_layer) if @top_layer
+        UnloadRenderTexture(@layer2)    if @layer2
         # ────────────────────────────────────────────────────────
 
         @audio.stop unless same_map
@@ -449,11 +454,13 @@ when :playing
         @audio.play(@game_map.music_file, @game_map.music_volume) unless same_map
         @fade_state = :in
       elsif @fade_state == :in
-        @fade_alpha -= 8 * dt * 60.0
+        # ← БЫЛО: @fade_alpha -= 8 * dt * 60.0
+        @fade_alpha -= fade_speed * dt * 60.0
         if @fade_alpha <= 0
           @fade_alpha = 0
           @fade_state = nil
           @warp_pending = nil
+          @warp_is_same_map = nil  # ← ДОБАВИЛИ: сброс флага
           @game_state = :playing
         end
       end
@@ -751,22 +758,19 @@ end
     EndDrawing()
   end
 
-  def change_map(map_id, target_x, target_y, facing = nil)
-    @warp_pending = {
-      map_id: map_id,
-      target_x: target_x,
-      target_y: target_y,
-      facing: facing
-    }
-    @game_state = :warping
-    
-    # Проверяем: если ID новой карты совпадает с текущей, значит это дверь/варп внутри локации
-    if map_id.to_s.strip == @current_map_id.to_s.strip
-      @warp_delay = 5         # Короткая задержка (5 кадров) для дверей
-    else
-      @warp_delay = 10        # Стандартная задержка (10 кадров) для смены карты
-    end
-  end
+def change_map(map_id, target_x, target_y, facing = nil)
+  same_map = map_id.to_s.strip == @current_map_id.to_s.strip
+
+  @warp_pending = {
+    map_id: map_id,
+    target_x: target_x,
+    target_y: target_y,
+    facing: facing
+  }
+  @game_state = :warping
+  @warp_delay = same_map ? 0 : 5
+  @warp_is_same_map = same_map
+end
 
   def draw_battle
     # 1. Рендер боевой сцены в её собственный холст (если активна)
