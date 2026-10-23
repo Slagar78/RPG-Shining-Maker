@@ -1995,10 +1995,13 @@ class DropMenu < ItemSubMenuBase
     @confirm_index = 0
     @confirm_anim_timer = 0
 
-    # ─── ДОБАВЛЕНО ДЛЯ ПРОДАЖИ ───
+    # ─── ДЛЯ ПРОДАЖИ ───
     @sell_mode = false       # Работаем как магазин?
     @intro_timer = 0         # Таймер интро-текста
     @sell_price = 0          # Сколько золота дадут
+    @text_reveal_index = 0
+    @text_reveal_timer = 0
+    @text_full_shown = false
 
     # Загружаем статические текстуры подтверждения
     @yes_tex = nil
@@ -2070,6 +2073,9 @@ class DropMenu < ItemSubMenuBase
     @selection_blink_timer = 0
     @drop_state = :intro     # Начинаем с текста
     @intro_timer = 0
+    @text_reveal_index = 0
+    @text_reveal_timer = 0
+    @text_full_shown = false
     @selected_drop_item = nil
     @selected_drop_actor = nil
     @confirm_index = 0
@@ -2083,11 +2089,20 @@ class DropMenu < ItemSubMenuBase
     when :intro
       # Пропускаем интро по кнопке
       if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D) || Raylib.IsKeyPressed(Raylib::KEY_S)
-        @drop_state = :select_item
-        @focus = :party
+        if !@text_full_shown
+          # Если текст не допечатан - показываем сразу весь
+          @text_reveal_index = 999 
+          @text_full_shown = true
+        else
+          # Если текст уже показан - идем дальше
+          @drop_state = :select_item
+          @focus = :party
+        end
       end
+      
     when :select_item
       super(dt)
+      
     when :show_message
       if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
         @confirm_index = 1 - @confirm_index
@@ -2106,6 +2121,7 @@ class DropMenu < ItemSubMenuBase
           reopen_for_selection
         end
       end
+      
     when :confirm_sell
       if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
         @confirm_index = 1 - @confirm_index
@@ -2114,18 +2130,28 @@ class DropMenu < ItemSubMenuBase
         @focus = :party
         @confirm_index = 0
         @confirm_anim_timer = 0
+        @text_reveal_index = 0
+        @text_full_shown = false
       elsif Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
-        if @confirm_index == 0 # YES
-          perform_drop
-          @drop_state = :result_message
-          @message_timer = 0
-        else # NO
-          @drop_state = :select_item
-          @focus = :party
-          @confirm_index = 0
-          @confirm_anim_timer = 0
+        if !@text_full_shown
+          @text_reveal_index = 999
+          @text_full_shown = true
+        else
+          if @confirm_index == 0 # YES
+            perform_drop
+            @drop_state = :result_message
+            @message_timer = 0
+          else # NO
+            @drop_state = :select_item
+            @focus = :party
+            @confirm_index = 0
+            @confirm_anim_timer = 0
+            @text_reveal_index = 0
+            @text_full_shown = false
+          end
         end
       end
+
     when :result_message
       # ничего не делаем
     end
@@ -2136,8 +2162,23 @@ class DropMenu < ItemSubMenuBase
     case @drop_state
     when :intro
       @intro_timer += dt * 60.0
-      # Если прошло 2 секунды (120 кадров) — переходим к выбору
-      if @intro_timer >= 120
+      # ПЕЧАТЬ ТЕКСТА
+      unless @text_full_shown
+        full_text = @game_text["0019"] || "Whose and which item{N}do you want to sell?"
+        @text_reveal_timer += dt * 60.0
+        while @text_reveal_timer >= 2 && @text_reveal_index < full_text.length
+          @text_reveal_timer -= 2
+          @text_reveal_index += 1
+          while full_text[@text_reveal_index, 3] == "{N}"
+            @text_reveal_index += 3
+          end
+        end
+        @text_full_shown = true if @text_reveal_index >= full_text.length
+      end
+      # КОНЕЦ ПЕЧАТИ
+
+      # Если прошло 2 секунды И текст допечатан — переходим к выбору
+      if @intro_timer >= 120 && @text_full_shown
         @drop_state = :select_item
         @focus = :party
       end
@@ -2145,6 +2186,19 @@ class DropMenu < ItemSubMenuBase
       @confirm_anim_timer += dt * 60.0
     when :confirm_sell
       @confirm_anim_timer += dt * 60.0
+      unless @text_full_shown
+        template = @game_text["0020"] || "I'll pay {PRICE} gold coins for it, OK?"
+        full_text = template.gsub("{PRICE}", @sell_price.to_s)
+        @text_reveal_timer += dt * 60.0
+        while @text_reveal_timer >= 2 && @text_reveal_index < full_text.length
+          @text_reveal_timer -= 2
+          @text_reveal_index += 1
+          while full_text[@text_reveal_index, 3] == "{N}"
+            @text_reveal_index += 3
+          end
+        end
+        @text_full_shown = true if @text_reveal_index >= full_text.length
+      end
     when :result_message
       @message_timer += dt * 60.0
       if @message_timer >= RESULT_DURATION
@@ -2236,16 +2290,16 @@ class DropMenu < ItemSubMenuBase
   # ─── ОТРИСОВКА ТЕКСТОВ ───
 
   def draw_intro_message
-    # текст берется из gamescript.txt (строка 0019)
-    text = @game_text["0019"] || "Whose and which item{N}do you want to sell?"
-    draw_common_message_panel(text, 0)
+    full_text = @game_text["0019"] || "Whose and which item{N}do you want to sell?"
+    display_text = full_text[0, @text_reveal_index] || ""
+    draw_common_message_panel(display_text, 0)
   end
 
   def draw_sell_message
-    # текст берется из gamescript.txt (строка 0020) и подставляется цена
     template = @game_text["0020"] || "I'll pay {PRICE} gold coins for it, OK?"
-    text = template.gsub("{PRICE}", @sell_price.to_s)
-    draw_common_message_panel(text, 0, true)
+    full_text = template.gsub("{PRICE}", @sell_price.to_s)
+    display_text = full_text[0, @text_reveal_index] || ""
+    draw_common_message_panel(display_text, @confirm_anim_timer, true)
   end
 
   def draw_message
