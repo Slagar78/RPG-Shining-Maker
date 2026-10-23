@@ -94,8 +94,12 @@ class Game
     (0x0400..0x04FF).each { |cp| codepoints << cp }
     cp_ptr = FFI::MemoryPointer.new(:int, codepoints.size)
     cp_ptr.write_array_of_int(codepoints)
+    
     @font = LoadFontEx("assets/ui/fonts/main.ttf", 20, cp_ptr, codepoints.size)
     Raylib.SetTextureFilter(@font.texture, TEXTURE_FILTER_POINT)
+    
+    @font_gold = LoadFontEx("assets/ui/fonts/main.ttf", 25, cp_ptr, codepoints.size)
+    Raylib.SetTextureFilter(@font_gold.texture, TEXTURE_FILTER_POINT)
 
     large_codepoints = []
     (32..126).each { |cp| large_codepoints << cp }
@@ -129,9 +133,9 @@ class Game
 
     @status_overlay = StatusOverlay.new(@font, @db, @start_inventory, @party, @classes_data, @class_names)
     @magic_overlay = MagicOverlay.new(@font, @db, @start_inventory, @party, @classes_data, @class_names)
-    @profile = Profile.new(@font, @db, @start_inventory)
+    @profile = Profile.new(@font, @db, @start_inventory, @font_gold)
     @search_overlay = SearchOverlay.new(@large_font, @game_text, @party)
-    @shop_menu = ShopMenu.new(@font, @db, @large_font, @game_text, @party, @start_inventory, @classes_data, @class_names)
+    @shop_menu = ShopMenu.new(@font, @db, @large_font, @game_text, @party, @start_inventory, @classes_data, @class_names, @font_gold)
     @shops = ShopMenu.load_all
     @dialog_manager = nil
 
@@ -171,6 +175,7 @@ class Game
 	
     Raylib.CloseAudioDevice()
     Raylib.UnloadFont(@font) if @font
+    Raylib.UnloadFont(@font_gold) if @font_gold
     UnloadRenderTexture(@game_map.static_bg) if @game_map.static_bg
     UnloadRenderTexture(@top_layer) if @top_layer
     UnloadRenderTexture(@layer2) if @layer2

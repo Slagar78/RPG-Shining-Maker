@@ -96,9 +96,10 @@ class ShopMenu
   # Инстанс
   # ─────────────────────────────────────────────────────────
 
-  def initialize(font = nil, db = nil, large_font = nil, game_text = {}, party = [], start_inventory = [], classes_data = [], class_names = {})
+  def initialize(font = nil, db = nil, large_font = nil, game_text = {}, party = [], start_inventory = [], classes_data = [], class_names = {}, font_gold = nil)
     @font           = font
     @large_font     = large_font || font
+    @font_gold      = font_gold || font
     @db             = db
     @game_text      = game_text || {}
     @party          = party
@@ -652,35 +653,39 @@ end
 
     gold_amount = @db&.globals ? (@db.globals["gold"] || 0) : 0
 
-    if @font
+    if @font_gold
       # 1. Рисуем надпись "GOLD"
       label_text = "GOLD"
-      label_w = Raylib.MeasureTextEx(@font, label_text, 20, 1).x
+      label_w = Raylib.MeasureTextEx(@font_gold, label_text, 25, 1).x
       label_x = @gold_panel_x + (GOLD_PANEL_W - label_w) / 2
-      label_y = GOLD_TARGET_Y + 16
-      
-      Raylib.DrawTextEx(@font, label_text, Raylib::Vector2.create(label_x, label_y), 20, 1, Raylib::WHITE)
+      label_y = GOLD_TARGET_Y + 12
+
+      Raylib.DrawTextEx(@font_gold, label_text, Raylib::Vector2.create(label_x, label_y), 25, 1, Raylib::WHITE)
 
       # 2. Рисуем цифры (с пробелами)
       gold_digits = [gold_amount, 9999999999].min.to_s.chars.join(' ')
-      gold_val_width = Raylib.MeasureTextEx(@font, gold_digits, 20, 1).x
-      val_x = @gold_panel_x + (GOLD_PANEL_W - gold_val_width) / 2
-      val_y = GOLD_TARGET_Y + 40
       
-      Raylib.DrawTextEx(@font, gold_digits, Raylib::Vector2.create(val_x, val_y), 20, 1, Raylib::YELLOW)
+      # Выбираем размер: 20, если от миллиона, иначе 25
+      val_size = gold_amount >= 1_000_000 ? 20 : 25
+      
+      gold_val_width = Raylib.MeasureTextEx(@font_gold, gold_digits, val_size, 1).x
+      val_x = @gold_panel_x + (GOLD_PANEL_W - gold_val_width) / 2
+      val_y = GOLD_TARGET_Y + 38
+      
+      Raylib.DrawTextEx(@font_gold, gold_digits, Raylib::Vector2.create(val_x, val_y), val_size, 1, Raylib::YELLOW)
     end
   end
 
   # Текст на панели зависит от действия
-def message_for_action
-  case @sub_action
-  when "buy"    then @game_text["0009"] || "Что вы хотите купить?"
-  when "sell"   then @game_text["0010"] || "What do you want to sell?"
-  when "repair" then @game_text["0011"] || "What do you want to repair?"
-  when "deals"  then @game_text["0012"] || "What do you want to deal?"
-  else "What do you want to do?"
+  def message_for_action
+    case @sub_action
+    when "buy"    then @game_text["0009"] || "Что вы хотите купить?"
+    when "sell"   then @game_text["0010"] || "What do you want to sell?"
+    when "repair" then @game_text["0011"] || "What do you want to repair?"
+    when "deals"  then @game_text["0012"] || "What do you want to deal?"
+    else "What do you want to do?"
+    end
   end
-end
 
   def get_confirm_text
     # Берем текст из файла. Если там пусто, используем фоллбек (запасной вариант)

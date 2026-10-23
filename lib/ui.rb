@@ -637,11 +637,11 @@ end
 # ОКНО ПРОФАЙЛА (Character Profile)
 # ============================================
 class Profile
-  def initialize(font = nil, db = nil, start_inventory = nil)
+  def initialize(font = nil, db = nil, start_inventory = nil, font_gold = nil)
     @font = font
     @db = db
     @start_inventory = start_inventory   # общий массив
-
+    @font_gold = font_gold || font
     # Загружаем, если не передан (обратная совместимость)
     if @start_inventory.nil?
       @start_inventory = []
@@ -911,20 +911,24 @@ class Profile
       if @gold
         # 1. Рисуем надпись "GOLD"
         label_text = "GOLD"
-        label_w = Raylib.MeasureTextEx(@font, label_text, 20, 1).x
+        label_w = Raylib.MeasureTextEx(@font_gold, label_text, 25, 1).x
         label_x = @gold_panel_x + (134 - label_w) / 2
-        label_y = @gold_target_y + 16  # <--- Опустили вниз
+        label_y = @gold_target_y + 12
         
-        draw_text_custom(label_text, label_x, label_y, 20, WHITE)
+        Raylib.DrawTextEx(@font_gold, label_text, Raylib::Vector2.create(label_x, label_y), 25, 1, Raylib::WHITE)
 
         # 2. Рисуем цифры
         gold_digits = [@gold, 9999999999].min.to_s.chars.join(' ')
-        gold_val_width = Raylib.MeasureTextEx(@font, gold_digits, 20, 1).x
+        
+        # Выбираем размер: 20, если от миллиона, иначе 25
+        val_size = @gold >= 1_000_000 ? 20 : 25
+        
+        gold_val_width = Raylib.MeasureTextEx(@font_gold, gold_digits, val_size, 1).x
         
         val_x = @gold_panel_x + (134 - gold_val_width) / 2
-        val_y = @gold_target_y + 40  # <--- Опустили вниз
+        val_y = @gold_target_y + 38
         
-        draw_text_custom(gold_digits, val_x, val_y, 20, YELLOW)
+        Raylib.DrawTextEx(@font_gold, gold_digits, Raylib::Vector2.create(val_x, val_y), val_size, 1, Raylib::YELLOW)
       end
     end
 
