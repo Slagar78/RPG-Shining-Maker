@@ -160,6 +160,10 @@ class ShopMenu
     
     @buy_item_name = ""
     @buy_item_price = 0
+    
+    @commands_tex = nil
+    @commands_w   = 0
+    @commands_h   = 0
 
     load_textures
   end
@@ -227,6 +231,22 @@ class ShopMenu
       Raylib.SetTextureFilter(@gold_panel_tex, Raylib::TEXTURE_FILTER_POINT)
     else
       puts "WARNING: #{gp_path} not found."
+    end
+    load_commands_panel
+  end
+
+  def load_commands_panel
+    path = "assets/ui/Commands.png"
+    if File.exist?(path)
+      img = Raylib.LoadImage(path)
+      @commands_tex = Raylib.LoadTextureFromImage(img)
+      Raylib.UnloadImage(img)
+      Raylib.SetTextureFilter(@commands_tex, Raylib::TEXTURE_FILTER_POINT)
+      @commands_w = @commands_tex.width
+      @commands_h = @commands_tex.height
+    else
+      puts "WARNING: #{path} not found."
+      @commands_tex = nil
     end
   end
 
@@ -849,6 +869,25 @@ end
         Raylib::DrawRectangleLines(pos[:x] - TILE_SIZE / 2, pos[:y] - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE, Raylib::DARKGRAY)
       end
     end
+
+    # ═══ ПАНЕЛЬ С НАЗВАНИЕМ ВЫБРАННОГО ПУНКТА ═══
+    if @commands_tex
+      panel_x = center_x + OFFSET + TILE_SIZE / 2 + 16
+      panel_y = center_y - @commands_h / 2 + 24
+
+      src = Raylib::Rectangle.create(0, 0, @commands_w, @commands_h)
+      dst = Raylib::Rectangle.create(panel_x, panel_y, @commands_w, @commands_h)
+      Raylib::DrawTexturePro(@commands_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+
+      if @large_font
+        name = @tiles[@selected_index]["name"].capitalize
+        font_size = 30
+        text_size = Raylib.MeasureTextEx(@large_font, name, font_size, 1)
+        text_x = panel_x + 20
+        text_y = panel_y + (@commands_h - text_size.y) / 2
+        Raylib.DrawTextEx(@large_font, name, Raylib::Vector2.create(text_x, text_y), font_size, 1, Raylib::WHITE)
+      end
+    end
   end
 
   public
@@ -873,12 +912,12 @@ end
     @selection_tex_dark = nil
     
     Raylib::UnloadTexture(@price_tag_tex) if @price_tag_tex
-    @price_tag_tex = nil
-    
+    @price_tag_tex = nil    
     Raylib::UnloadTexture(@message_panel_tex) if @message_panel_tex
     @message_panel_tex = nil
-
     Raylib::UnloadTexture(@gold_panel_tex) if @gold_panel_tex
-    @gold_panel_tex = nil
+    @gold_panel_tex = nil    
+    Raylib::UnloadTexture(@commands_tex) if @commands_tex
+    @commands_tex = nil
   end
 end
