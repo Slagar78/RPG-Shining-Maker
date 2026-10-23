@@ -166,6 +166,14 @@ class ShopMenu
     @commands_w   = 0
     @commands_h   = 0
 
+    @confirm_index = 0
+    @confirm_anim_timer = 0
+    @yes_tex = nil
+    @no_tex = nil
+    @yes_anim_tex = nil
+    @no_anim_tex = nil
+    @yes_no_panel_tex = nil
+
     load_textures
   end
 
@@ -232,6 +240,28 @@ class ShopMenu
       Raylib.SetTextureFilter(@gold_panel_tex, Raylib::TEXTURE_FILTER_POINT)
     else
       puts "WARNING: #{gp_path} not found."
+    end
+
+    # ═══ ЗАГРУЗКА YES/NO ТЕКСТУР (теперь внутри метода!) ═══
+    if File.exist?("assets/ui/menu/Yes.png")
+      @yes_tex = Raylib.LoadTexture("assets/ui/menu/Yes.png")
+      Raylib.SetTextureFilter(@yes_tex, 0)
+    end
+    if File.exist?("assets/ui/menu/No.png")
+      @no_tex = Raylib.LoadTexture("assets/ui/menu/No.png")
+      Raylib.SetTextureFilter(@no_tex, 0)
+    end
+    if File.exist?("assets/ui/menu/Yes_Anim.png")
+      @yes_anim_tex = Raylib.LoadTexture("assets/ui/menu/Yes_Anim.png")
+      Raylib.SetTextureFilter(@yes_anim_tex, 0)
+    end
+    if File.exist?("assets/ui/menu/No_Anim.png")
+      @no_anim_tex = Raylib.LoadTexture("assets/ui/menu/No_Anim.png")
+      Raylib.SetTextureFilter(@no_anim_tex, 0)
+    end
+    if File.exist?("assets/ui/yes-no_panel.png")
+      @yes_no_panel_tex = Raylib.LoadTexture("assets/ui/yes-no_panel.png")
+      Raylib.SetTextureFilter(@yes_no_panel_tex, 0)
     end
     load_commands_panel
   end
@@ -404,6 +434,8 @@ def handle_input(dt = 1.0 / 60.0)
         @sub_state = :confirm_buy
         @text_reveal_index = 0
         @text_full_shown = false
+        @confirm_index = 0        # <--- СБРАСЫВАЕМ НА YES
+        @confirm_anim_timer = 0   # <--- СБРАСЫВАЕМ АНИМАЦИЮ
         return
       end
     end
@@ -416,19 +448,27 @@ def handle_input(dt = 1.0 / 60.0)
     end
     return unless @text_full_shown
 
-    if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
-      gold_amount = @db&.globals ? (@db.globals["gold"] || 0) : 0
-      if gold_amount >= @buy_item_price
-        # Золото НЕ списываем здесь! Только открываем меню.
-        @sub_state = :select_target
-        @target_menu.open_for_shop(@buy_item_name)
-      else
-        # Недостаточно денег — переходим в новое состояние
-        @sub_state = :insufficient_funds
+    # Переключение между YES и NO
+    if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+      @confirm_index = 1 - @confirm_index
+    elsif Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
+      if @confirm_index == 0 # YES
+        gold_amount = @db&.globals ? (@db.globals["gold"] || 0) : 0
+        if gold_amount >= @buy_item_price
+          @sub_state = :select_target
+          @target_menu.open_for_shop(@buy_item_name)
+        else
+          @sub_state = :insufficient_funds
+        end
+        @text_reveal_index = 0
+        @text_full_shown = false
+      else # NO
+        @sub_state = :sub
+        @text_reveal_index = 0
+        @text_full_shown = false
       end
-      @text_reveal_index = 0
-      @text_full_shown = false
     elsif Raylib.IsKeyPressed(Raylib::KEY_S)
+      # S всегда отменяет
       @sub_state = :sub
       @text_reveal_index = 0
       @text_full_shown = false
@@ -509,6 +549,7 @@ def update(dt = 1.0 / 60.0)
 
   # 3. РЕЖИМ ПОДТВЕРЖДЕНИЯ ПОКУПКИ И ОШИБКИ
   elsif @sub_state == :confirm_buy || @sub_state == :insufficient_funds
+    @confirm_anim_timer += dt * 60.0 if @sub_state == :confirm_buy
     if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y
       @top_panel_anim_y -= speed
       @top_panel_anim_y = PANEL_HIDDEN_TOP_Y if @top_panel_anim_y < PANEL_HIDDEN_TOP_Y
@@ -641,7 +682,7 @@ end
     Raylib::DrawTexturePro(@message_panel_tex, src, dst,
                            Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
 
-        full_text = case @sub_state
+    full_text = case @sub_state
                 when :confirm_buy then get_confirm_text
                 when :insufficient_funds then get_insufficient_funds_text
                 else message_for_action
@@ -661,6 +702,71 @@ end
                           Raylib::Vector2.create(PANEL_MSG_X + 20, y_offset),
                           30, 1, Raylib::WHITE)
         y_offset += 38 # Межстрочный интервал
+      end
+    end
+
+    # ═══ ОТРИСОВКА YES / NO ═══
+    if @sub_state == :confirm_buy && @text_full_shown
+      icon_size = 48
+      spacing = 36
+      panel_w = 64
+      panel_h = 48
+      gap_to_panel = 18 # Строго 18 пикселей от иконки NO до панели
+
+      # Считаем ширину ТОЛЬКО двух иконок (без панели)
+      icons_total_width = (icon_size * 2) + spacing
+      
+      # Центрируем ТОЛЬКО иконки
+      start_x = PANEL_MSG_X + (PANEL_MSG_W - icons_total_width) / 2
+      
+      # Опускаем вниз на рамку
+      icon_y = @panel_anim_y - icon_size + 10
+
+      # 1. Рисуем иконку YES
+      if @yes_tex
+        tex_to_draw = @yes_tex
+        if @confirm_index == 0 && @yes_anim_tex
+          tex_to_draw = @yes_anim_tex if (@confirm_anim_timer % 24) < 12
+        end
+        src = Raylib::Rectangle.create(0, 0, tex_to_draw.width, tex_to_draw.height)
+        dst = Raylib::Rectangle.create(start_x, icon_y, icon_size, icon_size)
+        color = (@confirm_index == 0) ? Raylib::WHITE : Raylib::GRAY
+        Raylib::DrawTexturePro(tex_to_draw, src, dst, Raylib::Vector2.create(0,0), 0, color)
+      end
+
+      # 2. Рисуем иконку NO
+      no_icon_x = start_x + icon_size + spacing
+      if @no_tex
+        tex_to_draw = @no_tex
+        if @confirm_index == 1 && @no_anim_tex
+          tex_to_draw = @no_anim_tex if (@confirm_anim_timer % 24) < 12
+        end
+        src = Raylib::Rectangle.create(0, 0, tex_to_draw.width, tex_to_draw.height)
+        dst = Raylib::Rectangle.create(no_icon_x, icon_y, icon_size, icon_size)
+        color = (@confirm_index == 1) ? Raylib::WHITE : Raylib::GRAY
+        Raylib::DrawTexturePro(tex_to_draw, src, dst, Raylib::Vector2.create(0,0), 0, color)
+      end
+
+      # 3. Рисуем панель с текстом (строго +18px от иконки NO)
+      if @yes_no_panel_tex
+        panel_x = no_icon_x + icon_size + gap_to_panel
+        
+        # Рисуем саму синюю панель
+        src = Raylib::Rectangle.create(0, 0, @yes_no_panel_tex.width, @yes_no_panel_tex.height)
+        dst = Raylib::Rectangle.create(panel_x, icon_y, panel_w, panel_h)
+        Raylib::DrawTexturePro(@yes_no_panel_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+
+        # Рисуем текст "Yes" или "No" внутри панели
+        text = (@confirm_index == 0) ? "Yes" : "No"
+        
+        # Используем шрифт и центрируем текст внутри панели 64x48
+        if @font
+          font_size = 20
+          text_size = Raylib.MeasureTextEx(@font, text, font_size, 1)
+          text_x = panel_x + (panel_w - text_size.x) / 2
+          text_y = icon_y + (panel_h - text_size.y) / 2
+          Raylib.DrawTextEx(@font, text, Raylib::Vector2.create(text_x, text_y), font_size, 1, Raylib::WHITE)
+        end
       end
     end
   end
@@ -951,5 +1057,12 @@ end
     @gold_panel_tex = nil    
     Raylib::UnloadTexture(@commands_tex) if @commands_tex
     @commands_tex = nil
+    # ═══════════════════════════════════════
+    Raylib::UnloadTexture(@yes_tex) if @yes_tex
+    Raylib::UnloadTexture(@no_tex) if @no_tex
+    Raylib::UnloadTexture(@yes_anim_tex) if @yes_anim_tex
+    Raylib::UnloadTexture(@no_anim_tex) if @no_anim_tex
+    # ═══════════════════════════════════════
+    Raylib::UnloadTexture(@yes_no_panel_tex) if @yes_no_panel_tex
   end
 end
