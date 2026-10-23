@@ -16,3 +16,4 @@
 0015={TARGET} received the {ITEM}.
 0016=Oops! {TARGET}'s hands{N}are full! To anybody else?
 0017=Equip it now?
+0018=You don't have enough gold{N}to buy this item.

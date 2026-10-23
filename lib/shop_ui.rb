@@ -423,11 +423,28 @@ def handle_input(dt = 1.0 / 60.0)
         @sub_state = :select_target
         @target_menu.open_for_shop(@buy_item_name)
       else
-        @sub_state = :sub
+        # Недостаточно денег — переходим в новое состояние
+        @sub_state = :insufficient_funds
       end
       @text_reveal_index = 0
       @text_full_shown = false
     elsif Raylib.IsKeyPressed(Raylib::KEY_S)
+      @sub_state = :sub
+      @text_reveal_index = 0
+      @text_full_shown = false
+    end
+
+  when :insufficient_funds
+    # Если текст еще печатается, а игрок нажал кнопку — показываем всё сразу
+    if !@text_full_shown && (Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D))
+      @text_reveal_index = get_insufficient_funds_text.length
+      @text_full_shown = true
+      return
+    end
+    
+    # Если текст показан и нажата кнопка — возвращаемся к выбору предметов
+    return unless @text_full_shown
+    if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D) || Raylib.IsKeyPressed(Raylib::KEY_S)
       @sub_state = :sub
       @text_reveal_index = 0
       @text_full_shown = false
@@ -490,8 +507,8 @@ def update(dt = 1.0 / 60.0)
       @text_full_shown = true if @text_reveal_index >= full_text.length
     end
 
-  # 3. РЕЖИМ ПОДТВЕРЖДЕНИЯ ПОКУПКИ
-  elsif @sub_state == :confirm_buy
+  # 3. РЕЖИМ ПОДТВЕРЖДЕНИЯ ПОКУПКИ И ОШИБКИ
+  elsif @sub_state == :confirm_buy || @sub_state == :insufficient_funds
     if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y
       @top_panel_anim_y -= speed
       @top_panel_anim_y = PANEL_HIDDEN_TOP_Y if @top_panel_anim_y < PANEL_HIDDEN_TOP_Y
@@ -502,7 +519,9 @@ def update(dt = 1.0 / 60.0)
     end
 
     unless @text_full_shown
-      full_text = get_confirm_text
+      # Выбираем нужный текст в зависимости от состояния
+      full_text = @sub_state == :confirm_buy ? get_confirm_text : get_insufficient_funds_text
+      
       @text_reveal_timer += dt * 60.0
       while @text_reveal_timer >= TEXT_REVEAL_SPEED && @text_reveal_index < full_text.length
         @text_reveal_timer -= TEXT_REVEAL_SPEED
@@ -622,7 +641,11 @@ end
     Raylib::DrawTexturePro(@message_panel_tex, src, dst,
                            Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
 
-    full_text = @sub_state == :confirm_buy ? get_confirm_text : message_for_action
+        full_text = case @sub_state
+                when :confirm_buy then get_confirm_text
+                when :insufficient_funds then get_insufficient_funds_text
+                else message_for_action
+                end
     display_text = full_text[0, @text_reveal_index] || ""
     return if display_text.empty?
 
@@ -695,6 +718,10 @@ end
     text = template.gsub("{ITEM}", @buy_item_name.to_s)
     text = text.gsub("{PRICE}", @buy_item_price.to_s)
     text
+  end
+
+  def get_insufficient_funds_text
+    @game_text["0018"] || "You don't have enough gold to buy this item."
   end
 
   # def get_equip_text
