@@ -96,11 +96,19 @@ class ShopMenu
   # Инстанс
   # ─────────────────────────────────────────────────────────
 
-  def initialize(font = nil, db = nil, large_font = nil, game_text = {})
+  def initialize(font = nil, db = nil, large_font = nil, game_text = {}, party = [], start_inventory = [], classes_data = [], class_names = {})
     @font           = font
     @large_font     = large_font || font
     @db             = db
     @game_text      = game_text || {}
+    @party          = party
+    @start_inventory = start_inventory
+    @classes_data   = classes_data
+    @class_names    = class_names
+    
+    # Создаем меню выбора персонажа (оно уже есть в item_actions_ui.rb)
+    @target_menu = GiveMenu.new(@font, @large_font, @db, @party, @classes_data, @class_names, @start_inventory, @game_text)
+    
     @visible        = false
     @selected_index = 0
     @anim_timer     = 0.0
@@ -149,6 +157,9 @@ class ShopMenu
     @text_reveal_index = 0
     @text_reveal_timer = 0
     @text_full_shown   = false
+    
+    @buy_item_name = ""
+    @buy_item_price = 0
 
     load_textures
   end
@@ -277,173 +288,228 @@ class ShopMenu
     @text_full_shown     = false
   end
 
-  def handle_input(dt = 1.0 / 60.0)
-    return unless @visible
+def handle_input(dt = 1.0 / 60.0)
+  return unless @visible
 
-    case @sub_state
-    when :main
-      # ─── ВЫХОД ИЗ МАГАЗИНА ───
-      if Raylib.IsKeyPressed(Raylib::KEY_S)
-        close
-        return
-      end
+  case @sub_state
+  when :main
+    if Raylib.IsKeyPressed(Raylib::KEY_S)
+      close
+      return
+    end
+    if Raylib.IsKeyPressed(Raylib::KEY_UP)
+      @selected_index = 0
+    elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
+      @selected_index = 1
+    elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+      @selected_index = 2
+    elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
+      @selected_index = 3
+    end
+    if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
+      @sub_action = @tiles[@selected_index]["name"]
+      @sub_state  = :sub
+      @panel_anim_y      = PANEL_MSG_HIDDEN_Y
+      @top_panel_anim_y  = PANEL_HIDDEN_TOP_Y
+      @gold_panel_x      = GOLD_HIDDEN_X
+      @text_reveal_index = 0
+      @text_reveal_timer = 0
+      @text_full_shown   = false
+    end
 
-      # Навигация по кресту
-      if Raylib.IsKeyPressed(Raylib::KEY_UP)
-        @selected_index = 0
-      elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
-        @selected_index = 1
-      elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
-        @selected_index = 2
-      elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
-        @selected_index = 3
-      end
+  when :sub
+    if Raylib.IsKeyPressed(Raylib::KEY_S)
+      @sub_state = :main
+      @input_timer_left  = 0
+      @input_timer_right = 0
+      return
+    end
+    if !@text_full_shown && (Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D))
+      @text_reveal_index = message_for_action.length
+      @text_full_shown   = true
+      return
+    end
+    return unless @text_full_shown && @top_panel_anim_y >= PANEL_Y
 
-      # Подтверждение — открываем панель подменю
-      if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
-        @sub_action = @tiles[@selected_index]["name"]
-        @sub_state  = :sub
-
-        # Сброс всей анимации на начало
-        @panel_anim_y      = PANEL_MSG_HIDDEN_Y
-        @top_panel_anim_y  = PANEL_HIDDEN_TOP_Y
-        @gold_panel_x      = GOLD_HIDDEN_X
-        @text_reveal_index = 0
-        @text_reveal_timer = 0
-        @text_full_shown   = false
-      end
-
-    when :sub
-      # Возврат из подменю в крест.
-      if Raylib.IsKeyPressed(Raylib::KEY_S)
-        @sub_state = :main
-        @input_timer_left  = 0
-        @input_timer_right = 0
-        return
-      end
-
-      # ── ПРОПУСК ПЕЧАТИ: A или D мгновенно допечатывают текст ──
-      if !@text_full_shown && (Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D))
-        @text_reveal_index = message_for_action.length
-        @text_full_shown   = true
-        return
-      end
-
-      # Навигация работает только когда панель уже доехала и текст допечатан
-      return unless @text_full_shown && @top_panel_anim_y >= PANEL_Y
-
-      # Навигация по иконкам товаров + сдвиг окна (с автоповтором)
-      # БЕЗ wrap-around — на первом и последнем останавливаемся.
-      count = @shop_icons.size
-      if count > 0
-        # ── ВЛЕВО ──
-        if Raylib.IsKeyPressed(Raylib::KEY_LEFT)
+    count = @shop_icons.size
+    if count > 0
+      if Raylib.IsKeyPressed(Raylib::KEY_LEFT)
+        if @selected_item_index > 0
+          @selected_item_index -= 1
+          adjust_shop_scroll
+        end
+        @input_timer_left = 0
+      elsif Raylib.IsKeyDown(Raylib::KEY_LEFT)
+        @input_timer_left += dt * 60.0
+        if @input_timer_left > 20 && ((@input_timer_left - 20) % 5) < 1
           if @selected_item_index > 0
             @selected_item_index -= 1
             adjust_shop_scroll
           end
-          @input_timer_left = 0
-        elsif Raylib.IsKeyDown(Raylib::KEY_LEFT)
-          @input_timer_left += dt * 60.0
-          if @input_timer_left > 20 && ((@input_timer_left - 20) % 5) < 1
-            if @selected_item_index > 0
-              @selected_item_index -= 1
-              adjust_shop_scroll
-            end
-          end
-        else
-          @input_timer_left = 0
         end
+      else
+        @input_timer_left = 0
+      end
 
-        # ── ВПРАВО ──
-        if Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+      if Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+        if @selected_item_index < count - 1
+          @selected_item_index += 1
+          adjust_shop_scroll
+        end
+        @input_timer_right = 0
+      elsif Raylib.IsKeyDown(Raylib::KEY_RIGHT)
+        @input_timer_right += dt * 60.0
+        if @input_timer_right > 20 && ((@input_timer_right - 20) % 5) < 1
           if @selected_item_index < count - 1
             @selected_item_index += 1
             adjust_shop_scroll
           end
-          @input_timer_right = 0
-        elsif Raylib.IsKeyDown(Raylib::KEY_RIGHT)
-          @input_timer_right += dt * 60.0
-          if @input_timer_right > 20 && ((@input_timer_right - 20) % 5) < 1
-            if @selected_item_index < count - 1
-              @selected_item_index += 1
-              adjust_shop_scroll
-            end
-          end
-        else
-          @input_timer_right = 0
         end
+      else
+        @input_timer_right = 0
       end
     end
-  end
 
-  def update(dt = 1.0 / 60.0)
-    return unless @visible
-    @anim_timer += dt * 60.0
-    @selection_blink_timer += dt * 60.0
-
-    speed = PANEL_MSG_SPEED * dt * 60.0
-
-    if @sub_state == :sub
-      # ── ФАЗА 1: снизу выезжает message_panel ──
-      if @panel_anim_y > PANEL_MSG_TARGET_Y
-        @panel_anim_y -= speed
-        @panel_anim_y = PANEL_MSG_TARGET_Y if @panel_anim_y < PANEL_MSG_TARGET_Y
-
-      # ── ФАЗА 2: печатается текст ──
-      elsif !@text_full_shown
-        full_text = message_for_action
-        @text_reveal_timer += dt * 60.0
-        while @text_reveal_timer >= TEXT_REVEAL_SPEED &&
-              @text_reveal_index < full_text.length
-          @text_reveal_timer -= TEXT_REVEAL_SPEED
-          @text_reveal_index += 1
-          
-          # Пропускаем тег {N} целиком, чтобы он не мигал по буквам
-          while full_text[@text_reveal_index, 3] == "{N}"
-            @text_reveal_index += 3
-          end
-        end
-        @text_full_shown = true if @text_reveal_index >= full_text.length
-
-      # ── ФАЗА 3: сверху shop_panel, справа gold_panel (ОДНОВРЕМЕННО) ──
-      elsif @top_panel_anim_y < PANEL_Y || @gold_panel_x > GOLD_TARGET_X
-        if @top_panel_anim_y < PANEL_Y
-          @top_panel_anim_y += speed
-          @top_panel_anim_y = PANEL_Y if @top_panel_anim_y > PANEL_Y
-        end
-        if @gold_panel_x > GOLD_TARGET_X
-          @gold_panel_x -= speed
-          @gold_panel_x = GOLD_TARGET_X if @gold_panel_x < GOLD_TARGET_X
-        end
-      end
-
-    else
-      # ── ЗАКРЫТИЕ: наверх shop_panel, вправо gold_panel (ОДНОВРЕМЕННО) ──
-      if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y || @gold_panel_x < GOLD_HIDDEN_X
-        if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y
-          @top_panel_anim_y -= speed
-          @top_panel_anim_y = PANEL_HIDDEN_TOP_Y if @top_panel_anim_y < PANEL_HIDDEN_TOP_Y
-        end
-        if @gold_panel_x < GOLD_HIDDEN_X
-          @gold_panel_x += speed
-          @gold_panel_x = GOLD_HIDDEN_X if @gold_panel_x > GOLD_HIDDEN_X
-        end
-
-      # ── Потом уезжает вниз message_panel ──
-      elsif @panel_anim_y < PANEL_MSG_HIDDEN_Y
-        @panel_anim_y += speed
-        @panel_anim_y = PANEL_MSG_HIDDEN_Y if @panel_anim_y > PANEL_MSG_HIDDEN_Y
-
-      # ── Когда всё спряталось — сбрасываем состояние ──
-      elsif @sub_action
-        @sub_action        = nil
+    if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
+      if @shop_icons.any? && @selected_item_index < @shop_icons.size
+        @buy_item_name = @current_shop["items"][@selected_item_index]
+        item_data = @db ? @db.find_by_name(@buy_item_name) : nil
+        @buy_item_price = item_data ? (item_data["price"] || 0).to_i : 0
+        @sub_state = :confirm_buy
         @text_reveal_index = 0
-        @text_reveal_timer = 0
-        @text_full_shown   = false
+        @text_full_shown = false
+        return
       end
     end
+
+  when :confirm_buy
+    if !@text_full_shown && (Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D))
+      @text_reveal_index = get_confirm_text.length
+      @text_full_shown = true
+      return
+    end
+    return unless @text_full_shown
+
+    if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
+      gold_amount = @db&.globals ? (@db.globals["gold"] || 0) : 0
+      if gold_amount >= @buy_item_price
+        # Золото НЕ списываем здесь! Только открываем меню.
+        @sub_state = :select_target
+        @target_menu.open_for_shop(@buy_item_name)
+      else
+        @sub_state = :sub
+      end
+      @text_reveal_index = 0
+      @text_full_shown = false
+    elsif Raylib.IsKeyPressed(Raylib::KEY_S)
+      @sub_state = :sub
+      @text_reveal_index = 0
+      @text_full_shown = false
+    end
+
+  when :select_target
+    @target_menu.handle_input(dt)
   end
+end
+
+def update(dt = 1.0 / 60.0)
+  return unless @visible
+  @anim_timer += dt * 60.0
+  @selection_blink_timer += dt * 60.0
+
+  speed = PANEL_MSG_SPEED * dt * 60.0
+
+  # 1. РЕЖИМ ВЫБОРА ПЕРСОНАЖА
+  if @sub_state == :select_target
+    @target_menu.update(dt)
+    unless @target_menu.visible
+      # ─── СПИСЫВАЕМ ЗОЛОТО ТОЛЬКО ЕСЛИ ПРЕДМЕТ ОТДАН! ───
+      if @target_menu.item_given_successfully
+        @db.globals["gold"] -= @buy_item_price if @db && @db.globals
+      end
+
+      @sub_state = :sub
+      @top_panel_anim_y = PANEL_Y
+      @gold_panel_x = GOLD_TARGET_X
+      @text_reveal_index = 0
+      @text_full_shown = false
+    end
+    return
+  end
+
+  # 2. РЕЖИМ МАГАЗИНА (крест -> подменю)
+  if @sub_state == :sub
+    if @top_panel_anim_y < PANEL_Y
+      @top_panel_anim_y += speed
+      @top_panel_anim_y = PANEL_Y if @top_panel_anim_y > PANEL_Y
+    end
+    if @gold_panel_x > GOLD_TARGET_X
+      @gold_panel_x -= speed
+      @gold_panel_x = GOLD_TARGET_X if @gold_panel_x < GOLD_TARGET_X
+    end
+
+    if @panel_anim_y > PANEL_MSG_TARGET_Y
+      @panel_anim_y -= speed
+      @panel_anim_y = PANEL_MSG_TARGET_Y if @panel_anim_y < PANEL_MSG_TARGET_Y
+    elsif !@text_full_shown
+      full_text = message_for_action
+      @text_reveal_timer += dt * 60.0
+      while @text_reveal_timer >= TEXT_REVEAL_SPEED && @text_reveal_index < full_text.length
+        @text_reveal_timer -= TEXT_REVEAL_SPEED
+        @text_reveal_index += 1
+        while full_text[@text_reveal_index, 3] == "{N}"
+          @text_reveal_index += 3
+        end
+      end
+      @text_full_shown = true if @text_reveal_index >= full_text.length
+    end
+
+  # 3. РЕЖИМ ПОДТВЕРЖДЕНИЯ ПОКУПКИ
+  elsif @sub_state == :confirm_buy
+    if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y
+      @top_panel_anim_y -= speed
+      @top_panel_anim_y = PANEL_HIDDEN_TOP_Y if @top_panel_anim_y < PANEL_HIDDEN_TOP_Y
+    end
+    if @gold_panel_x < GOLD_HIDDEN_X
+      @gold_panel_x += speed
+      @gold_panel_x = GOLD_HIDDEN_X if @gold_panel_x > GOLD_HIDDEN_X
+    end
+
+    unless @text_full_shown
+      full_text = get_confirm_text
+      @text_reveal_timer += dt * 60.0
+      while @text_reveal_timer >= TEXT_REVEAL_SPEED && @text_reveal_index < full_text.length
+        @text_reveal_timer -= TEXT_REVEAL_SPEED
+        @text_reveal_index += 1
+        while full_text[@text_reveal_index, 3] == "{N}"
+          @text_reveal_index += 3
+        end
+      end
+      @text_full_shown = true if @text_reveal_index >= full_text.length
+    end
+
+  # 4. ЗАКРЫТИЕ
+  else
+    if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y || @gold_panel_x < GOLD_HIDDEN_X
+      if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y
+        @top_panel_anim_y -= speed
+        @top_panel_anim_y = PANEL_HIDDEN_TOP_Y if @top_panel_anim_y < PANEL_HIDDEN_TOP_Y
+      end
+      if @gold_panel_x < GOLD_HIDDEN_X
+        @gold_panel_x += speed
+        @gold_panel_x = GOLD_HIDDEN_X if @gold_panel_x > GOLD_HIDDEN_X
+      end
+    elsif @panel_anim_y < PANEL_MSG_HIDDEN_Y
+      @panel_anim_y += speed
+      @panel_anim_y = PANEL_MSG_HIDDEN_Y if @panel_anim_y > PANEL_MSG_HIDDEN_Y
+    elsif @sub_action
+      @sub_action = nil
+      @text_reveal_index = 0
+      @text_reveal_timer = 0
+      @text_full_shown = false
+    end
+  end
+end
 
   def selected_action
     @tiles[@selected_index]["name"]
@@ -451,6 +517,12 @@ class ShopMenu
 
   def draw
     return unless @visible
+
+    # Если мы выбираем персонажа, рисуем ТОЛЬКО меню выбора
+    if @sub_state == :select_target
+      @target_menu.draw
+      return
+    end
 
     # shop_panel — видна, когда выезжает/уже выехала
     draw_panel if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y
@@ -524,7 +596,7 @@ class ShopMenu
     Raylib::DrawTexturePro(@message_panel_tex, src, dst,
                            Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
 
-    full_text = message_for_action
+    full_text = @sub_state == :confirm_buy ? get_confirm_text : message_for_action
     display_text = full_text[0, @text_reveal_index] || ""
     return if display_text.empty?
 
@@ -584,6 +656,20 @@ def message_for_action
   else "What do you want to do?"
   end
 end
+
+  def get_confirm_text
+    # Берем текст из файла. Если там пусто, используем фоллбек (запасной вариант)
+    template = @game_text["0013"] || "The {ITEM} costs{N}{PRICE} gold coins.{N}OK?"
+    
+    # Подставляем название предмета и цену
+    text = template.gsub("{ITEM}", @buy_item_name.to_s)
+    text = text.gsub("{PRICE}", @buy_item_price.to_s)
+    text
+  end
+
+  # def get_equip_text
+    # @game_text["0017"] || "Equip it now?"
+  # end
 
   def draw_panel_items
     return if @shop_icons.empty?

@@ -791,6 +791,7 @@ end
 # class GiveMenu
 # ============================================================
 class GiveMenu < ItemSubMenuBase
+  attr_reader :item_given_successfully
   GIVE_MESSAGE_DURATION = 180
   RESULT_MESSAGE_DURATION = 120
 
@@ -812,12 +813,40 @@ class GiveMenu < ItemSubMenuBase
     @reveal_timer = 0
     @reveal_speed = 2          # скорость (символ за 2 кадра)
     @full_text_shown = false
+    @item_given_successfully = false
     load_give_textures
   end
 
   def load_give_textures
     @message_panel_tex = Raylib.LoadTexture("assets/ui/message_panel.png")
     Raylib.SetTextureFilter(@message_panel_tex, 0) if @message_panel_tex
+  end
+
+  def open_for_shop(item_name)
+    @visible = true
+    @item_given_successfully = false
+    @anim_phase = 1
+    @upper_x = @upper_start_x
+    @lower_y = @lower_start_y
+    @portrait_x = @portrait_start_x
+    @frame_x = @frame_start_x
+    @focus = :party
+    @blink_timer = 0
+    @blink_duration = 0
+    @give_state = :select_target # Сразу переходим к выбору персонажа!
+    @selected_give_item = { "item" => item_name, "equipped" => false }
+    @give_selected_item_index = nil
+    @donor_actor = nil # Магазин - это донор
+    @selected_actor_index = 0
+    @list_top_index = 0
+    @selection_blink_timer = 0
+    
+    # ─── ПРОВЕРКА НА СРАВНЕНИЕ ───
+    # Если это оружие или кольцо — показываем ATTACK/DEFENSE (режим 2).
+    # Если обычный предмет (трава, зелье) — показываем стандартный вид (режим 0).
+    @status_view_mode = item_affects_attack_defense? ? 2 : 0
+    
+    update_current_actor
   end
 
   def open(actor_name = nil)
@@ -852,9 +881,16 @@ class GiveMenu < ItemSubMenuBase
     when :select_target
       return unless @visible && @anim_phase == 2
       if Raylib.IsKeyPressed(Raylib::KEY_S)
-        @give_state = :select_item
-        @focus = :party
-        return
+        if @donor_actor.nil? # РЕЖИМ МАГАЗИНА - закрываем полностью
+          @visible = false
+          @anim_phase = 0
+          @give_state = :select_item
+          return
+        else
+          @give_state = :select_item
+          @focus = :party
+          return
+        end
       end
 		if Raylib.IsKeyPressed(Raylib::KEY_UP)
 		  change_selected_actor(-1)
@@ -903,6 +939,23 @@ class GiveMenu < ItemSubMenuBase
     when :result_message
       @result_message_timer += dt * 60.0
       if @result_message_timer >= RESULT_MESSAGE_DURATION
+        if @donor_actor.nil? # РЕЖИМ МАГАЗИНА
+          if @result_message_id == "0016"
+            # Инвентарь полон - возвращаемся к выбору, чтобы отдать другому!
+            @give_state = :select_target
+            @reveal_index = 0
+            @full_text_shown = false
+            @result_message_timer = 0
+            return
+          else
+            # Успешно куплено - закрываем
+            @visible = false
+            @anim_phase = 0
+            @give_state = :select_item
+            return
+          end
+        end
+        
         @give_state = :select_item
         donor_index = @party.index { |a| a["id"] == @donor_actor["id"] } || 0
         @selected_actor_index = donor_index
@@ -1074,8 +1127,36 @@ end
   end
 
   def give_item_to(actor)
-    return unless @selected_give_item && actor && @donor_actor
-    return if actor == @donor_actor
+    return unless @selected_give_item && actor
+    return if @donor_actor && actor == @donor_actor
+
+    # ── РЕЖИМ МАГАЗИНА (донора нет) ──
+    if @donor_actor.nil?
+      target_items = fill_to_four(find_actor_items(actor["name"]))
+      empty_slot = target_items.index { |entry| entry["item"] == "NOTHING" }
+
+      if empty_slot
+        item_to_give = @selected_give_item.dup
+        item_to_give["equipped"] = false
+        target_items[empty_slot] = item_to_give
+        update_inventory(actor["id"], target_items)
+        
+        @item_given_successfully = true
+
+        @result_message_id = "0015" # {TARGET} received the {ITEM}.
+        @result_params = { '{ITEM}' => item_to_give["item"], '{TARGET}' => actor["name"] }
+      else
+        @result_message_id = "0016" # The {TARGET}'s inventory is full.
+        @result_params = { '{TARGET}' => actor["name"] }
+      end
+
+      @give_state = :result_message
+      @reveal_index = 0
+      @full_text_shown = false
+      @result_message_timer = 0
+      return
+    end
+    # ── КОНЕЦ РЕЖИМА МАГАЗИНА ──
 
     donor_items = fill_to_four(find_actor_items(@donor_actor["name"]))
     target_items = fill_to_four(find_actor_items(actor["name"]))

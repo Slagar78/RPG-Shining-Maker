@@ -11,3 +11,8 @@
 0010=What do you want to sell?
 0011=What do you want to repair?
 0012=What do you want to deal?
+0013=The {ITEM} costs{N}{PRICE} gold coins.{N}OK?
+0014=Who gets it?
+0015={TARGET} received the {ITEM}.
+0016=Oops! {TARGET}'s hands{N}are full! To anybody else?
+0017=Equip it now?
