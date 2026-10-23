@@ -60,6 +60,15 @@ class ShopMenu
   # Позиция "за экраном сверху" для shop_panel
   PANEL_HIDDEN_TOP_Y = -PANEL_H    # = -128
 
+  # ─────────────────────────────────────────────────────────
+  # Панель золота (gold_panel.png)
+  # ─────────────────────────────────────────────────────────
+  GOLD_PANEL_W = 134
+  GOLD_PANEL_H = 72
+  GOLD_TARGET_X = PANEL_MSG_X + PANEL_MSG_W - GOLD_PANEL_W  # = 394 (правый край message_panel)
+  GOLD_TARGET_Y = PANEL_MSG_TARGET_Y + PANEL_MSG_H - GOLD_PANEL_H # = 384 (низ message_panel)
+  GOLD_HIDDEN_X = 576 # Прячем за правым краем экрана
+
   # Скорость печати текста (кадров на символ, как в SearchOverlay)
   TEXT_REVEAL_SPEED  = 2
 
@@ -133,6 +142,8 @@ class ShopMenu
     @panel_anim_y = PANEL_MSG_HIDDEN_Y
     # Анимация shop_panel (выезд из верха)
     @top_panel_anim_y = PANEL_HIDDEN_TOP_Y
+    # Анимация gold_panel
+    @gold_panel_x = GOLD_HIDDEN_X
     # Печать текста
     @text_reveal_index = 0
     @text_reveal_timer = 0
@@ -195,6 +206,16 @@ class ShopMenu
     else
       puts "WARNING: #{mp_path} not found."
     end
+
+    # Загрузка панели золота
+    @gold_panel_tex = nil
+    gp_path = "assets/ui/gold_panel.png"
+    if File.exist?(gp_path)
+      @gold_panel_tex = Raylib.LoadTexture(gp_path)
+      Raylib.SetTextureFilter(@gold_panel_tex, Raylib::TEXTURE_FILTER_POINT)
+    else
+      puts "WARNING: #{gp_path} not found."
+    end
   end
 
   def open(shop_data)
@@ -219,6 +240,7 @@ class ShopMenu
     @input_timer_right   = 0
     @panel_anim_y        = PANEL_MSG_HIDDEN_Y
     @top_panel_anim_y    = PANEL_HIDDEN_TOP_Y
+    @gold_panel_x        = GOLD_HIDDEN_X
     @text_reveal_index   = 0
     @text_reveal_timer   = 0
     @text_full_shown     = false
@@ -248,6 +270,7 @@ class ShopMenu
     @input_timer_right   = 0
     @selection_blink_timer = 0
     @top_panel_anim_y    = PANEL_HIDDEN_TOP_Y
+    @gold_panel_x        = GOLD_HIDDEN_X
     @text_reveal_index   = 0
     @text_reveal_timer   = 0
     @text_full_shown     = false
@@ -283,6 +306,7 @@ class ShopMenu
         # Сброс всей анимации на начало
         @panel_anim_y      = PANEL_MSG_HIDDEN_Y
         @top_panel_anim_y  = PANEL_HIDDEN_TOP_Y
+        @gold_panel_x      = GOLD_HIDDEN_X
         @text_reveal_index = 0
         @text_reveal_timer = 0
         @text_full_shown   = false
@@ -376,17 +400,29 @@ class ShopMenu
         end
         @text_full_shown = true if @text_reveal_index >= full_text.length
 
-      # ── ФАЗА 3: сверху выезжает shop_panel с иконками ──
-      elsif @top_panel_anim_y < PANEL_Y
-        @top_panel_anim_y += speed
-        @top_panel_anim_y = PANEL_Y if @top_panel_anim_y > PANEL_Y
+      # ── ФАЗА 3: сверху shop_panel, справа gold_panel (ОДНОВРЕМЕННО) ──
+      elsif @top_panel_anim_y < PANEL_Y || @gold_panel_x > GOLD_TARGET_X
+        if @top_panel_anim_y < PANEL_Y
+          @top_panel_anim_y += speed
+          @top_panel_anim_y = PANEL_Y if @top_panel_anim_y > PANEL_Y
+        end
+        if @gold_panel_x > GOLD_TARGET_X
+          @gold_panel_x -= speed
+          @gold_panel_x = GOLD_TARGET_X if @gold_panel_x < GOLD_TARGET_X
+        end
       end
 
     else
-      # ── ЗАКРЫТИЕ: сначала уезжает наверх shop_panel ──
-      if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y
-        @top_panel_anim_y -= speed
-        @top_panel_anim_y = PANEL_HIDDEN_TOP_Y if @top_panel_anim_y < PANEL_HIDDEN_TOP_Y
+      # ── ЗАКРЫТИЕ: наверх shop_panel, вправо gold_panel (ОДНОВРЕМЕННО) ──
+      if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y || @gold_panel_x < GOLD_HIDDEN_X
+        if @top_panel_anim_y > PANEL_HIDDEN_TOP_Y
+          @top_panel_anim_y -= speed
+          @top_panel_anim_y = PANEL_HIDDEN_TOP_Y if @top_panel_anim_y < PANEL_HIDDEN_TOP_Y
+        end
+        if @gold_panel_x < GOLD_HIDDEN_X
+          @gold_panel_x += speed
+          @gold_panel_x = GOLD_HIDDEN_X if @gold_panel_x > GOLD_HIDDEN_X
+        end
 
       # ── Потом уезжает вниз message_panel ──
       elsif @panel_anim_y < PANEL_MSG_HIDDEN_Y
@@ -416,9 +452,13 @@ class ShopMenu
     # message_panel — видна, когда выезжает/уже выехала
     draw_message_panel if @panel_anim_y < PANEL_MSG_HIDDEN_Y
 
-    # Крест — только когда панели полностью спрятаны и мы в :main
+    # gold_panel — видна, когда выезжает/уже выехала
+    draw_gold_panel if @gold_panel_x < GOLD_HIDDEN_X
+
+    # Крест — только когда все панели полностью спрятаны и мы в :main
     fully_closed = @sub_state == :main &&
                    @top_panel_anim_y <= PANEL_HIDDEN_TOP_Y &&
+                   @gold_panel_x >= GOLD_HIDDEN_X &&
                    @panel_anim_y >= PANEL_MSG_HIDDEN_Y
     draw_tiles if fully_closed
   end
@@ -487,6 +527,29 @@ class ShopMenu
       Raylib.DrawTextEx(@large_font, display_text,
                         Raylib::Vector2.create(PANEL_MSG_X + 20, @panel_anim_y + 42),
                         30, 1, Raylib::WHITE)
+    end
+  end
+
+  def draw_gold_panel
+    return unless @gold_panel_tex
+    return if @gold_panel_x >= GOLD_HIDDEN_X
+
+    # Двигаем по X, Y фиксирован
+    dst = Raylib::Rectangle.create(@gold_panel_x, GOLD_TARGET_Y, GOLD_PANEL_W, GOLD_PANEL_H)
+    src = Raylib::Rectangle.create(0, 0, @gold_panel_tex.width, @gold_panel_tex.height)
+    Raylib::DrawTexturePro(@gold_panel_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+
+    # Отрисовка суммы золота (если нужно, берем из @db.globals)
+    gold_amount = @db&.globals ? (@db.globals["gold"] || 0) : 0
+    gold_text = gold_amount.to_s
+
+    if @font
+      # Центрируем текст по нижней части панели
+      text_w = Raylib.MeasureTextEx(@font, gold_text, 20, 1).x
+      text_x = @gold_panel_x + (GOLD_PANEL_W - text_w) / 2
+      text_y = GOLD_TARGET_Y + 38
+      
+      Raylib.DrawTextEx(@font, gold_text, Raylib::Vector2.create(text_x, text_y), 20, 1, Raylib::YELLOW)
     end
   end
 
@@ -702,5 +765,8 @@ class ShopMenu
     
     Raylib::UnloadTexture(@message_panel_tex) if @message_panel_tex
     @message_panel_tex = nil
+
+    Raylib::UnloadTexture(@gold_panel_tex) if @gold_panel_tex
+    @gold_panel_tex = nil
   end
 end
