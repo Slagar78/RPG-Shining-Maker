@@ -297,6 +297,7 @@ def handle_input(dt = 1.0 / 60.0)
       close
       return
     end
+    old_index = @selected_index
     if Raylib.IsKeyPressed(Raylib::KEY_UP)
       @selected_index = 0
     elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
@@ -306,6 +307,8 @@ def handle_input(dt = 1.0 / 60.0)
     elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
       @selected_index = 3
     end
+    @anim_timer = 0 if @selected_index != old_index
+    
     if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
       @sub_action = @tiles[@selected_index]["name"]
       @sub_state  = :sub
@@ -333,6 +336,7 @@ def handle_input(dt = 1.0 / 60.0)
 
     count = @shop_icons.size
     if count > 0
+    old_item_index = @selected_item_index
       if Raylib.IsKeyPressed(Raylib::KEY_LEFT)
         if @selected_item_index > 0
           @selected_item_index -= 1
@@ -368,6 +372,7 @@ def handle_input(dt = 1.0 / 60.0)
       else
         @input_timer_right = 0
       end
+      @anim_timer = 0 if @selected_item_index != old_item_index
     end
 
     if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)

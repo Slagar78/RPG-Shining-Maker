@@ -833,19 +833,22 @@ class Profile
       end
 
     when 3  # разборка
-      @portrait_x -= speed
+      # Ускоряем закрытие, чтобы меню не ждало долго
+      close_speed = speed * 1.8
+
+      @portrait_x -= close_speed
       @portrait_x = @portrait_start_x if @portrait_x < @portrait_start_x
-      @frame_x -= speed
+      @frame_x -= close_speed
       @frame_x = @frame_start_x if @frame_x < @frame_start_x
 
-      @right_panel_x += speed
+      @right_panel_x += close_speed
       @right_panel_x = @right_panel_start_x if @right_panel_x > @right_panel_start_x
 
-      @sub_panel_y += speed
+      @sub_panel_y += close_speed
       @sub_panel_y = @sub_panel_start_y if @sub_panel_y > @sub_panel_start_y
       
       # Улет золота влево
-      @gold_panel_x -= speed
+      @gold_panel_x -= close_speed
       @gold_panel_x = @gold_hidden_x if @gold_panel_x < @gold_hidden_x
 
       # Ждём, пока самая длинная панель (правая) полностью уедет за экран
