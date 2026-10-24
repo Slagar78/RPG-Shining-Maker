@@ -91,7 +91,7 @@ class GameMap
     @stair_events = []
     @warp_events = []
 
-    load_section(entry, "events", "events.json").each do |ev|
+    load_section("events", "events.json").each do |ev|
       type = ev['type'] || 'roof'
       if type == 'roof'
         @roof_events << ev
@@ -140,11 +140,11 @@ class GameMap
     end
 
     @npcs = []
-    load_section(entry, "npcs", "NPC_events.json").each do |npc_def|
+    load_section("npcs", nil).each do |npc_def|
       @npcs << NPC.new(npc_def)
     end
 
-    @npc_scripts = load_section(entry, "scripts", "NPC_script.json")
+    @npc_scripts = load_section("scripts", nil)
 
     # Загрузка локального text.txt (всегда)
     @local_text = {}
@@ -206,48 +206,48 @@ class GameMap
 	  @open_doors = {}   # { [x,y] => { original_tile: id, event: event_hash } }
   end
   
-  def load_section(entry, section, fallback)
-    folder      = entry['folder']
-    map_id      = entry['id'].to_s
-    dir         = "data/maps/#{folder}/mapsetups"
-    global_path = "data/maps/mapsetups.json"
-    local_path  = "#{dir}/pointertable.json"
+  def load_section(section, fallback_root_filename = nil)
+    dir        = "data/maps/#{@map_id}"
+    setup_path = "#{dir}/mapsetups.json"
 
-    # Если есть оба файла — работаем через версии
-    if File.exist?(global_path) && File.exist?(local_path)
+    # 1. Проверяем наличие локального mapsetups.json
+    if File.exist?(setup_path)
       begin
-        global   = JSON.parse(File.read(global_path))
-        versions = global.dig(map_id, "versions")
+        setup    = JSON.parse(File.read(setup_path))
+        versions = setup["versions"]
 
         if versions.is_a?(Array) && versions.any?
-          # Берём ПОСЛЕДНЮЮ подходящую (порядок = сюжет: v00, v01, v02...)
+          # Ищем последнюю подходящую версию (как в сюжете)
           chosen = nil
           versions.each do |v|
-            if (v["conditions"] || []).all? { |f| @flags[f] }
-              chosen = v
-            end
+            conditions = v["when"] || []
+            chosen = v if conditions.all? { |flag| @flags[flag] }
           end
+          
+          # Если ни одна не подошла (например, нет флагов), берем v00 (первую)
           chosen ||= versions.first
 
-          if chosen && chosen["id"]
-            pointer = JSON.parse(File.read(local_path))
-            file = pointer.dig(chosen["id"], section)
-
-            if file
-              path = "#{dir}/#{file}"
-              return JSON.parse(File.read(path)) if File.exist?(path)
-            end
+          # 2. Если в выбранной версии указан файл для этого раздела (events, npcs, scripts)
+          if chosen && chosen["files"] && chosen["files"][section]
+            file = chosen["files"][section]
+            path = "#{dir}/mapsetups/#{file}"
+            return JSON.parse(File.read(path)) if File.exist?(path)
           end
         end
       rescue => e
-        puts "[mapsetups] #{folder}/#{section}: #{e.message}"
+        puts "[mapsetups] #{@map_id}/#{section}: #{e.message}"
       end
     end
 
-    # Fallback — старый файл
-    path = "data/maps/#{folder}/#{fallback}"
-    return [] unless File.exist?(path)
-    JSON.parse(File.read(path))
+    # 3. Фолбэк (сработает ТОЛЬКО если передан fallback_root_filename, т.е. для events)
+    # Для NPC и scripts мы передаем nil, поэтому они сюда не попадут.
+    if fallback_root_filename
+      path = "#{dir}/#{fallback_root_filename}"
+      return JSON.parse(File.read(path)) if File.exist?(path)
+    end
+
+    # 4. Если ничего не нашли или fallback не нужен — возвращаем пустой массив
+    []
   end
 
   def tile_src_rect(tile_id)

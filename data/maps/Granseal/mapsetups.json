@@ -1,0 +1,22 @@
+{
+  "versions": [
+    {
+      "id": "v00",
+      "when": [],
+      "desc": "Начало игры",
+      "files": {
+        "npcs":    "NPC_events_v00.json",
+        "scripts": "NPC_script_v00.json"
+      }
+    },
+    {
+      "id": "v01",
+      "when": ["battle_0_completed"],
+      "desc": "После битвы 0",
+      "files": {
+        "npcs":    "NPC_events_v01.json",
+        "scripts": "NPC_script_v01.json"
+      }
+    }
+  ]
+}

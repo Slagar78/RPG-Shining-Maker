@@ -1,8 +1,0 @@
-{
-  "0": {
-    "versions": [
-      { "id": "v00", "conditions": [],               "desc": "Начало игры" },
-      { "id": "v01", "conditions": ["battle_0_completed"], "desc": "После битвы 0" }
-    ]
-  }
-}

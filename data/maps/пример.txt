@@ -1,23 +1,99 @@
 data/maps/
-├── mapsetups.json                    ← ГЛОБАЛЬНЫЙ: карты + условия
-├── entries.json
-├── Granseal/
-│   └── mapsetups/
-│       ├── pointertable.json         ← ЛОКАЛЬНЫЙ: версия → файлы
-│       ├── NPC_events_v00.json
-│       ├── NPC_events_v01.json
-│       ├── NPC_events_v02.json
-│       ├── NPC_script_v00.json
-│       ├── NPC_script_v01.json
-│       ├── NPC_script_v02.json
-│       ├── events_v00.json
-│       └── events_v02.json
-└── Ribble/
-    └── mapsetups/
-        ├── pointertable.json
-        ├── NPC_events_v00.json
-        ├── NPC_events_v01.json
-        └── NPC_script_v00.json
-        
-        
-id = 0, 1, 2, ... по порядку. Никогда не меняется. карты ищем по id        
+├── entries.json       
+data/maps/Granseal/
+├── layout.json
+├── areas.json
+├── events.json              <-- (Базовые события для v00)
+├── text.txt
+├── mapsetups.json
+│
+└── mapsetups/               <-- (Папка)
+    ├── NPC_events_v00.json
+    ├── NPC_script_v00.json
+    ├── NPC_events_v01.json
+    └── NPC_script_v01.json 
+
+
+🗺️ 1. Общая структура корня (data/maps/)
+data/maps/
+├── entries.json         ← Реестр всех карт (id, folder, music, areas)
+│
+├── Granseal/            ← Папка карты (с сюжетом)
+├── map00/               ← Папка карты (статичная)
+└── ...
+
+🏙️ 2. Карта БЕЗ сюжета (Статичная)
+Если на карте ничего не меняется по ходу игры, и там нет NPC, то папка выглядит так:
+data/maps/map00/
+├── layout.json          ← Тайлы, слои
+├── areas.json           ← Границы экрана/камеры
+├── events.json          ← Базовые события (двери, варпы, крыши)
+└── text.txt             ← Локальные диалоги (если есть)
+
+🌟 3. Карта С сюжетом и NPC (Динамическая)
+Если на карте есть NPC или события меняются по ходу сюжета (как в Granseal), структура такая:
+data/maps/Granseal/
+├── layout.json
+├── areas.json
+├── events.json          ← ★ ЭТО БАЗОВЫЕ СОБЫТИЯ ДЛЯ v00
+├── text.txt
+│
+├── mapsetups.json       ← ★ НОВЫЙ КОНФИГ (условия + ссылки на файлы)
+│
+└── mapsetups/           ← ПАПКА С ФАЙЛАМИ ВЕРСИЙ
+    ├── NPC_events_v00.json  ← NPC для v00 (начало игры)
+    ├── NPC_script_v00.json
+    ├── events_v01.json      ← События для v01 (если меняются)
+    ├── NPC_events_v01.json  ← NPC для v01 (после битвы)
+    └── NPC_script_v01.json
+
+⚙️ 4. Как работает mapsetups.json (Правила)
+Файл mapsetups.json всегда лежит в корне конкретной карты.
+Вот его шаблон:
+{
+  "versions": [
+    {
+      "id": "v00",
+      "when": [],
+      "files": {
+        "npcs":    "NPC_events_v00.json",
+        "scripts": "NPC_script_v00.json"
+      }
+    },
+    {
+      "id": "v01",
+      "when": ["battle_0_completed"],
+      "files": {
+        "events":  "events_v01.json",
+        "npcs":    "NPC_events_v01.json",
+        "scripts": "NPC_script_v01.json"
+      }
+    }
+  ]
+}
+
+🧠 Логика движка (как игра это читает):
+Игра ищет mapsetups.json в папке карты.
+
+Если файла нет → грузит events.json из корня, а NPC не грузит вообще (пусто).
+
+Если файл есть → проходит по списку versions сверху вниз.
+
+Если условие when выполнено (все флаги есть) → игра запоминает эту версию. Берется последняя подходящая.
+
+Если в выбранной версии указан файл "events", "npcs" или "scripts" → игра берет его из папки mapsetups/.
+
+Если файл НЕ указан:
+
+Для events → берется базовый events.json из корня.
+
+Для npcs и scripts → берется пустота (NPC не появляются)
+
+💡 5. Главные правила (Запомнить!)
+events.json в корне = это версия v00. Никогда не создавай events_v00.json в папке mapsetups/, чтобы не дублировать.
+
+Если на карте есть NPC → обязателен mapsetups.json и папка mapsetups/. Даже если версия всего одна (v00).
+
+Если в версии v01 не нужны NPC (например, город опустел) → создай файл NPC_events_v01.json с пустым массивом [] и укажи его в конфиге.
+
+Условия (when) пишутся на основе флагов из flags.rb (пока это battle_X_completed).
