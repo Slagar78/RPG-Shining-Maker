@@ -37,6 +37,10 @@ class DialogManager
     @reveal_timer = 0
     @full_text_shown = false
 
+    @arrow_timer = 0.0
+    @arrow_visible = false
+    @next_text_delay = 0.0
+
     @panel_w = 480
     @panel_h = 128
     @panel_x = (576 - @panel_w) / 2
@@ -54,6 +58,12 @@ class DialogManager
         @index += 1
       end
       return
+    end
+
+    # ЖДЕМ ЗАДЕРЖКУ ПЕРЕД СЛЕДУЮЩИМ ТЕКСТОМ
+    if @next_text_delay > 0
+      @next_text_delay -= dt
+      return if @next_text_delay > 0
     end
 
     while @index < @script.length && !@waiting_for_input
@@ -99,14 +109,28 @@ class DialogManager
     if @finished && @npc.direction != @original_npc_direction
       @npc.direction = @original_npc_direction
     end
+
+    # ★ АНИМАЦИЯ МИГАНИЯ СТРЕЛОЧКИ ★
+    if @waiting_for_input && @full_text_shown && !@choices
+      @arrow_timer += dt
+      if @arrow_timer >= 0.4  # 0.4 секунды на одно состояние (видно/не видно)
+        @arrow_timer = 0.0
+        @arrow_visible = !@arrow_visible
+      end
+    else
+      # Если текст не показан или это выбор (choice), стрелку прячем
+      @arrow_visible = false
+      @arrow_timer = 0.0
+    end
   end
 
   def draw
     # Пока магазин открыт — диалог не рисуется, магазин сам себя рисует.
     return if @waiting_for_shop
-    return unless @waiting_for_input || @finished
+    return unless @waiting_for_input || @finished || @next_text_delay > 0
     return if @finished
 
+    # Отрисовка фона панели
     if @message_panel_tex
       dst = Rectangle.create(@panel_x, @panel_y, @panel_w, @panel_h)
       src = Rectangle.create(0, 0, @message_panel_tex.width, @message_panel_tex.height)
@@ -117,6 +141,7 @@ class DialogManager
     end
 
     if @current_text && !@choices
+      # Отрисовка текста (посимвольно)
       raw_display = @current_text[0, @reveal_index]
       lines = split_display_lines(raw_display)
 
@@ -125,7 +150,27 @@ class DialogManager
         DrawTextEx(@font, line, Vector2.create(@panel_x + 20, y_offset), 30, 1, WHITE)
         y_offset += 38
       end
+      
+      # ★ ОТРИСОВКА МИГАЮЩЕЙ СТРЕЛОЧКИ ★
+      # Проверяем, есть ли СЛЕДУЮЩИЙ текст в скрипте
+      next_cmd = @script[@index + 1]
+      has_next_text = next_cmd && next_cmd['type'] == 'say'
+
+      # Рисуем стрелочку ТОЛЬКО если есть следующий текст
+      if @full_text_shown && @arrow_visible && has_next_text
+        arrow_x = @panel_x + @panel_w - 30
+        arrow_y = @panel_y + @panel_h - 25
+        
+        DrawTriangle(
+          Vector2.create(arrow_x, arrow_y),
+          Vector2.create(arrow_x + 8, arrow_y + 12),
+          Vector2.create(arrow_x + 16, arrow_y),
+          YELLOW
+        )
+      end
+
     elsif @choices
+      # Отрисовка вариантов выбора (если это выбор)
       y_offset = @panel_y + 20
       @choices.each_with_index do |option, i|
         text = option['text']
@@ -234,6 +279,7 @@ class DialogManager
         @waiting_for_input = false
         @index += 1
         @current_text = nil
+        @next_text_delay = 0.1 # 0.1 секунды паузы
       end
     elsif @choices
       if IsKeyPressed(KEY_UP)
