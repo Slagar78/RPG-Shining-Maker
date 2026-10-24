@@ -167,7 +167,23 @@ class DialogManager
 
   def handle_say(cmd)
     text_id = cmd['text_id']
-    text = get_text(text_id)
+    
+    # Проверяем, есть ли запятая в ID
+    if text_id.is_a?(String) && text_id.include?(',')
+      ids = text_id.split(',').map(&:strip)
+      
+      # Берем первый ID для текущего окна
+      cmd['text_id'] = ids.shift
+      
+      # Остальные вставляем в скрипт сразу ПОСЛЕ текущего шага.
+      # Делаем reverse, чтобы порядок текстов не перепутался.
+      ids.reverse.each do |id|
+        @script.insert(@index + 1, { 'type' => 'say', 'text_id' => id })
+      end
+    end
+    
+    # Дальше стандартный код (он возьмет уже измененный cmd['text_id'])
+    text = get_text(cmd['text_id'])
     return unless text
 
     text = text.gsub('{LEADER}', @leader_name)

@@ -4,7 +4,7 @@
     "script": [
       { "type": "turn_to_player" },
       { "type": "turn_player_to_npc" },
-      { "type": "say", "text_id": "0001" },
+      { "type": "say", "text_id": "0001,0002" },
       { "type": "open_shop", "shop_id": 0 },
       { "type": "end", "wait_for_input": true }
     ]
