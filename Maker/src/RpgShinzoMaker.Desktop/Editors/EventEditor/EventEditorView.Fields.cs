@@ -11,6 +11,7 @@ using Avalonia.Media;   // ← для SolidColorBrush / Color
 using Avalonia.Media.Imaging;
 using RpgShinzoMaker.Core.Models;
 using RpgShinzoMaker.Core.Services;
+using System.Linq;
 
 namespace RpgShinzoMaker.Desktop.Editors.EventEditor;
 
@@ -855,43 +856,30 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
     {
         if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count)
         {
-            Npc_Id.Text        = "";
-            Npc_X.Text         = "0";
-            Npc_Y.Text         = "0";
-            Npc_Sprite.Text    = "";
-            Npc_Behavior.SelectedIndex = 0;
-            Npc_Direction.SelectedIndex = 0;
-            Npc_TextId.Text    = "";
-            Npc_HomeX.Text     = "0";
-            Npc_HomeY.Text     = "0";
-            Npc_Radius.Text    = "3";
+            Npc_Id.Text = ""; Npc_X.Text = "0"; Npc_Y.Text = "0";
+            Npc_Sprite.Text = ""; Npc_Behavior.SelectedIndex = 0; Npc_Direction.SelectedIndex = 0;
+            Npc_HomeX.Text = "0"; Npc_HomeY.Text = "0"; Npc_Radius.Text = "3";
             Npc_SpritePreview.Source = null;
+            
+            Npc_ScriptList.ItemsSource = null;
+            _selectedScriptIndex = -1;
             return;
         }
 
         var n = _events.Npcs[_selectedIndex];
-        Npc_Id.Text        = n.Id;
-        
-        Npc_X.Text         = n.X.ToString();
-        Npc_Y.Text         = n.Y.ToString();
-        
-        Npc_Sprite.Text    = n.Sprite;
-        Npc_Behavior.SelectedIndex  = n.Behavior == "wander" ? 1 : 0;
+        Npc_Id.Text = n.Id; Npc_X.Text = n.X.ToString(); Npc_Y.Text = n.Y.ToString();
+        Npc_Sprite.Text = n.Sprite;
+        Npc_Behavior.SelectedIndex = n.Behavior == "wander" ? 1 : 0;
         Npc_Direction.SelectedIndex = n.Direction switch
         {
-            "down"  => 0,
-            "left"  => 1,
-            "right" => 2,
-            "up"    => 3,
-            _       => 0
+            "down" => 0, "left" => 1, "right" => 2, "up" => 3, _ => 0
         };
-        Npc_TextId.Text = n.TextId;
-        
-        Npc_HomeX.Text  = n.HomeX.ToString();
-        Npc_HomeY.Text  = n.HomeY.ToString();
-        
+        Npc_HomeX.Text = n.HomeX.ToString(); Npc_HomeY.Text = n.HomeY.ToString();
         Npc_Radius.Text = n.Radius.ToString();
+        Npc_WanderPanel.IsEnabled = (n.Behavior == "wander");
         UpdateNpcSpritePreview(n.Sprite);
+
+        RefreshScriptList();
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -967,7 +955,21 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
 
         var item = Npc_Behavior.SelectedItem as ComboBoxItem;
         string value = item?.Content?.ToString() ?? "static";
-        _events.Npcs[_selectedIndex].Behavior = value;
+        
+        var npc = _events.Npcs[_selectedIndex];
+        npc.Behavior = value;
+        
+        // Включаем/выключаем поля Home и Radius
+        Npc_WanderPanel.IsEnabled = (value == "wander");
+
+        // ★ ХИТРОСТЬ: Если включили wander, а Home 0,0 — ставим координаты NPC ★
+        if (value == "wander" && npc.HomeX == 0 && npc.HomeY == 0)
+        {
+            npc.HomeX = npc.X;
+            npc.HomeY = npc.Y;
+            Npc_HomeX.Text = npc.X.ToString();
+            Npc_HomeY.Text = npc.Y.ToString();
+        }
     }
 
     private void OnNpcDirectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -980,15 +982,7 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         _events.Npcs[_selectedIndex].Direction = value;
         OnFieldChanged();
     }
-
-    private void OnNpcTextIdChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count) return;
-
-        _events.Npcs[_selectedIndex].TextId = (Npc_TextId.Text ?? "").Trim();
-    }
-
+    
     private void OnNpcRadiusChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
@@ -1008,7 +1002,130 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         var v = ParseInt(Npc_Radius.Text ?? "");
         if (v.HasValue) _events.Npcs[_selectedIndex].Radius = v.Value;
     }
+    private void RefreshScriptList()
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count) return;
+        var n = _events.Npcs[_selectedIndex];
 
+        Npc_ScriptList.SelectionChanged -= OnNpcScriptSelected;
+        var labels = n.Script.Select((c, i) => $"{i+1}. {c.Type} ({(c.Type == "say" ? c.TextId : c.Type == "open_shop" ? c.ShopId?.ToString() : "-")})").ToList();
+        Npc_ScriptList.ItemsSource = labels;
+        Npc_ScriptList.SelectedIndex = _selectedScriptIndex;
+        Npc_ScriptList.SelectionChanged += OnNpcScriptSelected;
+        
+        LoadScriptStepIntoFields();
+    }
+
+    private void LoadScriptStepIntoFields()
+    {
+        _suppressFieldEvents = true;
+        try
+        {
+            if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count || _selectedScriptIndex < 0 || _selectedScriptIndex >= _events.Npcs[_selectedIndex].Script.Count)
+            {
+                Npc_ScriptType.SelectedIndex = -1;
+                Npc_ScriptParam.Text = "";
+                Npc_ScriptParam.IsEnabled = false;
+                return;
+            }
+
+            var cmd = _events.Npcs[_selectedIndex].Script[_selectedScriptIndex];
+            
+            // Выбираем тип в ComboBox
+            for (int i = 0; i < Npc_ScriptType.Items.Count; i++)
+            {
+                if (Npc_ScriptType.Items[i] is ComboBoxItem item && item.Content?.ToString() == cmd.Type)
+                {
+                    Npc_ScriptType.SelectedIndex = i;
+                    break;
+                }
+            }
+
+            // Настраиваем поле параметра
+            UpdateScriptParamUI(cmd.Type);
+            
+            if (cmd.Type == "say") Npc_ScriptParam.Text = cmd.TextId ?? "";
+            else if (cmd.Type == "open_shop") Npc_ScriptParam.Text = cmd.ShopId?.ToString() ?? "0";
+            else if (cmd.Type == "start_battle" || cmd.Type == "unlock_battle") Npc_ScriptParam.Text = cmd.BattleId?.ToString() ?? "0";
+            else Npc_ScriptParam.Text = "";
+        }
+        finally { _suppressFieldEvents = false; }
+    }
+
+    private void UpdateScriptParamUI(string type)
+    {
+        if (type == "say") { Npc_ScriptParamLabel.Text = "Text ID:"; Npc_ScriptParam.IsEnabled = true; }
+        else if (type == "open_shop") { Npc_ScriptParamLabel.Text = "Shop ID:"; Npc_ScriptParam.IsEnabled = true; }
+        else if (type == "start_battle" || type == "unlock_battle") { Npc_ScriptParamLabel.Text = "Battle ID:"; Npc_ScriptParam.IsEnabled = true; }
+        else { Npc_ScriptParamLabel.Text = "Param:"; Npc_ScriptParam.IsEnabled = false; }
+    }
+
+    private void OnNpcScriptSelected(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        _selectedScriptIndex = Npc_ScriptList.SelectedIndex;
+        LoadScriptStepIntoFields();
+    }
+
+    private void OnNpcScriptAdd(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count) return;
+        var n = _events.Npcs[_selectedIndex];
+        n.Script.Add(new ScriptCommand { Type = "say", TextId = "0001" });
+        _selectedScriptIndex = n.Script.Count - 1;
+        RefreshScriptList();
+        OnFieldChanged();
+    }
+
+    private void OnNpcScriptRemove(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count || _selectedScriptIndex < 0) return;
+        var n = _events.Npcs[_selectedIndex];
+        if (_selectedScriptIndex >= n.Script.Count) return;
+
+        n.Script.RemoveAt(_selectedScriptIndex);
+        if (_selectedScriptIndex >= n.Script.Count) _selectedScriptIndex = n.Script.Count - 1;
+        
+        RefreshScriptList();
+        OnFieldChanged();
+    }
+
+    private void OnNpcScriptTypeChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count || _selectedScriptIndex < 0) return;
+        
+        var n = _events.Npcs[_selectedIndex];
+        if (_selectedScriptIndex >= n.Script.Count) return;
+
+        var type = (Npc_ScriptType.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "say";
+        n.Script[_selectedScriptIndex].Type = type;
+        
+        UpdateScriptParamUI(type);
+        RefreshScriptList();
+        OnFieldChanged();
+    }
+
+    private void OnNpcScriptParamChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count || _selectedScriptIndex < 0) return;
+        
+        var n = _events.Npcs[_selectedIndex];
+        if (_selectedScriptIndex >= n.Script.Count) return;
+
+        var cmd = n.Script[_selectedScriptIndex];
+        string text = Npc_ScriptParam.Text ?? "";
+
+        if (cmd.Type == "say") cmd.TextId = text;
+        else if (cmd.Type == "open_shop") cmd.ShopId = int.TryParse(text, out int s) ? s : 0;
+        else if (cmd.Type == "start_battle" || cmd.Type == "unlock_battle") cmd.BattleId = int.TryParse(text, out int b) ? b : 0;
+
+        // Обновляем отображение в списке
+        RefreshScriptList(); 
+        OnFieldChanged();
+    }
+    
     // ══════════════════════════════════════════════════════════════
     //   СПРАЙТ NPC — PREVIEW И ПЕРЕКЛЮЧЕНИЕ
     // ══════════════════════════════════════════════════════════════

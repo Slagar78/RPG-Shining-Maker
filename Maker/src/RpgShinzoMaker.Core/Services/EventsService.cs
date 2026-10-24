@@ -120,36 +120,122 @@ public static class EventsService
         {
             var arr = JsonNode.Parse(File.ReadAllText(file))?.AsArray();
             if (arr == null) return;
+            
             foreach (var item in arr)
             {
                 var obj = item?.AsObject();
                 if (obj == null) continue;
+                
                 string npcId = obj["npc_id"]?.GetValue<string>() ?? "";
                 var npc = events.Npcs.FirstOrDefault(n => n.Id == npcId);
                 if (npc == null) continue;
 
                 var scriptArr = obj["script"]?.AsArray();
                 if (scriptArr == null) continue;
-                var sayIds = new List<string>();
-                foreach (var cmd in scriptArr)
+                
+                npc.Script.Clear();
+                
+                foreach (var cmdNode in scriptArr)
                 {
-                    if (cmd?["type"]?.GetValue<string>() == "say")
+                    var cmdObj = cmdNode?.AsObject();
+                    if (cmdObj == null) continue;
+
+                    var cmd = new ScriptCommand
                     {
-                        string tid = cmd["text_id"]?.GetValue<string>() ?? "";
-                        if (!string.IsNullOrEmpty(tid)) sayIds.Add(tid);
-                    }
+                        Type = cmdObj["type"]?.GetValue<string>() ?? "say",
+                        WaitForInput = cmdObj["wait_for_input"]?.GetValue<bool>() ?? false
+                    };
+
+                    if (cmd.Type == "say")
+                        cmd.TextId = cmdObj["text_id"]?.GetValue<string>();
+                    else if (cmd.Type == "open_shop")
+                        cmd.ShopId = cmdObj["shop_id"]?.GetValue<int>();
+                    else if (cmd.Type == "start_battle" || cmd.Type == "unlock_battle")
+                        cmd.BattleId = cmdObj["battle"]?.GetValue<int>();
+
+                    npc.Script.Add(cmd);
                 }
-                if (sayIds.Count > 0) npc.TextId = string.Join(",", sayIds);
             }
         }
         catch (Exception ex) { Debug.WriteLine($"[EVENTS] Script error: {ex.Message}"); }
     }
 
-    // ─── Парсеры Roof / TileChange / Stairs / Warp (оставь свои, они не меняются) ───
-    private static void ParseRoof(JsonObject obj, MapEvents events) { /* Твой код */ }
-    private static void ParseTileChange(JsonObject obj, MapEvents events) { /* Твой код */ }
-    private static void ParseStairs(JsonObject obj, MapEvents events) { /* Твой код */ }
-    private static void ParseWarp(JsonObject obj, MapEvents events) { /* Твой код */ }
+    // ─── ПАРСЕРЫ (ВОТ ОНИ, ВСЁ НА МЕСТЕ) ───
+    private static void ParseRoof(JsonObject obj, MapEvents events)
+    {
+        var roof = new RoofEvent
+        {
+            StartX = obj["start_x"]?.GetValue<int>() ?? 0,
+            StartY = obj["start_y"]?.GetValue<int>() ?? 0,
+            EndX   = obj["end_x"]?.GetValue<int>()   ?? 1,
+            EndY   = obj["end_y"]?.GetValue<int>()   ?? 1,
+        };
+
+        var triggers = obj["triggers"]?.AsArray();
+        if (triggers != null)
+        {
+            foreach (var item in triggers)
+            {
+                var pair = item?.AsArray();
+                if (pair == null || pair.Count < 2) continue;
+                roof.Triggers.Add(new TriggerPoint(pair[0]?.GetValue<int>() ?? 0, pair[1]?.GetValue<int>() ?? 0));
+            }
+        }
+
+        var exits = obj["exits"]?.AsArray();
+        if (exits != null)
+        {
+            foreach (var item in exits)
+            {
+                var pair = item?.AsArray();
+                if (pair == null || pair.Count < 2) continue;
+                roof.Exits.Add(new TriggerPoint(pair[0]?.GetValue<int>() ?? 0, pair[1]?.GetValue<int>() ?? 0));
+            }
+        }
+        events.Roofs.Add(roof);
+    }
+
+    private static void ParseTileChange(JsonObject obj, MapEvents events)
+    {
+        events.TileChanges.Add(new TileChangeEvent
+        {
+            TriggerX  = obj["trigger_x"]?.GetValue<int>()   ?? -1,
+            TriggerY  = obj["trigger_y"]?.GetValue<int>()   ?? -1,
+            NewTileId = obj["new_tile_id"]?.GetValue<int>() ?? 0,
+            SampleX   = obj["sample_x"]?.GetValue<int>()    ?? -1,
+            SampleY   = obj["sample_y"]?.GetValue<int>()    ?? -1,
+            CloseX    = obj["close_x"]?.GetValue<int>()     ?? -1,
+            CloseY    = obj["close_y"]?.GetValue<int>()     ?? -1,
+        });
+    }
+
+    private static void ParseStairs(JsonObject obj, MapEvents events)
+    {
+        events.Stairs.Add(new StairEvent
+        {
+            StartX    = obj["start_x"]?.GetValue<int>()   ?? 0,
+            StartY    = obj["start_y"]?.GetValue<int>()   ?? 0,
+            EndX      = obj["end_x"]?.GetValue<int>()     ?? 1,
+            EndY      = obj["end_y"]?.GetValue<int>()     ?? 1,
+            Direction = obj["direction"]?.GetValue<int>() ?? 0,
+        });
+    }
+
+    private static void ParseWarp(JsonObject obj, MapEvents events)
+    {
+        int facing = obj["facing"]?.GetValue<int>() ?? 0;
+        facing = facing switch { 2 => 0, 4 => 1, 6 => 2, 8 => 3, _ => facing };
+
+        events.Warps.Add(new WarpEvent
+        {
+            TriggerX  = obj["trigger_x"]?.GetValue<int>()   ?? -1,
+            TriggerY  = obj["trigger_y"]?.GetValue<int>()   ?? -1,
+            TargetMap = obj["target_map"]?.GetValue<string>() ?? "",
+            TargetX   = obj["target_x"]?.GetValue<int>()     ?? 0,
+            TargetY   = obj["target_y"]?.GetValue<int>()     ?? 0,
+            Facing    = facing,
+        });
+    }
 
     // ══════════════════════════════════════════════════════════════
     //   SAVE
@@ -160,7 +246,6 @@ public static class EventsService
         string mapDir = GetMapDir(folder);
         Directory.CreateDirectory(mapDir);
 
-        // Ищем, куда сохранять (в какую версию)
         MapSetupVersion? chosen = null;
         var setupFile = ProjectPaths.MapSetupsFile(folder);
         if (File.Exists(setupFile))
@@ -190,14 +275,115 @@ public static class EventsService
         }
     }
 
-    private static void SaveEventsFileTo(string file, MapEvents events) {
-        // Твой старый код SaveEventsFile, только вместо GetEventsFile(folder) пишем в file
-        // Не забудь Directory.CreateDirectory(Path.GetDirectoryName(file))
+    private static void SaveEventsFileTo(string file, MapEvents events)
+    {
+        var root = new JsonArray();
+        foreach (var r in events.Roofs)
+        {
+            var triggers = new JsonArray();
+            foreach (var t in r.Triggers) triggers.Add(new JsonArray { t.X, t.Y });
+            var exits = new JsonArray();
+            foreach (var e in r.Exits) exits.Add(new JsonArray { e.X, e.Y });
+
+            root.Add(new JsonObject {
+                ["type"] = "roof", ["start_x"] = r.StartX, ["start_y"] = r.StartY,
+                ["end_x"] = r.EndX, ["end_y"] = r.EndY, ["triggers"] = triggers, ["exits"] = exits
+            });
+        }
+
+        foreach (var t in events.TileChanges)
+        {
+            root.Add(new JsonObject {
+                ["type"] = "tile_change", ["trigger_x"] = t.TriggerX, ["trigger_y"] = t.TriggerY,
+                ["new_tile_id"] = t.NewTileId, ["sample_x"] = t.SampleX, ["sample_y"] = t.SampleY,
+                ["close_x"] = t.CloseX, ["close_y"] = t.CloseY
+            });
+        }
+
+        foreach (var s in events.Stairs)
+        {
+            root.Add(new JsonObject {
+                ["type"] = "stairs", ["start_x"] = s.StartX, ["start_y"] = s.StartY,
+                ["end_x"] = s.EndX, ["end_y"] = s.EndY, ["direction"] = s.Direction
+            });
+        }
+
+        foreach (var w in events.Warps)
+        {
+            root.Add(new JsonObject {
+                ["type"] = "warp", ["trigger_x"] = w.TriggerX, ["trigger_y"] = w.TriggerY,
+                ["target_map"] = w.TargetMap, ["target_x"] = w.TargetX, ["target_y"] = w.TargetY,
+                ["facing"] = w.Facing
+            });
+        }
+
+        var dir = Path.GetDirectoryName(file);
+        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+        File.WriteAllText(file, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }
-    private static void SaveNpcEventsFileTo(string file, MapEvents events) {
-        // Твой старый код SaveNpcEventsFile, пишем в file
+
+    private static void SaveNpcEventsFileTo(string file, MapEvents events)
+    {
+        var root = new JsonArray();
+        foreach (var npc in events.Npcs)
+        {
+            var obj = new JsonObject {
+                ["id"] = npc.Id, ["x"] = npc.X, ["y"] = npc.Y,
+                ["sprite"] = npc.Sprite, ["behavior"] = npc.Behavior, ["direction"] = npc.Direction
+            };
+            if (npc.Behavior == "wander")
+            {
+                obj["home_x"] = npc.HomeX;
+                obj["home_y"] = npc.HomeY;
+                obj["radius"] = npc.Radius;
+            }
+            root.Add(obj);
+        }
+        var dir = Path.GetDirectoryName(file);
+        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+        File.WriteAllText(file, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }
-    private static void SaveNpcScriptFileTo(string file, MapEvents events) {
-        // Твой старый код SaveNpcScriptFile, пишем в file
+
+    private static void SaveNpcScriptFileTo(string file, MapEvents events)
+    {
+        var root = new JsonArray();
+
+        foreach (var npc in events.Npcs)
+        {
+            if (npc.Script.Count == 0 && !string.IsNullOrWhiteSpace(npc.TextId))
+            {
+                npc.Script.Add(new ScriptCommand { Type = "turn_to_player" });
+                npc.Script.Add(new ScriptCommand { Type = "turn_player_to_npc" });
+                var ids = npc.TextId.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s));
+                foreach (var tid in ids)
+                    npc.Script.Add(new ScriptCommand { Type = "say", TextId = tid });
+                npc.Script.Add(new ScriptCommand { Type = "end", WaitForInput = true });
+            }
+
+            if (npc.Script.Count == 0) continue;
+
+            var scriptArr = new JsonArray();
+            foreach (var cmd in npc.Script)
+            {
+                var cmdObj = new JsonObject { ["type"] = cmd.Type };
+
+                if (cmd.Type == "say" && !string.IsNullOrEmpty(cmd.TextId))
+                    cmdObj["text_id"] = cmd.TextId;
+                else if (cmd.Type == "open_shop" && cmd.ShopId.HasValue)
+                    cmdObj["shop_id"] = cmd.ShopId.Value;
+                else if ((cmd.Type == "start_battle" || cmd.Type == "unlock_battle") && cmd.BattleId.HasValue)
+                    cmdObj["battle"] = cmd.BattleId.Value;
+                else if (cmd.Type == "end")
+                    cmdObj["wait_for_input"] = cmd.WaitForInput;
+
+                scriptArr.Add(cmdObj);
+            }
+
+            root.Add(new JsonObject { ["npc_id"] = npc.Id, ["script"] = scriptArr });
+        }
+
+        var dir = Path.GetDirectoryName(file);
+        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+        File.WriteAllText(file, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }
 }

@@ -48,6 +48,9 @@ public partial class EventEditorView : UserControl, IEditor
     /// <summary>Индекс выбранного выхода крыши (-1 = ничего).</summary>
     private int _selectedRoofExitIndex = -1;
     
+    /// <summary>Индекс выбранного шага скрипта NPC (-1 = ничего).</summary>
+    private int _selectedScriptIndex = -1;
+    
     /// <summary>Последняя позиция курсора на карте (-1 = вне карты).</summary>
     private int _lastHoverX = -1;
     private int _lastHoverY = -1;
