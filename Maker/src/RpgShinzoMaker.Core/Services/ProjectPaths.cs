@@ -30,4 +30,10 @@ public static class ProjectPaths
 		
 	public static string NpcSpritesDir =>
 	    Path.Combine(Root ?? "", "assets", "mapsprites_NPC");
+
+    public static string MapSetupsFile(string folder) => 
+        Path.Combine(MapsDir, folder, "mapsetups.json");
+
+    public static string MapSetupsDir(string folder) => 
+        Path.Combine(MapsDir, folder, "mapsetups");
 }

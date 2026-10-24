@@ -548,45 +548,7 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
 
         W_TargetMapCombo.SelectionChanged += OnWTargetMapChanged;
     }
-
-    // ══════════════════════════════════════════════════════════════
-    //   NPC — загрузка в поля
-    // ══════════════════════════════════════════════════════════════
-    private void LoadNpc()
-    {
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count)
-        {
-            Npc_Id.Text        = "";
-            Npc_XY.Text        = "0,0";
-            Npc_Sprite.Text    = "";
-            Npc_Behavior.SelectedIndex = 0;
-            Npc_Direction.SelectedIndex = 0;
-            Npc_TextId.Text    = "";
-            Npc_HomeXY.Text    = "0,0";
-            Npc_Radius.Text    = "3";
-            Npc_SpritePreview.Source = null;
-            return;
-        }
-
-        var n = _events.Npcs[_selectedIndex];
-        Npc_Id.Text        = n.Id;
-        Npc_XY.Text        = $"{n.X},{n.Y}";
-        Npc_Sprite.Text    = n.Sprite;
-        Npc_Behavior.SelectedIndex  = n.Behavior == "wander" ? 1 : 0;
-        Npc_Direction.SelectedIndex = n.Direction switch
-        {
-            "down"  => 0,
-            "left"  => 1,
-            "right" => 2,
-            "up"    => 3,
-            _       => 0
-        };
-        Npc_TextId.Text = n.TextId;
-        Npc_HomeXY.Text = $"{n.HomeX},{n.HomeY}";
-        Npc_Radius.Text = n.Radius.ToString();
-        UpdateNpcSpritePreview(n.Sprite);
-    }
-
+    
     // ══════════════════════════════════════════════════════════════
     //   ХЕЛПЕРЫ
     // ══════════════════════════════════════════════════════════════
@@ -887,6 +849,52 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
     }
 
     // ══════════════════════════════════════════════════════════════
+    //   NPC — загрузка в поля
+    // ══════════════════════════════════════════════════════════════
+    private void LoadNpc()
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count)
+        {
+            Npc_Id.Text        = "";
+            Npc_X.Text         = "0";
+            Npc_Y.Text         = "0";
+            Npc_Sprite.Text    = "";
+            Npc_Behavior.SelectedIndex = 0;
+            Npc_Direction.SelectedIndex = 0;
+            Npc_TextId.Text    = "";
+            Npc_HomeX.Text     = "0";
+            Npc_HomeY.Text     = "0";
+            Npc_Radius.Text    = "3";
+            Npc_SpritePreview.Source = null;
+            return;
+        }
+
+        var n = _events.Npcs[_selectedIndex];
+        Npc_Id.Text        = n.Id;
+        
+        Npc_X.Text         = n.X.ToString();
+        Npc_Y.Text         = n.Y.ToString();
+        
+        Npc_Sprite.Text    = n.Sprite;
+        Npc_Behavior.SelectedIndex  = n.Behavior == "wander" ? 1 : 0;
+        Npc_Direction.SelectedIndex = n.Direction switch
+        {
+            "down"  => 0,
+            "left"  => 1,
+            "right" => 2,
+            "up"    => 3,
+            _       => 0
+        };
+        Npc_TextId.Text = n.TextId;
+        
+        Npc_HomeX.Text  = n.HomeX.ToString();
+        Npc_HomeY.Text  = n.HomeY.ToString();
+        
+        Npc_Radius.Text = n.Radius.ToString();
+        UpdateNpcSpritePreview(n.Sprite);
+    }
+
+    // ══════════════════════════════════════════════════════════════
     //   ОБРАБОТЧИКИ NPC
     // ══════════════════════════════════════════════════════════════
     private void OnNpcIdChanged(object? sender, TextChangedEventArgs e)
@@ -902,13 +910,43 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count) return;
 
-        var p = ParsePair(Npc_XY.Text ?? "");
-        if (p.HasValue)
+        // ─── ОЧИСТКА ОТ БУКВ (для вставки) ───
+        if (sender is TextBox tb)
         {
-            _events.Npcs[_selectedIndex].X = p.Value.x;
-            _events.Npcs[_selectedIndex].Y = p.Value.y;
-            OnFieldChanged();
+            string validText = System.Text.RegularExpressions.Regex.Replace(tb.Text ?? "", "[^0-9]", "");
+            if (tb.Text != validText)
+            {
+                tb.Text = validText;
+                tb.CaretIndex = validText.Length; // Ставим курсор в конец
+            }
         }
+
+        var n = _events.Npcs[_selectedIndex];
+        n.X = ParseCoord(Npc_X.Text, fallback: 0);
+        n.Y = ParseCoord(Npc_Y.Text, fallback: 0);
+        OnFieldChanged();
+    }
+
+    private void OnNpcHomeXYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count) return;
+
+        // ─── ОЧИСТКА ОТ БУКВ (для вставки) ───
+        if (sender is TextBox tb)
+        {
+            string validText = System.Text.RegularExpressions.Regex.Replace(tb.Text ?? "", "[^0-9]", "");
+            if (tb.Text != validText)
+            {
+                tb.Text = validText;
+                tb.CaretIndex = validText.Length;
+            }
+        }
+
+        var n = _events.Npcs[_selectedIndex];
+        n.HomeX = ParseCoord(Npc_HomeX.Text, fallback: 0);
+        n.HomeY = ParseCoord(Npc_HomeY.Text, fallback: 0);
+        OnFieldChanged();
     }
 
     private void OnNpcSpriteChanged(object? sender, TextChangedEventArgs e)
@@ -951,27 +989,21 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         _events.Npcs[_selectedIndex].TextId = (Npc_TextId.Text ?? "").Trim();
     }
 
-    private void OnNpcHomeXYChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count) return;
-
-        var n = _events.Npcs[_selectedIndex];
-        if (IsDash(Npc_HomeXY.Text ?? ""))
-        {
-            n.HomeX = n.HomeY = 0;
-        }
-        else
-        {
-            var p = ParsePair(Npc_HomeXY.Text ?? "");
-            if (p.HasValue) { n.HomeX = p.Value.x; n.HomeY = p.Value.y; }
-        }
-    }
-
     private void OnNpcRadiusChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count) return;
+
+        // ─── ОЧИСТКА ОТ БУКВ (для вставки) ───
+        if (sender is TextBox tb)
+        {
+            string validText = System.Text.RegularExpressions.Regex.Replace(tb.Text ?? "", "[^0-9]", "");
+            if (tb.Text != validText)
+            {
+                tb.Text = validText;
+                tb.CaretIndex = validText.Length;
+            }
+        }
 
         var v = ParseInt(Npc_Radius.Text ?? "");
         if (v.HasValue) _events.Npcs[_selectedIndex].Radius = v.Value;

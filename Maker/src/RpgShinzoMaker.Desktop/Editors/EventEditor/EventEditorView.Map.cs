@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json; // Добавлено для чтения mapsetups.json
 using Avalonia.Controls;
 using RpgShinzoMaker.Core.Models;
 using RpgShinzoMaker.Core.Services;
@@ -16,6 +17,9 @@ namespace RpgShinzoMaker.Desktop.Editors.EventEditor;
 /// </summary>
 public partial class EventEditorView
 {
+    // ★ ДОБАВЛЕНО: выбранная версия (по умолчанию v00)
+    private string _selectedVersionId = "v00";
+
     // ══════════════════════════════════════════════════════════════
     //   ЗАГРУЗКА ПРОЕКТА
     // ══════════════════════════════════════════════════════════════
@@ -89,6 +93,61 @@ public partial class EventEditorView
     }
 
     // ══════════════════════════════════════════════════════════════
+    //   ★ НОВОЕ: КОМБО ВЕРСИЙ (MAPSETUP)
+    // ══════════════════════════════════════════════════════════════
+    private void OnVersionSelectorChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (VersionSelector.SelectedItem is string ver && ver != _selectedVersionId)
+        {
+            _selectedVersionId = ver;
+            if (_currentMapIndex >= 0)
+                LoadMapByEntry(_mapEntries[_currentMapIndex]); // Перезагружаем карту с новой версией
+        }
+    }
+
+    private void PopulateVersionSelector(string folder)
+    {
+        if (VersionSelector == null) return;
+
+        // Отписываемся от события, чтобы не было рекурсии при заполнении
+        VersionSelector.SelectionChanged -= OnVersionSelectorChanged;
+        
+        var versions = new List<string>();
+        var setupFile = ProjectPaths.MapSetupsFile(folder);
+
+        if (File.Exists(setupFile))
+        {
+            try
+            {
+                var setup = JsonSerializer.Deserialize<MapSetup>(File.ReadAllText(setupFile));
+                if (setup?.Versions != null)
+                {
+                    foreach (var v in setup.Versions)
+                        versions.Add(v.Id); // Берем только ID (например, "v00", "v01")
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[EVENTS] Ошибка чтения mapsetups.json: {ex.Message}");
+            }
+        }
+
+        // Если файла нет или он пуст — показываем заглушку v00
+        if (versions.Count == 0) 
+            versions.Add("v00");
+
+        VersionSelector.ItemsSource = versions;
+        
+        // Восстанавливаем выбранную версию (если она есть в новом списке)
+        int idx = versions.IndexOf(_selectedVersionId);
+        VersionSelector.SelectedIndex = idx >= 0 ? idx : 0;
+        _selectedVersionId = versions[VersionSelector.SelectedIndex];
+        
+        // Подписываемся обратно
+        VersionSelector.SelectionChanged += OnVersionSelectorChanged;
+    }
+
+    // ══════════════════════════════════════════════════════════════
     //   ЗАГРУЗКА КОНКРЕТНОЙ КАРТЫ
     // ══════════════════════════════════════════════════════════════
     private void LoadMapByEntry(MapEntry entry)
@@ -114,23 +173,26 @@ public partial class EventEditorView
 
             _currentMap = map;
 
-            // 2. События (events.json + NPC_events.json + NPC_script.json)
-            _events = EventsService.Load(entry.Folder);
+            // 2. Обновляем список версий для текущей карты
+            PopulateVersionSelector(entry.Folder);
 
-            // 3. Сбросить выделение
+            // 3. Загружаем события с учетом выбранной версии
+            _events = EventsService.Load(entry.Folder, _selectedVersionId);
+
+            // 4. Сбросить выделение
             _selectedIndex = -1;
             _selectedRoofTriggerIndex = -1;
             _selectedRoofExitIndex = -1;
 
-            // 4. Обновить список событий и панель полей (Sections.cs + Fields.cs)
+            // 5. Обновить список событий и панель полей (Sections.cs + Fields.cs)
             RefreshEventList();
             UpdateSectionButtons();
             UpdatePanelVisibility();
 
-            // 5. Полная перерисовка — создаём все Image для новой карты
+            // 6. Полная перерисовка — создаём все Image для новой карты
             FullRedraw();
 
-            Debug.WriteLine($"[EVENTS] Карта '{entry.Name}' загружена. " +
+            Debug.WriteLine($"[EVENTS] Карта '{entry.Name}' загружена (Версия: {_selectedVersionId}). " +
                             $"Roofs={_events.Roofs.Count}, " +
                             $"TileChanges={_events.TileChanges.Count}, " +
                             $"Stairs={_events.Stairs.Count}, " +
@@ -194,8 +256,9 @@ public partial class EventEditorView
 
         try
         {
-            EventsService.Save(_currentMap.Folder, _events);
-            Debug.WriteLine($"[EVENTS] Сохранено: {_currentMap.Folder}");
+            // Передаем версию, чтобы сохранить в нужную папку mapsetups
+            EventsService.Save(_currentMap.Folder, _selectedVersionId, _events);
+            Debug.WriteLine($"[EVENTS] Сохранено: {_currentMap.Folder} (Версия: {_selectedVersionId})");
         }
         catch (Exception ex)
         {

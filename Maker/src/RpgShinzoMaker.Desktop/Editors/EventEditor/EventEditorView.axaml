@@ -84,6 +84,12 @@
                                       HorizontalAlignment="Stretch"
                                       SelectionChanged="OnMapSelectorChanged"/>
 
+                            <TextBlock Text="VERSION" 
+                                       Foreground="White" FontWeight="Bold" FontSize="12" Margin="0,8,0,0"/>
+                            <ComboBox x:Name="VersionSelector" 
+                                      HorizontalAlignment="Stretch" 
+                                      SelectionChanged="OnVersionSelectorChanged"/>
+                            
                             <!-- РАЗДЕЛЫ -->
                             <TextBlock Text="SECTIONS"
                                        Foreground="White"
@@ -203,7 +209,8 @@
                                       HorizontalScrollBarVisibility="Disabled">
                             <Panel>
                                                                 <!-- ───── ROOF ───── -->
-                                <StackPanel x:Name="RoofPanel" Spacing="3" IsVisible="False">
+
+                                  <StackPanel x:Name="RoofPanel" Spacing="3" IsVisible="False">
                                 
                                     <!-- Start X,Y -->
                                     <Grid ColumnDefinitions="100,*">
@@ -218,7 +225,7 @@
                                                      TextChanged="OnRoofStartYChanged"/>
                                         </StackPanel>
                                     </Grid>
-                                
+                                    
                                     <!-- End X,Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="End X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
@@ -231,7 +238,7 @@
                                                      TextInput="OnCoordTextInput"
                                                      TextChanged="OnRoofEndYChanged"/>
                                         </StackPanel>
-                                    </Grid>
+                                    </Grid>                                                              
                                 
                                     <!-- ═══════════════ TRIGGERS ═══════════════ -->
                                     <Grid ColumnDefinitions="100,*" Margin="0,6,0,0">
@@ -487,15 +494,26 @@
                                 </StackPanel>
 
                                 <!-- ───── NPC ───── -->
-                                <StackPanel x:Name="NpcPanel" Spacing="3" IsVisible="False">
+                                <StackPanel x:Name="NpcPanel" Spacing="4" IsVisible="False">
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="ID:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <TextBox Grid.Column="1" x:Name="Npc_Id" TextChanged="OnNpcIdChanged"/>
                                     </Grid>
+                                    
+                                    <!-- Раздельные X и Y -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Npc_XY" TextChanged="OnNpcXYChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="Npc_X" Width="40" MaxLength="4" 
+                                                     TextInput="OnCoordTextInput" 
+                                                     TextChanged="OnNpcXYChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="Npc_Y" Width="40" MaxLength="4" 
+                                                     TextInput="OnCoordTextInput" 
+                                                     TextChanged="OnNpcXYChanged"/>
+                                        </StackPanel>
                                     </Grid>
+                                    
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Sprite:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <Grid Grid.Column="1" ColumnDefinitions="Auto,Auto,*,Auto,Auto">
@@ -528,39 +546,46 @@
                                                     Click="OnNpcSpriteNextClick"/>
                                         </Grid>
                                     </Grid>
-                                    <Grid ColumnDefinitions="100,*">
+                                    
+                                    <!-- Behavior и Direction в одной строке -->
+                                    <Grid ColumnDefinitions="100,*,10,100,*">
                                         <TextBlock Grid.Column="0" Text="Behavior:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <ComboBox Grid.Column="1"
-                                                  x:Name="Npc_Behavior"
-                                                  HorizontalAlignment="Stretch"
-                                                  SelectionChanged="OnNpcBehaviorChanged">
+                                        <ComboBox Grid.Column="1" x:Name="Npc_Behavior" HorizontalAlignment="Stretch" SelectionChanged="OnNpcBehaviorChanged">
                                             <ComboBoxItem Content="static"/>
                                             <ComboBoxItem Content="wander"/>
                                         </ComboBox>
-                                    </Grid>
-                                    <Grid ColumnDefinitions="100,*">
-                                        <TextBlock Grid.Column="0" Text="Direction:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <ComboBox Grid.Column="1"
-                                                  x:Name="Npc_Direction"
-                                                  HorizontalAlignment="Stretch"
-                                                  SelectionChanged="OnNpcDirectionChanged">
+                                        
+                                        <TextBlock Grid.Column="3" Text="Direction:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                        <ComboBox Grid.Column="4" x:Name="Npc_Direction" HorizontalAlignment="Stretch" SelectionChanged="OnNpcDirectionChanged">
                                             <ComboBoxItem Content="down"/>
                                             <ComboBoxItem Content="left"/>
                                             <ComboBoxItem Content="right"/>
                                             <ComboBoxItem Content="up"/>
                                         </ComboBox>
                                     </Grid>
+
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Text ID:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <TextBox Grid.Column="1" x:Name="Npc_TextId" TextChanged="OnNpcTextIdChanged"/>
                                     </Grid>
-                                    <Grid ColumnDefinitions="100,*">
+
+                                    <!-- Home X,Y и Radius в одной строке -->
+                                    <Grid ColumnDefinitions="100,*,10,100,50">
                                         <TextBlock Grid.Column="0" Text="Home X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Npc_HomeXY" TextChanged="OnNpcHomeXYChanged"/>
-                                    </Grid>
-                                    <Grid ColumnDefinitions="100,*">
-                                        <TextBlock Grid.Column="0" Text="Radius:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Npc_Radius" TextChanged="OnNpcRadiusChanged"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="Npc_HomeX" Width="40" MaxLength="4" 
+                                                     TextInput="OnCoordTextInput" 
+                                                     TextChanged="OnNpcHomeXYChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="Npc_HomeY" Width="40" MaxLength="4" 
+                                                     TextInput="OnCoordTextInput" 
+                                                     TextChanged="OnNpcHomeXYChanged"/>
+                                        </StackPanel>
+                                        
+                                        <TextBlock Grid.Column="3" Text="Radius:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="4" x:Name="Npc_Radius" MaxLength="3" 
+                                                 TextInput="OnCoordTextInput" 
+                                                 TextChanged="OnNpcRadiusChanged"/>
                                     </Grid>
                                 </StackPanel>
 
