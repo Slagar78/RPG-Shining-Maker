@@ -21,6 +21,8 @@ namespace RpgShinzoMaker.Desktop.Editors.EventEditor;
 /// </summary>
 public partial class EventEditorView
 {
+    private List<string> _tempTextIds = new();
+    private int _editingTextIdIndex = -1;
     // ══════════════════════════════════════════════════════════════
     //   ЗАГРУЗКА ВЫБРАННОГО СОБЫТИЯ В ПОЛЯ
     // ══════════════════════════════════════════════════════════════
@@ -1016,7 +1018,7 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         LoadScriptStepIntoFields();
     }
 
-       private void LoadScriptStepIntoFields()
+        private void LoadScriptStepIntoFields()
     {
         _suppressFieldEvents = true;
         try
@@ -1026,7 +1028,7 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
                 Npc_ScriptType.SelectedIndex = -1;
                 Npc_ScriptParam.Text = "";
                 Npc_ScriptParam.IsEnabled = false;
-                Npc_ScriptTextCombo.IsVisible = false;
+                Npc_TextIdPanel.IsVisible = false;
                 return;
             }
 
@@ -1047,26 +1049,19 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
             
             if (cmd.Type == "say")
             {
+                // Заполняем выпадающий список всеми текстами
                 var items = _localTexts.Select(kvp => $"{kvp.Key}: {(kvp.Value.Length > 25 ? kvp.Value.Substring(0, 25) + "..." : kvp.Value)}").ToList();
                 Npc_ScriptTextCombo.ItemsSource = items;
-                
-                // Сначала сбрасываем выделение и ставим чистый текст (чтобы запятые работали)
-                Npc_ScriptTextCombo.SelectedIndex = -1;
-                Npc_ScriptTextCombo.Text = cmd.TextId ?? "";
-                
-                // ★ Если ID один (без запятой) — выделяем его в выпадающем списке
-                if (!string.IsNullOrEmpty(cmd.TextId) && !cmd.TextId.Contains(","))
+
+                // Разбиваем строку из JSON (например "0001,0002") на кусочки
+                _tempTextIds.Clear();
+                if (!string.IsNullOrEmpty(cmd.TextId))
                 {
-                    string firstId = cmd.TextId.Trim();
-                    for (int i = 0; i < items.Count; i++)
-                    {
-                        if (items[i].StartsWith(firstId + ":"))
-                        {
-                            Npc_ScriptTextCombo.SelectedIndex = i;
-                            break;
-                        }
-                    }
+                    _tempTextIds.AddRange(cmd.TextId.Split(',').Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)));
                 }
+                
+                // Обновляем кнопочки на экране
+                RefreshTextIdsUI();
             }
             else if (cmd.Type == "open_shop") Npc_ScriptParam.Text = cmd.ShopId?.ToString() ?? "0";
             else if (cmd.Type == "start_battle" || cmd.Type == "unlock_battle") Npc_ScriptParam.Text = cmd.BattleId?.ToString() ?? "0";
@@ -1081,27 +1076,27 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         { 
             Npc_ScriptParamLabel.Text = "Text ID:"; 
             Npc_ScriptParam.IsVisible = false; 
-            Npc_ScriptTextCombo.IsVisible = true; 
+            Npc_TextIdPanel.IsVisible = true; 
         }
         else if (type == "open_shop") 
         { 
             Npc_ScriptParamLabel.Text = "Shop ID:"; 
             Npc_ScriptParam.IsVisible = true; 
-            Npc_ScriptTextCombo.IsVisible = false; 
+            Npc_TextIdPanel.IsVisible = false; 
             Npc_ScriptParam.IsEnabled = true; 
         }
         else if (type == "start_battle" || type == "unlock_battle") 
         { 
             Npc_ScriptParamLabel.Text = "Battle ID:"; 
             Npc_ScriptParam.IsVisible = true; 
-            Npc_ScriptTextCombo.IsVisible = false; 
+            Npc_TextIdPanel.IsVisible = false; 
             Npc_ScriptParam.IsEnabled = true; 
         }
         else 
         { 
             Npc_ScriptParamLabel.Text = "Param:"; 
             Npc_ScriptParam.IsVisible = true; 
-            Npc_ScriptTextCombo.IsVisible = false; 
+            Npc_TextIdPanel.IsVisible = false; 
             Npc_ScriptParam.IsEnabled = false; 
         }
     }
@@ -1175,52 +1170,111 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
     private void OnNpcScriptTextSelected(object? sender, SelectionChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count || _selectedScriptIndex < 0) return;
+        if (Npc_ScriptTextCombo.SelectedItem is not string selectedItem) return;
 
+        // Берем только ID (до двоеточия)
+        string id = selectedItem.Split(':')[0].Trim();
+
+        // Если мы кликнули на существующую кнопку [0001] — меняем её
+        if (_editingTextIdIndex >= 0 && _editingTextIdIndex < _tempTextIds.Count)
+        {
+            _tempTextIds[_editingTextIdIndex] = id;
+        }
+        // Если нажали на "+" — добавляем в конец
+        else 
+        {
+            _tempTextIds.Add(id);
+        }
+
+        SaveTextIdsToModel();
+        RefreshTextIdsUI();
+
+        // Сбрасываем выделение в списке, чтобы можно было выбрать этот же текст еще раз
+        _suppressFieldEvents = true;
+        Npc_ScriptTextCombo.SelectedIndex = -1;
+        _suppressFieldEvents = false;
+    }
+
+    private void RefreshTextIdsUI()
+    {
+        if (Npc_TextIdsWrapPanel == null) return;
+        Npc_TextIdsWrapPanel.Children.Clear();
+
+        for (int i = 0; i < _tempTextIds.Count; i++)
+        {
+            var btn = new Button 
+            { 
+                Content = $"[{_tempTextIds[i]}]", 
+                Padding = new Avalonia.Thickness(4, 2), 
+                Margin = new Avalonia.Thickness(0,0,4,4), 
+                FontSize = 12 
+            };
+
+            // ★ Если эта кнопка сейчас редактируется — красим её в синий ★
+            if (i == _editingTextIdIndex)
+            {
+                btn.Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#3E5F8A"));
+                btn.Foreground = Avalonia.Media.Brushes.White;
+            }
+
+            int index = i;
+            btn.Click += (s, e) => {
+                _editingTextIdIndex = index;
+                
+                // ★ Ищем этот ID в выпадающем списке, чтобы выделить его ★
+                string currentId = _tempTextIds[index];
+                if (Npc_ScriptTextCombo.ItemsSource is System.Collections.Generic.List<string> items)
+                {
+                    for (int j = 0; j < items.Count; j++)
+                    {
+                        if (items[j].StartsWith(currentId + ":"))
+                        {
+                            _suppressFieldEvents = true; // Блокируем событие выбора, чтобы ничего не заменилось случайно
+                            Npc_ScriptTextCombo.SelectedIndex = j;
+                            _suppressFieldEvents = false;
+                            break;
+                        }
+                    }
+                }
+
+                RefreshTextIdsUI(); // Перерисовываем, чтобы кнопка стала синей
+                Npc_ScriptTextCombo.IsDropDownOpen = true; // Открываем список
+            };
+            Npc_TextIdsWrapPanel.Children.Add(btn);
+        }
+    }
+
+    private void OnTextIdAddClick(object? sender, RoutedEventArgs e)
+    {
+        _editingTextIdIndex = -1; 
+        Npc_ScriptTextCombo.SelectedIndex = -1; // Сбрасываем выделение в списке
+        RefreshTextIdsUI(); // Убираем синюю подсветку с кнопок
+        Npc_ScriptTextCombo.IsDropDownOpen = true; 
+    }
+
+    private void OnTextIdRemoveClick(object? sender, RoutedEventArgs e)
+    {
+        if (_tempTextIds.Count > 0)
+        {
+            _tempTextIds.RemoveAt(_tempTextIds.Count - 1);
+            SaveTextIdsToModel();
+            RefreshTextIdsUI();
+        }
+    }
+
+    private void SaveTextIdsToModel()
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count || _selectedScriptIndex < 0) return;
         var n = _events.Npcs[_selectedIndex];
         if (_selectedScriptIndex >= n.Script.Count) return;
 
         var cmd = n.Script[_selectedScriptIndex];
-        
-        if (Npc_ScriptTextCombo.SelectedItem is string selectedItem)
-        {
-            // Отрезаем текст после двоеточия (нам нужен только ID, например "0001")
-            string id = selectedItem.Split(':')[0].Trim();
-            cmd.TextId = id;
-            // НЕ ставим Npc_ScriptTextCombo.Text = id, чтобы не было рекурсии. 
-            // ComboBox сам поставит нужный текст.
-        }
+        cmd.TextId = string.Join(",", _tempTextIds);
         
         RefreshScriptList();
         OnFieldChanged();
-    }
+    } 
     
-    private void OnNpcScriptTextLostFocus(object? sender, RoutedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count || _selectedScriptIndex < 0) return;
-
-        var n = _events.Npcs[_selectedIndex];
-        if (_selectedScriptIndex >= n.Script.Count) return;
-
-        var cmd = n.Script[_selectedScriptIndex];
-        
-        string text = Npc_ScriptTextCombo.Text ?? "";
-        
-        // ★ Если в тексте есть двоеточие (например "0001: Привет"), отрезаем его, оставляя только ID!
-        if (text.Contains(":") && !text.Contains(","))
-        {
-            text = text.Split(':')[0].Trim();
-            Npc_ScriptTextCombo.Text = text;
-        }
-
-        if (cmd.TextId != text)
-        {
-            cmd.TextId = text;
-            RefreshScriptList();
-            OnFieldChanged();
-        }
-    }
     
     // ══════════════════════════════════════════════════════════════
     //   СПРАЙТ NPC — PREVIEW И ПЕРЕКЛЮЧЕНИЕ

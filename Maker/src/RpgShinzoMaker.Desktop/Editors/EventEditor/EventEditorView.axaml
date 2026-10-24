@@ -379,13 +379,26 @@
                             <Grid ColumnDefinitions="60,*">
                                 <TextBlock Grid.Column="0" x:Name="Npc_ScriptParamLabel" Text="Param:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                 <Grid Grid.Column="1">
-                                    <!-- Ширина 60, максимум 3 цифры, только цифры, прижато влево -->
+                                    <!-- Поле для магазинов и битв -->
                                     <TextBox x:Name="Npc_ScriptParam" TextChanged="OnNpcScriptParamChanged" IsVisible="True" Width="45" MaxLength="3" HorizontalAlignment="Left" TextInput="OnCoordTextInput"/>
                                     
-                                    <!-- А вот выпадающий список текстов оставляем на всю ширину (Stretch), чтобы видеть текст -->
-                                    <ComboBox x:Name="Npc_ScriptTextCombo" SelectionChanged="OnNpcScriptTextSelected" LostFocus="OnNpcScriptTextLostFocus" IsVisible="False" HorizontalAlignment="Stretch" IsEditable="True"/>
+                                    <!-- ★ НОВАЯ ПАНЕЛЬ ДЛЯ ТЕКСТОВ ★ -->
+                                    <StackPanel x:Name="Npc_TextIdPanel" IsVisible="False" Spacing="4">
+                                        <!-- Сюда будут добавляться теги [0001] -->
+                                        <WrapPanel x:Name="Npc_TextIdsWrapPanel" Orientation="Horizontal" />
+                                        
+                                        <!-- Выпадающий список и кнопки + / - -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <ComboBox x:Name="Npc_ScriptTextCombo" Grid.Column="0" HorizontalAlignment="Stretch" SelectionChanged="OnNpcScriptTextSelected"/>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                                <Button Content="+" Width="24" Height="24" Padding="0" FontSize="14" FontWeight="Bold" Click="OnTextIdAddClick"/>
+                                                <Button Content="-" Width="24" Height="24" Padding="0" FontSize="14" FontWeight="Bold" Click="OnTextIdRemoveClick"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
                                 </Grid>
                             </Grid>
+                            
                         </StackPanel>
                     </Border>
                     
