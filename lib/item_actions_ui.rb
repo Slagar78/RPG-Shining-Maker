@@ -2225,9 +2225,31 @@ class DropMenu < ItemSubMenuBase
         end
         @text_full_shown = true if @text_reveal_index >= full_text.length
       end
+
     when :result_message
       @message_timer += dt * 60.0
-      if @message_timer >= RESULT_DURATION
+      
+      unless @text_full_shown
+        template = if @sell_mode
+                     @game_text["0021"] || "Thank you!"
+                   else
+                     @game_text["0004"] || "The {ITEM} {N}is discarded."
+                   end
+        item_name = @selected_drop_item ? @selected_drop_item["item"] : "???"
+        full_text = template.gsub("{ITEM}", item_name)
+        
+        @text_reveal_timer += dt * 60.0
+        while @text_reveal_timer >= 2 && @text_reveal_index < full_text.length
+          @text_reveal_timer -= 2
+          @text_reveal_index += 1
+          while full_text[@text_reveal_index, 3] == "{N}"
+            @text_reveal_index += 3
+          end
+        end
+        @text_full_shown = true if @text_reveal_index >= full_text.length
+      end
+
+      if @message_timer >= RESULT_DURATION && @text_full_shown
         @drop_state = :select_item
         @selected_drop_item = nil
         @selected_drop_actor = nil
@@ -2236,6 +2258,7 @@ class DropMenu < ItemSubMenuBase
         reopen_for_selection
       end
     end
+
   end
 
   def draw
@@ -2276,6 +2299,9 @@ class DropMenu < ItemSubMenuBase
       @confirm_index = 0
       @confirm_anim_timer = 0
       # Панели НЕ закрываем!
+
+      @text_reveal_index = 0
+      @text_full_shown = false
     else
       @drop_state = :show_message
       @message_timer = 0
@@ -2311,6 +2337,10 @@ class DropMenu < ItemSubMenuBase
     if @sell_mode && @sell_price > 0
       @db.globals["gold"] = (@db.globals["gold"] || 0) + @sell_price
     end
+
+    @text_reveal_index = 0
+    @text_reveal_timer = 0
+    @text_full_shown = false
   end
 
   # ─── ОТРИСОВКА ТЕКСТОВ ───
@@ -2334,7 +2364,7 @@ class DropMenu < ItemSubMenuBase
                  @game_text["0003"] || "The {ITEM} {N}will be discarded. OK ?"
                when :result_message
                  if @sell_mode
-                   "Thank you!"
+                   @game_text["0021"] || "Thank you!"
                  else
                    @game_text["0004"] || "The {ITEM} {N}is discarded."
                  end
@@ -2344,13 +2374,7 @@ class DropMenu < ItemSubMenuBase
 
     item_name = @selected_drop_item ? @selected_drop_item["item"] : "???"
     text = template.gsub("{ITEM}", item_name)
-    
-    # Для результата показываем сразу весь, для вопроса - по буквам
-    if @drop_state == :result_message
-      display_text = text
-    else
-      display_text = text[0, @text_reveal_index] || ""
-    end
+    display_text = text[0, @text_reveal_index] || ""
     
     show_yes_no = (@drop_state == :show_message)
     draw_common_message_panel(display_text, @confirm_anim_timer, show_yes_no)
@@ -2375,7 +2399,7 @@ class DropMenu < ItemSubMenuBase
 
     y_offset = panel_y + 10
     lines.each do |line_text|
-      Raylib::DrawTextEx(@large_font, line_text, Raylib::Vector2.create(panel_x + 40, y_offset), 30, 1, Raylib::WHITE)
+      Raylib::DrawTextEx(@large_font, line_text, Raylib::Vector2.create(panel_x + 20, y_offset), 30, 1, Raylib::WHITE)
       y_offset += 38
     end
 
@@ -2386,8 +2410,11 @@ class DropMenu < ItemSubMenuBase
       panel_w_small = 64
       gap_to_panel = 18
       
-      total_width = (icon_size * 2) + spacing + gap_to_panel + panel_w_small
-      start_x = panel_x + (panel_w - total_width) / 2
+      # Считаем ширину ТОЛЬКО двух иконок (без панели)
+      icons_total_width = (icon_size * 2) + spacing
+      
+      # Центрируем ТОЛЬКО иконки
+      start_x = panel_x + (panel_w - icons_total_width) / 2
       icon_y = panel_y - icon_size + 10
 
       # --- YES ---
@@ -2445,6 +2472,8 @@ class DropMenu < ItemSubMenuBase
     @blink_duration = 0
     @selection_blink_timer = 0
     @status_view_mode = 0
+    @text_reveal_index = 0
+    @text_full_shown = false
     update_current_actor
   end
 end
