@@ -61,6 +61,9 @@ public partial class EventEditorView : UserControl, IEditor
 
     // ─── NPC спрайты ───
     private List<string> _npcSpriteNames = new();
+    
+    // ─── Тексты карты (из text.txt) ───
+    private Dictionary<string, string> _localTexts = new();
 
     // ─── Защита от рекурсии при обновлении полей ───
     private bool _suppressFieldEvents;

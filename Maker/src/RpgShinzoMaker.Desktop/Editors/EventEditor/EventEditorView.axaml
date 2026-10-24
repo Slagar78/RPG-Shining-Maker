@@ -335,7 +335,7 @@
                                     
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Script:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <Grid Grid.Column="1" RowDefinitions="80,Auto" RowSpacing="4">
+                                        <Grid Grid.Column="1" RowDefinitions="120,Auto" RowSpacing="4">
                                             <ListBox Grid.Row="0" x:Name="Npc_ScriptList" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="1" SelectionChanged="OnNpcScriptSelected"/>
                                             <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4">
                                                 <Button Content="+ Step" Width="60" FontSize="11" Click="OnNpcScriptAdd"/>
@@ -343,21 +343,7 @@
                                             </StackPanel>
                                         </Grid>
                                     </Grid>
-                                    <Grid ColumnDefinitions="100,*">
-                                        <TextBlock Grid.Column="0" Text="Type:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <ComboBox Grid.Column="1" x:Name="Npc_ScriptType" HorizontalAlignment="Stretch" SelectionChanged="OnNpcScriptTypeChanged">
-                                            <ComboBoxItem Content="say"/>
-                                            <ComboBoxItem Content="turn_to_player"/>
-                                            <ComboBoxItem Content="turn_player_to_npc"/>
-                                            <ComboBoxItem Content="open_shop"/>
-                                            <ComboBoxItem Content="start_battle"/>
-                                            <ComboBoxItem Content="end"/>
-                                        </ComboBox>
-                                    </Grid>
-                                    <Grid ColumnDefinitions="100,*">
-                                        <TextBlock Grid.Column="0" x:Name="Npc_ScriptParamLabel" Text="Text ID:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Npc_ScriptParam" TextChanged="OnNpcScriptParamChanged"/>
-                                    </Grid>
+                                    
                                 </StackPanel>
                             </Panel>
                         </ScrollViewer>
@@ -373,11 +359,36 @@
                     <Border Grid.Column="5" Background="#3E3E42" Width="4"/>
 
                     <Border Grid.Column="6" Padding="8" Background="#1E1E1E">
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="MESSAGE / TEXTS" Foreground="White" FontWeight="Bold" FontSize="12"/>
-                            <TextBlock Text="Здесь будет редактор текстов сообщений." Foreground="#666666" FontStyle="Italic" FontSize="12" TextWrapping="Wrap"/>
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="SCRIPT INSPECTOR" Foreground="White" FontWeight="Bold" FontSize="12"/>
+                            
+                            <!-- Выбор типа команды -->
+                            <Grid ColumnDefinitions="60,*">
+                                <TextBlock Grid.Column="0" Text="Type:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                <ComboBox Grid.Column="1" x:Name="Npc_ScriptType" HorizontalAlignment="Stretch" SelectionChanged="OnNpcScriptTypeChanged">
+                                    <ComboBoxItem Content="say"/>
+                                    <ComboBoxItem Content="turn_to_player"/>
+                                    <ComboBoxItem Content="turn_player_to_npc"/>
+                                    <ComboBoxItem Content="open_shop"/>
+                                    <ComboBoxItem Content="start_battle"/>
+                                    <ComboBoxItem Content="end"/>
+                                </ComboBox>
+                            </Grid>
+
+                            <!-- Поле параметра (TextBox для ID магазина/битвы) -->
+                            <Grid ColumnDefinitions="60,*">
+                                <TextBlock Grid.Column="0" x:Name="Npc_ScriptParamLabel" Text="Param:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                <Grid Grid.Column="1">
+                                    <!-- Ширина 60, максимум 3 цифры, только цифры, прижато влево -->
+                                    <TextBox x:Name="Npc_ScriptParam" TextChanged="OnNpcScriptParamChanged" IsVisible="True" Width="45" MaxLength="3" HorizontalAlignment="Left" TextInput="OnCoordTextInput"/>
+                                    
+                                    <!-- А вот выпадающий список текстов оставляем на всю ширину (Stretch), чтобы видеть текст -->
+                                    <ComboBox x:Name="Npc_ScriptTextCombo" SelectionChanged="OnNpcScriptTextSelected" LostFocus="OnNpcScriptTextLostFocus" IsVisible="False" HorizontalAlignment="Stretch" IsEditable="True"/>
+                                </Grid>
+                            </Grid>
                         </StackPanel>
                     </Border>
+                    
                 </Grid>
             </Grid>
         </Grid>

@@ -173,6 +173,18 @@ public partial class EventEditorView
 
             _currentMap = map;
 
+            // Загружаем text.txt карты
+            _localTexts.Clear();
+            string textPath = Path.Combine(ProjectPaths.MapsDir, entry.Folder, "text.txt");
+            if (File.Exists(textPath))
+            {
+                foreach (var line in File.ReadAllLines(textPath))
+                {
+                    var parts = line.Split('=', 2);
+                    if (parts.Length == 2) _localTexts[parts[0].Trim()] = parts[1].Trim();
+                }
+            }
+            
             // 2. Обновляем список версий для текущей карты
             PopulateVersionSelector(entry.Folder);
 

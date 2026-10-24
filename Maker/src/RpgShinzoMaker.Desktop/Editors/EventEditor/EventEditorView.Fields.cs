@@ -1016,7 +1016,7 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         LoadScriptStepIntoFields();
     }
 
-    private void LoadScriptStepIntoFields()
+       private void LoadScriptStepIntoFields()
     {
         _suppressFieldEvents = true;
         try
@@ -1026,6 +1026,7 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
                 Npc_ScriptType.SelectedIndex = -1;
                 Npc_ScriptParam.Text = "";
                 Npc_ScriptParam.IsEnabled = false;
+                Npc_ScriptTextCombo.IsVisible = false;
                 return;
             }
 
@@ -1044,20 +1045,65 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
             // Настраиваем поле параметра
             UpdateScriptParamUI(cmd.Type);
             
-            if (cmd.Type == "say") Npc_ScriptParam.Text = cmd.TextId ?? "";
+            if (cmd.Type == "say")
+            {
+                var items = _localTexts.Select(kvp => $"{kvp.Key}: {(kvp.Value.Length > 25 ? kvp.Value.Substring(0, 25) + "..." : kvp.Value)}").ToList();
+                Npc_ScriptTextCombo.ItemsSource = items;
+                
+                // Сначала сбрасываем выделение и ставим чистый текст (чтобы запятые работали)
+                Npc_ScriptTextCombo.SelectedIndex = -1;
+                Npc_ScriptTextCombo.Text = cmd.TextId ?? "";
+                
+                // ★ Если ID один (без запятой) — выделяем его в выпадающем списке
+                if (!string.IsNullOrEmpty(cmd.TextId) && !cmd.TextId.Contains(","))
+                {
+                    string firstId = cmd.TextId.Trim();
+                    for (int i = 0; i < items.Count; i++)
+                    {
+                        if (items[i].StartsWith(firstId + ":"))
+                        {
+                            Npc_ScriptTextCombo.SelectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
             else if (cmd.Type == "open_shop") Npc_ScriptParam.Text = cmd.ShopId?.ToString() ?? "0";
             else if (cmd.Type == "start_battle" || cmd.Type == "unlock_battle") Npc_ScriptParam.Text = cmd.BattleId?.ToString() ?? "0";
             else Npc_ScriptParam.Text = "";
         }
         finally { _suppressFieldEvents = false; }
     }
-
+    
     private void UpdateScriptParamUI(string type)
     {
-        if (type == "say") { Npc_ScriptParamLabel.Text = "Text ID:"; Npc_ScriptParam.IsEnabled = true; }
-        else if (type == "open_shop") { Npc_ScriptParamLabel.Text = "Shop ID:"; Npc_ScriptParam.IsEnabled = true; }
-        else if (type == "start_battle" || type == "unlock_battle") { Npc_ScriptParamLabel.Text = "Battle ID:"; Npc_ScriptParam.IsEnabled = true; }
-        else { Npc_ScriptParamLabel.Text = "Param:"; Npc_ScriptParam.IsEnabled = false; }
+        if (type == "say") 
+        { 
+            Npc_ScriptParamLabel.Text = "Text ID:"; 
+            Npc_ScriptParam.IsVisible = false; 
+            Npc_ScriptTextCombo.IsVisible = true; 
+        }
+        else if (type == "open_shop") 
+        { 
+            Npc_ScriptParamLabel.Text = "Shop ID:"; 
+            Npc_ScriptParam.IsVisible = true; 
+            Npc_ScriptTextCombo.IsVisible = false; 
+            Npc_ScriptParam.IsEnabled = true; 
+        }
+        else if (type == "start_battle" || type == "unlock_battle") 
+        { 
+            Npc_ScriptParamLabel.Text = "Battle ID:"; 
+            Npc_ScriptParam.IsVisible = true; 
+            Npc_ScriptTextCombo.IsVisible = false; 
+            Npc_ScriptParam.IsEnabled = true; 
+        }
+        else 
+        { 
+            Npc_ScriptParamLabel.Text = "Param:"; 
+            Npc_ScriptParam.IsVisible = true; 
+            Npc_ScriptTextCombo.IsVisible = false; 
+            Npc_ScriptParam.IsEnabled = false; 
+        }
     }
 
     private void OnNpcScriptSelected(object? sender, SelectionChangedEventArgs e)
@@ -1124,6 +1170,56 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         // Обновляем отображение в списке
         RefreshScriptList(); 
         OnFieldChanged();
+    }
+
+    private void OnNpcScriptTextSelected(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count || _selectedScriptIndex < 0) return;
+
+        var n = _events.Npcs[_selectedIndex];
+        if (_selectedScriptIndex >= n.Script.Count) return;
+
+        var cmd = n.Script[_selectedScriptIndex];
+        
+        if (Npc_ScriptTextCombo.SelectedItem is string selectedItem)
+        {
+            // Отрезаем текст после двоеточия (нам нужен только ID, например "0001")
+            string id = selectedItem.Split(':')[0].Trim();
+            cmd.TextId = id;
+            // НЕ ставим Npc_ScriptTextCombo.Text = id, чтобы не было рекурсии. 
+            // ComboBox сам поставит нужный текст.
+        }
+        
+        RefreshScriptList();
+        OnFieldChanged();
+    }
+    
+    private void OnNpcScriptTextLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count || _selectedScriptIndex < 0) return;
+
+        var n = _events.Npcs[_selectedIndex];
+        if (_selectedScriptIndex >= n.Script.Count) return;
+
+        var cmd = n.Script[_selectedScriptIndex];
+        
+        string text = Npc_ScriptTextCombo.Text ?? "";
+        
+        // ★ Если в тексте есть двоеточие (например "0001: Привет"), отрезаем его, оставляя только ID!
+        if (text.Contains(":") && !text.Contains(","))
+        {
+            text = text.Split(':')[0].Trim();
+            Npc_ScriptTextCombo.Text = text;
+        }
+
+        if (cmd.TextId != text)
+        {
+            cmd.TextId = text;
+            RefreshScriptList();
+            OnFieldChanged();
+        }
     }
     
     // ══════════════════════════════════════════════════════════════
