@@ -4,7 +4,7 @@ class BattlePlayer
   TILE_SIZE = 48
   FRAMES_PER_TILE = 14
   FIXED_DT = 1.0 / 60.0
-  ANIM_SPEED  = 12
+  ANIM_SPEED  = 16
 
   DIR_DOWN  = 2
   DIR_LEFT  = 4
@@ -122,37 +122,30 @@ end
     update_blinking(dt)
   end
 
-	def update_movement(dt = 1.0 / 60.0)
-	  unless @moving
-		@move_accum = 0.0
-		return
-	  end
+  def update_movement(dt = 1.0 / 60.0)
+    unless @moving
+      @move_accum = 0.0
+      return
+    end
 
-	  @move_accum += dt
-	  @move_accum = FIXED_DT * 5 if @move_accum > FIXED_DT * 5
+    # Добавляем прошедшее время напрямую (60.0 — нормализация под 60 FPS)
+    @step_progress += dt * 60.0
 
-	  while @move_accum >= FIXED_DT && @moving
-		@move_accum -= FIXED_DT
-		step_movement
-	  end
-	end
-
-  def step_movement
-    @step_progress += 1
     if @step_progress >= FRAMES_PER_TILE
-      # Завершаем тайл
+      # Юнит полностью завершил шаг на новую клетку
       case @move_dir
       when DIR_RIGHT then @x += 1
       when DIR_LEFT  then @x -= 1
       when DIR_DOWN  then @y += 1
       when DIR_UP    then @y -= 1
       end
+      
       @pixel_offset = 0
       @step_progress = 0
       @moving = false
     else
-      # Промежуточный кадр — целое смещение
-      @pixel_offset = (@tile_size * @step_progress / FRAMES_PER_TILE.to_f).round
+      # Плавно считаем пиксельный сдвиг, используя накопленное время
+      @pixel_offset = (@tile_size * @step_progress / FRAMES_PER_TILE.to_f)
     end
   end
 

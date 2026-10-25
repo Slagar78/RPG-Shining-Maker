@@ -43,16 +43,16 @@ class BattleCamera
   # без догона. Нужно для :cursor_moving / :cursor_returning,
   # где цель движется непрерывно и с постоянной скоростью.
   def lock_to(px, py)
-    @target_x = (px - @screen_width  / 2.0).round
-    @target_y = (py - @screen_height / 2.0).round
+    @target_x = (px - @screen_width  / 2.0)
+    @target_y = (py - @screen_height / 2.0)
     clamp_target!
     @x = @target_x
     @y = @target_y
   end
 
   def update(dt = 1.0 / 60.0)
-    tx = @target_x.round
-    ty = @target_y.round
+    tx = @target_x
+    ty = @target_y
 
     t = 1.0 - Math.exp(-@smooth_factor * dt)
     @x += (tx - @x) * t
@@ -62,9 +62,8 @@ class BattleCamera
     @y = ty if (ty - @y).abs < 0.5
   end
 
-  # Для рендеринга – только целые пиксели, чтобы убрать субпиксельное дрожание
   def integer_offset
-    Raylib::Vector2.create(@x.round, @y.round)
+    Raylib::Vector2.create(@x, @y)
   end
 
   def offset
