@@ -1453,11 +1453,13 @@ end
       # 1. Пиксельное движение (только если удержание > 0.08 сек)
       if @info_cursor_vx != 0 || @info_cursor_vy != 0
         @info_cursor_px += @info_cursor_vx
-        @info_cursor_py += @info_cursor_vy
-        @info_cursor_px = @info_cursor_px.clamp(0, (@battle_w * TILE_SIZE) - 1)
-        @info_cursor_py = @info_cursor_py.clamp(0, (@battle_h * TILE_SIZE) - 1)
+        @info_cursor_py += @info_cursor_vy        
+        half_tile = TILE_SIZE / 2.0
+        @info_cursor_px = @info_cursor_px.clamp(half_tile, (@battle_w * TILE_SIZE) - half_tile)
+        @info_cursor_py = @info_cursor_py.clamp(half_tile, (@battle_h * TILE_SIZE) - half_tile)
         @info_cursor_x = (@info_cursor_px / TILE_SIZE).floor
         @info_cursor_y = (@info_cursor_py / TILE_SIZE).floor
+
       elsif @info_cursor_dir
         # 2. Отпустили — проверяем, тап это был или удержание
         held_duration = GetTime() - @info_cursor_press_time
