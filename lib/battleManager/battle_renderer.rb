@@ -177,18 +177,25 @@ end
 
   private
 
-def draw_info_cursor(int_cam_x, int_cam_y)
-  return unless @manager.instance_variable_get(:@info_cursor_tex)
-  return unless [:info_mode, :info_profile].include?(@manager.battle_state)
+  def draw_info_cursor(int_cam_x, int_cam_y)
+    return unless @manager.instance_variable_get(:@info_cursor_tex)
+    return unless [:info_mode, :info_profile].include?(@manager.battle_state)
 
-  tex = @manager.instance_variable_get(:@info_cursor_tex)
-  x = @manager.instance_variable_get(:@info_cursor_x) * BattleManager::TILE_SIZE + int_cam_x
-  y = @manager.instance_variable_get(:@info_cursor_y) * BattleManager::TILE_SIZE + int_cam_y
+    tex = @manager.instance_variable_get(:@info_cursor_tex)
+    
+    # БЕРЕМ ПИКСЕЛЬНЫЕ КООРДИНАТЫ (они плавно меняются)
+    px = @manager.instance_variable_get(:@info_cursor_px)
+    py = @manager.instance_variable_get(:@info_cursor_py)
 
-  src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
-  dst = Raylib::Rectangle.create(x, y, BattleManager::TILE_SIZE, BattleManager::TILE_SIZE)
-  Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-end
+    # Центрируем рамку (так как px, py - это центр)
+    x = px - BattleManager::TILE_SIZE / 2.0 + int_cam_x
+    y = py - BattleManager::TILE_SIZE / 2.0 + int_cam_y
+
+    src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
+    # Округляем при отрисовке, чтобы пиксель-арт был четким
+    dst = Raylib::Rectangle.create(x.round, y.round, BattleManager::TILE_SIZE, BattleManager::TILE_SIZE)
+    Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+  end
 
   def draw_active_unit(cam_x, cam_y)
     bp = @manager.battle_player

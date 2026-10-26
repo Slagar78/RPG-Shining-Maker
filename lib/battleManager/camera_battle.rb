@@ -58,8 +58,8 @@ class BattleCamera
     @x += (tx - @x) * t
     @y += (ty - @y) * t
 
-    @x = tx if (tx - @x).abs < 0.5
-    @y = ty if (ty - @y).abs < 0.5
+    @x = tx if (tx - @x).abs < 0.1
+    @y = ty if (ty - @y).abs < 0.1
   end
 
   def integer_offset

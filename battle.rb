@@ -222,6 +222,10 @@ end
     @info_cursor_px = 0
     @info_cursor_py = 0
 
+    @info_cursor_target_px = 0.0
+    @info_cursor_target_py = 0.0
+    @info_cursor_moving = false
+
     @last_attacker = nil
     @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
     @last_defender_hp_before = nil
@@ -516,21 +520,22 @@ end
   end
   
  # start_cursor_return_from_info — возврат к юниту после осмотра 
-def start_cursor_return_from_info
-  # Перемещаем курсор в пиксельные координаты центра клетки, где он сейчас (info_cursor)
-  start_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2
-  start_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
-  @cursor.move_to_pixel(start_px, start_py)
+  def start_cursor_return_from_info
+    # Берем ТЕКУЩИЕ пиксельные координаты курсора (где он визуально)
+    start_px = @info_cursor_px
+    start_py = @info_cursor_py
+    
+    @cursor.move_to_pixel(start_px, start_py)
 
-  # Цель – центр клетки текущего юнита
-  @cursor_target_x = @current_unit[:x] * TILE_SIZE + TILE_SIZE / 2
-  @cursor_target_y = @current_unit[:y] * TILE_SIZE + TILE_SIZE / 2
+    # Цель – центр клетки текущего юнита
+    @cursor_target_x = @current_unit[:x] * TILE_SIZE + TILE_SIZE / 2
+    @cursor_target_y = @current_unit[:y] * TILE_SIZE + TILE_SIZE / 2
 
-  @cursor.visible = true
-  @battle_state = :cursor_returning
-  @camera.smooth_factor = 15.0
-  @camera.lock_to(start_px, start_py)
-end
+    @cursor.visible = true
+    @battle_state = :cursor_returning
+    @camera.smooth_factor = 15.0
+    @camera.lock_to(start_px, start_py)
+  end
 
   def next_unit
     next_index = (@current_unit_index + 1) % @turn_order.size
@@ -797,13 +802,13 @@ end
        @info_cursor_vx = 0
        @info_cursor_vy = 0
        if IsKeyDown(KEY_LEFT)
-         @info_cursor_vx = -480.0
+         @info_cursor_vx = -8.0
        elsif IsKeyDown(KEY_RIGHT)
-         @info_cursor_vx = 480.0
+         @info_cursor_vx = 8.0
        elsif IsKeyDown(KEY_UP)
-         @info_cursor_vy = -480.0
+         @info_cursor_vy = -8.0
        elsif IsKeyDown(KEY_DOWN)
-         @info_cursor_vy = 480.0
+         @info_cursor_vy = 8.0
        end
      end
 
@@ -835,7 +840,6 @@ end
        if @info_panel_unit
          @info_panel_unit = nil
        else
-         # Запускаем плавное возвращение, а потом уже player_turn
          @battle_player.blinking = false if @battle_player
          start_cursor_return_from_info
        end
@@ -1287,7 +1291,7 @@ end
     sync_cursor_to_unit
   end
 
-    when :magic_select
+  when :magic_select
       @battle_player&.update_animation(dt) 
 	
 	when :item_select
@@ -1296,7 +1300,7 @@ end
 	when :equip_weapon
       update_equip
       @battle_player&.update_animation(dt)
-    when :equip_ring
+  when :equip_ring
       update_equip
       @battle_player&.update_animation(dt)
 	  
@@ -1307,10 +1311,10 @@ end
       @battle_player&.update_animation(dt)
       update_give_animation(dt)
 
-    when :battle_scene
+  when :battle_scene
       @battle_scene.update
 
-     when :fade_to_battle
+  when :fade_to_battle
       @fade_alpha += 600 * GetFrameTime()
       
 	if @fade_alpha >= 255
@@ -1324,21 +1328,48 @@ end
       @battle_state = :battle_scene
     end
 
-    
     when :info_mode
+      # 1. Двигаем курсор ровно на 8 пикселей (БЕЗ dt!)
       if @info_cursor_vx != 0 || @info_cursor_vy != 0
-        @info_cursor_px += @info_cursor_vx * dt
-        @info_cursor_py += @info_cursor_vy * dt
+        @info_cursor_px += @info_cursor_vx
+        @info_cursor_py += @info_cursor_vy
+        
         max_px = (@battle_w * TILE_SIZE) - 1
         max_py = (@battle_h * TILE_SIZE) - 1
         @info_cursor_px = @info_cursor_px.clamp(0, max_px)
         @info_cursor_py = @info_cursor_py.clamp(0, max_py)
+        
         @info_cursor_x = (@info_cursor_px / TILE_SIZE).floor
         @info_cursor_y = (@info_cursor_py / TILE_SIZE).floor
       end
-      @camera.lock_to(@info_cursor_px, @info_cursor_py)
+
+      # 2. Мертвая зона: считаем НА СКОЛЬКО курсор вышел за край
+      screen_x = @info_cursor_px - @camera.x
+      screen_y = @info_cursor_py - @camera.y
+
+      overflow_x = 0.0
+      overflow_y = 0.0
+      dz_edge = 3 * TILE_SIZE  # 3 тайла от края (144 пикселя)
+
+      if screen_x < dz_edge
+        overflow_x = screen_x - dz_edge
+      elsif screen_x > 576 - dz_edge
+        overflow_x = screen_x - (576 - dz_edge)
+      end
+
+      if screen_y < dz_edge
+        overflow_y = screen_y - dz_edge
+      elsif screen_y > 480 - dz_edge
+        overflow_y = screen_y - (480 - dz_edge)
+      end
+
+      # 3. Камера двигается РОВНО на overflow (пиксель в пиксель с курсором)
+      if overflow_x != 0 || overflow_y != 0
+        @camera.lock_to(@camera.x + 288 + overflow_x, @camera.y + 240 + overflow_y)
+      end
+
       @battle_player&.update(dt)
-	  @battle_player&.update_animation(dt)
+      @battle_player&.update_animation(dt)
 	  
     when :info_profile
       @battle_player&.update(dt)
