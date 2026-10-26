@@ -4,7 +4,7 @@
 			"name":	"SDMN",
 			"full_name":	"SDMN",
 			"battle_sprite_path":	"assets/battles/battlesprites/allies/Mushra",
-			"move":	6,
+			"move": 9,
 			"move_type":	"centaur_archer",
 			"race":	"Enterran",
 			"status":	"normal",

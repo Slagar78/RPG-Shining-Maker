@@ -443,8 +443,20 @@ end
     @units = @allies + @enemies
     @units.each do |unit|
       if unit[:actor]
-        unit[:agi] = unit[:actor]["agi"] || 10
-        unit[:mov] = unit[:actor]["mov"] || 3
+        actor = unit[:actor]
+        # 1. Находим класс актера (SDMN, SRST и т.д.)
+        klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
+        
+        # 2. Берем ловкость из формулы роста класса (или ставим 10, если класса нет)
+        if klass
+          unit[:agi] = @db.stat_at_level(klass["agility_growth"], actor["level"] || 1)
+        else
+          unit[:agi] = 10
+        end
+        
+        # 3. Берем ходьбу (move) ИЗ КЛАССА
+        unit[:mov] = klass ? (klass["move"] || 3) : 3
+        
       elsif unit[:enemy]
         unit[:agi] = unit[:enemy]["stats"]["base_agi"] || 10
         unit[:mov] = unit[:enemy]["stats"]["base_mov"] || 3
@@ -517,7 +529,7 @@ def start_cursor_return_from_info
   @cursor.visible = true
   @battle_state = :cursor_returning
   @camera.smooth_factor = 15.0
-  @camera.follow_point(start_px, start_py)
+  @camera.lock_to(start_px, start_py)
 end
 
   def next_unit
@@ -543,7 +555,7 @@ def start_cursor_transition(from_unit, to_unit)
 
   # Переключаем камеру на быстрый, но плавный скролл перед началом движения
   @camera.smooth_factor = 12.0
-  @camera.follow_point(start_px, start_py)
+  @camera.lock_to(start_px, start_py)
 end
   
   def start_panel_slide_out
@@ -1071,7 +1083,7 @@ end
           end
         end
 
-        # Камера всегда привязана к визуальному центру юнита (и при движении, и после остановки)
+        # Камера плавно следует за визуальным центром юнита
         @camera.lock_to(
           @battle_player.visual_x + TILE_SIZE / 2,
           @battle_player.visual_y + TILE_SIZE / 2
@@ -1167,7 +1179,6 @@ end
     when :enemy_moving
       @battle_player.update(dt)
 
-      # Камера всегда привязана к визуальному центру (и при движении, и после остановки)
       @camera.lock_to(
         @battle_player.visual_x + TILE_SIZE / 2,
         @battle_player.visual_y + TILE_SIZE / 2

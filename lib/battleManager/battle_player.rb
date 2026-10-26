@@ -2,7 +2,7 @@
 
 class BattlePlayer
   TILE_SIZE = 48
-  FRAMES_PER_TILE = 14
+  FRAMES_PER_TILE = 12
   FIXED_DT = 1.0 / 60.0
   ANIM_SPEED  = 16
 

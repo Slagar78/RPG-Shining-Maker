@@ -63,7 +63,7 @@ class BattleCamera
   end
 
   def integer_offset
-    Raylib::Vector2.create(@x, @y)
+    Raylib::Vector2.create(@x.round, @y.round) # Вернули .round
   end
 
   def offset

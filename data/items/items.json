@@ -94,7 +94,7 @@
 			"hp":	0,
 			"mp":	0,
 			"agility":	0,
-			"mov":	10
+			"mov":	0
 		}, {
 			"id":	6,
 			"name":	"Black Ring",

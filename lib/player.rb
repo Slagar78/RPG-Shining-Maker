@@ -12,7 +12,7 @@ DIR_UP    = 8
 
 PIXEL_SPEED  = 4                # пикселей за 1/60 секунды (целое!)
 FIXED_DT     = 1.0 / 60.0       # логический шаг
-ANIM_SPEED   = 12
+ANIM_SPEED   = 16
 
 class Player
   attr_accessor :x, :y, :direction, :pattern, :last_x, :last_y

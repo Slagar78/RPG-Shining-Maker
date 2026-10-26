@@ -201,8 +201,8 @@ end
           else 2
           end
 
-    px = bp.visual_x + cam_x
-    py = bp.visual_y - 16 + cam_y
+    px = (bp.visual_x + cam_x).round
+    py = (bp.visual_y - 16 + cam_y).round
     src = Raylib::Rectangle.create(
       bp.instance_variable_get(:@pattern) * BattleManager::TILE_SIZE,
       row * BattleManager::TILE_SIZE,
