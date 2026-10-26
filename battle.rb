@@ -222,6 +222,8 @@ end
     @info_cursor_px = 0
     @info_cursor_py = 0
 
+    @camera_follow_player = true
+
     @info_cursor_target_px = 0.0
     @info_cursor_target_py = 0.0
     @info_cursor_moving = false
@@ -473,6 +475,7 @@ end
 # start_current_turn — начало хода, камера уже на юните
   def start_current_turn
     @camera.smooth_factor = 15.0
+    @camera_follow_player = true
     @current_unit = @turn_order[@current_unit_index]
     return unless @current_unit
 
@@ -519,49 +522,51 @@ end
     @cursor.move_to(@current_unit[:x], @current_unit[:y])	
   end
   
- # start_cursor_return_from_info — возврат к юниту после осмотра 
   def start_cursor_return_from_info
-    # Берем ТЕКУЩИЕ пиксельные координаты курсора (где он визуально)
     start_px = @info_cursor_px
     start_py = @info_cursor_py
-    
     @cursor.move_to_pixel(start_px, start_py)
 
-    # Цель – центр клетки текущего юнита
     @cursor_target_x = @current_unit[:x] * TILE_SIZE + TILE_SIZE / 2
     @cursor_target_y = @current_unit[:y] * TILE_SIZE + TILE_SIZE / 2
 
     @cursor.visible = true
     @battle_state = :cursor_returning
-    @camera.smooth_factor = 15.0
-    @camera.lock_to(start_px, start_py)
+
+    # Плавный доезд камеры к текущему юниту, пока курсор летит обратно
+    @camera.smooth_factor = 20.0
+    unit_px = @current_unit[:x] * TILE_SIZE + TILE_SIZE / 2
+    unit_py = @current_unit[:y] * TILE_SIZE + TILE_SIZE / 2
+    @camera.follow_point(unit_px, unit_py)
   end
+
 
   def next_unit
     next_index = (@current_unit_index + 1) % @turn_order.size
     @turn_order[next_index]
   end
   
-# start_cursor_transition — перелёт между юнитами
-def start_cursor_transition(from_unit, to_unit)
-  @cursor.visible = true
-  @battle_player = nil
-  @battle_menu.close
-  @battle_state = :cursor_moving
+  # start_cursor_transition — перелёт между юнитами
+  def start_cursor_transition(from_unit, to_unit)
+    @cursor.visible = true
+    @battle_player = nil
+    @battle_menu.close
+    @battle_state = :cursor_moving
 
-  start_px = from_unit[:x] * TILE_SIZE + TILE_SIZE / 2
-  start_py = from_unit[:y] * TILE_SIZE + TILE_SIZE / 2
-  @cursor.move_to_pixel(start_px, start_py)
+    start_px = from_unit[:x] * TILE_SIZE + TILE_SIZE / 2
+    start_py = from_unit[:y] * TILE_SIZE + TILE_SIZE / 2
+    @cursor.move_to_pixel(start_px, start_py)
 
-  @cursor_target_x = to_unit[:x] * TILE_SIZE + TILE_SIZE / 2
-  @cursor_target_y = to_unit[:y] * TILE_SIZE + TILE_SIZE / 2
+    @cursor_target_x = to_unit[:x] * TILE_SIZE + TILE_SIZE / 2
+    @cursor_target_y = to_unit[:y] * TILE_SIZE + TILE_SIZE / 2
 
-  @cursor_moving_to_target = true
+    @cursor_moving_to_target = true
 
-  # Переключаем камеру на быстрый, но плавный скролл перед началом движения
-  @camera.smooth_factor = 12.0
-  @camera.lock_to(start_px, start_py)
-end
+    @camera.smooth_factor = 12.0
+    if @camera_follow_player
+      @camera.lock_to(start_px, start_py)
+    end
+  end
   
   def start_panel_slide_out
     return unless @current_unit
@@ -1020,6 +1025,7 @@ end
     @highlight_timer += dt * 60.0
 
     case @battle_state
+
     when :cursor_moving
       if @cursor_moving_to_target
         cur_px = @cursor.px > 0 ? @cursor.px : @cursor.x * TILE_SIZE
@@ -1044,7 +1050,35 @@ end
           new_px = cur_px + step_x
           new_py = cur_py + step_y
           @cursor.move_to_pixel(new_px, new_py)
-          @camera.lock_to(new_px, new_py)   # ← двигается синхронно
+
+          if @camera_follow_player
+            # Обычный бой: камера в центре экрана летит за курсором
+            @camera.lock_to(new_px, new_py)
+          else
+            # После просмотра: камера стоит на месте, пока курсор не выйдет за 3 тайла
+            screen_x = new_px - @camera.x
+            screen_y = new_py - @camera.y
+
+            overflow_x = 0.0
+            overflow_y = 0.0
+            dz_edge = 3 * TILE_SIZE
+
+            if screen_x < dz_edge
+              overflow_x = screen_x - dz_edge
+            elsif screen_x > 576 - dz_edge
+              overflow_x = screen_x - (576 - dz_edge)
+            end
+
+            if screen_y < dz_edge
+              overflow_y = screen_y - dz_edge
+            elsif screen_y > 480 - dz_edge
+              overflow_y = screen_y - (480 - dz_edge)
+            end
+
+            if overflow_x != 0 || overflow_y != 0
+              @camera.lock_to(@camera.x + 288 + overflow_x, @camera.y + 240 + overflow_y)
+            end
+          end
         end
       end
 	  
@@ -1055,23 +1089,20 @@ end
       dy = @cursor_target_y - cur_py
       dist = Math.sqrt(dx*dx + dy*dy)
 
-    step_dist = CURSOR_SPEED * dt
-    if dist <= step_dist
-      # Прибыли – синхронизируемся и переходим в player_turn
-      final_tile_x = (@cursor_target_x / TILE_SIZE).round
-      final_tile_y = (@cursor_target_y / TILE_SIZE).round
-      @cursor.move_to(final_tile_x, final_tile_y)
-      @camera.snap_to(final_tile_x, final_tile_y)  
-      @battle_state = :player_turn
-      sync_cursor_to_unit   # на всякий случай подстрахует
-    else
-      step_x = dx / dist * step_dist
-      step_y = dy / dist * step_dist
-      new_px = cur_px + step_x
-      new_py = cur_py + step_y
-      @cursor.move_to_pixel(new_px, new_py)
-      @camera.lock_to(new_px, new_py)
-    end
+      step_dist = CURSOR_SPEED * dt
+      if dist <= step_dist
+        final_tile_x = (@cursor_target_x / TILE_SIZE).round
+        final_tile_y = (@cursor_target_y / TILE_SIZE).round
+        @cursor.move_to(final_tile_x, final_tile_y)
+        @battle_state = :player_turn
+        sync_cursor_to_unit
+      else
+        step_x = dx / dist * step_dist
+        step_y = dy / dist * step_dist
+        new_px = cur_px + step_x
+        new_py = cur_py + step_y
+        @cursor.move_to_pixel(new_px, new_py)
+      end
 
     when :player_turn
       if @battle_player
@@ -1087,14 +1118,43 @@ end
           end
         end
 
-        # Камера плавно следует за визуальным центром юнита
-        @camera.lock_to(
-          @battle_player.visual_x + TILE_SIZE / 2,
-          @battle_player.visual_y + TILE_SIZE / 2
-        )
+        # Камера: если вернулись из просмотра — НЕ центрируемся, используем мертвую зону
+        if @camera_follow_player
+          # Обычное поведение (центрируемся на игроке)
+          @camera.lock_to(
+            @battle_player.visual_x + TILE_SIZE / 2,
+            @battle_player.visual_y + TILE_SIZE / 2
+          )
+        else
+          # После возврата из просмотра: стоим на месте, двигаем только у краев
+          px = @battle_player.visual_x + TILE_SIZE / 2
+          py = @battle_player.visual_y + TILE_SIZE / 2
+          screen_x = px - @camera.x
+          screen_y = py - @camera.y
+
+          overflow_x = 0.0
+          overflow_y = 0.0
+          dz_edge = 3 * TILE_SIZE
+
+          if screen_x < dz_edge
+            overflow_x = screen_x - dz_edge
+          elsif screen_x > 576 - dz_edge
+            overflow_x = screen_x - (576 - dz_edge)
+          end
+
+          if screen_y < dz_edge
+            overflow_y = screen_y - dz_edge
+          elsif screen_y > 480 - dz_edge
+            overflow_y = screen_y - (480 - dz_edge)
+          end
+
+          if overflow_x != 0 || overflow_y != 0
+            @camera.lock_to(@camera.x + 288 + overflow_x, @camera.y + 240 + overflow_y)
+          end
+        end
 
         # Меню открывается всегда, независимо от клетки
-	    unless @cursor.visible
+        unless @cursor.visible
           if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
             if @battle_player.moving
               @pending_menu = true
@@ -1103,7 +1163,7 @@ end
               open_battle_menu
             end
           end
-	    end
+        end
 
         # Обновляем позицию и курсор
         unless @battle_player.moving
@@ -1152,7 +1212,7 @@ end
           @panel_slide_state = :visible
         end
       end
-	end
+    end
 
     when :enemy_turn_wait
       sync_cursor_to_unit
