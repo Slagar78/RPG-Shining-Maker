@@ -16,7 +16,7 @@ RPG-Shining-Maker/
 │   │   │   │   ├── RoofEvent.cs                    (крыша: rect + триггеры/выходы)
 │   │   │   │   ├── TileChangeEvent.cs              (изменение тайла по триггеру)
 │   │   │   │   ├── StairEvent.cs                   (лестница: start→end + dir)
-│   │   │   │   ├── WarpEvent.cs                    (телепорт: trigger → target)
+│   │   │   │   ├── WarpEvent.cs                    (телепорт: single 1-клетка / line область → target)
 │   │   │   │   ├── NpcEvent.cs                     (NPC: id, sprite, behavior…)
 │   │   │   │   ├── MapEvents.cs                    (контейнер 5 типов событий)
 │   │   │   │   └── SubArea.cs                      ★ НОВЫЙ (прямоугольник под-области)
@@ -30,7 +30,7 @@ RPG-Shining-Maker/
 │   │   │       │                                   • класс Areas (StartX/Y/EndX/Y + SubAreas)
 │   │   │       │                                   • Load — читает main + subAreas (макс 10)
 │   │   │       │                                   • Save — свой StringBuilder-форматтер
-│   │   │       └── EventsService.cs                (events.json + NPC_events + NPC_script)
+│   │   │       └── EventsService.cs                (events.json + NPC_events + NPC_script, парсер и сейвер Warp line-mode)
 │   │   │
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
 │   │       ├── App.axaml
@@ -77,15 +77,15 @@ RPG-Shining-Maker/
 │   │           │   └── TileItem.cs                 (модель тайла палитры)
 │   │           │
 │   │           └── EventEditor/                    ← редактор событий
-│   │               ├── EventEditorView.axaml       (MAP + SECTIONS + canvas + 7-колон. панель)
+│   │               ├── EventEditorView.axaml       (MAP + SECTIONS + canvas + 7-колон. панель, Warp Mode переключатель)
 │   │               ├── EventEditorView.axaml.cs    (поля, ctor, IEditor, StatusChanged)
 │   │               ├── EventEditorView.Map.cs      (загрузка карт, слои, зум, SAVE)
 │   │               ├── EventEditorView.Canvas.cs   (мост к EventCanvas, FullRedraw/RedrawCanvas)
-│   │               ├── EventEditorView.Sections.cs (5 разделов: Roof/TileChange/Stair/Warp/Npc)
-│   │               ├── EventEditorView.Fields.cs   (заполнение полей + 30 обработчиков)
+│   │               ├── EventEditorView.Sections.cs (5 разделов: Roof/TileChange/Stair/Warp/Npc + [line] индикатор)
+│   │               ├── EventEditorView.Fields.cs   (заполнение полей + 30+ обработчиков, вкл. Warp Mode)
 │   │               ├── EventEditorView.Events.cs   (кнопки +/−, добавление/удаление)
 │   │               ├── EventCanvas.axaml           (ScrollViewer + Canvas слои + Overlay)
-│   │               └── EventCanvas.axaml.cs        (рендер карты + подсветки событий
+│   │               └── EventCanvas.axaml.cs        (рендер карты + подсветки событий (вкл. Warp line)
 │   │                                                + TileHover для статус-бара)
 │   │
 │   └── assets/
@@ -96,7 +96,7 @@ RPG-Shining-Maker/
 │   │   └── <map_name>/
 │   │       ├── layout.json
 │   │       ├── areas.json                          ★ обновлён: main + subAreas (макс 10)
-│   │       ├── events.json                         (roofs/tile_changes/stairs/warps)
+│   │       ├── events.json                         (roofs/tile_changes/stairs/warps; warps бывают single и line)
 │   │       ├── NPC_events.json                     (NPC без text_id)
 │   │       └── NPC_script.json                     (генерация из TextId)
 │   ├── tile_types/
@@ -111,7 +111,7 @@ RPG-Shining-Maker/
         ├── camera.rb                               ★ обновлён: area_bounds_for + центрирование
         │                                            маленьких area
         └── game.rb                                 ★ обновлён: маска вокруг активной area
-                                                    (чёрные полосы за пределами area)
+                                                    (чёрные полосы за пределами area), обработка warp mode: line
 
 
 🏛️ Архитектура: оболочка и два редактора
@@ -255,7 +255,7 @@ RPG-Shining-Maker/
  │ Sections.cs  │         │ Fields.cs    │              │ Events.cs    │
  │              │         │              │              │              │
  │ • 5 разделов │         │ • Load в UI  │              │ • OnAdd      │
- │ • список     │         │ • 30 обработ.│              │ • OnRemove   │
+ │ • список     │         │ • 30+ обработ│              │ • OnRemove   │
  │ • переключ.  │         │ • парсеры    │              │ • GetCount   │
  │ • видимость  │         │ • NPC sprite │              │ • выбор след.│
  └──────────────┘         └──────────────┘              └──────────────┘
@@ -303,6 +303,7 @@ RPG-Shining-Maker/
 │           │                                                                │
 │           │  высота нижней панели: 200 px                                 │
 └───────────┴───────────────────────────────────────────────────────────────┘
+* WARP: переключатель Mode (single / line) + End X,Y для line
 
 
 📊 Раскладка диалога Areas (обновлено)
@@ -407,6 +408,7 @@ editor.Save()
     │
     └─→ EventEditor: → EventEditorView.Map.cs → SaveCurrentEvents()
             └─→ EventsService.Save()       → data/maps/<folder>/events.json
+                                           (warps: mode="line" + end_x/end_y при line-режиме)
                                            → data/maps/<folder>/NPC_events.json
                                            → data/maps/<folder>/NPC_script.json
 
@@ -466,6 +468,8 @@ MapEditorView.Undo.cs → OnUndoClick()
   - если игрок в main — маска = main bounds
   - если игрок в subArea — маска = subArea bounds
   - если area меньше экрана — камера центрирует её
+• Warp (events.json) — обработка line-режима:
+  - если "mode": "line" — срабатывает на любой тайл в прямоугольнике trigger_x/y → end_x/y
 
 Файл GameMap.rb
 • attr_reader :sub_areas
@@ -523,7 +527,9 @@ MapEditor (11 файлов)                                  ✅
 MapEditor.Dialogs с subAreas ★                         ✅
 MapEditor — фильтр цифр в NumericUpDown ★              ✅
 EventEditor (7 файлов + EventCanvas)                   ✅
+EventEditor — Warp Mode (single / line) ★              ✅
 Игра: subAreas + маска + центрирование ★               ✅
+Игра: Warp line-mode ★                                 ✅
 BattleEditor                                           📋 план
 SceneEditor                                            📋 план
 DatabaseEditor                                         📋 план

@@ -262,8 +262,11 @@
   },
   {
     "type": "warp",
+    "mode": "line",
     "trigger_x": 0,
-    "trigger_y": 26,
+    "trigger_y": 25,
+    "end_x": 0,
+    "end_y": 29,
     "target_map": "map00",
     "target_x": 4,
     "target_y": 8,
