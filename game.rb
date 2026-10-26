@@ -524,26 +524,45 @@ when :playing
    # Проверка варпов (телепортов)
    if @game_state == :playing && @game_map && @game_map.warp_events.any? && !@player.moving
       @game_map.warp_events.each do |warp|
-      if @player.x == warp['trigger_x'] && @player.y == warp['trigger_y']
-      target_map = warp['target_map']
-      target_x = warp['target_x']
-      target_y = warp['target_y']
+        
+        triggered = false
 
-      # Конвертация из нового формата редактора (0–3) в старые значения игры (2,4,6,8)
-      raw_facing = warp['facing'] || 0
-      facing = case raw_facing
-               when 0 then 2   # Down
-               when 1 then 4   # Left
-               when 2 then 6   # Right
-               when 3 then 8   # Up
-               else 2          # по умолчанию Down
-               end
+        # РАЗДЕЛЯЕМ НА ДВА РЕЖИМА ПО КЛЮЧУ "mode"
+        if warp['mode'] == "line"
+          # Режим 2: Линия (от trigger_x/y до end_x/y)
+          x1 = [warp['trigger_x'], warp['end_x']].min
+          x2 = [warp['trigger_x'], warp['end_x']].max
+          y1 = [warp['trigger_y'], warp['end_y']].min
+          y2 = [warp['trigger_y'], warp['end_y']].max
+          
+          triggered = @player.x.between?(x1, x2) && @player.y.between?(y1, y2)
+        else
+          # Режим 1: Обычный (1 тайл)
+          triggered = (@player.x == warp['trigger_x'] && @player.y == warp['trigger_y'])
+        end
+        # КОНЕЦ РАЗДЕЛЕНИЯ
 
-      change_map(target_map, target_x, target_y, facing)
-      break
-    end
-  end
-end
+        if triggered
+          # Если target_map не указан в JSON, остаемся на текущей карте
+          target_map = warp['target_map'] || @current_map_id
+          target_x = warp['target_x']
+          target_y = warp['target_y']
+
+          # Конвертация из нового формата редактора (0–3) в старые значения игры (2,4,6,8)
+          raw_facing = warp['facing'] || 0
+          facing = case raw_facing
+                   when 0 then 2   # Down
+                   when 1 then 4   # Left
+                   when 2 then 6   # Right
+                   when 3 then 8   # Up
+                   else 2          # по умолчанию Down
+                   end
+
+          change_map(target_map, target_x, target_y, facing)
+          break
+        end
+      end
+   end
 
     # Автозапуск битвы (если игрок зашел пешком, а не через варп)
     if @game_state == :playing && @game_map && !@player.moving
