@@ -1075,8 +1075,8 @@ end
           end
         end
       end
-	  
-    when :cursor_returning
+
+  when :cursor_returning
       cur_px = @cursor.px
       cur_py = @cursor.py
       dx = @cursor_target_x - cur_px
@@ -1085,21 +1085,53 @@ end
 
       step_dist = CURSOR_SPEED * dt
       if dist <= step_dist
+        # Курсор прибыл — фиксируем на клетке
         final_tile_x = (@cursor_target_x / TILE_SIZE).round
         final_tile_y = (@cursor_target_y / TILE_SIZE).round
         @cursor.move_to(final_tile_x, final_tile_y)
-        @battle_state = :player_turn
-        sync_cursor_to_unit
+
+        # Плавно доводим камеру до юнита
+        unit_px = @current_unit[:x] * TILE_SIZE + TILE_SIZE / 2
+        unit_py = @current_unit[:y] * TILE_SIZE + TILE_SIZE / 2
+        @camera.smooth_factor = 18.0
+        @camera.follow_point(unit_px, unit_py)
+
+        # Переход только когда камера догнала меньше 1 пикселя
+        if (@camera.x - @camera.target_x).abs < 1.0 && (@camera.y - @camera.target_y).abs < 1.0
+          @battle_state = :player_turn
+          sync_cursor_to_unit
+        end
       else
+        # Курсор летит к юниту
         step_x = dx / dist * step_dist
         step_y = dy / dist * step_dist
         new_px = cur_px + step_x
         new_py = cur_py + step_y
         @cursor.move_to_pixel(new_px, new_py)
 
-        # Камера ПЛАВНО следует за курсором (не прыжок, но и не отстаёт)
-        @camera.smooth_factor = 10.0
-        @camera.follow_point(new_px, new_py)
+        # Камера НЕ центрирует курсор — следует по мёртвой зоне (нет рывка в начале)
+        screen_x = new_px - @camera.x
+        screen_y = new_py - @camera.y
+
+        overflow_x = 0.0
+        overflow_y = 0.0
+        dz_edge = 3 * TILE_SIZE
+
+        if screen_x < dz_edge
+          overflow_x = screen_x - dz_edge
+        elsif screen_x > 576 - dz_edge
+          overflow_x = screen_x - (576 - dz_edge)
+        end
+
+        if screen_y < dz_edge
+          overflow_y = screen_y - dz_edge
+        elsif screen_y > 480 - dz_edge
+          overflow_y = screen_y - (480 - dz_edge)
+        end
+
+        if overflow_x != 0 || overflow_y != 0
+          @camera.lock_to(@camera.x + 288 + overflow_x, @camera.y + 240 + overflow_y)
+        end
       end
 
     when :player_turn
