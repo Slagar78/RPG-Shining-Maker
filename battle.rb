@@ -532,12 +532,6 @@ end
 
     @cursor.visible = true
     @battle_state = :cursor_returning
-
-    # Плавный доезд камеры к текущему юниту, пока курсор летит обратно
-    @camera.smooth_factor = 20.0
-    unit_px = @current_unit[:x] * TILE_SIZE + TILE_SIZE / 2
-    unit_py = @current_unit[:y] * TILE_SIZE + TILE_SIZE / 2
-    @camera.follow_point(unit_px, unit_py)
   end
 
 
@@ -1102,6 +1096,10 @@ end
         new_px = cur_px + step_x
         new_py = cur_py + step_y
         @cursor.move_to_pixel(new_px, new_py)
+
+        # Камера ПЛАВНО следует за курсором (не прыжок, но и не отстаёт)
+        @camera.smooth_factor = 10.0
+        @camera.follow_point(new_px, new_py)
       end
 
     when :player_turn
