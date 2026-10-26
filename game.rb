@@ -409,98 +409,107 @@ when :playing
     end # ← закрывает if @game_state == :playing
   end
 	
-	# Fade-логика для варпа (стиль Sega RPG)
-    if @game_state == :warping
-      # 60 для дверей (быстро, ~150 мс), 8 для смены карты (плавно, ~1.1 сек)
-      fade_speed = @warp_is_same_map ? 60.0 : 8.0
+  # Fade-логика для варпа (стиль Sega RPG)
+  if @game_state == :warping
+    fade_speed = @warp_is_same_map ? 15.0 : 10.0
 
-      if @warp_delay > 0
-        @warp_delay -= dt * 60.0
-      elsif @fade_state.nil?
-        @fade_state = :out
-        @fade_alpha = 0
+    if @warp_delay > 0
+      @warp_delay -= dt * 60.0
+    elsif @fade_state.nil?
+      @fade_state = :out
+      @fade_alpha = 0
+    end
+
+    if @fade_state == :out
+      @fade_alpha += fade_speed * dt * 60.0
+      if @fade_alpha >= 255
+        @fade_alpha = 255
+        @fade_state = :hold
       end
 
-      if @fade_state == :out
-        # ← БЫЛО: @fade_alpha += 8 * dt * 60.0
-        @fade_alpha += fade_speed * dt * 60.0
-        if @fade_alpha >= 255
-          @fade_alpha = 255
-          @fade_state = :hold
-        end
-      elsif @fade_state == :hold
-        # Загружаем новую карту (экран уже чёрный)
-        pending = @warp_pending
-        same_map = (pending[:map_id].to_s.strip == @current_map_id.to_s.strip)
-        
-        # ── ВЫГРУЖАЕМ СТАРУЮ КАРТУ ─────────────────────────────
+    elsif @fade_state == :hold
+      pending = @warp_pending
+      same_map = (pending[:map_id].to_s.strip == @current_map_id.to_s.strip)
+
+      if same_map
+        # ── ВАРП ВНУТРИ ОДНОЙ КАРТЫ ──
+        # Карту НЕ трогаем. Просто переносим игрока и камеру.
+        @player.x = pending[:target_x]
+        @player.y = pending[:target_y]
+        @player.last_x = @player.x
+        @player.last_y = @player.y
+        @player.direction = pending[:facing] if pending[:facing]
+        @player.moving = false
+        @player.pattern = 0
+        @camera.snap_to(@player, @game_map)
+      else
+        # ── СМЕНА КАРТЫ (межкарточный варп) ──
         @game_map.unload if @game_map
         UnloadRenderTexture(@top_layer) if @top_layer
         UnloadRenderTexture(@layer2)    if @layer2
-        # ────────────────────────────────────────────────────────
 
-        @audio.stop unless same_map
+        @audio.stop
         @game_map = GameMap.new(pending[:map_id], @flags)
         @current_map_id = @game_map.map_id
         @top_layer = @game_map.build_top_layer
         SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
         @layer2 = @game_map.build_layer2
         SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
+
         @player.map = @game_map
         @player.x = pending[:target_x]
         @player.y = pending[:target_y]
         @player.last_x = @player.x
         @player.last_y = @player.y
-        
-        @camera.snap_to(@player, @game_map)
-        
         @player.direction = pending[:facing] if pending[:facing]
         @player.moving = false
         @player.pattern = 0
         @zone_hidden = Array.new(@game_map.roof_events.size, false)
-        @audio.play(@game_map.music_file, @game_map.music_volume) unless same_map
-        @fade_state = :in
-      elsif @fade_state == :in
-        # ← БЫЛО: @fade_alpha -= 8 * dt * 60.0
-        @fade_alpha -= fade_speed * dt * 60.0
-        if @fade_alpha <= 0
-          @fade_alpha = 0
-          @fade_state = nil
-          @warp_pending = nil
-          @warp_is_same_map = nil  # ← ДОБАВИЛИ: сброс флага
-          @game_state = :playing
-        end
+        @camera.snap_to(@player, @game_map)
+        @audio.play(@game_map.music_file, @game_map.music_volume)
+      end
+
+      @fade_state = :in
+
+    elsif @fade_state == :in
+      @fade_alpha -= fade_speed * dt * 60.0
+      if @fade_alpha <= 0
+        @fade_alpha = 0
+        @fade_state = nil
+        @warp_pending = nil
+        @warp_is_same_map = nil
+        @game_state = :playing
       end
     end
+  end
 
- if @game_map && @game_map.roof_events.any?
-  @game_map.roof_events.each_with_index do |ev, idx|
-    # ─── ТРИГГЕР (скрыть крышу) ───
-    triggered = false
-    if ev['triggers']
-      triggered = ev['triggers'].any? { |t| @player.x == t[0] && @player.y == t[1] }
-    elsif ev['trigger_x'] && ev['trigger_y']
-      triggered = (@player.x == ev['trigger_x'] && @player.y == ev['trigger_y'])
-    end
+  if @game_map && @game_map.roof_events.any?
+    @game_map.roof_events.each_with_index do |ev, idx|
+      # ─── ТРИГГЕР (скрыть крышу) ───
+      triggered = false
+      if ev['triggers']
+        triggered = ev['triggers'].any? { |t| @player.x == t[0] && @player.y == t[1] }
+      elsif ev['trigger_x'] && ev['trigger_y']
+        triggered = (@player.x == ev['trigger_x'] && @player.y == ev['trigger_y'])
+      end
 
-    if triggered
-      @zone_hidden[idx] = true
-    end
+      if triggered
+        @zone_hidden[idx] = true
+      end
 
-    # ─── EXIT (показать крышу) ───
-    exited = false
-    if ev['exits']
-      exited = ev['exits'].any? { |e| @player.x == e[0] && @player.y == e[1] }
-    elsif ev['exit_x'] && ev['exit_y']
-      exited = (@player.x == ev['exit_x'] && @player.y == ev['exit_y'])
-    end
+      # ─── EXIT (показать крышу) ───
+      exited = false
+      if ev['exits']
+        exited = ev['exits'].any? { |e| @player.x == e[0] && @player.y == e[1] }
+      elsif ev['exit_x'] && ev['exit_y']
+        exited = (@player.x == ev['exit_x'] && @player.y == ev['exit_y'])
+      end
 
-    if exited
-      @zone_hidden[idx] = false
+      if exited
+        @zone_hidden[idx] = false
+      end
     end
   end
-end
-
 
    # Проверка варпов (телепортов)
    if @game_state == :playing && @game_map && @game_map.warp_events.any? && !@player.moving
@@ -739,7 +748,7 @@ end
     end
 
     if @game_state == :warping
-    DrawRectangle(0, 0, 576, 480, Fade(BLACK, @fade_alpha))
+      DrawRectangle(0, 0, 576, 480, Fade(BLACK, @fade_alpha / 255.0))
     end
 
     DrawText("FPS: #{GetFPS()}", 576 - 100, 10, 20, DARKGRAY)
