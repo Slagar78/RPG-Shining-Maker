@@ -79,7 +79,6 @@ class Game
     @player.y = start_y
 
     @camera = Camera.new
-    @fixed_dt = 1.0 / 60.0
 
     codepoints = []
     (32..126).each { |cp| codepoints << cp }
@@ -149,7 +148,6 @@ class Game
 	  @warp_pending = nil      # данные варпа, ожидающие перехода
     @fade_alpha = 0          # 0..255, 0 = прозрачный, 255 = чёрный
     @fade_state = nil        # :out, :in, nil
-    @fade_timer = 0          # для задержки на чёрном экране
 	  @warp_delay = 0          # задержка перед началом fade (кадры)
     @warp_is_same_map = nil
     @battle_pending_after_warp = false
