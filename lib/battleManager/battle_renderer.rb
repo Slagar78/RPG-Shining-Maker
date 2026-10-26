@@ -183,18 +183,18 @@ end
 
     tex = @manager.instance_variable_get(:@info_cursor_tex)
     
-    # БЕРЕМ ПИКСЕЛЬНЫЕ КООРДИНАТЫ (они плавно меняются)
-    px = @manager.instance_variable_get(:@info_cursor_px)
-    py = @manager.instance_variable_get(:@info_cursor_py)
+    # БЕРЕМ ТАЙЛОВЫЕ КООРДИНАТЫ (они меняются только целыми числами)
+    tx = @manager.instance_variable_get(:@info_cursor_x)
+    ty = @manager.instance_variable_get(:@info_cursor_y)
+    return unless tx && ty
 
-    # Центрируем рамку (так как px, py - это центр)
-    x = px - BattleManager::TILE_SIZE / 2.0 + int_cam_x
-    y = py - BattleManager::TILE_SIZE / 2.0 + int_cam_y
+    # Рисуем рамку ровно по сетке
+    x = tx * BattleManager::TILE_SIZE + int_cam_x
+    y = ty * BattleManager::TILE_SIZE + int_cam_y
 
     src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
-    # Округляем при отрисовке, чтобы пиксель-арт был четким
     dst = Raylib::Rectangle.create(x.round, y.round, BattleManager::TILE_SIZE, BattleManager::TILE_SIZE)
-    Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+    Raylib::DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
   end
 
   def draw_active_unit(cam_x, cam_y)

@@ -217,10 +217,8 @@ end
     @death_anim = nil
     @info_panel_unit = nil
 
-    @info_cursor_vx = 0
-    @info_cursor_vy = 0
-    @info_cursor_px = 0
-    @info_cursor_py = 0
+    @info_das_key = nil
+    @info_das_timer = 0.0
 
     @camera_follow_player = true
 
@@ -526,12 +524,13 @@ end
   end
   
   def start_cursor_return_from_info
-    start_px = @info_cursor_px
-    start_py = @info_cursor_py
+    # Переводим тайловые координаты обратно в пиксели для плавного возврата
+    start_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2.0
+    start_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2.0
     @cursor.move_to_pixel(start_px, start_py)
 
-    @cursor_target_x = @current_unit[:x] * TILE_SIZE + TILE_SIZE / 2
-    @cursor_target_y = @current_unit[:y] * TILE_SIZE + TILE_SIZE / 2
+    @cursor_target_x = @current_unit[:x] * TILE_SIZE + TILE_SIZE / 2.0
+    @cursor_target_y = @current_unit[:y] * TILE_SIZE + TILE_SIZE / 2.0
 
     @cursor.visible = true
     @battle_state = :cursor_returning
@@ -801,32 +800,27 @@ end
 
   when :info_mode
      unless @info_panel_unit
-       if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_DOWN)
-         @info_cursor_start_tile_x = @info_cursor_x
-         @info_cursor_start_tile_y = @info_cursor_y
-         @info_cursor_dir = [0, 0]
-         if IsKeyPressed(KEY_LEFT) then @info_cursor_dir = [-1, 0]
-         elsif IsKeyPressed(KEY_RIGHT) then @info_cursor_dir = [1, 0]
-         elsif IsKeyPressed(KEY_UP) then @info_cursor_dir = [0, -1]
-         elsif IsKeyPressed(KEY_DOWN) then @info_cursor_dir = [0, 1]
-         end
-         @info_cursor_press_time = GetTime()   # ← запомнили время нажатия
+       dir = nil
+       if IsKeyDown(KEY_LEFT) then dir = [-1, 0]
+       elsif IsKeyDown(KEY_RIGHT) then dir = [1, 0]
+       elsif IsKeyDown(KEY_UP) then dir = [0, -1]
+       elsif IsKeyDown(KEY_DOWN) then dir = [0, 1]
        end
 
-       if @info_cursor_dir
-         if IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN)
-           # Время удержания больше 0.08 сек (80 мс) = зажатие → пиксельное движение
-           if GetTime() - @info_cursor_press_time > 0.08
-             @info_cursor_vx = @info_cursor_dir[0] * 8.0
-             @info_cursor_vy = @info_cursor_dir[1] * 8.0
-           else
-             @info_cursor_vx = 0
-             @info_cursor_vy = 0
-           end
+       if dir
+         if @info_das_key != dir
+           @info_das_key = dir
+           @info_das_timer = 0.2
+           move_info_cursor(dir[0], dir[1])
          else
-           @info_cursor_vx = 0
-           @info_cursor_vy = 0
+           @info_das_timer -= GetFrameTime()
+           if @info_das_timer <= 0
+             @info_das_timer = 0.05
+             move_info_cursor(dir[0], dir[1])
+           end
          end
+       else
+         @info_das_key = nil
        end
      end
 
@@ -1030,6 +1024,16 @@ end
    end
  end
 
+  def move_info_cursor(dx, dy)
+    new_x = @info_cursor_x + dx
+    new_y = @info_cursor_y + dy
+    if new_x >= 0 && new_x < @battle_w && new_y >= 0 && new_y < @battle_h
+      @info_cursor_x = new_x
+      @info_cursor_y = new_y
+      @audio.play_sfx("cursor") if @audio
+    end
+  end
+
   def update
     dt = GetFrameTime()
     @battle_menu.update(dt)
@@ -1060,8 +1064,8 @@ end
         dist = Math.sqrt(dx*dx + dy*dy)
         step_dist = CURSOR_SPEED * dt
         if dist <= step_dist
-          final_tile_x = (@cursor_target_x / TILE_SIZE).round
-          final_tile_y = (@cursor_target_y / TILE_SIZE).round
+          final_tile_x = (@cursor_target_x / TILE_SIZE).floor
+          final_tile_y = (@cursor_target_y / TILE_SIZE).floor
           @cursor.move_to(final_tile_x, final_tile_y)
 		  @camera.snap_to(final_tile_x, final_tile_y)
           @cursor_moving_to_target = false
@@ -1117,8 +1121,8 @@ end
       step_dist = CURSOR_SPEED * dt
       if dist <= step_dist
         # Курсор прибыл — фиксируем на клетке
-        final_tile_x = (@cursor_target_x / TILE_SIZE).round
-        final_tile_y = (@cursor_target_y / TILE_SIZE).round
+          final_tile_x = (@cursor_target_x / TILE_SIZE).floor
+          final_tile_y = (@cursor_target_y / TILE_SIZE).floor
         @cursor.move_to(final_tile_x, final_tile_y)
 
         # Плавно доводим камеру до юнита
@@ -1450,52 +1454,17 @@ end
     end
 
     when :info_mode
-      # 1. Пиксельное движение (только если удержание > 0.08 сек)
-      if @info_cursor_vx != 0 || @info_cursor_vy != 0
-        @info_cursor_px += @info_cursor_vx
-        @info_cursor_py += @info_cursor_vy        
-        half_tile = TILE_SIZE / 2.0
-        @info_cursor_px = @info_cursor_px.clamp(half_tile, (@battle_w * TILE_SIZE) - half_tile)
-        @info_cursor_py = @info_cursor_py.clamp(half_tile, (@battle_h * TILE_SIZE) - half_tile)
-        @info_cursor_x = (@info_cursor_px / TILE_SIZE).floor
-        @info_cursor_y = (@info_cursor_py / TILE_SIZE).floor
+      # 1. Курсор теперь строго по тайлам. Вычисляем его центр в пикселях для камеры.
+      px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2.0
+      py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2.0
 
-      elsif @info_cursor_dir
-        # 2. Отпустили — проверяем, тап это был или удержание
-        held_duration = GetTime() - @info_cursor_press_time
-        if held_duration <= 0.08
-          # Быстрый тап — двигаем ровно на 1 тайл
-          new_tx = @info_cursor_start_tile_x + @info_cursor_dir[0]
-          new_ty = @info_cursor_start_tile_y + @info_cursor_dir[1]
-          if new_tx >= 0 && new_tx < @battle_w && new_ty >= 0 && new_ty < @battle_h
-            @info_cursor_x = new_tx
-            @info_cursor_y = new_ty
-          end
-        end
-
-        # Доводим до центра клетки (плавно, чтобы не застрять между тайлами)
-        target_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2.0
-        target_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2.0
-        dx = target_px - @info_cursor_px
-        dy = target_py - @info_cursor_py
-
-        if dx.abs > 0.5 || dy.abs > 0.5
-          @info_cursor_px += dx * 0.5
-          @info_cursor_py += dy * 0.5
-        else
-          @info_cursor_px = target_px
-          @info_cursor_py = target_py
-          @info_cursor_dir = nil
-        end
-      end
-
-      # 2. Мертвая зона: считаем НА СКОЛЬКО курсор вышел за край
-      screen_x = @info_cursor_px - @camera.x
-      screen_y = @info_cursor_py - @camera.y
+      # 2. Мертвая зона: 3 тайла от края
+      screen_x = px - @camera.x
+      screen_y = py - @camera.y
 
       overflow_x = 0.0
       overflow_y = 0.0
-      dz_edge = 3 * TILE_SIZE  # 3 тайла от края (144 пикселя)
+      dz_edge = 3 * TILE_SIZE
 
       if screen_x < dz_edge
         overflow_x = screen_x - dz_edge
@@ -1509,7 +1478,7 @@ end
         overflow_y = screen_y - (480 - dz_edge)
       end
 
-      # 3. Камера двигается РОВНО на overflow (пиксель в пиксель с курсором)
+      # 3. Двигаем камеру
       if overflow_x != 0 || overflow_y != 0
         @camera.lock_to(@camera.x + 288 + overflow_x, @camera.y + 240 + overflow_y)
       end
