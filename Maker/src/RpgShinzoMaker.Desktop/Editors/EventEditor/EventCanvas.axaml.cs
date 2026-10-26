@@ -372,46 +372,66 @@ public partial class EventCanvas : UserControl
     }
 
     // ─── Warps ───
-    private void DrawWarps()
+private void DrawWarps()
+{
+    if (_events == null) return;
+    int ts = TilePx;
+
+    for (int i = 0; i < _events.Warps.Count; i++)
     {
-        if (_events == null) return;
-        int ts = TilePx;
+        var w = _events.Warps[i];
+        bool selected = i == _selectedIndex;
+        byte alpha    = (byte)(selected ? 255 : 140);
 
-        for (int i = 0; i < _events.Warps.Count; i++)
+        var purple = Color.FromArgb(alpha, 200, 0, 200);
+        var yellow = Color.FromArgb(alpha, 255, 255, 0);
+
+        if (w.Mode == "line")
         {
-            var w = _events.Warps[i];
-            bool selected = i == _selectedIndex;
-            byte alpha = (byte)(selected ? 255 : 140);
+            int x1 = Math.Min(w.TriggerX, w.EndX);
+            int y1 = Math.Min(w.TriggerY, w.EndY);
+            int x2 = Math.Max(w.TriggerX, w.EndX);
+            int y2 = Math.Max(w.TriggerY, w.EndY);
 
+            AddRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1,
+                purple, null, thickness: 4);
+
+            double cx = (x1 + x2 + 1) / 2.0 * ts;
+            double cy = (y1 + y2 + 1) / 2.0 * ts;
+            DrawWarpArrow(cx, cy, ts * 0.3, w.Facing, yellow);
+        }
+        else
+        {
             if (w.TriggerX < 0 || w.TriggerY < 0) continue;
 
-            AddRect(w.TriggerX, w.TriggerY, 1, 1,
-                Color.FromArgb(alpha, 200, 0, 200), null, thickness: 4);
+            AddRect(w.TriggerX, w.TriggerY, 1, 1, purple, null, thickness: 4);
 
-            // Стрелка направления
             double cx = w.TriggerX * ts + ts / 2.0;
             double cy = w.TriggerY * ts + ts / 2.0;
-            double sz = ts * 0.3;
-
-            Point[] pts = w.Facing switch
-            {
-                0 => new[] { new Point(cx, cy + sz), new Point(cx - sz, cy - sz/2), new Point(cx + sz, cy - sz/2) },
-                1 => new[] { new Point(cx - sz, cy), new Point(cx + sz/2, cy - sz), new Point(cx + sz/2, cy + sz) },
-                2 => new[] { new Point(cx + sz, cy), new Point(cx - sz/2, cy - sz), new Point(cx - sz/2, cy + sz) },
-                _ => new[] { new Point(cx, cy - sz), new Point(cx - sz, cy + sz/2), new Point(cx + sz, cy + sz/2) }
-            };
-
-            var poly = new Polygon
-            {
-                Points = new List<Point>(pts),
-                Stroke = new SolidColorBrush(Color.FromArgb(alpha, 255, 255, 0)),
-                StrokeThickness = 3,
-                Fill = new SolidColorBrush(Color.FromArgb(100, 255, 255, 0)),
-                IsHitTestVisible = false,
-            };
-            OverlayCanvas.Children.Add(poly);
+            DrawWarpArrow(cx, cy, ts * 0.3, w.Facing, yellow);
         }
     }
+}
+
+private void DrawWarpArrow(double cx, double cy, double sz, int facing, Color color)
+{
+    Point[] pts = facing switch
+    {
+        0 => new[] { new Point(cx, cy + sz),  new Point(cx - sz, cy - sz/2), new Point(cx + sz, cy - sz/2) },
+        1 => new[] { new Point(cx - sz, cy),  new Point(cx + sz/2, cy - sz), new Point(cx + sz/2, cy + sz) },
+        2 => new[] { new Point(cx + sz, cy),  new Point(cx - sz/2, cy - sz), new Point(cx - sz/2, cy + sz) },
+        _ => new[] { new Point(cx, cy - sz),  new Point(cx - sz, cy + sz/2), new Point(cx + sz, cy + sz/2) }
+    };
+
+    OverlayCanvas.Children.Add(new Polygon
+    {
+        Points = new List<Point>(pts),
+        Stroke = new SolidColorBrush(color),
+        StrokeThickness = 3,
+        Fill = new SolidColorBrush(Color.FromArgb(100, color.R, color.G, color.B)),
+        IsHitTestVisible = false,
+    });
+}
 
     // ─── NPC ───
     private void DrawNpcs()

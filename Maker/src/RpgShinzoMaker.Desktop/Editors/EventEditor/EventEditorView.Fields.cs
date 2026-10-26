@@ -500,16 +500,20 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         {
             W_TriggerX.Text = "";
             W_TriggerY.Text = "";
+            W_EndX.Text = "";
+            W_EndY.Text = "";
+
+            SetWarpModeUI("");
+
             PopulateTargetMapCombo(null);
-            W_TargetX.Text  = "0";
-            W_TargetY.Text  = "0";
+            W_TargetX.Text = "0";
+            W_TargetY.Text = "0";
             SetWarpFacingUI(0);
             return;
         }
 
         var w = _events.Warps[_selectedIndex];
 
-        // Trigger (может быть пустой = нет триггера)
         if (w.TriggerX >= 0 && w.TriggerY >= 0)
         {
             W_TriggerX.Text = w.TriggerX.ToString();
@@ -519,6 +523,19 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         {
             W_TriggerX.Text = "";
             W_TriggerY.Text = "";
+        }
+
+        SetWarpModeUI(w.Mode);
+
+        if (w.Mode == "line")
+        {
+            W_EndX.Text = w.EndX >= 0 ? w.EndX.ToString() : "";
+            W_EndY.Text = w.EndY >= 0 ? w.EndY.ToString() : "";
+        }
+        else
+        {
+            W_EndX.Text = "";
+            W_EndY.Text = "";
         }
 
         PopulateTargetMapCombo(w.TargetMap);
@@ -795,6 +812,86 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
 
         _events.Warps[_selectedIndex].TargetY = ParseCoord(W_TargetY.Text, fallback: 0);
     }
+// ══════════════════════════════════════════════════════════════
+//   WARP — Mode (single / line)
+// ══════════════════════════════════════════════════════════════
+private void OnWModeSingleClick(object? sender, RoutedEventArgs e) => SetWarpMode("");
+private void OnWModeLineClick(object? sender, RoutedEventArgs e)   => SetWarpMode("line");
+
+private void SetWarpMode(string mode)
+{
+    // Сначала UI — даже если события подавлены
+    SetWarpModeUI(mode);
+
+    if (_suppressFieldEvents) return;
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
+
+    var w = _events.Warps[_selectedIndex];
+    w.Mode = mode;
+
+    if (mode == "line")
+    {
+        // Инициализируем End из Trigger, если ещё не задано
+        if (w.EndX < 0) w.EndX = w.TriggerX >= 0 ? w.TriggerX : 0;
+        if (w.EndY < 0) w.EndY = w.TriggerY >= 0 ? w.TriggerY : 0;
+
+        bool saved = _suppressFieldEvents;
+        _suppressFieldEvents = true;
+        try
+        {
+            W_EndX.Text = w.EndX.ToString();
+            W_EndY.Text = w.EndY.ToString();
+        }
+        finally { _suppressFieldEvents = saved; }
+    }
+
+    OnFieldChanged();
+}
+
+private void SetWarpModeUI(string mode)
+{
+    if (W_ModeSingleBtn == null || W_ModeLineBtn == null) return;
+    if (W_ModeLabel == null || W_EndPanel == null) return;
+
+    bool isLine = mode == "line";
+
+    var activeBg = new SolidColorBrush(Color.Parse("#3E5F8A"));
+    var idleBg   = new SolidColorBrush(Color.Parse("#3E3E42"));
+    var activeFg = new SolidColorBrush(Color.Parse("#FFFFFF"));
+    var idleFg   = new SolidColorBrush(Color.Parse("#CCCCCC"));
+
+    W_ModeSingleBtn.IsChecked  = !isLine;
+    W_ModeSingleBtn.Background = isLine ? idleBg : activeBg;
+    W_ModeSingleBtn.Foreground = isLine ? idleFg : activeFg;
+
+    W_ModeLineBtn.IsChecked  = isLine;
+    W_ModeLineBtn.Background = isLine ? activeBg : idleBg;
+    W_ModeLineBtn.Foreground = isLine ? activeFg : idleFg;
+
+    W_ModeLabel.Text = isLine ? "line" : "single";
+    W_EndPanel.IsVisible = isLine;
+}
+
+// ══════════════════════════════════════════════════════════════
+//   WARP — End X/Y (только для line)
+// ══════════════════════════════════════════════════════════════
+private void OnWEndXChanged(object? sender, TextChangedEventArgs e)
+{
+    if (_suppressFieldEvents) return;
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
+
+    _events.Warps[_selectedIndex].EndX = ParseCoord(W_EndX.Text, fallback: 0);
+    OnFieldChanged();
+}
+
+private void OnWEndYChanged(object? sender, TextChangedEventArgs e)
+{
+    if (_suppressFieldEvents) return;
+    if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
+
+    _events.Warps[_selectedIndex].EndY = ParseCoord(W_EndY.Text, fallback: 0);
+    OnFieldChanged();
+}
 
     // ══════════════════════════════════════════════════════════════
     //   ОБРАБОТЧИКИ WARP — Facing (0=down, 1=left, 2=right, 3=up)

@@ -132,7 +132,12 @@ public partial class EventEditorView
 
             case "warp":
                 foreach (var w in _events.Warps)
-                    result.Add($"({w.TriggerX},{w.TriggerY}) → {w.TargetMap}");
+                {
+                    if (w.Mode == "line")
+                        result.Add($"[line] ({w.TriggerX},{w.TriggerY})→({w.EndX},{w.EndY}) → {w.TargetMap}");
+                    else
+                        result.Add($"({w.TriggerX},{w.TriggerY}) → {w.TargetMap}");
+                }
                 break;
 
             case "npc":

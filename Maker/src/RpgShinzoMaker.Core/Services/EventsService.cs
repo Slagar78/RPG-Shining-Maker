@@ -226,15 +226,24 @@ public static class EventsService
         int facing = obj["facing"]?.GetValue<int>() ?? 0;
         facing = facing switch { 2 => 0, 4 => 1, 6 => 2, 8 => 3, _ => facing };
 
-        events.Warps.Add(new WarpEvent
+        var warp = new WarpEvent
         {
+            Mode      = obj["mode"]?.GetValue<string>() ?? "",
             TriggerX  = obj["trigger_x"]?.GetValue<int>()   ?? -1,
             TriggerY  = obj["trigger_y"]?.GetValue<int>()   ?? -1,
             TargetMap = obj["target_map"]?.GetValue<string>() ?? "",
             TargetX   = obj["target_x"]?.GetValue<int>()     ?? 0,
             TargetY   = obj["target_y"]?.GetValue<int>()     ?? 0,
             Facing    = facing,
-        });
+        };
+
+        if (warp.Mode == "line")
+        {
+            warp.EndX = obj["end_x"]?.GetValue<int>() ?? warp.TriggerX;
+            warp.EndY = obj["end_y"]?.GetValue<int>() ?? warp.TriggerY;
+        }
+
+        events.Warps.Add(warp);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -275,52 +284,100 @@ public static class EventsService
         }
     }
 
-    private static void SaveEventsFileTo(string file, MapEvents events)
+private static void SaveEventsFileTo(string file, MapEvents events)
+{
+    var root = new JsonArray();
+
+    // ─── ROOFS ────────────────────────────────────────────────
+    // Крыши — прямоугольник (start→end) + списки триггеров и выходов.
+    // triggers/exits — массивы пар [x, y].
+    foreach (var r in events.Roofs)
     {
-        var root = new JsonArray();
-        foreach (var r in events.Roofs)
+        var triggers = new JsonArray();
+        foreach (var t in r.Triggers) triggers.Add(new JsonArray { t.X, t.Y });
+
+        var exits = new JsonArray();
+        foreach (var e in r.Exits) exits.Add(new JsonArray { e.X, e.Y });
+
+        root.Add(new JsonObject
         {
-            var triggers = new JsonArray();
-            foreach (var t in r.Triggers) triggers.Add(new JsonArray { t.X, t.Y });
-            var exits = new JsonArray();
-            foreach (var e in r.Exits) exits.Add(new JsonArray { e.X, e.Y });
-
-            root.Add(new JsonObject {
-                ["type"] = "roof", ["start_x"] = r.StartX, ["start_y"] = r.StartY,
-                ["end_x"] = r.EndX, ["end_y"] = r.EndY, ["triggers"] = triggers, ["exits"] = exits
-            });
-        }
-
-        foreach (var t in events.TileChanges)
-        {
-            root.Add(new JsonObject {
-                ["type"] = "tile_change", ["trigger_x"] = t.TriggerX, ["trigger_y"] = t.TriggerY,
-                ["new_tile_id"] = t.NewTileId, ["sample_x"] = t.SampleX, ["sample_y"] = t.SampleY,
-                ["close_x"] = t.CloseX, ["close_y"] = t.CloseY
-            });
-        }
-
-        foreach (var s in events.Stairs)
-        {
-            root.Add(new JsonObject {
-                ["type"] = "stairs", ["start_x"] = s.StartX, ["start_y"] = s.StartY,
-                ["end_x"] = s.EndX, ["end_y"] = s.EndY, ["direction"] = s.Direction
-            });
-        }
-
-        foreach (var w in events.Warps)
-        {
-            root.Add(new JsonObject {
-                ["type"] = "warp", ["trigger_x"] = w.TriggerX, ["trigger_y"] = w.TriggerY,
-                ["target_map"] = w.TargetMap, ["target_x"] = w.TargetX, ["target_y"] = w.TargetY,
-                ["facing"] = w.Facing
-            });
-        }
-
-        var dir = Path.GetDirectoryName(file);
-        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-        File.WriteAllText(file, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            ["type"]     = "roof",
+            ["start_x"]  = r.StartX, ["start_y"] = r.StartY,
+            ["end_x"]    = r.EndX,   ["end_y"]   = r.EndY,
+            ["triggers"] = triggers,
+            ["exits"]    = exits
+        });
     }
+
+    // ─── TILE CHANGES ─────────────────────────────────────────
+    // Смена тайла при заходе на trigger_x/y.
+    // sample_x/y — откуда взять стиль, close_x/y — обратный триггер.
+    foreach (var t in events.TileChanges)
+    {
+        root.Add(new JsonObject
+        {
+            ["type"]        = "tile_change",
+            ["trigger_x"]   = t.TriggerX, ["trigger_y"] = t.TriggerY,
+            ["new_tile_id"] = t.NewTileId,
+            ["sample_x"]    = t.SampleX,  ["sample_y"]  = t.SampleY,
+            ["close_x"]     = t.CloseX,   ["close_y"]   = t.CloseY
+        });
+    }
+
+    // ─── STAIRS ───────────────────────────────────────────────
+    // Лестница от start к end. direction: 0 = "\", 1 = "/".
+    foreach (var s in events.Stairs)
+    {
+        root.Add(new JsonObject
+        {
+            ["type"]      = "stairs",
+            ["start_x"]   = s.StartX, ["start_y"] = s.StartY,
+            ["end_x"]     = s.EndX,   ["end_y"]   = s.EndY,
+            ["direction"] = s.Direction
+        });
+    }
+
+    // ─── WARPS ────────────────────────────────────────────────
+    // Два режима:
+    //   single (Mode == "")     → только trigger_x/y
+    //   line   (Mode == "line") → trigger_x/y + end_x/y (область)
+    // "mode" пишем ТОЛЬКО для line — single остаётся обратно совместимым
+    // со старыми JSON, где поля mode вообще нет.
+    foreach (var w in events.Warps)
+    {
+        var obj = new JsonObject { ["type"] = "warp" };
+
+        if (w.Mode == "line")
+        {
+            obj["mode"]      = "line";
+            obj["trigger_x"] = w.TriggerX;
+            obj["trigger_y"] = w.TriggerY;
+            obj["end_x"]     = w.EndX;
+            obj["end_y"]     = w.EndY;
+        }
+        else
+        {
+            obj["trigger_x"] = w.TriggerX;
+            obj["trigger_y"] = w.TriggerY;
+        }
+
+        obj["target_map"] = w.TargetMap;
+        obj["target_x"]   = w.TargetX;
+        obj["target_y"]   = w.TargetY;
+        obj["facing"]     = w.Facing;
+
+        root.Add(obj);
+    }
+
+    // ─── ЗАПИСЬ НА ДИСК ───────────────────────────────────────
+    var dir = Path.GetDirectoryName(file);
+    if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+    File.WriteAllText(file, root.ToJsonString(new JsonSerializerOptions
+    {
+        WriteIndented = true
+    }));
+}
 
     private static void SaveNpcEventsFileTo(string file, MapEvents events)
     {

@@ -246,11 +246,32 @@
                                 <!-- WARP -->
                                 <StackPanel x:Name="WarpPanel" Spacing="3" IsVisible="False">
                                     <Grid ColumnDefinitions="100,*">
+                                        <TextBlock Grid.Column="0" Text="Mode:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <ToggleButton x:Name="W_ModeSingleBtn" Content="single" Padding="8,2"
+                                                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                          Click="OnWModeSingleClick"/>
+                                            <ToggleButton x:Name="W_ModeLineBtn" Content="line" Padding="8,2"
+                                                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                          Click="OnWModeLineClick"/>
+                                            <TextBlock x:Name="W_ModeLabel" Text="single" VerticalAlignment="Center"
+                                                       Foreground="#CCCCCC" Margin="6,0,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Trigger X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
                                             <TextBox x:Name="W_TriggerX" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTriggerXChanged"/>
                                             <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
                                             <TextBox x:Name="W_TriggerY" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTriggerYChanged"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid x:Name="W_EndPanel" ColumnDefinitions="100,*" IsVisible="False">
+                                        <TextBlock Grid.Column="0" Text="End X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                            <TextBox x:Name="W_EndX" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWEndXChanged"/>
+                                            <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
+                                            <TextBox x:Name="W_EndY" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWEndYChanged"/>
                                         </StackPanel>
                                     </Grid>
                                     <Grid ColumnDefinitions="100,*">
@@ -268,10 +289,10 @@
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Facing:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3">
-                                            <ToggleButton x:Name="W_FacingDownBtn" Content="↓" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingDownClick"/>
-                                            <ToggleButton x:Name="W_FacingLeftBtn" Content="←" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingLeftClick"/>
+                                            <ToggleButton x:Name="W_FacingDownBtn"  Content="↓" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingDownClick"/>
+                                            <ToggleButton x:Name="W_FacingLeftBtn"  Content="←" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingLeftClick"/>
                                             <ToggleButton x:Name="W_FacingRightBtn" Content="→" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingRightClick"/>
-                                            <ToggleButton x:Name="W_FacingUpBtn" Content="↑" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingUpClick"/>
+                                            <ToggleButton x:Name="W_FacingUpBtn"    Content="↑" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingUpClick"/>
                                             <TextBlock x:Name="W_FacingLabel" Text="down" VerticalAlignment="Center" Foreground="#CCCCCC" Margin="6,0,0,0"/>
                                         </StackPanel>
                                     </Grid>
