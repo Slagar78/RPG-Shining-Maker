@@ -224,9 +224,10 @@ end
 
     @camera_follow_player = true
 
-    @info_cursor_target_px = 0.0
-    @info_cursor_target_py = 0.0
-    @info_cursor_moving = false
+    @info_cursor_dir = nil
+    @info_cursor_start_tile_x = 0
+    @info_cursor_start_tile_y = 0
+    @info_cursor_press_time = 0.0
 
     @last_attacker = nil
     @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
@@ -796,18 +797,34 @@ end
        @audio.play_sfx("cancel_menu") if @audio
      end
 
-    when :info_mode
+  when :info_mode
      unless @info_panel_unit
-       @info_cursor_vx = 0
-       @info_cursor_vy = 0
-       if IsKeyDown(KEY_LEFT)
-         @info_cursor_vx = -8.0
-       elsif IsKeyDown(KEY_RIGHT)
-         @info_cursor_vx = 8.0
-       elsif IsKeyDown(KEY_UP)
-         @info_cursor_vy = -8.0
-       elsif IsKeyDown(KEY_DOWN)
-         @info_cursor_vy = 8.0
+       if IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_DOWN)
+         @info_cursor_start_tile_x = @info_cursor_x
+         @info_cursor_start_tile_y = @info_cursor_y
+         @info_cursor_dir = [0, 0]
+         if IsKeyPressed(KEY_LEFT) then @info_cursor_dir = [-1, 0]
+         elsif IsKeyPressed(KEY_RIGHT) then @info_cursor_dir = [1, 0]
+         elsif IsKeyPressed(KEY_UP) then @info_cursor_dir = [0, -1]
+         elsif IsKeyPressed(KEY_DOWN) then @info_cursor_dir = [0, 1]
+         end
+         @info_cursor_press_time = GetTime()   # ← запомнили время нажатия
+       end
+
+       if @info_cursor_dir
+         if IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN)
+           # Время удержания больше 0.08 сек (80 мс) = зажатие → пиксельное движение
+           if GetTime() - @info_cursor_press_time > 0.08
+             @info_cursor_vx = @info_cursor_dir[0] * 8.0
+             @info_cursor_vy = @info_cursor_dir[1] * 8.0
+           else
+             @info_cursor_vx = 0
+             @info_cursor_vy = 0
+           end
+         else
+           @info_cursor_vx = 0
+           @info_cursor_vy = 0
+         end
        end
      end
 
@@ -844,14 +861,14 @@ end
        end
      end
 
-   when :info_profile
+  when :info_profile
      # Только запускаем анимацию закрытия по S, состояние сменится в update
      if IsKeyPressed(KEY_S)
        @audio.play_sfx("cancel_menu") if @audio
        @profile.close
      end
 
-   when :enemy_profile
+  when :enemy_profile
      if IsKeyPressed(KEY_S)
        @audio.play_sfx("cancel_menu") if @audio
        @enemy_profile.close
@@ -1419,18 +1436,41 @@ end
     end
 
     when :info_mode
-      # 1. Двигаем курсор ровно на 8 пикселей (БЕЗ dt!)
+      # 1. Пиксельное движение (только если удержание > 0.08 сек)
       if @info_cursor_vx != 0 || @info_cursor_vy != 0
         @info_cursor_px += @info_cursor_vx
         @info_cursor_py += @info_cursor_vy
-        
-        max_px = (@battle_w * TILE_SIZE) - 1
-        max_py = (@battle_h * TILE_SIZE) - 1
-        @info_cursor_px = @info_cursor_px.clamp(0, max_px)
-        @info_cursor_py = @info_cursor_py.clamp(0, max_py)
-        
+        @info_cursor_px = @info_cursor_px.clamp(0, (@battle_w * TILE_SIZE) - 1)
+        @info_cursor_py = @info_cursor_py.clamp(0, (@battle_h * TILE_SIZE) - 1)
         @info_cursor_x = (@info_cursor_px / TILE_SIZE).floor
         @info_cursor_y = (@info_cursor_py / TILE_SIZE).floor
+      elsif @info_cursor_dir
+        # 2. Отпустили — проверяем, тап это был или удержание
+        held_duration = GetTime() - @info_cursor_press_time
+        if held_duration <= 0.08
+          # Быстрый тап — двигаем ровно на 1 тайл
+          new_tx = @info_cursor_start_tile_x + @info_cursor_dir[0]
+          new_ty = @info_cursor_start_tile_y + @info_cursor_dir[1]
+          if new_tx >= 0 && new_tx < @battle_w && new_ty >= 0 && new_ty < @battle_h
+            @info_cursor_x = new_tx
+            @info_cursor_y = new_ty
+          end
+        end
+
+        # Доводим до центра клетки (плавно, чтобы не застрять между тайлами)
+        target_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2.0
+        target_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2.0
+        dx = target_px - @info_cursor_px
+        dy = target_py - @info_cursor_py
+
+        if dx.abs > 0.5 || dy.abs > 0.5
+          @info_cursor_px += dx * 0.5
+          @info_cursor_py += dy * 0.5
+        else
+          @info_cursor_px = target_px
+          @info_cursor_py = target_py
+          @info_cursor_dir = nil
+        end
       end
 
       # 2. Мертвая зона: считаем НА СКОЛЬКО курсор вышел за край
