@@ -152,6 +152,7 @@ class Game
     @fade_timer = 0          # для задержки на чёрном экране
 	  @warp_delay = 0          # задержка перед началом fade (кадры)
     @warp_is_same_map = nil
+    @battle_pending_after_warp = false
 	
     @pending_profile_open = false
     @pending_status_open = false
@@ -466,10 +467,21 @@ when :playing
         @player.pattern = 0
         @zone_hidden = Array.new(@game_map.roof_events.size, false)
         @camera.snap_to(@player, @game_map)
-        @audio.play(@game_map.music_file, @game_map.music_volume)
+        # ВАЖНО: убрал отсюда @audio.play, он теперь ниже
       end
 
-      @fade_state = :in
+      # 👇 ПРОВЕРКА БИТВЫ ПРЯМО НА ЧЁРНОМ ЭКРАНЕ 👇
+      battle_id = battle_id_for_map(@game_map.map_id)
+      if battle_id && @flags.battle_unlocked?(battle_id) && !@flags.battle_completed?(battle_id)
+        # Нашли битву! Запускаем бой, НЕ включаем :in (экран остается черным)
+        @battle_pending_after_warp = true
+        @audio.stop
+        launch_battle(battle_id)
+      else
+        # Битвы нет — включаем музыку и плавно показываем карту
+        @audio.play(@game_map.music_file, @game_map.music_volume) unless same_map
+        @fade_state = :in
+      end
 
     elsif @fade_state == :in
       @fade_alpha -= fade_speed * dt * 60.0
@@ -535,7 +547,7 @@ when :playing
   end
 end
 
-    # Автозапуск битвы при входе на карту битвы
+    # Автозапуск битвы (если игрок зашел пешком, а не через варп)
     if @game_state == :playing && @game_map && !@player.moving
       battle_id = battle_id_for_map(@game_map.map_id)
       if battle_id && @flags.battle_unlocked?(battle_id) && !@flags.battle_completed?(battle_id)
@@ -849,8 +861,18 @@ end
     end
     @current_battle_id = nil
 
-    @audio.play(@game_map.music_file, @game_map.music_volume)
-    @game_state = :playing
+    if @battle_pending_after_warp
+      # Бой был после варпа: запускаем плавное появление карты
+      @battle_pending_after_warp = false
+      @game_state = :warping
+      @fade_state = :in
+      @fade_alpha = 255
+      @audio.play(@game_map.music_file, @game_map.music_volume)
+    else
+      # Обычный бой: просто возвращаемся в игру
+      @audio.play(@game_map.music_file, @game_map.music_volume)
+      @game_state = :playing
+    end
   end
   
   def battle_id_for_map(map_id)

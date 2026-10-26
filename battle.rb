@@ -259,6 +259,8 @@ end
     @current_unit = first_unit
     @camera.snap_to(first_unit[:x], first_unit[:y]) if first_unit
     start_current_turn
+    @battle_state = :turn_start_delay
+    @turn_start_timer = 0.3
   end
 
   def load_spriteset
@@ -1036,6 +1038,18 @@ end
     @highlight_timer += dt * 60.0
 
     case @battle_state
+
+    when :turn_start_delay
+      @battle_player&.update_animation(dt)
+      @turn_start_timer -= dt
+      if @turn_start_timer <= 0
+        if @current_unit[:actor]
+          @battle_state = :player_turn
+        else
+          @battle_state = :enemy_turn_wait
+          @enemy_action_timer = 40
+        end
+      end
 
     when :cursor_moving
       if @cursor_moving_to_target
