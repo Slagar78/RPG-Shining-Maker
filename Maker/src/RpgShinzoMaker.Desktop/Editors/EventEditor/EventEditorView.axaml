@@ -123,8 +123,9 @@
                     <Border Grid.Column="2" Padding="8">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <Panel>
-                                <!-- ROOF -->
-                                <StackPanel x:Name="RoofPanel" Spacing="3" IsVisible="False">
+                                
+                                                                <!-- ROOF -->
+                                <StackPanel x:Name="RoofPanel" Spacing="2" IsVisible="False">
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Start X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
@@ -142,11 +143,12 @@
                                         </StackPanel>
                                     </Grid>
                                     
+                                    <!-- TRIGGERS -->
                                     <Grid ColumnDefinitions="100,*" Margin="0,6,0,0">
                                         <TextBlock Grid.Column="0" Text="Triggers" Foreground="#CCCCCC" VerticalAlignment="Center" FontWeight="Bold"/>
                                         <TextBlock Grid.Column="1" x:Name="Roof_TriggersCount" Text="0 / 10" Foreground="#888888" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                     </Grid>
-                                    <ListBox x:Name="Roof_TriggersList" Height="60" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="1" SelectionChanged="OnRoofTriggerSelected">
+                                    <ListBox x:Name="Roof_TriggersList" Height="50" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="1" SelectionChanged="OnRoofTriggerSelected">
                                         <ListBox.Styles>
                                             <Style Selector="ListBoxItem">
                                                 <Setter Property="FontSize" Value="11"/>
@@ -159,18 +161,20 @@
                                         <Button Content="+ Add" MinWidth="70" FontSize="11" Padding="4,2" Click="OnRoofTriggerAdd"/>
                                         <Button Content="− Delete" MinWidth="70" FontSize="11" Padding="4,2" Click="OnRoofTriggerDelete"/>
                                     </StackPanel>
-                                    <Grid ColumnDefinitions="30,*,10,30,*">
-                                        <TextBlock Grid.Column="0" Text="X:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Roof_TriggerX" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnRoofTriggerXChanged"/>
-                                        <TextBlock Grid.Column="3" Text="Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="4" x:Name="Roof_TriggerY" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnRoofTriggerYChanged"/>
-                                    </Grid>
+                                    <!-- КОМПАКТНЫЕ ПОЛЯ ТРИГГЕРА -->
+                                    <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,4">
+                                        <TextBlock Text="X:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="Roof_TriggerX" Width="45" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnRoofTriggerXChanged"/>
+                                        <TextBlock Text="Y:" Foreground="#CCCCCC" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <TextBox x:Name="Roof_TriggerY" Width="45" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnRoofTriggerYChanged"/>
+                                    </StackPanel>
                                     
-                                    <Grid ColumnDefinitions="100,*" Margin="0,8,0,0">
+                                    <!-- EXITS -->
+                                    <Grid ColumnDefinitions="100,*" Margin="0,6,0,0">
                                         <TextBlock Grid.Column="0" Text="Exits" Foreground="#CCCCCC" VerticalAlignment="Center" FontWeight="Bold"/>
                                         <TextBlock Grid.Column="1" x:Name="Roof_ExitsCount" Text="0 / 10" Foreground="#888888" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                     </Grid>
-                                    <ListBox x:Name="Roof_ExitsList" Height="60" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="1" SelectionChanged="OnRoofExitSelected">
+                                    <ListBox x:Name="Roof_ExitsList" Height="50" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="1" SelectionChanged="OnRoofExitSelected">
                                         <ListBox.Styles>
                                             <Style Selector="ListBoxItem">
                                                 <Setter Property="FontSize" Value="11"/>
@@ -183,12 +187,13 @@
                                         <Button Content="+ Add" MinWidth="70" FontSize="11" Padding="4,2" Click="OnRoofExitAdd"/>
                                         <Button Content="− Delete" MinWidth="70" FontSize="11" Padding="4,2" Click="OnRoofExitDelete"/>
                                     </StackPanel>
-                                    <Grid ColumnDefinitions="30,*,10,30,*">
-                                        <TextBlock Grid.Column="0" Text="X:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" x:Name="Roof_ExitX" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnRoofExitXChanged"/>
-                                        <TextBlock Grid.Column="3" Text="Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="4" x:Name="Roof_ExitY" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnRoofExitYChanged"/>
-                                    </Grid>
+                                    <!-- КОМПАКТНЫЕ ПОЛЯ ВЫХОДА -->
+                                    <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                                        <TextBlock Text="X:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="Roof_ExitX" Width="45" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnRoofExitXChanged"/>
+                                        <TextBlock Text="Y:" Foreground="#CCCCCC" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <TextBox x:Name="Roof_ExitY" Width="45" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnRoofExitYChanged"/>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- TILE CHANGE -->
