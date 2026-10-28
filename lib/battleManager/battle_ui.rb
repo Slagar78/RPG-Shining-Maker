@@ -517,7 +517,15 @@ end
   end
 
   def find_spell_icon(name, level)
-    spells = $spells || []
+    spells = $spells
+    unless spells
+      path = "data/spells/spells.json"
+      if File.exist?(path)
+        spells = JSON.parse(File.read(path))["spells"]
+      else
+        spells = []
+      end
+    end
     spell = spells.find { |s| s["name"].casecmp?(name) && s["level"] == level }
     spell ? spell["icon"] : nil
   end
