@@ -200,7 +200,11 @@ public partial class MapEditorView
         var dir = ProjectPaths.SoundsDir;
         if (Directory.Exists(dir))
         {
-            foreach (var f in Directory.GetFiles(dir, "*.mp3"))
+            // Ищем и mp3, и ogg
+            var mp3Files = Directory.GetFiles(dir, "*.mp3");
+            var oggFiles = Directory.GetFiles(dir, "*.ogg");
+            
+            foreach (var f in mp3Files.Concat(oggFiles))
                 _musicFiles.Add(Path.GetFileName(f));
 
             _musicFiles.Sort(StringComparer.OrdinalIgnoreCase);
