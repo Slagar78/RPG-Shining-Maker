@@ -61,7 +61,9 @@
     <Panel>
         <Grid ColumnDefinitions="250,4,*">
 
-            <!-- ЛЕВАЯ КОЛОНКА -->
+            <!-- ========================================================= -->
+            <!-- ЛЕВАЯ КОЛОНКА (Настройки, Слои, Разделы)                  -->
+            <!-- ========================================================= -->
             <Border Grid.Column="0" Background="#252526" Padding="8">
                 <Border Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="1" CornerRadius="4">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -108,24 +110,34 @@
             <!-- РАЗДЕЛИТЕЛЬ -->
             <Border Grid.Column="1" Background="#3E3E42" Width="4"/>
 
-            <!-- ЦЕНТР -->
+            <!-- ========================================================= -->
+            <!-- ЦЕНТР (Карта и нижняя панель редактирования)              -->
+            <!-- ========================================================= -->
             <Grid Grid.Column="2" RowDefinitions="*,200">
 
+                <!-- САМА КАРТА -->
                 <eventEditor:EventCanvas x:Name="CanvasControl" Grid.Row="0"/>
 
+                <!-- НИЖНЯЯ ПАНЕЛЬ -->
                 <Grid Grid.Row="1" ColumnDefinitions="300,4,400,4,40,4,*" Background="#252526">
 
+                    <!-- СПИСОК СОБЫТИЙ -->
                     <Border Grid.Column="0" Padding="6">
                         <ListBox x:Name="EventList" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="1" SelectionChanged="OnEventListSelectionChanged"/>
                     </Border>
 
                     <Border Grid.Column="1" Background="#3E3E42" Width="4"/>
 
+                    <!-- ========================================================= -->
+                    <!-- ПАНЕЛЬ ПОЛЕЙ РЕДАКТИРОВАНИЯ                               -->
+                    <!-- ========================================================= -->
                     <Border Grid.Column="2" Padding="8">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            
+                            <!-- ВСЕ ПАНЕЛИ ЛЕЖАТ ДРУГ ПОД ДРУГОМ НА ОДНОМ УРОВНЕ -->
                             <Panel>
                                 
-                                                                <!-- ROOF -->
+                                <!-- ==================== ROOF ==================== -->
                                 <StackPanel x:Name="RoofPanel" Spacing="2" IsVisible="False">
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Start X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
@@ -162,7 +174,6 @@
                                         <Button Content="+ Add" MinWidth="70" FontSize="11" Padding="4,2" Click="OnRoofTriggerAdd"/>
                                         <Button Content="− Delete" MinWidth="70" FontSize="11" Padding="4,2" Click="OnRoofTriggerDelete"/>
                                     </StackPanel>
-                                    <!-- КОМПАКТНЫЕ ПОЛЯ ТРИГГЕРА -->
                                     <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,4">
                                         <TextBlock Text="X:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <TextBox x:Name="Roof_TriggerX" Width="45" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnRoofTriggerXChanged"/>
@@ -188,7 +199,6 @@
                                         <Button Content="+ Add" MinWidth="70" FontSize="11" Padding="4,2" Click="OnRoofExitAdd"/>
                                         <Button Content="− Delete" MinWidth="70" FontSize="11" Padding="4,2" Click="OnRoofExitDelete"/>
                                     </StackPanel>
-                                    <!-- КОМПАКТНЫЕ ПОЛЯ ВЫХОДА -->
                                     <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
                                         <TextBlock Text="X:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <TextBox x:Name="Roof_ExitX" Width="45" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnRoofExitXChanged"/>
@@ -197,7 +207,8 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <!-- TILE CHANGE -->
+
+                                <!-- ================= TILE CHANGE ================= -->
                                 <StackPanel x:Name="TileChangePanel" Spacing="3" IsVisible="False">
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Trigger X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
@@ -221,7 +232,8 @@
                                     </Grid>
                                 </StackPanel>
 
-                                <!-- STAIR -->
+
+                                <!-- ==================== STAIR ==================== -->
                                 <StackPanel x:Name="StairPanel" Spacing="3" IsVisible="False">
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Start X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
@@ -249,19 +261,15 @@
                                     </Grid>
                                 </StackPanel>
 
-                                <!-- WARP -->
+
+                                <!-- ==================== WARP ==================== -->
                                 <StackPanel x:Name="WarpPanel" Spacing="3" IsVisible="False">
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Mode:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                                            <ToggleButton x:Name="W_ModeSingleBtn" Content="single" Padding="8,2"
-                                                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                          Click="OnWModeSingleClick"/>
-                                            <ToggleButton x:Name="W_ModeLineBtn" Content="line" Padding="8,2"
-                                                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                          Click="OnWModeLineClick"/>
-                                            <TextBlock x:Name="W_ModeLabel" Text="single" VerticalAlignment="Center"
-                                                       Foreground="#CCCCCC" Margin="6,0,0,0"/>
+                                            <ToggleButton x:Name="W_ModeSingleBtn" Content="single" Padding="8,2" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWModeSingleClick"/>
+                                            <ToggleButton x:Name="W_ModeLineBtn" Content="line" Padding="8,2" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWModeLineClick"/>
+                                            <TextBlock x:Name="W_ModeLabel" Text="single" VerticalAlignment="Center" Foreground="#CCCCCC" Margin="6,0,0,0"/>
                                         </StackPanel>
                                     </Grid>
                                     <Grid ColumnDefinitions="100,*">
@@ -295,16 +303,17 @@
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Facing:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3">
-                                            <ToggleButton x:Name="W_FacingDownBtn"  Content="↓" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingDownClick"/>
-                                            <ToggleButton x:Name="W_FacingLeftBtn"  Content="←" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingLeftClick"/>
+                                            <ToggleButton x:Name="W_FacingDownBtn" Content="↓" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingDownClick"/>
+                                            <ToggleButton x:Name="W_FacingLeftBtn" Content="←" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingLeftClick"/>
                                             <ToggleButton x:Name="W_FacingRightBtn" Content="→" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingRightClick"/>
-                                            <ToggleButton x:Name="W_FacingUpBtn"    Content="↑" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingUpClick"/>
+                                            <ToggleButton x:Name="W_FacingUpBtn" Content="↑" Width="28" Height="24" Padding="0" FontSize="14" FontWeight="Bold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="OnWFacingUpClick"/>
                                             <TextBlock x:Name="W_FacingLabel" Text="down" VerticalAlignment="Center" Foreground="#CCCCCC" Margin="6,0,0,0"/>
                                         </StackPanel>
                                     </Grid>
                                 </StackPanel>
 
-                                <!-- NPC -->
+
+                                <!-- ==================== NPC ==================== -->
                                 <StackPanel x:Name="NpcPanel" Spacing="4" IsVisible="False">
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="ID:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
@@ -329,24 +338,7 @@
                                             <Button Grid.Column="4" Content="&gt;" Width="24" Height="24" Margin="2,0,0,0" Padding="0" Click="OnNpcSpriteNextClick"/>
                                         </Grid>
                                     </Grid>
-    
-                                    <!-- COUNTER -->
-                                    <StackPanel x:Name="CounterPanel" Spacing="3" IsVisible="False">
-                                        <Grid ColumnDefinitions="100,*">
-                                            <TextBlock Grid.Column="0" Text="X:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                            <TextBox Grid.Column="1" x:Name="Cnt_X" Width="45" MaxLength="3"
-                                                     HorizontalAlignment="Left"
-                                                     TextInput="OnCoordTextInput" TextChanged="OnCounterXChanged"/>
-                                        </Grid>
-                                        <Grid ColumnDefinitions="100,*">
-                                            <TextBlock Grid.Column="0" Text="Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                            <TextBox Grid.Column="1" x:Name="Cnt_Y" Width="45" MaxLength="3"
-                                                     HorizontalAlignment="Left"
-                                                     TextInput="OnCoordTextInput" TextChanged="OnCounterYChanged"/>
-                                        </Grid>
-                                    </StackPanel>                               
                                     
-                                    <!-- МЕНЯЕМ ColumnDefinitions (ширина для wander) -->
                                     <Grid ColumnDefinitions="90,140,10,90,*">
                                         <TextBlock Grid.Column="0" Text="Behavior:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <ComboBox Grid.Column="1" x:Name="Npc_Behavior" HorizontalAlignment="Stretch" SelectionChanged="OnNpcBehaviorChanged">
@@ -363,7 +355,6 @@
                                         </ComboBox>
                                     </Grid>
 
-                                    <!-- ДОБАВЛЯЕМ x:Name="Npc_WanderPanel" -->
                                     <Grid x:Name="Npc_WanderPanel" ColumnDefinitions="100,*,10,100,50">
                                         <TextBlock Grid.Column="0" Text="Home X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
@@ -386,14 +377,32 @@
                                             </StackPanel>
                                         </Grid>
                                     </Grid>
-                                    
                                 </StackPanel>
+
+
+                                <!-- ==================== COUNTER ==================== -->
+                                <StackPanel x:Name="CounterPanel" Spacing="3" IsVisible="False">
+                                    <Grid ColumnDefinitions="100,*">
+                                        <TextBlock Grid.Column="0" Text="X:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="1" x:Name="Cnt_X" Width="50" MaxLength="4"
+                                                 HorizontalAlignment="Left"
+                                                 TextInput="OnCoordTextInput" TextChanged="OnCounterXChanged"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="100,*">
+                                        <TextBlock Grid.Column="0" Text="Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="1" x:Name="Cnt_Y" Width="50" MaxLength="4"
+                                                 HorizontalAlignment="Left"
+                                                 TextInput="OnCoordTextInput" TextChanged="OnCounterYChanged"/>
+                                    </Grid>
+                                </StackPanel>
+
                             </Panel>
                         </ScrollViewer>
                     </Border>
 
                     <Border Grid.Column="3" Background="#3E3E42" Width="4"/>
 
+                    <!-- КНОПКИ ДОБАВИТЬ / УДАЛИТЬ -->
                     <StackPanel Grid.Column="4" Spacing="4" VerticalAlignment="Top" Margin="0,8,0,0">
                         <Button x:Name="AddBtn" Content="+" Width="28" Height="28" Padding="0" FontSize="18" FontWeight="Bold" Click="OnAddClick"/>
                         <Button x:Name="RemoveBtn" Content="−" Width="28" Height="28" Padding="0" FontSize="18" FontWeight="Bold" Click="OnRemoveClick"/>
@@ -401,11 +410,13 @@
 
                     <Border Grid.Column="5" Background="#3E3E42" Width="4"/>
 
+                    <!-- ========================================================= -->
+                    <!-- SCRIPT INSPECTOR (Правая панель для скриптов NPC)          -->
+                    <!-- ========================================================= -->
                     <Border Grid.Column="6" Padding="8" Background="#1E1E1E">
                         <StackPanel Spacing="8">
                             <TextBlock Text="SCRIPT INSPECTOR" Foreground="White" FontWeight="Bold" FontSize="12"/>
                             
-                            <!-- Выбор типа команды -->
                             <Grid ColumnDefinitions="60,*">
                                 <TextBlock Grid.Column="0" Text="Type:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                 <ComboBox Grid.Column="1" x:Name="Npc_ScriptType" HorizontalAlignment="Stretch" SelectionChanged="OnNpcScriptTypeChanged">
@@ -418,19 +429,13 @@
                                 </ComboBox>
                             </Grid>
 
-                            <!-- Поле параметра (TextBox для ID магазина/битвы) -->
                             <Grid ColumnDefinitions="60,*">
                                 <TextBlock Grid.Column="0" x:Name="Npc_ScriptParamLabel" Text="Param:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                 <Grid Grid.Column="1">
-                                    <!-- Поле для магазинов и битв -->
                                     <TextBox x:Name="Npc_ScriptParam" TextChanged="OnNpcScriptParamChanged" IsVisible="True" Width="45" MaxLength="3" HorizontalAlignment="Left" TextInput="OnCoordTextInput"/>
                                     
-                                    <!-- ★ НОВАЯ ПАНЕЛЬ ДЛЯ ТЕКСТОВ ★ -->
                                     <StackPanel x:Name="Npc_TextIdPanel" IsVisible="False" Spacing="4">
-                                        <!-- Сюда будут добавляться теги [0001] -->
                                         <WrapPanel x:Name="Npc_TextIdsWrapPanel" Orientation="Horizontal" />
-                                        
-                                        <!-- Выпадающий список и кнопки + / - -->
                                         <Grid ColumnDefinitions="*,Auto">
                                             <ComboBox x:Name="Npc_ScriptTextCombo" Grid.Column="0" HorizontalAlignment="Stretch" SelectionChanged="OnNpcScriptTextSelected"/>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
@@ -441,7 +446,6 @@
                                     </StackPanel>
                                 </Grid>
                             </Grid>
-                            
                         </StackPanel>
                     </Border>
                     
