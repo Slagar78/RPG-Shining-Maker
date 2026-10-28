@@ -1,0 +1,16 @@
+
+
+Открой командную строку (cmd) в папке ...\RPG-Shining-Maker\Maker\ :
+
+dotnet build src/RpgShinzoMaker.Desktop/RpgShinzoMaker.Desktop.csproj -c Release
+
+RPG-Shining-Maker/
+├── data/
+├── assets/
+├── game.rb
+└── Maker/
+    ├── src/
+    ├── RpgShinzoMaker.Desktop.exe  <-- ТУТ
+    ├── RpgShinzoMaker.Core.dll
+    ├── runtimes/
+    └── (остальные dll)
