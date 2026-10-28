@@ -235,20 +235,19 @@ when :playing
     else
       @pending_menu_request = true
     end
-  elsif IsKeyPressed(KEY_D) && @game_state != :dialog
-    # Ищем NPC строго по вертикали или горизонтали
-    npc = @game_map.npcs.find { |n| (n.x - @player.x).abs + (n.y - @player.y).abs == 1 }
-    if npc
-      try_start_interaction
-    else
-      if can_open_now
-        @game_state = :menu
-        @audio.play_sfx(:confirm)
-        @menu.open
+
+    elsif IsKeyPressed(KEY_D) && @game_state != :dialog
+      if find_interactable_npc
+        try_start_interaction
       else
-        @pending_menu_request = true
+        if can_open_now
+          @game_state = :menu
+          @audio.play_sfx(:confirm)
+          @menu.open
+        else
+          @pending_menu_request = true
+        end
       end
-    end
   else
     @player.handle_input
   end
@@ -925,34 +924,45 @@ end
     idx   # если не найдено → nil
   end
 
-def try_start_interaction
-  # строгая проверка на 4 стороны
-  npc = @game_map.npcs.find { |n| (n.x - @player.x).abs + (n.y - @player.y).abs == 1 }
-  return if npc.nil?
+  def try_start_interaction
+    npc = find_interactable_npc
+    return if npc.nil?
 
-  script_entry = @game_map.npc_scripts.find { |s| s["npc_id"] == npc.id || (s["x"] == npc.x && s["y"] == npc.y) }
-  return if script_entry.nil?
+    script_entry = @game_map.npc_scripts.find { |s| s["npc_id"] == npc.id || (s["x"] == npc.x && s["y"] == npc.y) }
+    return if script_entry.nil?
 
-  local_text = @game_map.local_text || {}
-  leader_name = @party && @party[0] ? @party[0]["name"] : ""
+    local_text = @game_map.local_text || {}
+    leader_name = @party && @party[0] ? @party[0]["name"] : ""
 
-  @dialog_manager = DialogManager.new(
-    script_entry["script"],
-    npc,
-    @player,
-    @game_map,
-    local_text,
-    @game_text,
-    @message_panel_tex,
-    @large_font,
-    leader_name,
-    npc.direction,
-    @flags,
-    @shop_menu,
-    @shops
-  )
-  @game_state = :dialog
-end
+    @dialog_manager = DialogManager.new(
+      script_entry["script"],
+      npc,
+      @player,
+      @game_map,
+      local_text,
+      @game_text,
+      @message_panel_tex,
+      @large_font,
+      leader_name,
+      npc.direction,
+      @flags,
+      @shop_menu,
+      @shops
+    )
+    @game_state = :dialog
+  end
+
+  def find_interactable_npc
+    adjacent = @game_map.npcs.find { |n| (n.x - @player.x).abs + (n.y - @player.y).abs == 1 }
+    return adjacent if adjacent
+
+    @game_map.npcs.find do |n|
+      dx = n.x - @player.x
+      dy = n.y - @player.y
+      (dx.abs + dy.abs == 2) && (dx == 0 || dy == 0) &&
+        @game_map.counter_at?(@player.x + dx / 2, @player.y + dy / 2)
+    end
+  end
 
   private
 

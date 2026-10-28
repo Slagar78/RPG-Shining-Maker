@@ -298,5 +298,10 @@
 		"target_x":	45,
 		"target_y":	7,
 		"facing":	1
-	}
+	},
+  {
+    "type":	"counter",
+    "x":	7,
+    "y":	19
+  }
 ]

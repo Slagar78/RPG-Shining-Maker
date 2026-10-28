@@ -90,6 +90,7 @@ class GameMap
     @tile_events = []
     @stair_events = []
     @warp_events = []
+    @counter_cells = []
 
     load_section("events", "events.json").each do |ev|
       type = ev['type'] || 'roof'
@@ -101,6 +102,8 @@ class GameMap
         @stair_events << ev
       elsif type == 'warp'
         @warp_events << ev
+      elsif type == 'counter'
+        @counter_cells << ev
       end
     end
 
@@ -204,6 +207,7 @@ class GameMap
 	  @roof_offsets = []
 	  @npcs = []
 	  @open_doors = {}   # { [x,y] => { original_tile: id, event: event_hash } }
+    @counter_cells = []
   end
   
   def load_section(section, fallback_root_filename = nil)
@@ -287,19 +291,24 @@ class GameMap
     # Иначе (тип 0, пол) – разрешаем проход свободно, без ограничений
   end
 
-  # Стандартные проверки слоёв
-  tile2_id = @tiles2[x][y]
-  if tile2_id && tile2_id >= 0
+    # Стандартные проверки слоёв
+    tile2_id = @tiles2[x][y]
+    if tile2_id && tile2_id >= 0
     type2 = @tile_types[tile2_id] || 0
     return false if type2 == 1 || type2 == 2
   end
 
-  tile_id = @tiles[x][y]
-  type = @tile_types[tile_id] || 0
-  return false if type == 1
+    tile_id = @tiles[x][y]
+    type = @tile_types[tile_id] || 0
+    return false if type == 1
 
-  true
-end
+    true
+  end
+
+  def counter_at?(x, y)
+    return false if @counter_cells.nil?
+    @counter_cells.any? { |ev| ev['x'] == x && ev['y'] == y }
+  end
 
   def npc_at?(x, y)
     @npcs.any? { |npc| npc.x == x && npc.y == y }
