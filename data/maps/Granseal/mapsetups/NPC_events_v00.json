@@ -1,37 +1,37 @@
 [
-  {
-    "id": "npc1",
-    "x": 7,
-    "y": 18,
-    "sprite": "mapsprite193",
-    "behavior": "static",
-    "direction": "down"
-  },
-  {
-    "id": "npc2",
-    "x": 20,
-    "y": 13,
-    "sprite": "mapsprite195",
-    "behavior": "wander",
-    "direction": "down",
-    "home_x": 20,
-    "home_y": 13,
-    "radius": 3
-  },
-  {
-    "id": "npc3",
-    "x": 2,
-    "y": 26,
-    "sprite": "mapsprite193",
-    "behavior": "static",
-    "direction": "right"
-  },
-  {
-    "id": "npc4",
-    "x": 32,
-    "y": 11,
-    "sprite": "mapsprite192",
-    "behavior": "static",
-    "direction": "down"
-  }
+	{
+		"id":	"npc1",
+		"x":	7,
+		"y":	18,
+		"sprite":	"mapsprite193",
+		"behavior":	"static",
+		"direction":	"down"
+	},
+	{
+		"id":	"npc2",
+		"x":	20,
+		"y":	13,
+		"sprite":	"mapsprite195",
+		"behavior":	"wander",
+		"direction":	"down",
+		"home_x":	20,
+		"home_y":	13,
+		"radius":	3
+	},
+	{
+		"id":	"npc3",
+		"x":	2,
+		"y":	26,
+		"sprite":	"mapsprite193",
+		"behavior":	"static",
+		"direction":	"right"
+	},
+	{
+		"id":	"npc4",
+		"x":	32,
+		"y":	11,
+		"sprite":	"mapsprite192",
+		"behavior":	"static",
+		"direction":	"down"
+	}
 ]

@@ -1,0 +1,120 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RpgShinzoMaker.Desktop.Editors.TilesetImporter.TilesetImporterView">
+    <Panel>
+        <Grid RowDefinitions="Auto,*,Auto">
+            <Border Grid.Row="0" Background="#2D2D30" Padding="8,6">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="LoadBtn" Content="📂 Load Map PNG" Padding="12,6" Click="OnLoadClick"/>
+                    <Button x:Name="SaveTilesetBtn" Content="💾 Save Tileset" Padding="12,6"
+                            Background="#007ACC" Foreground="White" FontWeight="Bold"
+                            IsEnabled="False" Click="OnSaveTilesetClick"/>
+                    <Button x:Name="SaveMapBtn" Content="🗺 Save as Map" Padding="12,6"
+                            Background="#4CAF50" Foreground="White" FontWeight="Bold"
+                            IsEnabled="False" Click="OnSaveMapClick"/>
+                    <Separator Width="1" Margin="6,2"/>
+                    <TextBlock x:Name="StatusText" VerticalAlignment="Center"
+                               Foreground="#AAAAAA" Text="Загрузите PNG-карту для импорта"/>
+                </StackPanel>
+            </Border>
+
+            <Grid Grid.Row="1" ColumnDefinitions="*,4,400">
+                <Border Grid.Column="0" Background="#1E1E1E" Padding="8">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="SOURCE IMAGE"
+                                   Foreground="White" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock DockPanel.Dock="Bottom" x:Name="SourceInfoText"
+                                   Foreground="#888" FontSize="11" Margin="0,8,0,0"/>
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                            <Image x:Name="SourcePreview" Stretch="None"
+                                   RenderOptions.BitmapInterpolationMode="None"
+                                   RenderOptions.EdgeMode="Aliased"/>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+
+                <GridSplitter Grid.Column="1" Background="#3E3E42"/>
+
+                <Border Grid.Column="2" Background="#1E1E1E" Padding="8">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="GENERATED TILESET"
+                                   Foreground="White" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock DockPanel.Dock="Bottom" x:Name="TilesetInfoText"
+                                   Foreground="#888" FontSize="11" Margin="0,8,0,0"/>
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                            <ListBox x:Name="TilesetPreviewList" Background="Transparent" BorderThickness="0"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.Styles>
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="Margin" Value="0"/>
+                                        <Setter Property="MinHeight" Value="0"/>
+                                        <Setter Property="MinWidth" Value="0"/>
+                                    </Style>
+                                </ListBox.Styles>
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Width="384" Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Width="48" Height="48">
+                                            <Image Source="{Binding}" Width="48" Height="48"
+                                                   RenderOptions.BitmapInterpolationMode="None"
+                                                   RenderOptions.EdgeMode="Aliased"/>
+                                            <Border BorderBrush="#55FFFFFF" BorderThickness="1" IsHitTestVisible="False"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="2" Background="#007ACC" Padding="8,4">
+                <TextBlock x:Name="StatusBarText" Foreground="White" Text="Готово"/>
+            </Border>
+        </Grid>
+
+        <!-- ОБНОВЛЕННОЕ ОКНО СОХРАНЕНИЯ -->
+        <Panel x:Name="SaveOverlay" IsVisible="False" Background="#80000000">
+            <Border Width="520" Background="#2D2D30" BorderBrush="#555" BorderThickness="1"
+                    CornerRadius="8" Padding="20"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Save as Map" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                    
+                    <!-- Поля ввода с рамками -->
+                    <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto" RowSpacing="10">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Map name:" Foreground="#CCC" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" x:Name="MapNameBox" 
+                                 BorderBrush="#888" BorderThickness="1" Background="#1E1E1E" Foreground="White"
+                                 Watermark="Введите имя карты..." TextChanged="OnPathFieldsChanged"/>
+                        
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Tileset name:" Foreground="#CCC" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" x:Name="TilesetNameBox" 
+                                 BorderBrush="#888" BorderThickness="1" Background="#1E1E1E" Foreground="White"
+                                 Watermark="Введите имя тайлсета..." TextChanged="OnPathFieldsChanged"/>
+                    </Grid>
+
+                    <!-- Предпросмотр пути -->
+                    <Border Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="1" Padding="10" Margin="0,4,0,0" CornerRadius="4">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Файлы будут сохранены в:" Foreground="#888" FontSize="11" />
+                            <TextBlock x:Name="PathPreviewText" Foreground="#4CAF50" FontSize="12" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock x:Name="SaveError" Foreground="#E74C3C" FontSize="11" TextWrapping="Wrap" IsVisible="False"/>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                        <Button x:Name="SaveCancelBtn" Content="Cancel" MinWidth="90" Click="OnSaveCancelClick"/>
+                        <Button x:Name="SaveOkBtn" Content="OK" MinWidth="90" FontWeight="Bold" Background="#4CAF50" Foreground="White" Click="OnSaveOkClick"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Panel>
+    </Panel>
+</UserControl>

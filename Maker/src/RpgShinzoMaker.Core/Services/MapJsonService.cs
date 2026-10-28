@@ -156,10 +156,10 @@ public static class MapJsonService
         var dir = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
 
-        File.WriteAllText(filePath, root.ToJsonString(new JsonSerializerOptions
-        {
-            WriteIndented = true
-        }));
+        // (Для простоты оставляем остальное как есть, но без склеивания)
+        var options = new JsonSerializerOptions { WriteIndented = true };
+        var tempStr = root.ToJsonString(options).Replace("  ", "\t").Replace(": ", ":\t");
+        File.WriteAllText(filePath, tempStr);
     }
 
     private static void SaveLayer(JsonObject root,

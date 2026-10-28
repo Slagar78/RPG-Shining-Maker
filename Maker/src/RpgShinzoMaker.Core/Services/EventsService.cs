@@ -373,10 +373,7 @@ private static void SaveEventsFileTo(string file, MapEvents events)
     var dir = Path.GetDirectoryName(file);
     if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
 
-    File.WriteAllText(file, root.ToJsonString(new JsonSerializerOptions
-    {
-        WriteIndented = true
-    }));
+    File.WriteAllText(file, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }).Replace("  ", "\t").Replace(": ", ":\t"));
 }
 
     private static void SaveNpcEventsFileTo(string file, MapEvents events)
@@ -398,7 +395,7 @@ private static void SaveEventsFileTo(string file, MapEvents events)
         }
         var dir = Path.GetDirectoryName(file);
         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-        File.WriteAllText(file, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(file, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }).Replace("  ", "\t").Replace(": ", ":\t"));
     }
 
     private static void SaveNpcScriptFileTo(string file, MapEvents events)
@@ -441,6 +438,6 @@ private static void SaveEventsFileTo(string file, MapEvents events)
 
         var dir = Path.GetDirectoryName(file);
         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-        File.WriteAllText(file, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(file, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }).Replace("  ", "\t").Replace(": ", ":\t"));
     }
 }

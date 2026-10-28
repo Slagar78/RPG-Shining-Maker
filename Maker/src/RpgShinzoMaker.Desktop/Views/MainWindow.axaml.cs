@@ -23,6 +23,9 @@ public partial class MainWindow : Window
 
         if (EventEditor != null)
             EventEditor.StatusChanged += OnEditorStatusChanged;
+
+        if (TilesetImporter != null)
+            TilesetImporter.StatusChanged += OnEditorStatusChanged;
     }
 
     // ══════════════════════════════════════════════════════════════

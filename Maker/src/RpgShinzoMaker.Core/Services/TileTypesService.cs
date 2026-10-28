@@ -51,10 +51,15 @@ public static class TileTypesService
             var arr = new JsonArray();
             foreach (var t in tileTypes) arr.Add(t);
 
-            File.WriteAllText(file, arr.ToJsonString(new JsonSerializerOptions
+            var sb = new System.Text.StringBuilder();
+            sb.Append("[\n");
+            for (int i = 0; i < arr.Count; i++)
             {
-                WriteIndented = false
-            }));
+                sb.Append($"\t{arr[i]}");
+                if (i < arr.Count - 1) sb.Append(",\n");
+            }
+            sb.Append("\n]");
+            File.WriteAllText(file, sb.ToString());
         }
         catch (Exception ex)
         {

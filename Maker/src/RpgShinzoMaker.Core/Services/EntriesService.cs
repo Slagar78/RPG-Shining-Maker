@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
+using System.Text;
 using System.Text.Json.Nodes;
 using RpgShinzoMaker.Core.Models;
 
@@ -44,26 +44,33 @@ public static class EntriesService
 
     public static void Save(string path, IEnumerable<MapEntry> entries)
     {
-        var arr = new JsonArray();
+        var sb = new StringBuilder();
+        sb.Append("[");
+
+        bool first = true;
         foreach (var e in entries)
         {
-            arr.Add(new JsonObject
-            {
-                ["id"]           = e.Id,
-                ["folder"]       = e.Folder,
-                ["name"]         = e.Name,
-                ["music"]        = e.Music,
-                ["music_volume"] = e.MusicVolume,
-                ["areas"]        = e.Areas,
-            });
+            if (!first) sb.Append(", ");
+            first = false;
+
+            sb.Append("{\n");
+            sb.Append($"\t\t\"id\":\t{e.Id},\n");
+            sb.Append($"\t\t\"folder\":\t\"{e.Folder}\",\n");
+            sb.Append($"\t\t\"name\":\t\"{e.Name}\",\n");
+            sb.Append($"\t\t\"music\":\t\"{e.Music}\",\n");
+            
+            string vol = e.MusicVolume.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            sb.Append($"\t\t\"music_volume\":\t{vol},\n");
+            
+            sb.Append($"\t\t\"areas\":\t\"{e.Areas}\"\n");
+            sb.Append("\t}");
         }
+
+        sb.Append("]");
 
         var dir = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
 
-        File.WriteAllText(path, arr.ToJsonString(new JsonSerializerOptions
-        {
-            WriteIndented = true
-        }));
+        File.WriteAllText(path, sb.ToString());
     }
 }

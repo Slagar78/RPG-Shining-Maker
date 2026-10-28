@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:mapEditor="using:RpgShinzoMaker.Desktop.Editors.MapEditor"
         xmlns:eventEditor="using:RpgShinzoMaker.Desktop.Editors.EventEditor"
+        xmlns:importer="using:RpgShinzoMaker.Desktop.Editors.TilesetImporter"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="RpgShinzoMaker.Desktop.Views.MainWindow"
         Icon="/Assets/shinzo.ico"
@@ -85,6 +86,10 @@
 
                 <TabItem Header="Эвенты">
                     <eventEditor:EventEditorView x:Name="EventEditor"/>
+                </TabItem>
+                
+                <TabItem Header="Импорт">
+                    <importer:TilesetImporterView x:Name="TilesetImporter"/>
                 </TabItem>
 
                 <TabItem Header="Бои">
