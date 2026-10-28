@@ -23,6 +23,7 @@ public partial class EventEditorView
     private void OnSectionStairClick(object? sender, RoutedEventArgs e)      => SelectSection("stair");
     private void OnSectionWarpClick(object? sender, RoutedEventArgs e)       => SelectSection("warp");
     private void OnSectionNpcClick(object? sender, RoutedEventArgs e)        => SelectSection("npc");
+    private void OnSectionCounterClick(object? sender, RoutedEventArgs e)    => SelectSection("counter");
 
     /// <summary>
     /// Переключает активный раздел.
@@ -56,6 +57,7 @@ public partial class EventEditorView
         SetToggleActive(SectionStairBtn,      _currentSection == "stair");
         SetToggleActive(SectionWarpBtn,       _currentSection == "warp");
         SetToggleActive(SectionNpcBtn,        _currentSection == "npc");
+        SetToggleActive(SectionCounterBtn,    _currentSection == "counter");
     }
 
     private static void SetToggleActive(ToggleButton btn, bool active)
@@ -85,6 +87,7 @@ public partial class EventEditorView
         StairPanel.IsVisible      = _currentSection == "stair";
         WarpPanel.IsVisible       = _currentSection == "warp";
         NpcPanel.IsVisible        = _currentSection == "npc";
+        CounterPanel.IsVisible    = _currentSection == "counter";
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -143,6 +146,11 @@ public partial class EventEditorView
             case "npc":
                 foreach (var n in _events.Npcs)
                     result.Add($"{n.Id} ({n.X},{n.Y}) {n.Behavior} [text:{n.TextId}]");
+                break;
+            
+            case "counter":
+                foreach (var c in _events.Counters)
+                    result.Add($"({c.X},{c.Y})");
                 break;
         }
 

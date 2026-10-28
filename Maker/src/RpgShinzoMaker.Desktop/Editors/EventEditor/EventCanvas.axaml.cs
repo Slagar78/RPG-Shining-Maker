@@ -271,6 +271,7 @@ public partial class EventCanvas : UserControl
             case "stair":       DrawStairs();      break;
             case "warp":        DrawWarps();       break;
             case "npc":         DrawNpcs();        break;
+            case "counter":     DrawCounters();    break;
         }
     }
 
@@ -451,6 +452,42 @@ private void DrawWarpArrow(double cx, double cy, double sz, int facing, Color co
         }
     }
 
+// ─── Counter ───
+    private void DrawCounters()
+    {
+        if (_events == null) return;
+        int ts = TilePx;
+
+        for (int i = 0; i < _events.Counters.Count; i++)
+        {
+            var c = _events.Counters[i];
+            bool selected = i == _selectedIndex;
+            byte alpha = (byte)(selected ? 255 : 140);
+
+            // 1. Рисуем саму рамку
+            AddRect(c.X, c.Y, 1, 1,
+                Color.FromArgb(alpha, 139, 69, 19), null, thickness: 4);
+
+            // 2. Рисуем букву "T" по центру клетки
+            var text = new TextBlock
+            {
+                Text = "T",
+                Foreground = new SolidColorBrush(Color.FromArgb(alpha, 255, 255, 255)), // Белая буква
+                FontWeight = FontWeight.Bold,
+                FontSize = ts * 0.6, // Размер зависит от зума
+                Width = ts,
+                TextAlignment = TextAlignment.Center, // Центрируем по горизонтали
+                IsHitTestVisible = false // Чтобы мышка проходила сквозь букву
+            };
+
+            Canvas.SetLeft(text, c.X * ts);
+            // Небольшой сдвиг вниз (на 15% высоты), чтобы буква была ровно по центру
+            Canvas.SetTop(text, c.Y * ts + (ts * 0.15)); 
+        
+            OverlayCanvas.Children.Add(text);
+        }
+    }
+    
     // ─── Утилита: добавить прямоугольник в клетках ───
     private void AddRect(int x, int y, int wCells, int hCells,
                          Color stroke, Color? fill, double thickness,

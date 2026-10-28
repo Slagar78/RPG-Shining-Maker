@@ -39,6 +39,7 @@ public partial class EventEditorView
                 case "stair":       LoadStair();       break;
                 case "warp":        LoadWarp();        break;
                 case "npc":         LoadNpc();         break;
+                case "counter":     LoadCounter();     break;
             }
         }
         finally
@@ -982,6 +983,23 @@ private void OnWEndYChanged(object? sender, TextChangedEventArgs e)
     }
 
     // ══════════════════════════════════════════════════════════════
+    //   COUNTER — загрузка в поля
+    // ══════════════════════════════════════════════════════════════
+    private void LoadCounter()
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Counters.Count)
+        {
+            Cnt_X.Text = "";
+            Cnt_Y.Text = "";
+            return;
+        }
+
+        var c = _events.Counters[_selectedIndex];
+        Cnt_X.Text = c.X.ToString();
+        Cnt_Y.Text = c.Y.ToString();
+    }  
+    
+    // ══════════════════════════════════════════════════════════════
     //   ОБРАБОТЧИКИ NPC
     // ══════════════════════════════════════════════════════════════
     private void OnNpcIdChanged(object? sender, TextChangedEventArgs e)
@@ -1014,6 +1032,28 @@ private void OnWEndYChanged(object? sender, TextChangedEventArgs e)
         OnFieldChanged();
     }
 
+    // ══════════════════════════════════════════════════════════════
+    //   ОБРАБОТЧИКИ COUNTER
+    // ══════════════════════════════════════════════════════════════
+    private void OnCounterXChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Counters.Count) return;
+
+        _events.Counters[_selectedIndex].X = ParseCoord(Cnt_X.Text, fallback: 0);
+        OnFieldChanged();
+    }
+
+    private void OnCounterYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Counters.Count) return;
+
+        _events.Counters[_selectedIndex].Y = ParseCoord(Cnt_Y.Text, fallback: 0);
+        OnFieldChanged();
+    }
+ 
+    
     private void OnNpcHomeXYChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;

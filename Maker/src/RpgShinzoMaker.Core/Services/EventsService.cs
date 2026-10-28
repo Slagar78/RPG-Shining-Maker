@@ -80,6 +80,7 @@ public static class EventsService
                     case "tile_change": ParseTileChange(obj, events);  break;
                     case "stairs":      ParseStairs(obj, events);      break;
                     case "warp":        ParseWarp(obj, events);        break;
+                    case "counter":     ParseCounter(obj, events);     break;
                 }
             }
         }
@@ -246,6 +247,15 @@ public static class EventsService
         events.Warps.Add(warp);
     }
 
+    private static void ParseCounter(JsonObject obj, MapEvents events)
+    {
+        events.Counters.Add(new CounterEvent
+        {
+            X = obj["x"]?.GetValue<int>() ?? 0,
+            Y = obj["y"]?.GetValue<int>() ?? 0,
+        });
+    }
+
     // ══════════════════════════════════════════════════════════════
     //   SAVE
     // ══════════════════════════════════════════════════════════════
@@ -367,6 +377,19 @@ private static void SaveEventsFileTo(string file, MapEvents events)
         obj["facing"]     = w.Facing;
 
         root.Add(obj);
+    }
+
+    // ─── COUNTERS ─────────────────────────────────────────────
+    // Прилавки: одна клетка = один объект { type, x, y }.
+    // Игра читает их как talk_through-клетки для диалога через стол.
+    foreach (var c in events.Counters)
+    {
+        root.Add(new JsonObject
+        {
+            ["type"] = "counter",
+            ["x"]    = c.X,
+            ["y"]    = c.Y
+        });
     }
 
     // ─── ЗАПИСЬ НА ДИСК ───────────────────────────────────────

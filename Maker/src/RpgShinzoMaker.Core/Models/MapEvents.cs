@@ -13,4 +13,5 @@ public class MapEvents
     public List<StairEvent>       Stairs       { get; set; } = new();
     public List<WarpEvent>        Warps        { get; set; } = new();
     public List<NpcEvent>         Npcs         { get; set; } = new();
+    public List<CounterEvent>     Counters     { get; set; } = new();
 }

@@ -25,6 +25,7 @@ public partial class EventEditorView
             case "stair":       _events.Stairs.Add(new StairEvent());            break;
             case "warp":        _events.Warps.Add(new WarpEvent());              break;
             case "npc":         _events.Npcs.Add(new NpcEvent());                break;
+            case "counter":     _events.Counters.Add(new CounterEvent());        break;
         }
 
         int newIndex = GetCount(_currentSection) - 1;
@@ -87,6 +88,14 @@ public partial class EventEditorView
                     removed = true;
                 }
                 break;
+            
+            case "counter":
+                if (_selectedIndex < _events.Counters.Count)
+                {
+                    _events.Counters.RemoveAt(_selectedIndex);
+                    removed = true;
+                }
+                break;
         }
 
         if (!removed) return;
@@ -120,6 +129,7 @@ public partial class EventEditorView
         "stair"       => _events.Stairs.Count,
         "warp"        => _events.Warps.Count,
         "npc"         => _events.Npcs.Count,
+        "counter"     => _events.Counters.Count,
         _             => 0
     };
 }
