@@ -635,15 +635,12 @@ end
       end
 	end
 
- if @phase == :shutter_close || @phase == :shutter_hold
-  progress = @phase == :shutter_hold ? 1.0 : @shutter_progress
-  full_height = 960.0
-  bar_h = (full_height / 2.0) * progress   # половина экрана на каждую шторку
-  # Верхняя шторка от самого верха
-  Raylib.DrawRectangle(0, 0, WORK_WIDTH, bar_h, Raylib::BLACK)
-  # Нижняя шторка от самого низа
-  Raylib.DrawRectangle(0, full_height - bar_h, WORK_WIDTH, bar_h, Raylib::BLACK)
-end
+  if @phase == :shutter_close || @phase == :shutter_hold
+    progress = @phase == :shutter_hold ? 1.0 : @shutter_progress
+    
+    # Простое затемнение всего экрана (от 0.0 до 1.0)
+    Raylib.DrawRectangle(0, 0, WORK_WIDTH, 960, Raylib.Fade(Raylib::BLACK, progress))
+  end
 
   when :black_screen, :finished
     Raylib.ClearBackground(Raylib::BLACK)
