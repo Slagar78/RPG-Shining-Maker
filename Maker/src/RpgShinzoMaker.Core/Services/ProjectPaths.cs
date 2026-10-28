@@ -36,4 +36,20 @@ public static class ProjectPaths
 
     public static string MapSetupsDir(string folder) => 
         Path.Combine(MapsDir, folder, "mapsetups");
+
+    // ★ ДОБАВЛЕН ЭТОТ МЕТОД ★
+    public static void Initialize()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        for (int i = 0; i < 10 && dir != null; i++)
+        {
+            if (Directory.Exists(Path.Combine(dir.FullName, "data", "maps")))
+            {
+                Root = dir.FullName;
+                return;
+            }
+            dir = dir.Parent;
+        }
+        Root = Directory.GetCurrentDirectory();
+    }
 }
