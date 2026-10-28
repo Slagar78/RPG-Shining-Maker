@@ -3,7 +3,7 @@
 RPG-Shining-Maker/
 │
 ├── Maker/
-│   ├── RpgShinzoMaker.sln
+│   ├── RpgShinzoMaker.slnx                       (новый формат решения)
 │   │
 │   ├── src/
 │   │   │
@@ -18,7 +18,8 @@ RPG-Shining-Maker/
 │   │   │   │   ├── StairEvent.cs                   (лестница: start→end + dir)
 │   │   │   │   ├── WarpEvent.cs                    (телепорт: single 1-клетка / line область → target)
 │   │   │   │   ├── NpcEvent.cs                     (NPC: id, sprite, behavior…)
-│   │   │   │   ├── MapEvents.cs                    (контейнер 5 типов событий)
+│   │   │   │   ├── CounterEvent.cs                 ★ НОВЫЙ (прилавок: x, y для диалога через стол)
+│   │   │   │   ├── MapEvents.cs                    (контейнер 6 типов событий)
 │   │   │   │   └── SubArea.cs                      (прямоугольник под-области)
 │   │   │   │
 │   │   │   └── Services/
@@ -27,7 +28,7 @@ RPG-Shining-Maker/
 │   │   │       ├── EntriesService.cs               ★ ОБНОВЛЕНО (сохранение с табами)
 │   │   │       ├── TileTypesService.cs             ★ ОБНОВЛЕНО (сохранение с табами)
 │   │   │       ├── AreasService.cs                 (main + subAreas, свой StringBuilder)
-│   │   │       ├── EventsService.cs                ★ ОБНОВЛЕНО (сохранение с табами)
+│   │   │       ├── EventsService.cs                ★ ОБНОВЛЕНО (чтение/запись Counter)
 │   │   │       └── TilesetImportService.cs         ★ НОВЫЙ (алгоритм нарезки PNG)
 │   │   │
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
@@ -46,8 +47,8 @@ RPG-Shining-Maker/
 │   │       │   └── ViewModelBase.cs
 │   │       │
 │   │       ├── Views/
-│   │       │   ├── MainWindow.axaml                ★ ОБНОВЛЕНО (добавлена вкладка «Импорт»)
-│   │       │   ├── MainWindow.axaml.cs             ★ ОБНОВЛЕНО (подписка на импортер)
+│   │       │   ├── MainWindow.axaml                
+│   │       │   ├── MainWindow.axaml.cs             
 │   │       │   ├── MapCanvas.axaml                 
 │   │       │   └── MapCanvas.axaml.cs
 │   │       │
@@ -72,21 +73,21 @@ RPG-Shining-Maker/
 │   │           │   └── TileItem.cs                 
 │   │           │
 │   │           ├── EventEditor/                    ← редактор событий
-│   │           │   ├── EventEditorView.axaml       
+│   │           │   ├── EventEditorView.axaml       ★ ОБНОВЛЕНО (CounterPanel вынесен, ScriptInspector скрыт)
 │   │           │   ├── EventEditorView.axaml.cs    
 │   │           │   ├── EventEditorView.Map.cs      
-│   │           │   ├── EventEditorView.Canvas.cs   
-│   │           │   ├── EventEditorView.Sections.cs 
-│   │           │   ├── EventEditorView.Fields.cs   
-│   │           │   ├── EventEditorView.Events.cs   
+│   │           │   ├── EventEditorView.Canvas.cs   ★ ОБНОВЛЕНО (автоскролл)
+│   │           │   ├── EventEditorView.Sections.cs ★ ОБНОВЛЕНО (Counter + автоскролл + скрытие панелей)
+│   │           │   ├── EventEditorView.Fields.cs   ★ ОБНОВЛЕНО (Counter X/Y)
+│   │           │   ├── EventEditorView.Events.cs   ★ ОБНОВЛЕНО (Add/Remove Counter)
 │   │           │   ├── EventCanvas.axaml           
-│   │           │   └── EventCanvas.axaml.cs        
+│   │           │   └── EventCanvas.axaml.cs        ★ ОБНОВЛЕНО (Отрисовка спрайтов NPC и буквы T)
 │   │           │
-│   │           └── TilesetImporter/                ★ НОВЫЙ РЕДАКТОР (Импорт карт)
-│   │               ├── TilesetImporterView.axaml   (Превью, сетка, диалог сохранения)
-│   │               ├── TilesetImporterView.axaml.cs(Поля, IEditor)
-│   │               ├── TilesetImporterView.Load.cs (Загрузка PNG, RU->EN, превью)
-│   │               └── TilesetImporterView.Save.cs (Сохранение PNG и JSON)
+│   │           └── TilesetImporter/                ← импорт карт
+│   │               ├── TilesetImporterView.axaml   
+│   │               ├── TilesetImporterView.axaml.cs
+│   │               ├── TilesetImporterView.Load.cs 
+│   │               └── TilesetImporterView.Save.cs 
 │   │
 │   └── assets/
 │
@@ -96,7 +97,7 @@ RPG-Shining-Maker/
 │   │   └── <map_name>/
 │   │       ├── layout.json
 │   │       ├── areas.json                          
-│   │       ├── events.json                         
+│   │       ├── events.json                         (теперь хранит и type: "counter")
 │   │       ├── NPC_events.json                     
 │   │       └── NPC_script.json                     
 │   ├── tile_types/
@@ -105,16 +106,16 @@ RPG-Shining-Maker/
 │
 └── Игра (отдельный проект)
     └── lib/
-        ├── GameMap.rb                              
+        ├── GameMap.rb                              ★ ОБНОВЛЕНО (counter_at? и массив @counter_cells)
         ├── player.rb                               
         ├── camera.rb                               
-        └── game.rb                                 
+        └── game.rb                                 ★ ОБНОВЛЕНО (find_interactable_npc через прилавок)
+
 
 🏛️ Архитектура: оболочка и ТРИ редактора
 
 ┌─────────────────────────────────────────────────────────────────┐
 │                     MainWindow (Shell)                          │
-│                                                                 │
 │  ┌────────────────────────────────────────────────────────┐     │
 │  │ Тулбар: [SAVE] [▶ Run] [⚔ Battle]                     │     │
 │  ├────────────────────────────────────────────────────────┤     │
@@ -123,7 +124,7 @@ RPG-Shining-Maker/
 │  │  │                                                   │ │     │
 │  │  │  MapEditorView  (IEditor)  ← вкладка «Карты»      │ │     │
 │  │  │  EventEditorView(IEditor)  ← вкладка «Эвенты»     │ │     │
-│  │  │  TilesetImporter(IEditor)  ← вкладка «Импорт» ★   │ │     │
+│  │  │  TilesetImporter(IEditor)  ← вкладка «Импорт»     │ │     │
 │  │  │                                                   │ │     │
 │  │  └───────────────────────────────────────────────────┘ │     │
 │  ├────────────────────────────────────────────────────────┤     │
@@ -149,7 +150,7 @@ RPG-Shining-Maker/
         ▼                       ▼                       ▼                   ▼
   ┌───────────┐           ┌───────────┐           ┌───────────┐       ┌───────────┐
   │ MapEditor │           │ EventEdit │           │ ImportEd  │       │ BattleEd  │
-  │  ✓ готов  │           │  ✓ готов  │           │  ✓ готов★ │       │  (план)   │
+  │  ✓ готов  │           │  ✓ готов  │           │  ✓ готов  │       │  (план)   │
   └─────┬─────┘           └─────┬─────┘           └─────┬─────┘       └───────────┘
         │                       │                       │
         │  использует           │  использует           │  использует
@@ -159,12 +160,12 @@ RPG-Shining-Maker/
 │                                                                 │
 │   ProjectPaths      MapJsonService      EntriesService          │
 │   TileTypesService  AreasService        EventsService           │
-│   TilesetImportService ★                                        │
+│   TilesetImportService                                          │
 │                                                                 │
 │   + Core.Models: GameMap, MapEntry, TileType,                   │
 │                  RoofEvent, TileChangeEvent, StairEvent,        │
-│                  WarpEvent, NpcEvent, MapEvents,                │
-│                  Areas, SubArea                                 │
+│                  WarpEvent, NpcEvent, CounterEvent,             │
+│                  MapEvents, Areas, SubArea                      │
 └──────────────────────────────┬──────────────────────────────────┘
                                │
                                │  читают / пишут
@@ -175,36 +176,7 @@ RPG-Shining-Maker/
                         └─────────────┘
 
 
-🧩 Внутреннее устройство TilesetImporterView ★ НОВЫЙ
-
-                    ┌──────────────────────────┐
-                    │ TilesetImporterView      │
-                    │ : UserControl, IEditor   │
-                    └────────────┬─────────────┘
-                                 │
-        ┌────────────────────────┼─────────────────────────────┐
-        │                        │                             │
-        ▼                        ▼                             ▼
- ┌──────────────┐         ┌──────────────┐              ┌──────────────┐
- │ axaml.cs     │         │ Load.cs      │              │ Save.cs      │
- │              │         │              │              │              │
- │ • поля       │         │ • диалог PNG │              │ • SaveTileset│
- │ • ctor       │         │ • ReadPixels │              │  (только PNG)│
- │ • IEditor    │         │ • Sanitize   │              │ • SaveAsMap  │
- │ • StatusChg  │         │  (RU->EN)    │              │  (PNG+JSON)  │
- └──────────────┘         │ • превью     │              │ • предпросмотр│
-                          └──────────────┘              │   путей      │
-                                                        └──────────────┘
-
-Алгоритм импорта:
-1. Загрузка PNG (размер кратен 48x48).
-2. Нарезка на тайлы 48x48, поиск уникальных (через хэш-таблицу).
-3. Сборка тайлсета 1536x1536 (сетка 32x32, полосами по 8 штук).
-4. Отображение сеткой с рамками.
-5. Кнопка "Save Tileset" (сохранить только PNG) или "Save as Map" (создать layout.json, areas.json, entries.json).
-
-
-📁 Формат JSON: Сохранение с табами ★ ОБНОВЛЕНО
+📁 Формат JSON: Сохранение с табами
 
 Мы отказались от WriteIndented и переписали сохранение вручную.
 Теперь файлы сохраняются в точности как в C-программе (cJSON).
@@ -222,6 +194,13 @@ RPG-Shining-Maker/
 		"folder":	"map00"
 	}]
 
+Пример нового события в events.json:
+{
+	"type":	"counter",
+	"x":	5,
+	"y":	10
+}
+
 Правила:
 • Используются табы (\t) для отступов.
 • Нет склеивания в одну строку.
@@ -229,33 +208,7 @@ RPG-Shining-Maker/
 • Игра на Ruby читает это без ошибок.
 
 
-🔄 Поток данных: SAVE (общий для трех редакторов) ★ ОБНОВЛЕНО
-
- [клик по кнопке 💾 SAVE]
-    │
-    ▼
-MainWindow.axaml.cs → OnSaveClick()
-    │  GetActiveEditor() → IEditor
-    ▼
-editor.Save()
-    │
-    ├─→ MapEditor:       → SaveCurrentMap()
-    │       ├─→ MapJsonService.Save()      → layout.json
-    │       ├─→ TileTypesService.Save()    → tile_types.json
-    │       ├─→ AreasService.Save()        → areas.json
-    │       └─→ EntriesService.Save()      → entries.json
-    │
-    ├─→ EventEditor:     → SaveCurrentEvents()
-    │       └─→ EventsService.Save()       → events.json, NPC_events.json, NPC_script.json
-    │
-    └─→ TilesetImporter: → SaveAsMap()
-            ├─→ Создание и сохранение PNG тайлсета
-            ├─→ MapJsonService.Save()      → layout.json
-            ├─→ AreasService.Save()        → areas.json
-            └─→ EntriesService.Save()      → entries.json
-
-
-📐 Правила, чтобы код не превратился в кашу (дополнено)
+📐 Правила, чтобы код не превратился в кашу
 
 #   Правило                                        Как соблюдать
 1   Один редактор — одна папка                     TilesetImporter лежит в Editors/TilesetImporter/.
@@ -268,24 +221,27 @@ editor.Save()
 7   Отдельный Canvas — отдельный класс              Если редактор хочет свой рендер — создаёт свой *Canvas.
 8   FullRedraw ≠ RedrawCanvas                       FullRedraw — при смене карты, RedrawCanvas — на изменения UI.
 9   subAreas — макс 10                               Индексы 0..9. Main всегда main, sub — всегда sub.
-10  Формат JSON — читаемый                          ★ ОБНОВЛЕНО: Свой StringBuilder-форматтер с табами (\t).
-11  Безопасность имен                               ★ НОВОЕ: При импорте имена проходят транслитерацию (RU->EN).
+10  Формат JSON — читаемый                          Свой StringBuilder-форматтер с табами (\t).
+11  Безопасность имен                               При импорте имена проходят транслитерацию (RU->EN).
+12  Counter = невидимая логика                      В игре прилавок не блокирует диалог, а разрешает его сквозь себя (talk_through).
 
 
 📈 Что уже готово vs что в планах (обновлено)
 
 Компонент                                              Статус
 Core.Models (GameMap, MapEntry, TileType)              ✅
-Core.Models (6 моделей событий)                        ✅
+Core.Models (7 моделей событий, вкл. Counter)          ✅
 Core.Models (SubArea)                                  ✅
 Core.Services (7 сервисов)                             ✅
-Core.Services (TilesetImportService) ★                 ✅
-Core.Services (Сохранение с табами) ★                  ✅
 IEditor (интерфейс)                                    ✅
 MainWindow (оболочка)                                  ✅
 MapEditor (11 файлов)                                  ✅
 EventEditor (7 файлов + EventCanvas)                   ✅
-TilesetImporter (4 файла) ★                            ✅
+Редактор: Вкладка Counters (Прилавки)                  ✅
+Редактор: Отрисовка NPC спрайтов на канвасе            ✅
+Редактор: Автоскролл к выбранному событию              ✅
+Редактор: Скрытие Script Inspector вне вкладки NPC     ✅
+Игра: Диалог через прилавок (строго по вертикали/гор.) ✅
 Игра: subAreas + маска + центрирование                 ✅
 Игра: Warp line-mode                                   ✅
 BattleEditor                                           📋 план
