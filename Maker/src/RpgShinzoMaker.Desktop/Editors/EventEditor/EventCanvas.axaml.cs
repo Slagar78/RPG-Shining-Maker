@@ -1,6 +1,7 @@
 // RpgShinzoMaker.Desktop/Editors/EventEditor/EventCanvas.axaml.cs
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Avalonia;
 using Avalonia.Collections;        // ← для AvaloniaList<>
 using Avalonia.Controls;
@@ -54,6 +55,9 @@ public partial class EventCanvas : UserControl
         public int Y;
     }
     private readonly List<TileCtrl> _controls = new();
+    
+    // ★ КЭШ СПРАЙТОВ NPC ★
+    private readonly Dictionary<string, IImage?> _npcSpriteCache = new();
 
     public EventCanvas()
     {
@@ -121,6 +125,32 @@ public partial class EventCanvas : UserControl
         }
     }
 
+    // ══════════════════════════════════════════════════════════════
+//   АВТОСКРОЛЛ К ВЫБРАННОМУ СОБЫТИЮ
+// ══════════════════════════════════════════════════════════════
+    public void ScrollToTile(int tx, int ty)
+    {
+        if (_map == null) return;
+    
+        // Размер одной клетки в пикселях (зависит от текущего зума)
+        int ts = TilePx;
+
+        // Вычисляем центр нужной клетки в пикселях
+        double centerX = tx * ts + ts / 2.0;
+        double centerY = ty * ts + ts / 2.0;
+
+        // Получаем размер видимой области (окна)
+        double viewportW = CanvasScroller.Viewport.Width;
+        double viewportH = CanvasScroller.Viewport.Height;
+
+        // Вычисляем смещение так, чтобы клетка была ровно по центру
+        double offsetX = Math.Max(0, centerX - viewportW / 2.0);
+        double offsetY = Math.Max(0, centerY - viewportH / 2.0);
+
+        // Прокручиваем!
+        CanvasScroller.Offset = new Avalonia.Vector(offsetX, offsetY);
+    }
+    
     // ══════════════════════════════════════════════════════════════
     //   СОЗДАНИЕ IMAGE ДЛЯ КЛЕТКИ
     // ══════════════════════════════════════════════════════════════
@@ -434,23 +464,83 @@ private void DrawWarpArrow(double cx, double cy, double sz, int facing, Color co
     });
 }
 
-    // ─── NPC ───
-    private void DrawNpcs()
+// ─── NPC ───
+private void DrawNpcs()
+{
+    if (_events == null) return;
+    int ts = TilePx;
+
+    for (int i = 0; i < _events.Npcs.Count; i++)
     {
-        if (_events == null) return;
-        int ts = TilePx;
+        var n = _events.Npcs[i];
+        bool selected = i == _selectedIndex;
+        byte alpha = (byte)(selected ? 255 : 140);
 
-        for (int i = 0; i < _events.Npcs.Count; i++)
+        // 1. Рисуем самого NPC (если есть спрайт)
+        if (!string.IsNullOrEmpty(n.Sprite))
         {
-            var n = _events.Npcs[i];
-            bool selected = i == _selectedIndex;
-            byte alpha = (byte)(selected ? 255 : 140);
-
-            // Пока спрайта нет — рисуем рамку
-            AddRect(n.X, n.Y, 1, 1,
-                Color.FromArgb(alpha, 255, 165, 0), null, thickness: 3, dashed: true);
+            var spriteBmp = GetNpcSprite(n.Sprite);
+            if (spriteBmp != null)
+            {
+                var img = new Image
+                {
+                    Source = spriteBmp,
+                    Width = ts,
+                    Height = ts,
+                    Stretch = Stretch.Fill,
+                    IsHitTestVisible = false,
+                    Opacity = selected ? 1.0 : 0.6 // Выделенный NPC ярче, остальные чуть бледнее
+                };
+                    
+                RenderOptions.SetBitmapInterpolationMode(img, BitmapInterpolationMode.None);
+                Canvas.SetLeft(img, n.X * ts);
+                Canvas.SetTop(img, n.Y * ts);
+                OverlayCanvas.Children.Add(img);
+            }
         }
+
+        // 2. Рисуем пунктирную рамку выделения ПОВЕРХ спрайта
+        AddRect(n.X, n.Y, 1, 1,
+            Color.FromArgb(alpha, 255, 165, 0), null, thickness: 3, dashed: true);
     }
+}
+
+// ─── Загрузка и кэширование спрайта NPC ───
+private IImage? GetNpcSprite(string spriteName)
+{
+    // Если уже загружали — возвращаем из кэша
+    if (_npcSpriteCache.TryGetValue(spriteName, out var cached))
+        return cached;
+
+    try
+    {
+        // Используем System.IO, чтобы компилятор не путал с Avalonia.Shapes.Path
+        string path = System.IO.Path.Combine(RpgShinzoMaker.Core.Services.ProjectPaths.NpcSpritesDir, spriteName + ".png");
+            
+        if (!System.IO.File.Exists(path))
+        {
+            _npcSpriteCache[spriteName] = null;
+            return null;
+        }
+
+        var full = new Bitmap(path);
+        IImage result = full;
+
+        // Если это стандартный спрайт-лист 48x144 — вырезаем кадр "лицом вниз"
+        if (full.PixelSize.Width >= 48 && full.PixelSize.Height >= 144)
+        {
+            result = new CroppedBitmap(full, new PixelRect(0, 96, 48, 48));
+        }
+
+        _npcSpriteCache[spriteName] = result;
+        return result;
+    }
+    catch
+    {
+        _npcSpriteCache[spriteName] = null;
+        return null;
+    }
+}
 
 // ─── Counter ───
     private void DrawCounters()

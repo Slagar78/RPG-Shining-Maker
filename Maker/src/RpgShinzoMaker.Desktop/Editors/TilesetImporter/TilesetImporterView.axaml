@@ -89,14 +89,15 @@
                     <!-- Поля ввода с рамками -->
                     <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto" RowSpacing="10">
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Map name:" Foreground="#CCC" VerticalAlignment="Center"/>
+                        
                         <TextBox Grid.Row="0" Grid.Column="1" x:Name="MapNameBox" 
                                  BorderBrush="#888" BorderThickness="1" Background="#1E1E1E" Foreground="White"
-                                 Watermark="Введите имя карты..." TextChanged="OnPathFieldsChanged"/>
+                                 PlaceholderText="Введите имя карты..." TextChanged="OnPathFieldsChanged"/>
                         
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Tileset name:" Foreground="#CCC" VerticalAlignment="Center"/>
                         <TextBox Grid.Row="1" Grid.Column="1" x:Name="TilesetNameBox" 
                                  BorderBrush="#888" BorderThickness="1" Background="#1E1E1E" Foreground="White"
-                                 Watermark="Введите имя тайлсета..." TextChanged="OnPathFieldsChanged"/>
+                                 PlaceholderText="Введите имя тайлсета..." TextChanged="OnPathFieldsChanged"/>
                     </Grid>
 
                     <!-- Предпросмотр пути -->

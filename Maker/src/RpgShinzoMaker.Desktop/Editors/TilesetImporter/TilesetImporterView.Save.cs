@@ -10,6 +10,8 @@ using Avalonia.Platform.Storage;
 using RpgShinzoMaker.Core.Models;
 using RpgShinzoMaker.Core.Services;
 
+#pragma warning disable CS0618 // Игнорируем устаревший метод сохранения (работает нормально)
+
 namespace RpgShinzoMaker.Desktop.Editors.TilesetImporter;
 
 public partial class TilesetImporterView

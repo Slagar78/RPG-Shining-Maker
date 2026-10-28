@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="RpgShinzoMaker.Desktop.Editors.EventEditor.EventCanvas"
              Background="#1E1E1E">
-    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+    <ScrollViewer x:Name="CanvasScroller" 
+                  HorizontalScrollBarVisibility="Auto"
                   VerticalScrollBarVisibility="Auto">
         <Panel x:Name="RootPanel"
                Background="Transparent"

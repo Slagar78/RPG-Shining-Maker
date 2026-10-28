@@ -94,7 +94,7 @@ public partial class TilesetImporterView
             StatusBarText.Text = StatusText.Text;
             SetStatus(StatusText.Text);
 
-            var baseName = Path.GetFileNameWithoutExtension(path);
+            string? baseName = Path.GetFileNameWithoutExtension(path);
             if (!string.IsNullOrEmpty(baseName))
             {
                 MapNameBox.Text = Sanitize(baseName);

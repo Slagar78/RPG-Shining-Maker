@@ -160,18 +160,72 @@ public partial class EventEditorView
     // ══════════════════════════════════════════════════════════════
     //   ВЫБОР СОБЫТИЯ В СПИСКЕ
     // ══════════════════════════════════════════════════════════════
-    private void OnEventListSelectionChanged(object? sender, SelectionChangedEventArgs e)
+private void OnEventListSelectionChanged(object? sender, SelectionChangedEventArgs e)
+{
+    if (_suppressListSelection) return;
+
+    _selectedIndex = EventList.SelectedIndex;
+
+    // Заполнить поля (Fields.cs)
+    LoadSelectedIntoFields();
+
+    // Обновить подсветку на карте
+    RedrawCanvas();
+
+    // ★ АВТОСКРОЛЛ К ВЫБРАННОМУ ЭЛЕМЕНТУ ★
+    if (_selectedIndex >= 0)
     {
-        // Пока идёт OnFieldChanged — игнорируем сбросы выделения,
-        // иначе LoadSelectedIntoFields затрёт поля, которые редактирует пользователь.
-        if (_suppressListSelection) return;
+        int? targetX = null;
+        int? targetY = null;
 
-        _selectedIndex = EventList.SelectedIndex;
+        switch (_currentSection)
+        {
+            case "roof":
+                if (_selectedIndex < _events.Roofs.Count) {
+                    var r = _events.Roofs[_selectedIndex];
+                    // Берем центр крыши, чтобы было видно всю область
+                    targetX = (r.StartX + r.EndX) / 2;
+                    targetY = (r.StartY + r.EndY) / 2;
+                }
+                break;
+            case "tile_change":
+                if (_selectedIndex < _events.TileChanges.Count) {
+                    var tc = _events.TileChanges[_selectedIndex];
+                    targetX = tc.TriggerX; targetY = tc.TriggerY;
+                }
+                break;
+            case "stair":
+                if (_selectedIndex < _events.Stairs.Count) {
+                    var st = _events.Stairs[_selectedIndex];
+                    targetX = (st.StartX + st.EndX) / 2; targetY = (st.StartY + st.EndY) / 2;
+                }
+                break;
+            case "warp":
+                if (_selectedIndex < _events.Warps.Count) {
+                    var w = _events.Warps[_selectedIndex];
+                    targetX = w.TriggerX; targetY = w.TriggerY;
+                }
+                break;
+            case "npc":
+                if (_selectedIndex < _events.Npcs.Count) {
+                    var n = _events.Npcs[_selectedIndex];
+                    targetX = n.X; targetY = n.Y;
+                }
+                break;
+            case "counter":
+                if (_selectedIndex < _events.Counters.Count) {
+                    var c = _events.Counters[_selectedIndex];
+                    targetX = c.X; targetY = c.Y;
+                }
+                break;
+        }
 
-        // Заполнить поля (Fields.cs)
-        LoadSelectedIntoFields();
-
-        // Обновить подсветку на карте
-        RedrawCanvas();
+        // Если координаты нашлись и они валидные — скроллим
+        if (targetX.HasValue && targetY.HasValue && targetX.Value >= 0 && targetY.Value >= 0)
+        {
+            CanvasControl.ScrollToTile(targetX.Value, targetY.Value);
+        }
     }
+  }
+
 }
