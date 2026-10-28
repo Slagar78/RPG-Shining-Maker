@@ -1,0 +1,11 @@
+
+
+Открой командную строку (cmd) в папке ...\RPG-Shining-Maker\Maker\ :
+
+dotnet build src/RpgShinzoMaker.Desktop/RpgShinzoMaker.Desktop.csproj -c Release
+
+2. Команда ОЧИСТКИ (аналог make clean)
+Эта команда удалит скомпилированные файлы из папки Maker и очистит временные папки bin и obj внутри src. исходники (.cs, .axaml, .csproj) и папка src останутся на месте.
+
+cmd
+del *.exe *.dll *.pdb 2>nul & rmdir /s /q src\RpgShinzoMaker.Desktop\bin src\RpgShinzoMaker.Desktop\obj 2>nul & rmdir /s /q src\RpgShinzoMaker.Core\bin src\RpgShinzoMaker.Core\obj 2>nul

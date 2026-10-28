@@ -1,29 +1,22 @@
 ﻿using Avalonia;
 using System;
+using RpgShinzoMaker.Core.Services;
 
-namespace RpgShinzoMaker.Desktop;
-
-sealed class Program
+namespace RpgShinzoMaker.Desktop
 {
-    // Initialization code. Don't use any Avalonia, third-party APIs or any
-    // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
-    // yet and stuff might break.
-    [STAThread]
-    public static void Main(string[] args)
+    internal class Program
     {
-        // ★ ДОБАВЛЕНА ЭТА СТРОКА: Ищем корень проекта до запуска интерфейса ★
-        RpgShinzoMaker.Core.Services.ProjectPaths.Initialize();
-        
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-    }
+        [STAThread]
+        public static void Main(string[] args)
+        {
+            ProjectPaths.Initialize();
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
 
-    // Avalonia configuration, don't remove; also used by visual designer.
-    public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-#if DEBUG
-            .WithDeveloperTools()
-#endif
-            .WithInterFont()
-            .LogToTrace();
+        public static AppBuilder BuildAvaloniaApp()
+            => AppBuilder.Configure<App>()
+                .UsePlatformDetect()
+                .WithInterFont()
+                .LogToTrace();
+    }
 }
