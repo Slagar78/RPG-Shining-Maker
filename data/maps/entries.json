@@ -1,34 +1,29 @@
-[
-  {
-    "id": 0,
-    "folder": "Granseal",
-    "name": "Granseal",
-    "music": "assets/sounds/Track1.mp3",
-    "music_volume": 0.8,
-    "areas": "data/maps/Granseal/areas.json"
-  },
-  {
-    "id": 1,
-    "folder": "map00",
-    "name": "map00",
-    "music": "assets/sounds/Track1.mp3",
-    "music_volume": 0.8,
-    "areas": "data/maps/map00/areas.json"
-  },
-  {
-    "id": 2,
-    "folder": "Expraito",
-    "name": "Expraito",
-    "music": "assets/sounds/SF_Feather.mp3",
-    "music_volume": 0.8,
-    "areas": "data/maps/Expraito/areas.json"
-  },
-  {
-    "id": 3,
-    "folder": "Alcaran",
-    "name": "Alcaran",
-    "music": "assets/sounds/SF_Feather.mp3",
-    "music_volume": 0.8,
-    "areas": "data/maps/Alcaran/areas.json"
-  }
-]
+[{
+		"id":	0,
+		"folder":	"Granseal",
+		"name":	"Granseal",
+		"music":	"assets/sounds/Track1.mp3",
+		"music_volume":	0.8,
+		"areas":	"data/maps/Granseal/areas.json"
+	}, {
+		"id":	1,
+		"folder":	"overworld",
+		"name":	"overworld",
+		"music":	"assets/sounds/Track1.mp3",
+		"music_volume":	0.8,
+		"areas":	"data/maps/overworld/areas.json"
+	}, {
+		"id":	2,
+		"folder":	"Yeel_Town",
+		"name":	"Yeel_Town",
+		"music":	"assets/sounds/Shinzo.ogg",
+		"music_volume":	0.8,
+		"areas":	"data/maps/Yeel_Town/areas.json"
+	}, {
+		"id":	3,
+		"folder":	"Hawel_House",
+		"name":	"Hawel_House",
+		"music":	"assets/sounds/SF_Feather.mp3",
+		"music_volume":	0.8,
+		"areas":	"data/maps/Hawel_House/areas.json"
+	}]

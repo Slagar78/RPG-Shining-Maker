@@ -267,7 +267,7 @@
 		"trigger_y":	25,
 		"end_x":	0,
 		"end_y":	29,
-		"target_map":	"map00",
+		"target_map":	"overworld",
 		"target_x":	4,
 		"target_y":	8,
 		"facing":	1
