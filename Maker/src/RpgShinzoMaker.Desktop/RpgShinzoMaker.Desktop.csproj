@@ -6,9 +6,20 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     
-    <!-- Сборка exe прямо в папку Maker, без подпапки net10.0 -->
-    <OutputPath>..\..\</OutputPath>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- Сборка в один файл -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    
+    <!-- Кидаем EXE сразу в папку Maker -->
+    <PublishDir>..\..\</PublishDir>
+    
+    <!-- Отключаем создание PDB -->
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+    <AllowedReferenceRelatedFileExtensions>.xml</AllowedReferenceRelatedFileExtensions>
     
     <!-- Иконка программы -->
     <ApplicationIcon>Assets\shinzo.ico</ApplicationIcon>
@@ -35,4 +46,12 @@
   <ItemGroup>
     <ProjectReference Include="..\RpgShinzoMaker.Core\RpgShinzoMaker.Core.csproj" />
   </ItemGroup>
+
+  <!-- ★ АВТОМАТИЧЕСКОЕ УДАЛЕНИЕ ВСЕХ PDB ПОСЛЕ СБОРКИ ★ -->
+  <Target Name="RemovePdbsAfterPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <PdbFilesToDelete Include="$(PublishDir)*.pdb" />
+    </ItemGroup>
+    <Delete Files="@(PdbFilesToDelete)" />
+  </Target>
 </Project>
