@@ -162,6 +162,8 @@ class Game
 
     @battle_manager = nil
     @current_battle_id = nil
+    @battle_transition_fade = 0      # Таймер затемнения
+    @battle_scene_was_active = false # Ловим конец сцены
   end
 
   def run
@@ -348,6 +350,21 @@ when :playing
 
     # Если идёт бой — обновляем только бой
     if @game_state == :battle && @battle_manager
+      
+      # Ловим момент, когда боевая сцена закрылась
+      is_active = @battle_manager.battle_scene.active?
+      if @battle_scene_was_active && !is_active
+        @battle_transition_fade = 255 # Сцена погасла — включаем черный экран на тактической карте
+      end
+      @battle_scene_was_active = is_active
+      
+      # Плавно уменьшаем черный экран
+      if @battle_transition_fade > 0
+        safe_dt = [dt, 0.05].min
+        @battle_transition_fade -= (255.0 / 0.5) * safe_dt
+        @battle_transition_fade = 0 if @battle_transition_fade <= 0
+      end
+
       @battle_manager.update
       end_battle if @battle_manager.battle_over?
       return
@@ -355,7 +372,7 @@ when :playing
 
     @player.update_animation(dt)
     @player.update_movement(dt) if @game_state == :playing
-	# dt передаётся. Внутри player.rb он копится в fixed-timestep аккумулятор,
+	  # dt передаётся. Внутри player.rb он копится в fixed-timestep аккумулятор,
     # а шаг делается целыми пикселями (PIXEL_SPEED). Скорость одна на любом мониторе.
 	
 	if @game_map
@@ -827,6 +844,13 @@ end
     BeginTextureMode(@canvas)
     ClearBackground(BLACK)
     @battle_manager.draw
+    # --- ПЛАВНОЕ ПОЯВЛЕНИЕ КАРТЫ (FADE-IN) ---
+    if @battle_transition_fade > 0
+      # Прозрачность от 1.0 (полностью черный) до 0.0 (полностью прозрачный)
+      alpha = @battle_transition_fade / 255.0
+      DrawRectangle(0, 0, 576, 480, Fade(BLACK, alpha))
+    end
+    # -----------------------------------------
     EndTextureMode()
 
     # 3. @canvas на экран с целочисленным масштабированием
