@@ -655,9 +655,13 @@ end
 def draw_to_target
   return unless @active && @render_texture
 
+  # 1. Принудительно закрашиваем весь экран черным (глушим карту намертво)
+  Raylib.DrawRectangle(0, 0, 576, 480, Raylib::BLACK)
+
+  # 2. Рисуем саму боевую сцену поверх этого черного квадрата
   src = Raylib::Rectangle.create(0, 0, 1152, -960)
   dst = Raylib::Rectangle.create(0, 0, 576, 480)
-  Raylib.DrawTexturePro(@render_texture.texture, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+  Raylib::DrawTexturePro(@render_texture.texture, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
 end
 
 # Проверка активности сцены.
@@ -905,75 +909,53 @@ end
   def draw_unit(unit, anim_key, base_x, base_y, flip_h, frame_idx = 0, use_top_left = false)
     return unless unit
     anim = unit[:battle_anim]
-    if anim
-      anim_data = anim.send(anim_key)
-      if anim_data && !anim_data[:frames].empty?
-        idx = frame_idx % anim_data[:frames].size
-        frame_info = anim_data[:frames][idx]
-        tex = frame_info[:tex]
-        frame_off_x = frame_info[:offset_x] || 0
-        frame_off_y = frame_info[:offset_y] || 0
+    return unless anim
 
-        x = base_x + anim_data[:offset_x] + frame_off_x
-        y = if use_top_left
-              base_y + anim_data[:offset_y] + frame_off_y
-            else
-              base_y + anim_data[:offset_y] + frame_off_y - (tex.height / 2.0)
-            end
-        src = Raylib::Rectangle.create(0, 0, flip_h ? -tex.width : tex.width, tex.height)
-        dst = Raylib::Rectangle.create(x, y, tex.width, tex.height)
-        Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-        return
-      end
-    end
-    # Fallback: карта/спрайт
-    tex = unit[:tex]
-    return unless tex
-    x = base_x
-    y = base_y - (TILE_SIZE / 2)
-    src = Raylib::Rectangle.create(0, 2 * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-    dst = Raylib::Rectangle.create(x, y, TILE_SIZE, TILE_SIZE)
+    anim_data = anim.send(anim_key)
+    return unless anim_data && !anim_data[:frames].empty?
+
+    idx = frame_idx % anim_data[:frames].size
+    frame_info = anim_data[:frames][idx]
+    tex = frame_info[:tex]
+    frame_off_x = frame_info[:offset_x] || 0
+    frame_off_y = frame_info[:offset_y] || 0
+
+    x = base_x + anim_data[:offset_x] + frame_off_x
+    y = if use_top_left
+          base_y + anim_data[:offset_y] + frame_off_y
+        else
+          base_y + anim_data[:offset_y] + frame_off_y - (tex.height / 2.0)
+        end
+    src = Raylib::Rectangle.create(0, 0, flip_h ? -tex.width : tex.width, tex.height)
+    dst = Raylib::Rectangle.create(x, y, tex.width, tex.height)
     Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
   end
-  
+
   def draw_unit_with_alpha(unit, anim_key, base_x, base_y, flip_h, frame_idx, use_top_left, alpha)
     return unless unit
     anim = unit[:battle_anim]
-    color = Raylib::Color.new
-    color.r = 255
-    color.g = 255
-    color.b = 255
-    color.a = alpha
-    
-    if anim
-      anim_data = anim.send(anim_key)
-      if anim_data && !anim_data[:frames].empty?
-        idx = frame_idx % anim_data[:frames].size
-        frame_info = anim_data[:frames][idx]
-        tex = frame_info[:tex]
-        frame_off_x = frame_info[:offset_x] || 0
-        frame_off_y = frame_info[:offset_y] || 0
+    return unless anim
 
-        x = base_x + anim_data[:offset_x] + frame_off_x
-        y = if use_top_left
-              base_y + anim_data[:offset_y] + frame_off_y
-            else
-              base_y + anim_data[:offset_y] + frame_off_y - (tex.height / 2.0)
-            end
-        src = Raylib::Rectangle.create(0, 0, flip_h ? -tex.width : tex.width, tex.height)
-        dst = Raylib::Rectangle.create(x, y, tex.width, tex.height)
-        Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, color)
-        return
-      end
-    end
-    
-    # Fallback: mapsprite с альфой
-    tex = unit[:tex]
-    return unless tex
-    x = base_x
-    y = base_y - (TILE_SIZE / 2)
-    src = Raylib::Rectangle.create(0, 2 * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-    dst = Raylib::Rectangle.create(x, y, TILE_SIZE, TILE_SIZE)
+    anim_data = anim.send(anim_key)
+    return unless anim_data && !anim_data[:frames].empty?
+
+    idx = frame_idx % anim_data[:frames].size
+    frame_info = anim_data[:frames][idx]
+    tex = frame_info[:tex]
+    frame_off_x = frame_info[:offset_x] || 0
+    frame_off_y = frame_info[:offset_y] || 0
+
+    color = Raylib::Color.new
+    color.r = 255; color.g = 255; color.b = 255; color.a = alpha
+
+    x = base_x + anim_data[:offset_x] + frame_off_x
+    y = if use_top_left
+          base_y + anim_data[:offset_y] + frame_off_y
+        else
+          base_y + anim_data[:offset_y] + frame_off_y - (tex.height / 2.0)
+        end
+    src = Raylib::Rectangle.create(0, 0, flip_h ? -tex.width : tex.width, tex.height)
+    dst = Raylib::Rectangle.create(x, y, tex.width, tex.height)
     Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, color)
   end
   
