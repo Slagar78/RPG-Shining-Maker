@@ -81,6 +81,7 @@ public partial class EventEditorView
         if (StairPanel      == null) return;
         if (WarpPanel       == null) return;
         if (NpcPanel        == null) return;
+        if (CounterPanel    == null) return;
 
         RoofPanel.IsVisible       = _currentSection == "roof";
         TileChangePanel.IsVisible = _currentSection == "tile_change";
@@ -88,6 +89,12 @@ public partial class EventEditorView
         WarpPanel.IsVisible       = _currentSection == "warp";
         NpcPanel.IsVisible        = _currentSection == "npc";
         CounterPanel.IsVisible    = _currentSection == "counter";
+
+        // ★ СКРЫВАЕМ SCRIPT INSPECTOR ДЛЯ ВСЕХ РАЗДЕЛОВ, КРОМЕ NPC ★
+        if (ScriptInspectorPanel != null)
+        {
+            ScriptInspectorPanel.IsVisible = _currentSection == "npc";
+        }
     }
 
     // ══════════════════════════════════════════════════════════════

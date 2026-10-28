@@ -413,7 +413,7 @@
                     <!-- ========================================================= -->
                     <!-- SCRIPT INSPECTOR (Правая панель для скриптов NPC)          -->
                     <!-- ========================================================= -->
-                    <Border Grid.Column="6" Padding="8" Background="#1E1E1E">
+                    <Border Grid.Column="6" Padding="8" Background="#1E1E1E" x:Name="ScriptInspectorPanel">
                         <StackPanel Spacing="8">
                             <TextBlock Text="SCRIPT INSPECTOR" Foreground="White" FontWeight="Bold" FontSize="12"/>
                             

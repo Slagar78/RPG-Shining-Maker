@@ -308,5 +308,30 @@
 		"type":	"counter",
 		"x":	8,
 		"y":	19
+	},
+	{
+		"type":	"counter",
+		"x":	32,
+		"y":	12
+	},
+	{
+		"type":	"counter",
+		"x":	40,
+		"y":	9
+	},
+	{
+		"type":	"counter",
+		"x":	41,
+		"y":	9
+	},
+	{
+		"type":	"counter",
+		"x":	43,
+		"y":	9
+	},
+	{
+		"type":	"counter",
+		"x":	44,
+		"y":	9
 	}
 ]
