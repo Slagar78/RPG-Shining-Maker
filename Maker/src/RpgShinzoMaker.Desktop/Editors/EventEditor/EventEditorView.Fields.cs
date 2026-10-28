@@ -515,16 +515,8 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
 
         var w = _events.Warps[_selectedIndex];
 
-        if (w.TriggerX >= 0 && w.TriggerY >= 0)
-        {
-            W_TriggerX.Text = w.TriggerX.ToString();
-            W_TriggerY.Text = w.TriggerY.ToString();
-        }
-        else
-        {
-            W_TriggerX.Text = "";
-            W_TriggerY.Text = "";
-        }
+        W_TriggerX.Text = Math.Max(0, w.TriggerX).ToString();
+        W_TriggerY.Text = Math.Max(0, w.TriggerY).ToString();
 
         SetWarpModeUI(w.Mode);
 
@@ -750,39 +742,39 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
 
         St_DirLabel.Text = isLeft ? "left" : "right";
     }
-
-    // ══════════════════════════════════════════════════════════════
-    //   ОБРАБОТЧИКИ WARP — Trigger X/Y
-    // ══════════════════════════════════════════════════════════════
-    private void OnWTriggerXChanged(object? sender, TextChangedEventArgs e)
+ 
+    private void OnWTriggerXYChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
 
         var w = _events.Warps[_selectedIndex];
-        int oldX = w.TriggerX;
-        w.TriggerX = ParseCoord(W_TriggerX.Text, fallback: -1);
-
-        if (w.TriggerX < 0) w.TriggerY = -1;
-        else if (oldX < 0 && w.TriggerY < 0) w.TriggerY = 0;
-
+        w.TriggerX = ParseCoord(W_TriggerX.Text, fallback: 0);
+        w.TriggerY = ParseCoord(W_TriggerY.Text, fallback: 0);
         OnFieldChanged();
     }
 
-    private void OnWTriggerYChanged(object? sender, TextChangedEventArgs e)
+    private void OnWEndXYChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
 
         var w = _events.Warps[_selectedIndex];
-        w.TriggerY = ParseCoord(W_TriggerY.Text, fallback: -1);
-
-        if (w.TriggerY < 0) w.TriggerX = -1;
-        else if (w.TriggerX < 0) w.TriggerX = 0;
-
+        w.EndX = ParseCoord(W_EndX.Text, fallback: 0);
+        w.EndY = ParseCoord(W_EndY.Text, fallback: 0);
         OnFieldChanged();
     }
 
+    private void OnWTargetXYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
+
+        var w = _events.Warps[_selectedIndex];
+        w.TargetX = ParseCoord(W_TargetX.Text, fallback: 0);
+        w.TargetY = ParseCoord(W_TargetY.Text, fallback: 0);
+    }
+    
     // ══════════════════════════════════════════════════════════════
     //   ОБРАБОТЧИКИ WARP — Target Map (ComboBox)
     // ══════════════════════════════════════════════════════════════
@@ -795,24 +787,7 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         _events.Warps[_selectedIndex].TargetMap = name;
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //   ОБРАБОТЧИКИ WARP — Target X/Y
-    // ══════════════════════════════════════════════════════════════
-    private void OnWTargetXChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
 
-        _events.Warps[_selectedIndex].TargetX = ParseCoord(W_TargetX.Text, fallback: 0);
-    }
-
-    private void OnWTargetYChanged(object? sender, TextChangedEventArgs e)
-    {
-        if (_suppressFieldEvents) return;
-        if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
-
-        _events.Warps[_selectedIndex].TargetY = ParseCoord(W_TargetY.Text, fallback: 0);
-    }
 // ══════════════════════════════════════════════════════════════
 //   WARP — Mode (single / line)
 // ══════════════════════════════════════════════════════════════
@@ -873,26 +848,6 @@ private void SetWarpModeUI(string mode)
     W_EndPanel.IsVisible = isLine;
 }
 
-// ══════════════════════════════════════════════════════════════
-//   WARP — End X/Y (только для line)
-// ══════════════════════════════════════════════════════════════
-private void OnWEndXChanged(object? sender, TextChangedEventArgs e)
-{
-    if (_suppressFieldEvents) return;
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
-
-    _events.Warps[_selectedIndex].EndX = ParseCoord(W_EndX.Text, fallback: 0);
-    OnFieldChanged();
-}
-
-private void OnWEndYChanged(object? sender, TextChangedEventArgs e)
-{
-    if (_suppressFieldEvents) return;
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
-
-    _events.Warps[_selectedIndex].EndY = ParseCoord(W_EndY.Text, fallback: 0);
-    OnFieldChanged();
-}
 
     // ══════════════════════════════════════════════════════════════
     //   ОБРАБОТЧИКИ WARP — Facing (0=down, 1=left, 2=right, 3=up)

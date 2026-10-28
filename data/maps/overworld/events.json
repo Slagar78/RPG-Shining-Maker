@@ -1,11 +1,41 @@
 [
-  {
-    "type": "warp",
-    "trigger_x": 6,
-    "trigger_y": 5,
-    "target_map": "Granseal",
-    "target_x": 4,
-    "target_y": 5,
-    "facing": 0
-  }
+	{
+		"type":	"warp",
+		"trigger_x":	31,
+		"trigger_y":	32,
+		"target_map":	"Granseal",
+		"target_x":	4,
+		"target_y":	5,
+		"facing":	0
+	},
+	{
+		"type":	"warp",
+		"trigger_x":	6,
+		"trigger_y":	5,
+		"target_map":	"Hawel_House",
+		"target_x":	5,
+		"target_y":	13,
+		"facing":	3
+	},
+	{
+		"type":	"warp",
+		"trigger_x":	18,
+		"trigger_y":	22,
+		"target_map":	"Yeel_Town",
+		"target_x":	7,
+		"target_y":	1,
+		"facing":	0
+	},
+	{
+		"type":	"warp",
+		"mode":	"line",
+		"trigger_x":	19,
+		"trigger_y":	22,
+		"end_x":	19,
+		"end_y":	23,
+		"target_map":	"Yeel_Town",
+		"target_x":	20,
+		"target_y":	42,
+		"facing":	3
+	}
 ]

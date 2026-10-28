@@ -275,17 +275,17 @@
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Trigger X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                                            <TextBox x:Name="W_TriggerX" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTriggerXChanged"/>
+                                            <TextBox x:Name="W_TriggerX" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTriggerXYChanged"/>
                                             <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
-                                            <TextBox x:Name="W_TriggerY" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTriggerYChanged"/>
+                                            <TextBox x:Name="W_TriggerY" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTriggerXYChanged"/>
                                         </StackPanel>
                                     </Grid>
                                     <Grid x:Name="W_EndPanel" ColumnDefinitions="100,*" IsVisible="False">
                                         <TextBlock Grid.Column="0" Text="End X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                                            <TextBox x:Name="W_EndX" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWEndXChanged"/>
+                                            <TextBox x:Name="W_EndX" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWEndXYChanged"/>
                                             <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
-                                            <TextBox x:Name="W_EndY" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWEndYChanged"/>
+                                            <TextBox x:Name="W_EndY" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWEndXYChanged"/>
                                         </StackPanel>
                                     </Grid>
                                     <Grid ColumnDefinitions="100,*">
@@ -295,9 +295,9 @@
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Target X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                                            <TextBox x:Name="W_TargetX" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTargetXChanged"/>
+                                            <TextBox x:Name="W_TargetX" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTargetXYChanged"/>
                                             <TextBlock Text="," VerticalAlignment="Center" Foreground="#CCCCCC"/>
-                                            <TextBox x:Name="W_TargetY" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTargetYChanged"/>
+                                            <TextBox x:Name="W_TargetY" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTargetXYChanged"/>
                                         </StackPanel>
                                     </Grid>
                                     <Grid ColumnDefinitions="100,*">

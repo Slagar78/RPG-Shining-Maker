@@ -1,0 +1,26 @@
+[
+	{
+		"type":	"warp",
+		"mode":	"line",
+		"trigger_x":	5,
+		"trigger_y":	0,
+		"end_x":	9,
+		"end_y":	0,
+		"target_map":	"overworld",
+		"target_x":	18,
+		"target_y":	21,
+		"facing":	3
+	},
+	{
+		"type":	"warp",
+		"mode":	"line",
+		"trigger_x":	18,
+		"trigger_y":	43,
+		"end_x":	24,
+		"end_y":	43,
+		"target_map":	"overworld",
+		"target_x":	19,
+		"target_y":	24,
+		"facing":	0
+	}
+]
