@@ -212,6 +212,7 @@ class BattleScene
     @finished = false
     @phase = :delay
     @render_texture = Raylib.LoadRenderTexture(1152, 960)
+    # Raylib.SetTextureFilter(@render_texture.texture, Raylib::TEXTURE_FILTER_POINT)
 
     @attacker_anim_timer = 0.0
     @defender_anim_timer = 0.0
