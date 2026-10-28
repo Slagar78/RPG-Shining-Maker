@@ -17,7 +17,6 @@ Database/ShinzoDatabase.exe
 [Dd]ebug/
 [Rr]elease/
 *.dll
-*.exe
 *.pdb
 *.lib
 *.exp
