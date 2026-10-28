@@ -250,24 +250,23 @@ def handle_input
     end
 
     if @item_grid_mode
-      # Стрелки: переключение с пропуском пустых слотов
-      if Raylib.IsKeyPressed(Raylib::KEY_UP) || Raylib.IsKeyPressed(Raylib::KEY_LEFT)
-        new_idx = @item_selected
-        loop do
-          new_idx = (new_idx - 1) % 4
-          break if @items[new_idx]&.dig("item") != "NOTHING" || new_idx == @item_selected
-        end
-        @item_selected = new_idx
-      elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT) || Raylib.IsKeyPressed(Raylib::KEY_DOWN)
-        new_idx = @item_selected
-        loop do
-          new_idx = (new_idx + 1) % 4
-          break if @items[new_idx]&.dig("item") != "NOTHING" || new_idx == @item_selected
-        end
-        @item_selected = new_idx
+      target = nil
+      if    Raylib.IsKeyPressed(Raylib::KEY_UP)    then target = 0
+      elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)  then target = 1
+      elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT) then target = 2
+      elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)  then target = 3
       end
 
-      # Подтверждение – только если слот не пустой
+      # Переключаемся, только если в целевом слоте есть предмет
+      if target && target != @item_selected
+        item = @items[target]
+        if item && item["item"] != "NOTHING"
+          @item_selected = target
+          @anim_timer = 0
+        end
+      end
+
+      # Подтверждение — только если слот не пустой
       if (Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)) &&
          @items[@item_selected]&.dig("item") != "NOTHING"
         @pending_grid_item = [selected_item, @item_grid_mode]
@@ -275,19 +274,19 @@ def handle_input
       return
     end
 
-  # Основное меню
-  old_index = @selected_index
-  if Raylib.IsKeyPressed(Raylib::KEY_UP)
-    @selected_index = 0
-  elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
-    @selected_index = 1
-  elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
-    @selected_index = 2
-  elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
-    @selected_index = 3
+    # Основное меню
+    old_index = @selected_index
+    if Raylib.IsKeyPressed(Raylib::KEY_UP)
+      @selected_index = 0
+    elsif Raylib.IsKeyPressed(Raylib::KEY_LEFT)
+      @selected_index = 1
+    elsif Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
+      @selected_index = 2
+    elsif Raylib.IsKeyPressed(Raylib::KEY_DOWN)
+      @selected_index = 3
+    end
+    @anim_timer = 0 if @selected_index != old_index
   end
-  @anim_timer = 0 if @selected_index != old_index
-end
 
   def update(dt = 1.0 / 60.0)
     return unless @visible
