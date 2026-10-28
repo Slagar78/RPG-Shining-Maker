@@ -10,6 +10,7 @@ require_relative 'lib/ui'
 require_relative 'lib/AudioManager'
 require_relative 'lib/item_actions_ui'
 require_relative 'lib/GameMap'
+require_relative 'lib/intro'
 require_relative 'lib/dialog_manager'
 require_relative 'lib/shop_ui'
 require_relative 'battle'   # ← BattleManager доступен как класс
@@ -54,7 +55,6 @@ class Game
     @audio = AudioManager.new
     @audio.load_sfx(:confirm, "assets/sounds/buttons/button_menu.ogg")
     @audio.load_sfx(:cancel,  "assets/sounds/buttons/Cancel.ogg")
-    @audio.play(@game_map.music_file, @game_map.music_volume)
     @audio.set_sfx_volume(:confirm, 1.0)
     @audio.set_sfx_volume(:cancel,  1.0)
     @audio.load_sfx(:block, "assets/sounds/buttons/block_button.ogg")
@@ -143,7 +143,8 @@ class Game
     @anim_delay = 0.33
     @show_anim  = false
 
-    @game_state = :playing
+    @game_state = :intro
+    @intro = Intro.new
 	
 	  @warp_pending = nil      # данные варпа, ожидающие перехода
     @fade_alpha = 0          # 0..255, 0 = прозрачный, 255 = чёрный
@@ -203,6 +204,15 @@ class Game
     SetMouseScale(1.0 / scale, 1.0 / scale)
     SetMouseOffset(-dx, -dy)
     play_ui_sounds
+
+    # --- ОБРАБОТКА ИНТРО ---
+    if @game_state == :intro
+      if IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_S) || IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+        @intro.skip
+      end
+      return
+    end
+    # ------------------------
 
     # Если идёт бой — управление уходит ему
     if @game_state == :battle && @battle_manager
@@ -346,6 +356,18 @@ when :playing
   def update
     dt = GetFrameTime()
     @audio.update
+
+    # --- ОБНОВЛЕНИЕ ИНТРО ---
+    if @game_state == :intro
+      @intro.update(dt)
+      if @intro.done?
+        @intro.unload
+        @game_state = :playing
+        @audio.play(@game_map.music_file, @game_map.music_volume) # <--- включаем музыку после интро
+      end
+      return
+    end
+    # -------------------------
 
     # Если идёт бой — обновляем только бой
     if @game_state == :battle && @battle_manager
@@ -689,6 +711,16 @@ when :playing
   end
 
   def draw
+    # --- ОТРИСОВКА ИНТРО ---
+    if @game_state == :intro
+      BeginDrawing()
+      ClearBackground(BLACK)
+      @intro.draw
+      EndDrawing()
+      return
+    end
+    # ------------------------
+
     # Если идёт бой — рисуем бой
     if @game_state == :battle && @battle_manager
       draw_battle
