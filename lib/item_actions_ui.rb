@@ -631,14 +631,14 @@ end
 def draw_character_list(mode: 0, item_bonus_atk: 0, item_bonus_df: 0)
   header_y = @lower_y + 28
   if mode == 0
-    draw_text_custom("Имя",    @lower_x + 44,  header_y, 20, WHITE)
-    draw_text_custom("Класс",  @lower_x + 187, header_y, 20, WHITE)
-    level_header_center_x = @lower_x + 290 + Raylib.MeasureTextEx(@font, "Уровень", 20, 1).x / 2
-    exp_header_center_x   = @lower_x + 395 + Raylib.MeasureTextEx(@font, "Опыт", 20, 1).x / 2
-    draw_text_custom("Уровень", @lower_x + 290, header_y, 20, WHITE)
-    draw_text_custom("Опыт",    @lower_x + 395, header_y, 20, WHITE)
+    draw_text_custom("Name",    @lower_x + 44,  header_y, 20, WHITE)
+    draw_text_custom("Class",  @lower_x + 187, header_y, 20, WHITE)
+    level_header_center_x = @lower_x + 290 + Raylib.MeasureTextEx(@font, "Level", 20, 1).x / 2
+    exp_header_center_x   = @lower_x + 395 + Raylib.MeasureTextEx(@font, "Exp", 20, 1).x / 2
+    draw_text_custom("Level", @lower_x + 290, header_y, 20, WHITE)
+    draw_text_custom("Exp",    @lower_x + 395, header_y, 20, WHITE)
   elsif mode == 1
-    draw_text_custom("Имя", @lower_x + 44, header_y, 20, WHITE)
+    draw_text_custom("Name", @lower_x + 44, header_y, 20, WHITE)
     stat_headers = ["HP", "MP", "AT", "DF", "AGI", "MV"]
     stat_centers = [@lower_x + 200, @lower_x + 250, @lower_x + 300, @lower_x + 350, @lower_x + 400, @lower_x + 445]
     stat_headers.each_with_index do |head, idx|
@@ -647,7 +647,7 @@ def draw_character_list(mode: 0, item_bonus_atk: 0, item_bonus_df: 0)
       draw_text_custom(head, cx - w / 2, header_y, 20, WHITE)
     end
   elsif mode == 2
-    draw_text_custom("Имя",    @lower_x + 44,  header_y, 20, WHITE)
+    draw_text_custom("Name",    @lower_x + 44,  header_y, 20, WHITE)
     draw_text_custom("ATTACK",  @lower_x + 187, header_y, 20, WHITE)
     draw_text_custom("DEFENSE", @lower_x + 290, header_y, 20, WHITE)
   end
@@ -783,7 +783,7 @@ class UseMenu < ItemSubMenuBase
   end
 
   def confirm_action(item_entry, actor)
-    puts "Использован предмет #{item_entry["item"]} на #{actor["name"]}"
+    puts "Used item #{item_entry["item"]} on #{actor["name"]}"
   end
 end
 
@@ -1226,7 +1226,7 @@ def draw_lower_content
     end
 
     header_y = @lower_y + 28
-    draw_text_custom("Имя",    @lower_x + 44,  header_y, 20, WHITE)
+    draw_text_custom("Name",    @lower_x + 44,  header_y, 20, WHITE)
     draw_text_custom("ATTACK",  @lower_x + 187, header_y, 20, WHITE)
     draw_text_custom("DEFENSE", @lower_x + 290, header_y, 20, WHITE)
 

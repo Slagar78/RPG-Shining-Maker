@@ -561,8 +561,8 @@ end
     else
       draw_text_custom("NO DATA", @upper_x + 25, @upper_y + 12, 20, WHITE)
     end
-    draw_text_custom("Магия", @upper_x + 25, @upper_y + 38, 20, WHITE)
-    draw_text_custom("Предметы", @upper_x + 195, @upper_y + 38, 20, WHITE)
+    draw_text_custom("Magic", @upper_x + 25, @upper_y + 38, 20, WHITE)
+    draw_text_custom("Items", @upper_x + 195, @upper_y + 38, 20, WHITE)
 
     if @current_spells && @current_spells.any?
       @current_spells.each_with_index do |spell, i|
@@ -590,14 +590,14 @@ end
     # Нижняя панель
     header_y = @lower_y + 28
     if @status_view_mode == 0
-      draw_text_custom("Имя",   @lower_x + 44,  header_y, 20, WHITE)
-      draw_text_custom("Класс", @lower_x + 187, header_y, 20, WHITE)
-      level_header_center_x = @lower_x + 290 + Raylib.MeasureTextEx(@font, "Уровень", 20, 1).x / 2
-      exp_header_center_x   = @lower_x + 395 + Raylib.MeasureTextEx(@font, "Опыт", 20, 1).x / 2
-      draw_text_custom("Уровень", @lower_x + 290, header_y, 20, WHITE)
-      draw_text_custom("Опыт",    @lower_x + 395, header_y, 20, WHITE)
+      draw_text_custom("Name",   @lower_x + 44,  header_y, 20, WHITE)
+      draw_text_custom("Class", @lower_x + 187, header_y, 20, WHITE)
+      level_header_center_x = @lower_x + 290 + Raylib.MeasureTextEx(@font, "Level", 20, 1).x / 2
+      exp_header_center_x   = @lower_x + 395 + Raylib.MeasureTextEx(@font, "Exp", 20, 1).x / 2
+      draw_text_custom("Level", @lower_x + 290, header_y, 20, WHITE)
+      draw_text_custom("Exp",    @lower_x + 395, header_y, 20, WHITE)
     else
-      draw_text_custom("Имя", @lower_x + 44, header_y, 20, WHITE)
+      draw_text_custom("Name", @lower_x + 44, header_y, 20, WHITE)
       stat_headers = ["HP", "MP", "AT", "DF", "AGI", "MV"]
       stat_centers = [@lower_x + 200, @lower_x + 250, @lower_x + 300, @lower_x + 350, @lower_x + 400, @lower_x + 445]
       stat_headers.each_with_index do |head, idx|
@@ -1009,7 +1009,7 @@ class Profile
       class_width = Raylib.MeasureTextEx(@font, class_full_name, 20, 1).x
       space_width = 12
       name_x = @right_panel_x + 25 + class_width + space_width
-      # Имя – белым
+      # Name – белым
       draw_text_custom(actor_name, name_x, @right_panel_y + 12, 20, WHITE)
 
       # --- базовые статы от класса ---
@@ -1706,14 +1706,14 @@ end
     # ===== НИЖНЯЯ ПАНЕЛЬ: ЗАГОЛОВКИ =====
     header_y = @lower_y + 28
     if @status_view_mode == 0
-      draw_text_custom("Имя",    @lower_x + 44,  header_y, 20, WHITE)
-      draw_text_custom("Класс",  @lower_x + 187, header_y, 20, WHITE)
-      level_header_center_x = @lower_x + 290 + Raylib.MeasureTextEx(@font, "Уровень", 20, 1).x / 2
-      exp_header_center_x   = @lower_x + 395 + Raylib.MeasureTextEx(@font, "Опыт", 20, 1).x / 2
-      draw_text_custom("Уровень", @lower_x + 290, header_y, 20, WHITE)
-      draw_text_custom("Опыт",    @lower_x + 395, header_y, 20, WHITE)
+      draw_text_custom("Name",    @lower_x + 44,  header_y, 20, WHITE)
+      draw_text_custom("Class",  @lower_x + 187, header_y, 20, WHITE)
+      level_header_center_x = @lower_x + 290 + Raylib.MeasureTextEx(@font, "Level", 20, 1).x / 2
+      exp_header_center_x   = @lower_x + 395 + Raylib.MeasureTextEx(@font, "Exp", 20, 1).x / 2
+      draw_text_custom("Level", @lower_x + 290, header_y, 20, WHITE)
+      draw_text_custom("Exp",    @lower_x + 395, header_y, 20, WHITE)
     else
-      draw_text_custom("Имя", @lower_x + 44, header_y, 20, WHITE)
+      draw_text_custom("Name", @lower_x + 44, header_y, 20, WHITE)
       stat_headers = ["HP", "MP", "AT", "DF", "AGI", "MV"]
       stat_centers = [@lower_x + 200, @lower_x + 250, @lower_x + 300, @lower_x + 350, @lower_x + 400, @lower_x + 445]
       stat_headers.each_with_index do |head, idx|
