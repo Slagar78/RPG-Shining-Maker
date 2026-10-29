@@ -515,7 +515,7 @@ class GameMap
           tile_id = @tiles[x][y]
           next if tile_id.nil? || tile_id < 0
           next if animated_tile?(tile_id)
-          type = @tile_types[tile_id] || 0
+          type = tile_type_at(x, y)
           next unless type == 3
 
           src_rect = tile_src_rect(tile_id)
