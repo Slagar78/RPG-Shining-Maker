@@ -1,7 +1,7 @@
 [{
 		"folder":	"battle00",
 		"name":	"Battle #0",
-		"map_id":	"map00",
+		"map_id":	"overworld",
 		"music":	"assets/sounds/Shinzo.ogg",
 		"music_volume":	0.800000011920929,
 		"battle_x":	10,
