@@ -244,5 +244,24 @@
                 </DockPanel>
             </Border>
         </Grid>
+
+        <!-- ★ НАЧАЛО ЗАСТАВКИ ★ -->
+        <Border x:Name="SplashOverlay" 
+                Grid.ColumnSpan="3"
+                Background="Black" 
+                IsVisible="True"
+                ZIndex="1000"
+                Opacity="1"
+                IsHitTestVisible="True">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:1.5"/>
+                </Transitions>
+            </Border.Transitions>
+            <Image Source="/Assets/logo.png" 
+                   Stretch="Uniform" 
+                   RenderOptions.BitmapInterpolationMode="HighQuality"/>
+        </Border>
+
     </Grid>
 </Window>

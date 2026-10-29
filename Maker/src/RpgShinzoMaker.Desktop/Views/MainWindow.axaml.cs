@@ -19,6 +19,9 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        // ★ ЗАПУСКАЕМ ТАЙМЕР ТОЛЬКО КОГДА ОКНО ПОЛНОСТЬЮ ОТРИСОВАЛОСЬ НА ЭКРАНЕ ★
+        this.Opened += OnWindowOpened;
+
         // Мост для статус-бара: каждый редактор отправляет текст — MainWindow его ставит
         if (MapEditor != null)
             MapEditor.StatusChanged += OnEditorStatusChanged;
@@ -188,5 +191,25 @@ public partial class MainWindow : Window
             dir = dir.Parent;
         }
         return null;
+    }
+
+    // Срабатывает ровно в тот момент, когда окно готово и показано пользователю
+    private async void OnWindowOpened(object? sender, EventArgs e)
+    {
+        // Ждём 3 секунды (3000 мс). Поскольку окно УЖЕ загружено, 
+        // эти 3 секунды пройдут ровно столько, сколько нужно.
+        await System.Threading.Tasks.Task.Delay(3000);
+
+        if (SplashOverlay != null)
+        {
+            // Запускаем плавное затухание (Fade Out)
+            SplashOverlay.Opacity = 0;
+
+            // Ждём 1.5 секунды, пока анимация затухания завершится (время из XAML)
+            await System.Threading.Tasks.Task.Delay(1500);
+
+            // Полностью убираем заставку, чтобы она не мешала кликам
+            SplashOverlay.IsVisible = false;
+        }
     }
 }

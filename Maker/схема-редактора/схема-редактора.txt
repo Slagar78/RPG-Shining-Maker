@@ -34,10 +34,11 @@ RPG-Shining-Maker/
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
 │   │       ├── App.axaml
 │   │       ├── App.axaml.cs
-│   │       ├── Program.cs
+│   │       ├── Program.cs                          ★ ОБНОВЛЕНО (возвращен в исходное состояние для скорости)
 │   │       ├── ViewLocator.cs
 │   │       │
 │   │       ├── Assets/
+│   │       │   ├── logo.png                        ★ НОВЫЙ (Заставка 1280x720)
 │   │       │   ├── avalonia-logo.ico
 │   │       │   └── icons/
 │   │       │       └── select.png
@@ -47,10 +48,10 @@ RPG-Shining-Maker/
 │   │       │   └── ViewModelBase.cs
 │   │       │
 │   │       ├── Views/
-│   │       │   ├── MainWindow.axaml                
-│   │       │   ├── MainWindow.axaml.cs             
+│   │       │   ├── MainWindow.axaml                ★ ОБНОВЛЕНО (Добавлен оверлей SplashOverlay)
+│   │       │   ├── MainWindow.axaml.cs             ★ ОБНОВЛЕНО (Плавное скрытие заставки через Opened)
 │   │       │   ├── MapCanvas.axaml                 
-│   │       │   └── MapCanvas.axaml.cs
+│   │       │   └── MapCanvas.axaml.cs              ★ ОБНОВЛЕНО (Фикс кликов по скроллбарам)
 │   │       │
 │   │       ├── Shared/
 │   │       │   └── Interfaces/
@@ -59,11 +60,11 @@ RPG-Shining-Maker/
 │   │       └── Editors/
 │   │           │
 │   │           ├── MapEditor/                      ← редактор карт
-│   │           │   ├── MapEditorView.axaml         
+│   │           │   ├── MapEditorView.axaml         ★ ОБНОВЛЕНО (Толстые скроллбары)
 │   │           │   ├── MapEditorView.axaml.cs      
 │   │           │   ├── MapEditorView.Palette.cs    
 │   │           │   ├── MapEditorView.Map.cs        
-│   │           │   ├── MapEditorView.Painting.cs   
+│   │           │   ├── MapEditorView.Painting.cs   ★ ОБНОВЛЕНО (Сброс CellType при рисовании, разделение логики кружков/квадратов)
 │   │           │   ├── MapEditorView.Select.cs     
 │   │           │   ├── MapEditorView.GridMode.cs   
 │   │           │   ├── MapEditorView.Layers.cs     
@@ -104,12 +105,16 @@ RPG-Shining-Maker/
 │   │   └── <tileset>.json
 │   └── ...
 │
+├── opengl32.dll                                    ★ НОВЫЙ (Mesa llvmpipe/d3d12 для фикса WGL ошибки)
+├── @echo off.txt                                   ★ ОБНОВЛЕНО (Скрипт сборки: копирование battle.rb, opengl32.dll, очистка .rb и lib)
+├── .gitignore                                      ★ ОБНОВЛЕНО (Добавлен !PortableRuby/bin/opengl32.dll)
+│
 └── Игра (отдельный проект)
     └── lib/
         ├── GameMap.rb                              ★ ОБНОВЛЕНО (counter_at? и массив @counter_cells)
         ├── player.rb                               
         ├── camera.rb                               
-        └── game.rb                                 ★ ОБНОВЛЕНО (find_interactable_npc через прилавок)
+        └── game.rb                                 ★ ОБНОВЛЕНО (find_interactable_npc через прилавок, убран хардкод llvmpipe)
 
 
 🏛️ Архитектура: оболочка и ТРИ редактора
@@ -117,7 +122,7 @@ RPG-Shining-Maker/
 ┌─────────────────────────────────────────────────────────────────┐
 │                     MainWindow (Shell)                          │
 │  ┌────────────────────────────────────────────────────────┐     │
-│  │ Тулбар: [SAVE] [▶ Run] [⚔ Battle]                     │     │
+│  │ Тулбар: [SAVE] [▶ Play Game] [⚔ Battle]               │     │
 │  ├────────────────────────────────────────────────────────┤     │
 │  │  ┌─── TabControl (EditorTabs) ───────────────────────┐ │     │
 │  │  │ [Карты] [Эвенты] [Импорт] [Бои] [Сцены] [База]    │ │     │
@@ -224,6 +229,9 @@ RPG-Shining-Maker/
 10  Формат JSON — читаемый                          Свой StringBuilder-форматтер с табами (\t).
 11  Безопасность имен                               При импорте имена проходят транслитерацию (RU->EN).
 12  Counter = невидимая логика                      В игре прилавок не блокирует диалог, а разрешает его сквозь себя (talk_through).
+13  Базовая графика и Оверрайды                     Кружки (0-3) меняются только в блоксете (свойства тайла), квадраты (5-8) — только на карте (оверрайд).
+14  Изоляция графики (Playtest)                     Для запуска из редактора без ошибок WGL используется Mesa (opengl32.dll) + llvmpipe.
+15  Кинематографичный старт                         Заставка (Splash) ждет полной загрузки окна (событие Opened), затем плавно исчезает.
 
 
 📈 Что уже готово vs что в планах (обновлено)
@@ -241,6 +249,10 @@ EventEditor (7 файлов + EventCanvas)                   ✅
 Редактор: Отрисовка NPC спрайтов на канвасе            ✅
 Редактор: Автоскролл к выбранному событию              ✅
 Редактор: Скрытие Script Inspector вне вкладки NPC     ✅
+Редактор: Заставка при запуске (Splash Screen)         ✅
+Редактор: Изоляция кликов от скроллбаров               ✅
+Редактор: Сброс коллизии при рисовании тайла           ✅
+Сборка: Автоматическое копирование opengl32.dll        ✅
 Игра: Диалог через прилавок (строго по вертикали/гор.) ✅
 Игра: subAreas + маска + центрирование                 ✅
 Игра: Warp line-mode                                   ✅
