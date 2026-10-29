@@ -50,11 +50,13 @@ xcopy "%BASE%data"   "%RELEASE%\data\"   /E /I /Y
 xcopy "%BASE%assets" "%RELEASE%\assets\" /E /I /Y
 xcopy "%BASE%lib"    "%RELEASE%\lib\"    /E /I /Y
 
-copy "%BASE%game.rb" "%RELEASE%\"
+copy "%BASE%game.rb" "%RELEASE%\" 
+
+copy "%BASE%opengl32.dll" "%RELEASE%\"
 
 copy "%PORTABLE_ROOT%\dll\libraylib.dll" "%RELEASE%\"
 copy "%PORTABLE_ROOT%\dll\zlib1.dll" "%RELEASE%\"
-copy "%PORTABLE_ROOT%\dll\libwinpthread-1.dll" "%RELEASE%\"
+copy "%PORTABLE_ROOT%\dll\libwinpthread-1.dll" "%RELEASE%\" 
 
 :: Copy icon
 if exist "%ICON_SRC%" (
@@ -87,7 +89,7 @@ echo [OK] EXE created
 
 :: ---------- Step 3: Done ----------
 echo [3/3] BUILD SUCCESSFUL
-echo File: %RELEASE%\Shinzo.exe
+echo File: %RELEASE%\Game.exe
 
 :END
 echo.
