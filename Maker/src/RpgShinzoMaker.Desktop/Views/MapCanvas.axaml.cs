@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -78,6 +79,17 @@ public partial class MapCanvas : UserControl
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Icon load error: {ex.Message}"); }
     }
 
+    private static bool IsFromScrollBar(object? source)
+    {
+        var current = source as Control;
+        while (current != null)
+        {
+            if (current is ScrollBar) return true;
+            current = current.Parent as Control;
+        }
+        return false;
+    }
+    
     // ══════════════════════════════════════════════
     //   SET MAP — создаёт контролы один раз
     // ══════════════════════════════════════════════
@@ -600,6 +612,8 @@ public partial class MapCanvas : UserControl
     private void OnCanvasPointerMoved(object? sender, PointerEventArgs e)
     {
         if (_map == null) return;
+        
+        if (IsFromScrollBar(e.Source)) return;
 
         int ts = TilePx;
         var p = e.GetPosition(RootPanel);
@@ -648,6 +662,8 @@ public partial class MapCanvas : UserControl
     private void OnCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         if (_map == null) return;
+        
+        if (IsFromScrollBar(e.Source)) return;
 
         var p = e.GetPosition(RootPanel);
         int ts = TilePx;
@@ -666,6 +682,8 @@ public partial class MapCanvas : UserControl
     private void OnCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (_map == null) return;
+        
+        if (IsFromScrollBar(e.Source)) return; 
 
         int ts = TilePx;
         var p = e.GetPosition(RootPanel);

@@ -22,20 +22,31 @@
             <Setter Property="Background" Value="#1E1E1E"/>
         </Style>
         <Style Selector="ScrollBar:vertical">
-            <Setter Property="Width" Value="10"/>
+            <Setter Property="Width" Value="18"/>
         </Style>
         <Style Selector="ScrollBar:horizontal">
-            <Setter Property="Height" Value="10"/>
+            <Setter Property="Height" Value="18"/>
         </Style>
         <Style Selector="ScrollBar /template/ Thumb">
             <Setter Property="Background" Value="#007ACC"/>
             <Setter Property="Opacity" Value="1"/>
+            <Setter Property="MinWidth" Value="18"/>
+            <Setter Property="MinHeight" Value="18"/>
         </Style>
         <Style Selector="ScrollBar /template/ Thumb:pointerover">
             <Setter Property="Background" Value="#1E90FF"/>
         </Style>
         <Style Selector="ScrollBar /template/ Thumb:pressed">
             <Setter Property="Background" Value="#005A9E"/>
+        </Style>
+        <Style Selector="ScrollBar /template/ RepeatButton">
+            <Setter Property="Background" Value="#3E3E42"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="MinWidth" Value="18"/>
+            <Setter Property="MinHeight" Value="18"/>
+        </Style>
+        <Style Selector="ScrollBar /template/ RepeatButton:pointerover">
+            <Setter Property="Background" Value="#555555"/>
         </Style>
     </UserControl.Styles>
 
