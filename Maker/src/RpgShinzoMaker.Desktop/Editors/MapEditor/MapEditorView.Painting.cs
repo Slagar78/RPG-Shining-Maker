@@ -53,7 +53,7 @@ public partial class MapEditorView
         // ═══ Grid Mode ═══
         if (_gridMode)
         {
-            AssignTypeToMapTile(idx, tx, ty); // Передаем координаты
+            AssignTypeToMapTile(idx, tx, ty); //
             return;
         }
 
@@ -119,7 +119,7 @@ public partial class MapEditorView
 
         if (_gridMode)
         {
-            AssignTypeToMapTile(idx, tx, ty);
+            AssignTypeToMapTile(idx, tx, ty); // Передаем координаты
             return;
         }
 
@@ -294,7 +294,10 @@ public partial class MapEditorView
         if (_currentMap == null) return;
         if (idx < 0 || idx >= _currentMap.TotalCells) return;
 
-        // ★ НОВОЕ: Если выбран оверрайд (5-8), мы меняем CellType на карте ★
+        // ★  Кружки (0-3) по карте не ставятся ★
+        if (_currentCollisionType == 0) return;
+
+        // ★ Если выбран оверрайд (5-8), мы меняем CellType на карте ★
         if (_currentCollisionType != 0)
         {
             // Запоминаем "до" для Undo
