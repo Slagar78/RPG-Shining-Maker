@@ -51,7 +51,7 @@ xcopy "%BASE%assets" "%RELEASE%\assets\" /E /I /Y
 xcopy "%BASE%lib"    "%RELEASE%\lib\"    /E /I /Y
 
 copy "%BASE%game.rb" "%RELEASE%\" 
-
+copy "%BASE%battle.rb" "%RELEASE%\"
 copy "%BASE%opengl32.dll" "%RELEASE%\"
 
 copy "%PORTABLE_ROOT%\dll\libraylib.dll" "%RELEASE%\"
@@ -78,6 +78,9 @@ echo [2/3] Building autonomous EXE...
 
 cd /d "%RELEASE%"
 
+:: Эта строчка нужна, чтобы при сборке игра запустилась на процессоре и не вылетала
+set GALLIUM_DRIVER=llvmpipe
+
 "%RUBY_EXE%" -S ocran game.rb --output Game.exe --no-enc --gem-full --no-lzma --windows --dll libraylib.dll --icon "%ICON_FILE%"
 
 if errorlevel 1 (
@@ -86,6 +89,13 @@ if errorlevel 1 (
 )
 
 echo [OK] EXE created
+
+:: ---------- Step 2.5: Cleanup ----------
+echo [2.5/3] Cleaning up build files...
+del /q "%RELEASE%\game.rb"
+del /q "%RELEASE%\battle.rb"
+rmdir /s /q "%RELEASE%\lib"
+echo [OK] Cleanup done
 
 :: ---------- Step 3: Done ----------
 echo [3/3] BUILD SUCCESSFUL
