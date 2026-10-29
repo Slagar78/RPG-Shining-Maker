@@ -20,7 +20,12 @@ RPG-Shining-Maker/
 │   │   │   │   ├── NpcEvent.cs                     (NPC: id, sprite, behavior…)
 │   │   │   │   ├── CounterEvent.cs                 ★ НОВЫЙ (прилавок: x, y для диалога через стол)
 │   │   │   │   ├── MapEvents.cs                    (контейнер 6 типов событий)
-│   │   │   │   └── SubArea.cs                      (прямоугольник под-области)
+│   │   │   │   ├── SubArea.cs                      (прямоугольник под-области)
+│   │   │   │   │
+│   │   │   │   └── Database/                       ★ НОВАЯ ПАПКА (Модели базы данных)
+│   │   │   │       ├── Actor.cs                    ★ НОВЫЙ (id, name, class_id, portrait, mapsprite, level...)
+│   │   │   │       ├── CharacterClass.cs           ★ НОВЫЙ (id, name - облегченная версия для ComboBox)
+│   │   │   │       └── StartInventory.cs           ★ НОВЫЙ (actor_id, start_level, items[4])
 │   │   │   │
 │   │   │   └── Services/
 │   │   │       ├── ProjectPaths.cs                 (+NpcSpritesDir)
@@ -29,7 +34,10 @@ RPG-Shining-Maker/
 │   │   │       ├── TileTypesService.cs             ★ ОБНОВЛЕНО (сохранение с табами)
 │   │   │       ├── AreasService.cs                 (main + subAreas, свой StringBuilder)
 │   │   │       ├── EventsService.cs                ★ ОБНОВЛЕНО (чтение/запись Counter)
-│   │   │       └── TilesetImportService.cs         ★ НОВЫЙ (алгоритм нарезки PNG)
+│   │   │       ├── TilesetImportService.cs         ★ НОВЫЙ (алгоритм нарезки PNG)
+│   │   │       ├── CJsonFormatter.cs               ★ НОВЫЙ (форматтер JSON с табами)
+│   │   │       ├── ActorsService.cs                ★ НОВЫЙ (чтение/запись actors.json и start_inventory.json)
+│   │   │       └── AssetScannerService.cs          ★ НОВЫЙ (сканирование папок portraits, mapsprites)
 │   │   │
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
 │   │       ├── App.axaml
@@ -44,11 +52,12 @@ RPG-Shining-Maker/
 │   │       │       └── select.png
 │   │       │
 │   │       ├── ViewModels/                         
-│   │       │   ├── MainViewModel.cs
+│   │       │   ├── MainViewModel.cs                ★ ОБНОВЛЕНО (Добавлены ActorsVM и SaveCommand)
+│   │       │   ├── ActorsViewModel.cs              ★ НОВЫЙ (Логика для Heroes)
 │   │       │   └── ViewModelBase.cs
 │   │       │
 │   │       ├── Views/
-│   │       │   ├── MainWindow.axaml                ★ ОБНОВЛЕНО (Добавлен оверлей SplashOverlay)
+│   │       │   ├── MainWindow.axaml                ★ ОБНОВЛЕНО (Добавлен оверлей SplashOverlay, подключен DatabaseEditor)
 │   │       │   ├── MainWindow.axaml.cs             ★ ОБНОВЛЕНО (Плавное скрытие заставки через Opened)
 │   │       │   ├── MapCanvas.axaml                 
 │   │       │   └── MapCanvas.axaml.cs              ★ ОБНОВЛЕНО (Фикс кликов по скроллбарам)
@@ -84,11 +93,18 @@ RPG-Shining-Maker/
 │   │           │   ├── EventCanvas.axaml           
 │   │           │   └── EventCanvas.axaml.cs        ★ ОБНОВЛЕНО (Отрисовка спрайтов NPC и буквы T)
 │   │           │
-│   │           └── TilesetImporter/                ← импорт карт
-│   │               ├── TilesetImporterView.axaml   
-│   │               ├── TilesetImporterView.axaml.cs
-│   │               ├── TilesetImporterView.Load.cs 
-│   │               └── TilesetImporterView.Save.cs 
+│   │           ├── TilesetImporter/                ← импорт карт
+│   │           │   ├── TilesetImporterView.axaml   
+│   │           │   ├── TilesetImporterView.axaml.cs
+│   │           │   ├── TilesetImporterView.Load.cs 
+│   │           │   └── TilesetImporterView.Save.cs 
+│   │           │
+│   │           └── DatabaseEditor/                 ★ НОВЫЙ (Редактор базы данных)
+│   │               ├── DatabaseEditorView.axaml    ★ НОВЫЙ (Общий контейнер с вертикальными вкладками)
+│   │               ├── DatabaseEditorView.axaml.cs ★ НОВЫЙ
+│   │               └── Views/                      ★ НОВАЯ ПАПКА (Панели для каждой категории)
+│   │                   ├── ActorsPanel.axaml       ★ НОВЫЙ (Список героев слева, свойства и инвентарь справа)
+│   │                   └── ActorsPanel.axaml.cs    ★ НОВЫЙ
 │   │
 │   └── assets/
 │
@@ -103,6 +119,10 @@ RPG-Shining-Maker/
 │   │       └── NPC_script.json                     
 │   ├── tile_types/
 │   │   └── <tileset>.json
+│   ├── actors/                                     ★ НОВАЯ ПАПКА
+│   │   ├── actors.json                             ★ ФАЙЛ (Список персонажей)
+│   │   ├── start_inventory.json                    ★ ФАЙЛ (Стартовый инвентарь)
+│   │   └── classes.json                            ★ ФАЙЛ (Классы)
 │   └── ...
 │
 ├── opengl32.dll                                    ★ НОВЫЙ (Mesa llvmpipe/d3d12 для фикса WGL ошибки)
@@ -117,7 +137,7 @@ RPG-Shining-Maker/
         └── game.rb                                 ★ ОБНОВЛЕНО (find_interactable_npc через прилавок, убран хардкод llvmpipe)
 
 
-🏛️ Архитектура: оболочка и ТРИ редактора
+🏛️ Архитектура: оболочка и ЧЕТЫРЕ редактора (Map, Event, Import, Database)
 
 ┌─────────────────────────────────────────────────────────────────┐
 │                     MainWindow (Shell)                          │
@@ -130,6 +150,7 @@ RPG-Shining-Maker/
 │  │  │  MapEditorView  (IEditor)  ← вкладка «Карты»      │ │     │
 │  │  │  EventEditorView(IEditor)  ← вкладка «Эвенты»     │ │     │
 │  │  │  TilesetImporter(IEditor)  ← вкладка «Импорт»     │ │     │
+│  │  │  DatabaseEditor (IEditor)  ← вкладка «База»       │ │     │
 │  │  │                                                   │ │     │
 │  │  └───────────────────────────────────────────────────┘ │     │
 │  ├────────────────────────────────────────────────────────┤     │
@@ -154,31 +175,33 @@ RPG-Shining-Maker/
         ┌───────────────────────┬───────────────────────┬───────────────────┐
         ▼                       ▼                       ▼                   ▼
   ┌───────────┐           ┌───────────┐           ┌───────────┐       ┌───────────┐
-  │ MapEditor │           │ EventEdit │           │ ImportEd  │       │ BattleEd  │
-  │  ✓ готов  │           │  ✓ готов  │           │  ✓ готов  │       │  (план)   │
-  └─────┬─────┘           └─────┬─────┘           └─────┬─────┘       └───────────┘
-        │                       │                       │
-        │  использует           │  использует           │  использует
-        ▼                       ▼                       ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      Core.Services                              │
-│                                                                 │
-│   ProjectPaths      MapJsonService      EntriesService          │
-│   TileTypesService  AreasService        EventsService           │
-│   TilesetImportService                                          │
-│                                                                 │
-│   + Core.Models: GameMap, MapEntry, TileType,                   │
-│                  RoofEvent, TileChangeEvent, StairEvent,        │
-│                  WarpEvent, NpcEvent, CounterEvent,             │
-│                  MapEvents, Areas, SubArea                      │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-                               │  читают / пишут
-                               ▼
-                        ┌─────────────┐
-                        │   data/     │
-                        │  *.json     │
-                        └─────────────┘
+  │ MapEditor │           │ EventEdit │           │ ImportEd  │       │ DataBase  │
+  │  ✓ готов  │           │  ✓ готов  │           │  ✓ готов  │       │  (в работе)│
+  └─────┬─────┘           └─────┬─────┘           └─────┬─────┘       └─────┬─────┘
+        │                       │                       │                   │
+        │  использует           │  использует           │  использует       │
+        ▼                       ▼                       ▼                   ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           Core.Services                                         │
+│                                                                                 │
+│   ProjectPaths      MapJsonService      EntriesService                          │
+│   TileTypesService  AreasService        EventsService                           │
+│   TilesetImportService                  CJsonFormatter                          │
+│   ActorsService     AssetScannerService                                         │
+│                                                                                 │
+│   + Core.Models: GameMap, MapEntry, TileType,                                   │
+│                  RoofEvent, TileChangeEvent, StairEvent,                        │
+│                  WarpEvent, NpcEvent, CounterEvent,                             │
+│                  MapEvents, Areas, SubArea,                                     │
+│                  Actor, StartInventory, CharacterClass                          │
+└──────────────────────────────────────┬──────────────────────────────────────────┘
+                                       │
+                                       │  читают / пишут
+                                       ▼
+                                ┌─────────────┐
+                                │   data/     │
+                                │  *.json     │
+                                └─────────────┘
 
 
 📁 Формат JSON: Сохранение с табами
@@ -218,7 +241,7 @@ RPG-Shining-Maker/
 #   Правило                                        Как соблюдать
 1   Один редактор — одна папка                     TilesetImporter лежит в Editors/TilesetImporter/.
 2   Partial-файлы для больших редакторов            MapEditor = 11 файлов, EventEditor = 7 файлов,
-                                                     TilesetImporter = 4 файла. Каждый — за свою область.
+                                                     TilesetImporter = 4 файла. DatabaseEditor тоже делится на Views/.
 3   Core — общий для всех                           Модели и сервисы в Core/. Любой редактор их использует.
 4   MainWindow знает только IEditor                  Никаких ссылок на конкретные классы редакторов.
 5   Общение между редакторами — через Core          Импортер вызывает MapJsonService.Save и EntriesService.Save.
@@ -232,6 +255,7 @@ RPG-Shining-Maker/
 13  Базовая графика и Оверрайды                     Кружки (0-3) меняются только в блоксете (свойства тайла), квадраты (5-8) — только на карте (оверрайд).
 14  Изоляция графики (Playtest)                     Для запуска из редактора без ошибок WGL используется Mesa (opengl32.dll) + llvmpipe.
 15  Кинематографичный старт                         Заставка (Splash) ждет полной загрузки окна (событие Opened), затем плавно исчезает.
+16  DatabaseEditor = MVVM                           Используется Binding, ObservableCollection и RelayCommand вместо ручного перерисовывания.
 
 
 📈 Что уже готово vs что в планах (обновлено)
@@ -240,11 +264,14 @@ RPG-Shining-Maker/
 Core.Models (GameMap, MapEntry, TileType)              ✅
 Core.Models (7 моделей событий, вкл. Counter)          ✅
 Core.Models (SubArea)                                  ✅
-Core.Services (7 сервисов)                             ✅
+Core.Models (Database: Actor, StartInventory)          ✅
+Core.Services (7 старых сервисов)                      ✅
+Core.Services (CJsonFormatter, ActorsService)          ✅
 IEditor (интерфейс)                                    ✅
 MainWindow (оболочка)                                  ✅
 MapEditor (11 файлов)                                  ✅
 EventEditor (7 файлов + EventCanvas)                   ✅
+DatabaseEditor (Оболочка + вкладка Heroes)             ✅ (в процессе)
 Редактор: Вкладка Counters (Прилавки)                  ✅
 Редактор: Отрисовка NPC спрайтов на канвасе            ✅
 Редактор: Автоскролл к выбранному событию              ✅
@@ -256,9 +283,9 @@ EventEditor (7 файлов + EventCanvas)                   ✅
 Игра: Диалог через прилавок (строго по вертикали/гор.) ✅
 Игра: subAreas + маска + центрирование                 ✅
 Игра: Warp line-mode                                   ✅
+DatabaseEditor: Вкладки Enemies, Classes, Items и др.   📋 план
 BattleEditor                                           📋 план
 SceneEditor                                            📋 план
-DatabaseEditor                                         📋 план
 ASSETS (живое дерево)                                  📋 план
 СВОЙСТВА (инфо о выбранном)                            📋 план
 MESSAGE / TEXTS (редактор диалогов)                    📋 план

@@ -5,6 +5,7 @@
         xmlns:mapEditor="using:RpgShinzoMaker.Desktop.Editors.MapEditor"
         xmlns:eventEditor="using:RpgShinzoMaker.Desktop.Editors.EventEditor"
         xmlns:importer="using:RpgShinzoMaker.Desktop.Editors.TilesetImporter"
+        xmlns:dbEditor="using:RpgShinzoMaker.Desktop.Editors.DatabaseEditor"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="RpgShinzoMaker.Desktop.Views.MainWindow"
         Icon="/Assets/shinzo.ico"
@@ -118,14 +119,9 @@
                     </Border>
                 </TabItem>
 
+                <!-- ЗАМЕНИЛИ ЗАГЛУШКУ НА РЕДАКТОР -->
                 <TabItem Header="База данных">
-                    <Border Background="#1E1E1E">
-                        <TextBlock Text="База данных"
-                                   Foreground="Gray"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   FontSize="20"/>
-                    </Border>
+                    <dbEditor:DatabaseEditorView x:Name="DatabaseEditor"/>
                 </TabItem>
             </TabControl>
         </DockPanel>

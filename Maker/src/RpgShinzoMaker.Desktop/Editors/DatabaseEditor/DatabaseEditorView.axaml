@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="using:RpgShinzoMaker.Desktop.Editors.DatabaseEditor.Views"
+             xmlns:vm="using:RpgShinzoMaker.Desktop.ViewModels"
+             x:DataType="vm:MainViewModel"
+             x:Class="RpgShinzoMaker.Desktop.Editors.DatabaseEditor.DatabaseEditorView">
+    
+    <Grid RowDefinitions="Auto,*">
+        <!-- Верхняя панель с кнопкой SAVE -->
+        <Border Grid.Row="0" Background="#2D2D30" Padding="10">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Content="SAVE DATABASE" 
+                        Background="#4CAF50" 
+                        Foreground="White" 
+                        FontWeight="Bold"
+                        Command="{Binding SaveCommand}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Главный TabControl с вертикальным меню слева -->
+        <TabControl Grid.Row="1" TabStripPlacement="Left" Margin="5" Background="#1E1E1E">
+            
+            <!-- Вкладка Heroes (Персонажи) -->
+            <TabItem Header="Heroes">
+                <views:ActorsPanel DataContext="{Binding ActorsVM}" />
+            </TabItem>
+
+            <!-- Вкладка Enemies (Враги) -->
+            <TabItem Header="Enemies">
+                <TextBlock Text="Enemies Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </TabItem>
+
+            <!-- Вкладка Classes (Классы) -->
+            <TabItem Header="Classes">
+                <TextBlock Text="Classes Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </TabItem>
+
+            <!-- Вкладка Items (Предметы) -->
+            <TabItem Header="Items">
+                <TextBlock Text="Items Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </TabItem>
+
+            <!-- Вкладка Spells (Магия) -->
+            <TabItem Header="Spells">
+                <TextBlock Text="Spells Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </TabItem>
+
+            <!-- Вкладка System (Система) -->
+            <TabItem Header="System">
+                <TextBlock Text="System Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </TabItem>
+
+        </TabControl>
+    </Grid>
+</UserControl>

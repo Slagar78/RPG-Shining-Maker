@@ -1,0 +1,110 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:RpgShinzoMaker.Core.Models.Database"
+             xmlns:vm="using:RpgShinzoMaker.Desktop.ViewModels"
+             x:DataType="vm:ActorsViewModel"
+             x:Class="RpgShinzoMaker.Desktop.Editors.DatabaseEditor.Views.ActorsPanel">
+    
+    <Grid ColumnDefinitions="250, *" Background="#1E1E1E">
+        
+        <!-- ЛЕВАЯ КОЛОНКА: Список актеров -->
+        <Grid Grid.Column="0" RowDefinitions="Auto, *" Margin="5">
+            <!-- Кнопки управления -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="5" Margin="0,0,0,10">
+                <Button Content="Add" Background="#4CAF50" Foreground="White" Command="{Binding AddActorCommand}"/>
+                <Button Content="Del" Background="#F44336" Foreground="White" Command="{Binding DeleteActorCommand}"/>
+            </StackPanel>
+
+            <!-- Сам список -->
+            <ListBox Grid.Row="1" ItemsSource="{Binding Actors}" SelectedItem="{Binding SelectedActor}" Background="#252526">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:Actor">
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <TextBlock Text="{Binding Id}" Foreground="Gray" Width="25"/>
+                            <TextBlock Text=":" Foreground="Gray"/>
+                            <TextBlock Text="{Binding Name}" Foreground="White"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+
+        <!-- ПРАВАЯ КОЛОНКА: Свойства выбранного актера -->
+        <ScrollViewer Grid.Column="1" IsVisible="{Binding SelectedActor, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <StackPanel Margin="20" Spacing="15">
+                
+                <TextBlock Text="Hero Properties" FontSize="20" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
+
+                <!-- Name -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Name:" Width="100" VerticalAlignment="Center" Foreground="White"/>
+                    <TextBox Text="{Binding SelectedActor.Name}" Width="200" Background="#3C3C3C" Foreground="White"/>
+                </StackPanel>
+
+                <!-- Class (ComboBox) -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Class:" Width="100" VerticalAlignment="Center" Foreground="White"/>
+                    <ComboBox ItemsSource="{Binding AvailableClasses}" 
+                              SelectedValue="{Binding SelectedActor.ClassId}"
+                              SelectedValueBinding="{Binding Id}"
+                              Width="200">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="models:CharacterClass">
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Level -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Level:" Width="100" VerticalAlignment="Center" Foreground="White"/>
+                    <NumericUpDown Value="{Binding SelectedActor.Level}" Minimum="1" Maximum="99" Width="200" Background="#3C3C3C"/>
+                </StackPanel>
+
+                <!-- Portrait (ComboBox) -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Portrait:" Width="100" VerticalAlignment="Center" Foreground="White"/>
+                    <ComboBox ItemsSource="{Binding AvailablePortraits}" 
+                              SelectedItem="{Binding SelectedActor.Portrait}" 
+                              Width="200"/>
+                </StackPanel>
+
+                <!-- Mapsprite (ComboBox) -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Mapsprite:" Width="100" VerticalAlignment="Center" Foreground="White"/>
+                    <ComboBox ItemsSource="{Binding AvailableMapsprites}" 
+                              SelectedItem="{Binding SelectedActor.Mapsprite}" 
+                              Width="200"/>
+                </StackPanel>
+
+                <Separator Margin="0,10" Background="Gray"/>
+
+                <!-- START INVENTORY -->
+                <TextBlock Text="Start Inventory" FontSize="16" FontWeight="Bold" Foreground="#4CAF50"/>
+                
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Start Level:" Width="100" VerticalAlignment="Center" Foreground="White"/>
+                    <NumericUpDown Value="{Binding CurrentInventory.StartLevel}" Minimum="1" Maximum="99" Width="150" Background="#3C3C3C"/>
+                </StackPanel>
+
+                <!-- 4 слота инвентаря -->
+                <ItemsControl ItemsSource="{Binding CurrentInventory.Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:StartItem">
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,5">
+                                <!-- Выбор предмета -->
+                                <ComboBox ItemsSource="{Binding $parent[UserControl].((vm:ActorsViewModel)DataContext).AvailableItems}" 
+                                          SelectedItem="{Binding Item}" 
+                                          Width="200"/>
+                                <!-- Галочка экипировки -->
+                                <CheckBox Content="Equipped" IsChecked="{Binding Equipped}" Foreground="White"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
