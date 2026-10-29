@@ -232,6 +232,8 @@ public partial class MapEditorView
             _currentMap.MirrorX2[idx] = false;
             _currentMap.MirrorY2[idx] = false;
         }
+        
+        _currentMap.CellType[idx] = 0; 
 
         // Снимок "после"
         var newSnap = SnapshotCell(idx, _currentLayer);
