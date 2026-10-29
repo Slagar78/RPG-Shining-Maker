@@ -181,16 +181,18 @@ public partial class MapEditorView
         if (!int.TryParse(tagStr, out int type)) return;
 
         _currentTileType = type;
+        _currentCollisionType = 0; // ★ СБРАСЫВАЕМ ОВЕРРАЙД КАРТЫ ★
         UpdateTypeIconSelection();
         UpdateTypePreview();
     }
 
     private void UpdateTypeIconSelection()
     {
+        // Старые иконки 0-3 (для тайлсета)
         var icons = new[] { TypeIcon0, TypeIcon1, TypeIcon2, TypeIcon3 };
         for (int i = 0; i < icons.Length; i++)
         {
-            bool selected = i == _currentTileType;
+            bool selected = (i == _currentTileType) && (_currentCollisionType == 0); // Если выбран оверрайд, старые гаснут
 
             icons[i].BorderBrush = selected
                 ? Brushes.White
@@ -200,16 +202,45 @@ public partial class MapEditorView
             // Мигание — только в Mode B
             icons[i].Classes.Set("selected", selected && _isModeB);
         }
+
+        // иконки 5-8 (для карты) ★
+        var collIcons = new[] { CollisionIcon5, CollisionIcon6, CollisionIcon7, CollisionIcon8 };
+        for (int i = 0; i < collIcons.Length; i++)
+        {
+            int typeValue = i + 5;
+            bool selected = (_currentCollisionType == typeValue);
+
+            collIcons[i].BorderBrush = selected
+                ? Brushes.White
+                : new SolidColorBrush(Color.Parse("#555555"));
+            collIcons[i].BorderThickness = new Thickness(2);
+            collIcons[i].Classes.Set("selected", selected);
+        }
+    }
+
+    //  Клик по иконке оверрайда карты (5-8) ★
+    private void OnCollisionIconClick(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Border border || border.Tag is not string tagStr) return;
+        if (!int.TryParse(tagStr, out int type)) return;
+
+        _currentCollisionType = type;   // Устанавливаем 5, 6, 7 или 8
+        UpdateTypeIconSelection();      // Обновляем визуал
+        UpdateTypePreview();            // Меняем большой круг
     }
 
     private void UpdateTypePreview()
     {
-        var (brush, label) = _currentTileType switch
+        // Если выбран оверрайд (5-8), показываем его. Иначе старый (0-3).
+        int displayType = _currentCollisionType != 0 ? _currentCollisionType - 5 : _currentTileType;
+        bool isOverride = _currentCollisionType != 0;
+
+        var (brush, label) = displayType switch
         {
-            0 => ((IBrush)new SolidColorBrush(Color.Parse("#4CAF50")), "Passable"),
-            1 => (new SolidColorBrush(Color.Parse("#E74C3C")),         "Block"),
-            2 => (new SolidColorBrush(Color.Parse("#3498DB")),         "Slow"),
-            3 => (new SolidColorBrush(Color.Parse("#E67E22")),         "Under"),
+            0 => ((IBrush)new SolidColorBrush(Color.Parse("#4CAF50")), isOverride ? "Map: Passable" : "Passable"),
+            1 => (new SolidColorBrush(Color.Parse("#E74C3C")),         isOverride ? "Map: Block" : "Block"),
+            2 => (new SolidColorBrush(Color.Parse("#3498DB")),         isOverride ? "Map: Slow" : "Slow"),
+            3 => (new SolidColorBrush(Color.Parse("#E67E22")),         isOverride ? "Map: Under" : "Under"),
             _ => (Brushes.Gray, "Unknown")
         };
         TypePreviewEllipse.Fill = brush;

@@ -19,6 +19,7 @@ public partial class MapEditorView
         public int  Rot;
         public bool MirrorX;
         public bool MirrorY;
+        public int  CellType; // запоминаем и коллизию
     }
 
     // ─── Изменение одной ячейки ───
@@ -58,6 +59,7 @@ public partial class MapEditorView
                 Rot     = _currentMap.Rot[idx],
                 MirrorX = _currentMap.MirrorX[idx],
                 MirrorY = _currentMap.MirrorY[idx],
+                CellType = _currentMap.CellType[idx] // ★ Читаем ★
             };
         }
         else
@@ -68,6 +70,7 @@ public partial class MapEditorView
                 Rot     = _currentMap.Rot2[idx],
                 MirrorX = _currentMap.MirrorX2[idx],
                 MirrorY = _currentMap.MirrorY2[idx],
+                CellType = _currentMap.CellType[idx]
             };
         }
     }
@@ -77,7 +80,8 @@ public partial class MapEditorView
         return a.Tile == b.Tile
             && a.Rot == b.Rot
             && a.MirrorX == b.MirrorX
-            && a.MirrorY == b.MirrorY;
+            && a.MirrorY == b.MirrorY
+            && a.CellType == b.CellType;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -93,6 +97,7 @@ public partial class MapEditorView
             _currentMap.Rot[idx]     = snap.Rot;
             _currentMap.MirrorX[idx] = snap.MirrorX;
             _currentMap.MirrorY[idx] = snap.MirrorY;
+            _currentMap.CellType[idx] = snap.CellType; // ★ Восстанавливаем ★
         }
         else
         {
@@ -100,6 +105,7 @@ public partial class MapEditorView
             _currentMap.Rot2[idx]     = snap.Rot;
             _currentMap.MirrorX2[idx] = snap.MirrorX;
             _currentMap.MirrorY2[idx] = snap.MirrorY;
+            _currentMap.CellType[idx] = snap.CellType;
         }
     }
 

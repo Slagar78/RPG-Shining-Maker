@@ -40,6 +40,9 @@ public partial class MapEditorView : UserControl, IEditor
 
     /// <summary>Select Mode включён (выделение и вставка).</summary>
     private bool _selectMode;
+    
+    // Выбранный оверрайд для карты (0 = выкл, 5-8 = вкл) ★
+    private int _currentCollisionType = 0;
 
     // ══════════════════════════════════════════════════════════════
     //   СОСТОЯНИЕ КАРТ

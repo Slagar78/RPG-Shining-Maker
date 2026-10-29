@@ -51,7 +51,7 @@
                         BorderBrush="#3E3E42"
                         BorderThickness="1"
                         CornerRadius="4">
-                    <Grid Margin="8" RowDefinitions="Auto,Auto,Auto,384,Auto,Auto">
+                    <Grid Margin="8" RowDefinitions="Auto,Auto,Auto,320,Auto,Auto">
 
                         <Grid Grid.Row="0"
                               ColumnDefinitions="*,Auto,Auto"
@@ -249,7 +249,7 @@
                                     </StackPanel>
                                 </Grid>
 
-                                <StackPanel x:Name="ModeBPreviewPanel"
+                                                                <StackPanel x:Name="ModeBPreviewPanel"
                                             Spacing="4"
                                             HorizontalAlignment="Center"
                                             IsVisible="False">
@@ -274,7 +274,29 @@
                                                Foreground="#888888"
                                                FontSize="10"
                                                HorizontalAlignment="Center"/>
+                                    
+                                    <!-- ★ НОВЫЙ БЛОК: ИКОНКИ ДЛЯ ОВЕРРАЙДА КАРТЫ (5-8) ★ -->
+                                    <TextBlock Text="Map Collision Override" 
+                                               Foreground="#AAAAAA" 
+                                               FontSize="10" 
+                                               HorizontalAlignment="Center"
+                                               Margin="0,6,0,2"/>
+                                    <UniformGrid Columns="4" Margin="0,4,0,0">
+                                        <Border x:Name="CollisionIcon5" Classes="typeIcon" Width="28" Height="28" Margin="2" Background="#2A2A2A" BorderBrush="#555555" BorderThickness="2" CornerRadius="4" Cursor="Hand" Tag="5" ToolTip.Tip="Override: Passable (5)" PointerPressed="OnCollisionIconClick">
+                                            <Image Source="avares://RpgShinzoMaker.Desktop/Assets/icons/passable.png" Stretch="Uniform" Margin="4"/>
+                                        </Border>
+                                        <Border x:Name="CollisionIcon6" Classes="typeIcon" Width="28" Height="28" Margin="2" Background="#2A2A2A" BorderBrush="#555555" BorderThickness="2" CornerRadius="4" Cursor="Hand" Tag="6" ToolTip.Tip="Override: Block (6)" PointerPressed="OnCollisionIconClick">
+                                            <Image Source="avares://RpgShinzoMaker.Desktop/Assets/icons/block.png" Stretch="Uniform" Margin="4"/>
+                                        </Border>
+                                        <Border x:Name="CollisionIcon7" Classes="typeIcon" Width="28" Height="28" Margin="2" Background="#2A2A2A" BorderBrush="#555555" BorderThickness="2" CornerRadius="4" Cursor="Hand" Tag="7" ToolTip.Tip="Override: Slow (7)" PointerPressed="OnCollisionIconClick">
+                                            <Image Source="avares://RpgShinzoMaker.Desktop/Assets/icons/slow.png" Stretch="Uniform" Margin="4"/>
+                                        </Border>
+                                        <Border x:Name="CollisionIcon8" Classes="typeIcon" Width="28" Height="28" Margin="2" Background="#2A2A2A" BorderBrush="#555555" BorderThickness="2" CornerRadius="4" Cursor="Hand" Tag="8" ToolTip.Tip="Override: Under (8)" PointerPressed="OnCollisionIconClick">
+                                            <Image Source="avares://RpgShinzoMaker.Desktop/Assets/icons/under.png" Stretch="Uniform" Margin="4"/>
+                                        </Border>
+                                    </UniformGrid>
                                 </StackPanel>
+                                
                             </Grid>
                         </Border>
 

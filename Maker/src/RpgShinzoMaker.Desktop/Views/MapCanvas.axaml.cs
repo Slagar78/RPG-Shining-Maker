@@ -43,6 +43,10 @@ public partial class MapCanvas : UserControl
     private readonly List<Ellipse> _gridDots = new();
     private readonly List<Line> _gridLines = new();
 
+    // Список картинок для коллизий и их кэш ★
+    private readonly List<Image> _gridIcons = new();
+    private Bitmap? _iconPassable, _iconBlock, _iconSlow, _iconUnder;
+
     private double _zoom = 1.0;
     public double Zoom => _zoom;
     
@@ -62,6 +66,16 @@ public partial class MapCanvas : UserControl
         PointerMoved += OnCanvasPointerMoved;
         PointerExited += OnCanvasPointerExited;
         PointerReleased += OnCanvasPointerReleased;
+
+        // ★ Загружаем иконки из ресурсов ★
+        try
+        {
+            _iconPassable = new Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri("avares://RpgShinzoMaker.Desktop/Assets/icons/passable.png")));
+            _iconBlock    = new Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri("avares://RpgShinzoMaker.Desktop/Assets/icons/block.png")));
+            _iconSlow     = new Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri("avares://RpgShinzoMaker.Desktop/Assets/icons/slow.png")));
+            _iconUnder    = new Bitmap(Avalonia.Platform.AssetLoader.Open(new Uri("avares://RpgShinzoMaker.Desktop/Assets/icons/under.png")));
+        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Icon load error: {ex.Message}"); }
     }
 
     // ══════════════════════════════════════════════
@@ -148,6 +162,9 @@ public partial class MapCanvas : UserControl
         }
 
         // Точки типов — поверх линий
+        _gridDots.Clear();
+        _gridIcons.Clear(); // ★ Очищаем старые иконки ★
+        
         for (int x = 0; x < _map.Width; x++)
         for (int y = 0; y < _map.Height; y++)
         {
@@ -165,6 +182,21 @@ public partial class MapCanvas : UserControl
             Canvas.SetTop (dot, y * ts + (ts - 14) / 2);
             GridOverlayCanvas.Children.Add(dot);
             _gridDots.Add(dot);
+
+            // ★ Картинка-иконка для оверрайда ★
+            var icon = new Image
+            {
+                Width = 28,
+                Height = 28,
+                Stretch = Stretch.Uniform,
+                IsVisible = false,
+                IsHitTestVisible = false,
+            };
+            RenderOptions.SetBitmapInterpolationMode(icon, BitmapInterpolationMode.None);
+            Canvas.SetLeft(icon, x * ts + (ts - 28) / 2);
+            Canvas.SetTop (icon, y * ts + (ts - 28) / 2);
+            GridOverlayCanvas.Children.Add(icon);
+            _gridIcons.Add(icon);
         }
 
         // Рамка-курсор — поверх всего
@@ -276,14 +308,20 @@ public partial class MapCanvas : UserControl
             line.EndPoint   = new Point(mapW, y * ts);
         }
 
-        // Точки типов
+        // Точки типов и иконки
         int di = 0;
         for (int x = 0; x < _map.Width; x++)
         for (int y = 0; y < _map.Height; y++)
         {
-            var dot = _gridDots[di++];
+            var dot = _gridDots[di];
             Canvas.SetLeft(dot, x * ts + (ts - 14) / 2);
             Canvas.SetTop (dot, y * ts + (ts - 14) / 2);
+
+            var icon = _gridIcons[di];
+            Canvas.SetLeft(icon, x * ts + (ts - 28) / 2);
+            Canvas.SetTop (icon, y * ts + (ts - 28) / 2);
+            
+            di++;
         }
 
         // Рамка-курсор
@@ -416,6 +454,42 @@ public partial class MapCanvas : UserControl
             if (idx < 0 || idx >= _gridDots.Count) continue;
 
             var dot = _gridDots[idx];
+            
+            // ★ Получаем иконку (если у нас есть список иконок) ★
+            Image? icon = (idx < _gridIcons.Count) ? _gridIcons[idx] : null;
+
+            // ★ Проверяем оверрайд (5-8) ★
+            if (ShowGridMode && _map.CellType != null && idx < _map.CellType.Length)
+            {
+                int cellType = _map.CellType[idx];
+                if (cellType >= 5 && cellType <= 8)
+                {
+                    dot.IsVisible = false; // Прячем кружок
+                    if (icon != null)
+                    {
+                        icon.IsVisible = true; // Показываем картинку
+                        icon.Source = cellType switch
+                        {
+                            5 => _iconPassable,
+                            6 => _iconBlock,
+                            7 => _iconSlow,
+                            8 => _iconUnder,
+                            _ => null
+                        };
+                    }
+                    continue; // Пропускаем остальную логику
+                }
+            }
+
+            // Если оверрайда нет — прячем иконку и возвращаем нормальный размер кружку
+            if (icon != null) icon.IsVisible = false;
+            
+            dot.Width = 14;
+            dot.Height = 14;
+            Canvas.SetLeft(dot, x * TilePx + (TilePx - 14) / 2);
+            Canvas.SetTop (dot, y * TilePx + (TilePx - 14) / 2);
+
+            // ★ СТАРАЯ ЛОГИКА: рисуем кружок по типу тайла ★
             int tileId = (CurrentLayer == 0) ? _map.Tiles[idx] : _map.Tiles2[idx];
 
             if (!ShowGridMode || TileTypes == null || tileId < 0 || tileId >= TileTypes.Length)

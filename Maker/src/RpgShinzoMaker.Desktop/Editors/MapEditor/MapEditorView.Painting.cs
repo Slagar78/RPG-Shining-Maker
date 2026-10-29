@@ -53,7 +53,7 @@ public partial class MapEditorView
         // ═══ Grid Mode ═══
         if (_gridMode)
         {
-            AssignTypeToMapTile(idx);
+            AssignTypeToMapTile(idx, tx, ty); // Передаем координаты
             return;
         }
 
@@ -119,7 +119,7 @@ public partial class MapEditorView
 
         if (_gridMode)
         {
-            AssignTypeToMapTile(idx);
+            AssignTypeToMapTile(idx, tx, ty);
             return;
         }
 
@@ -289,11 +289,34 @@ public partial class MapEditorView
     // ══════════════════════════════════════════════════════════════
     //   GRID MODE — назначение типа
     // ══════════════════════════════════════════════════════════════
-    private void AssignTypeToMapTile(int idx)
+    private void AssignTypeToMapTile(int idx, int tx, int ty)
     {
         if (_currentMap == null) return;
         if (idx < 0 || idx >= _currentMap.TotalCells) return;
 
+        // ★ НОВОЕ: Если выбран оверрайд (5-8), мы меняем CellType на карте ★
+        if (_currentCollisionType != 0)
+        {
+            // Запоминаем "до" для Undo
+            var oldSnap = SnapshotCell(idx, _currentLayer);
+
+            // Меняем значение в конкретной клетке карты
+            _currentMap.CellType[idx] = _currentCollisionType;
+            
+            // Запоминаем "после" для Undo
+            var newSnap = SnapshotCell(idx, _currentLayer);
+
+            // Сохраняем в историю
+            if (!SnapshotsEqual(oldSnap, newSnap))
+                RecordChange(idx, _currentLayer, oldSnap, newSnap);
+
+            // Перерисовываем оверлей и саму клетку (чтобы видеть, что поставили)
+            MapCanvasControl.UpdateGridOverlay();
+            MapCanvasControl.RedrawTile(tx, ty); // Внимание: tx, ty нужно будет передать или вычислить
+            return;
+        }
+
+        // ★ СТАРЫЙ КОД (для 0-3): Меняем тип всего тайлсета ★
         int tileId = (_currentLayer == 0)
             ? _currentMap.Tiles[idx]
             : _currentMap.Tiles2[idx];
@@ -309,4 +332,5 @@ public partial class MapEditorView
 
         MapCanvasControl.UpdateGridOverlay();
     }
+    
 }
