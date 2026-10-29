@@ -16,7 +16,6 @@ Database/ShinzoDatabase.exe
 [Oo]bj/
 [Dd]ebug/
 [Rr]elease/
-*.dll
 *.pdb
 *.lib
 *.exp
@@ -47,3 +46,4 @@ startup_log.txt
 project.lock.json
 project.fragment.lock.json
 artifacts/
+!PortableRuby/bin/opengl32.dll

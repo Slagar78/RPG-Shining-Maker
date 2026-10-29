@@ -1,4 +1,5 @@
-﻿using Avalonia;
+﻿// Program.cs
+using Avalonia;
 using System;
 using RpgShinzoMaker.Core.Services;
 

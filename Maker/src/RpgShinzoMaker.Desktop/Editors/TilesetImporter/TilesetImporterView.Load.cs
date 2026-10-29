@@ -97,8 +97,8 @@ public partial class TilesetImporterView
             string? baseName = Path.GetFileNameWithoutExtension(path);
             if (!string.IsNullOrEmpty(baseName))
             {
-                MapNameBox.Text = Sanitize(baseName);
-                TilesetNameBox.Text = Sanitize(baseName) + "_tiles";
+                MapNameBox.Text = Sanitize(baseName!);
+                TilesetNameBox.Text = Sanitize(baseName!) + "_tiles";
             }
         }
         catch (Exception ex)

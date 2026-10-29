@@ -53,8 +53,14 @@
                             Padding="12,6"
                             Click="OnSaveClick"/>
                     <Separator Width="1" Margin="6,2"/>
-                    <Button Content="▶ Запустить игру"  ToolTip.Tip="F5"/>
-                    <Button Content="⚔ Запустить битву" ToolTip.Tip="F6"/>
+                    <!-- Кнопка запуска игры -->
+                    <Button Content="▶ Play Game"  
+                            ToolTip.Tip="Запустить игру (F5)" 
+                            Click="OnPlaytestClick"/>
+                    <!-- Кнопка битвы (отключена) -->
+                    <Button Content="⚔ Battle Test" 
+                            ToolTip.Tip="Запустить битву (в разработке)" 
+                            IsEnabled="False"/>
                 </StackPanel>
             </Border>
 
