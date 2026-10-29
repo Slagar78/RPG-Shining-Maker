@@ -280,23 +280,32 @@ class GameMap
   def passable?(x, y, from_x = nil, from_y = nil)
     return false if x < 0 || x >= @width || y < 0 || y >= @height
 
-  # Если клетка принадлежит лестнице
-  if from_x && from_y && stairs_at(x, y)
-    tile_id = @tiles[x][y]
-    type = @tile_types[tile_id] || 0
-    # Если это стена (тип 1) – пропускаем только сбоку
-    if type == 1
-      return (x - from_x).abs == 1 && y == from_y
+    # Проверка переопределения (5, 6, 7, 8) ★
+    if @collision && @collision[x] && @collision[x][y]
+      override = @collision[x][y]
+      if override == 6
+        return false # Принудительная стена
+      elsif override == 5 || override == 7 || override == 8
+        return true  # Принудительно проходимо, лёд или поверх
+      end
     end
-    # Иначе (тип 0, пол) – разрешаем проход свободно, без ограничений
-  end
+
+    # Если клетка принадлежит лестнице
+    if from_x && from_y && stairs_at(x, y)
+      tile_id = @tiles[x][y]
+      type = @tile_types[tile_id] || 0
+      # Если это стена (тип 1) – пропускаем только сбоку
+      if type == 1
+        return (x - from_x).abs == 1 && y == from_y
+      end
+    end
 
     # Стандартные проверки слоёв
     tile2_id = @tiles2[x][y]
     if tile2_id && tile2_id >= 0
-    type2 = @tile_types[tile2_id] || 0
-    return false if type2 == 1 || type2 == 2
-  end
+      type2 = @tile_types[tile2_id] || 0
+      return false if type2 == 1 || type2 == 2
+    end
 
     tile_id = @tiles[x][y]
     type = @tile_types[tile_id] || 0
@@ -316,6 +325,22 @@ class GameMap
 
   def tile_type_at(x, y)
     return 1 if x < 0 || x >= @width || y < 0 || y >= @height
+
+    # ★ Если есть переопределение, возвращаем его ★
+    if @collision && @collision[x] && @collision[x][y]
+      override = @collision[x][y]
+      if override == 6
+        return 1 # Стена
+      elsif override == 5
+        return 0 # Проходимо
+      elsif override == 7
+        return 2 # Лёд
+      elsif override == 8
+        return 3 # Поверх
+      end
+    end
+
+    # Если оверрайда нет (0), работает старый код
     tile_id = @tiles[x][y]
     @tile_types[tile_id] || 0
   end

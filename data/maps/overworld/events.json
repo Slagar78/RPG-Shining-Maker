@@ -4,9 +4,9 @@
 		"trigger_x":	31,
 		"trigger_y":	32,
 		"target_map":	"Granseal",
-		"target_x":	4,
-		"target_y":	5,
-		"facing":	0
+		"target_x":	1,
+		"target_y":	26,
+		"facing":	2
 	},
 	{
 		"type":	"warp",
