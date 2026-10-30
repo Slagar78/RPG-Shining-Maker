@@ -5,7 +5,8 @@ class BattleMenu
   attr_reader :magic_mode, :item_menu_mode
   attr_reader :selected_spell, :selected_item_action
 
-  def initialize
+  def initialize(db = nil)
+    @db = db
     @tiles = [
       { "id" => 0, "name" => "attack", "icon" => "assets/ui/menu/Attack.png", "icon_anim" => "assets/ui/menu/Attack_Anim.png" },
       { "id" => 1, "name" => "magic",  "icon" => "assets/ui/menu/Menu2.png",  "icon_anim" => "assets/ui/menu/Menu2_Anim.png" },
@@ -391,7 +392,8 @@ def handle_input
       pos = positions[i]
 
       icon = if spell
-               load_magic_icon(find_spell_icon(spell["spell"], spell["spell_level"]))
+               spell_data = @db ? @db.find_spell_by_id(spell["spell_id"]) : nil
+               load_magic_icon(spell_data ? spell_data["icon"] : nil)
              else
                @empty_magic_tex
              end
@@ -416,7 +418,8 @@ def handle_input
     selected_spell = @spells[selected_i]
 
     icon = if selected_spell
-             load_magic_icon(find_spell_icon(selected_spell["spell"], selected_spell["spell_level"]))
+             spell_data = @db ? @db.find_spell_by_id(selected_spell["spell_id"]) : nil
+             load_magic_icon(spell_data ? spell_data["icon"] : nil)
            else
              @empty_magic_tex
            end
@@ -448,7 +451,9 @@ def handle_input
       Raylib.DrawTexturePro(@magic_panel_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
 
       if @font && @magic_selected < @spells.length
-        name = @spells[@magic_selected]["spell"] || ""
+        spell_entry = @spells[@magic_selected]
+        spell_data = @db ? @db.find_spell_by_id(spell_entry["spell_id"]) : nil
+        name = spell_data ? spell_data["name"] : "???"
         font_size = 25
         text_size = Raylib.MeasureTextEx(@font, name, font_size, 1)
         text_x = panel_x + (@magic_panel_w - text_size.x) / 2 - 42
@@ -514,20 +519,6 @@ end
     else
       @magic_icon_cache[path] = nil
     end
-  end
-
-  def find_spell_icon(name, level)
-    spells = $spells
-    unless spells
-      path = "data/spells/spells.json"
-      if File.exist?(path)
-        spells = JSON.parse(File.read(path))["spells"]
-      else
-        spells = []
-      end
-    end
-    spell = spells.find { |s| s["name"].casecmp?(name) && s["level"] == level }
-    spell ? spell["icon"] : nil
   end
   
   def unload

@@ -131,6 +131,10 @@ class Database
     @items.find { |i| i.name == name }
   end
 
+  def find_spell_by_id(id)
+    @spells.find { |s| s["id"] == id }
+  end
+
   # Поиск кривой роста по id (например, "LINEAR")
   def growth_curve(curve_id)
     @growth_curves.find { |c| c["id"] == curve_id }

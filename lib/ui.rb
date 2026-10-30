@@ -565,10 +565,15 @@ end
     draw_text_custom("Items", @upper_x + 195, @upper_y + 38, 20, WHITE)
 
     if @current_spells && @current_spells.any?
+
       @current_spells.each_with_index do |spell, i|
         y = @upper_y + 72 + i * 34
-        draw_text_custom("#{spell["spell"]} Lv#{spell["spell_level"]}", @upper_x + 25, y, 20, WHITE)
+        # Ищем магию по ID, чтобы взять её настоящее имя
+        spell_data = @db ? @db.find_spell_by_id(spell["spell_id"]) : nil
+        spell_name = spell_data ? spell_data["name"] : "???"
+        draw_text_custom("#{spell_name} Lv#{spell["spell_level"]}", @upper_x + 25, y, 20, WHITE)
       end
+
     else
       draw_text_custom("Nothing", @upper_x + 25, @upper_y + 72, 20, ORANGE)
     end
@@ -1087,13 +1092,19 @@ class Profile
       if spells.any?
         spells.first(4).each_with_index do |spell, i|
           y = section_y + 30 + i * 52
-          spell_icon = load_icon(find_spell_icon(spell["spell"], spell["spell_level"]))
+          
+          # Ищем по ID
+          spell_data = @db ? @db.find_spell_by_id(spell["spell_id"]) : nil
+          spell_name = spell_data ? spell_data["name"] : "???"
+          icon_path = spell_data ? spell_data["icon"] : nil
+          
+          spell_icon = load_icon(icon_path)
           if spell_icon
             src = Raylib::Rectangle.create(0, 0, 32, 48)
             dst = Raylib::Rectangle.create(left_x - 30, y, 32, 48)
-            Raylib.DrawTexturePro(spell_icon, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+            Raylib::DrawTexturePro(spell_icon, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
           end
-          draw_text_custom(spell["spell"], left_x + 10, y + 6, 18, WHITE)
+          draw_text_custom(spell_name, left_x + 10, y + 6, 18, WHITE)
           draw_text_custom("Lv #{spell["spell_level"]}", left_x + 10, y + 26, 18, WHITE)
         end
       else
@@ -1674,7 +1685,11 @@ end
       spell = spells[i]
 
       if spell
-        icon = load_icon(find_spell_icon(spell["spell"], spell["spell_level"]))
+        # Ищем по ID и берем иконку оттуда
+        spell_data = @db ? @db.find_spell_by_id(spell["spell_id"]) : nil
+        icon_path = spell_data ? spell_data["icon"] : nil
+        icon = load_icon(icon_path)
+
         if icon
           src = Raylib::Rectangle.create(0, 0, 32, 48)
           dst = Raylib::Rectangle.create(ipos[:x], ipos[:y], 32, 48)
@@ -1696,7 +1711,10 @@ end
         spell = spells[i]
         next unless spell
         y = text_y + i * text_line_h
-        draw_text_custom(spell["spell"], text_x, y, 20, PURPLE)
+        # Ищем по ID для отображения имени
+        spell_data = @db ? @db.find_spell_by_id(spell["spell_id"]) : nil
+        spell_name = spell_data ? spell_data["name"] : "???"
+        draw_text_custom(spell_name, text_x, y, 20, PURPLE)
         draw_text_custom("level #{spell["spell_level"]}", text_x + 14, y + 18, 20, LIME)
       end
     else

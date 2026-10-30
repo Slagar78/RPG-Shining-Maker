@@ -157,7 +157,7 @@ end
     load_spriteset
     load_terrain
 
-    @battle_menu = BattleMenu.new
+    @battle_menu = BattleMenu.new(@db)
     @battle_menu.font = @font
     @hp_mp_panel = HpMpPanel.new(@font)
     @target_hp_panel = HpMpPanel.new(@font)
@@ -873,6 +873,7 @@ end
    when :magic_select
      @battle_menu.handle_input
      if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
+     # TODO: каст магии тут. ID: @battle_menu.selected_spell["spell_id"] → @db.find_spell_by_id(id)
        @battle_menu.close_magic
        @battle_state = :player_turn
        @cursor.visible = true
