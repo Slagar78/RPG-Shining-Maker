@@ -5,8 +5,33 @@
              x:DataType="vm:MainViewModel"
              x:Class="RpgShinzoMaker.Desktop.Editors.DatabaseEditor.DatabaseEditorView">
     
+    <UserControl.Styles>
+        <!-- Стиль для вертикальных вкладок (как в RPG Maker) -->
+        <Style Selector="TabItem">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#AAAAAA"/>
+            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="Margin" Value="0,2,0,0"/>
+            <Setter Property="Background" Value="#2D2D30"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        </Style>
+        <!-- При наведении -->
+        <Style Selector="TabItem:pointerover">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#3E3E42"/>
+        </Style>
+        <!-- Активная вкладка (синяя полоска) -->
+        <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#005A9E"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+    </UserControl.Styles>
+
     <Grid RowDefinitions="Auto,*">
-        <!-- Верхняя панель с кнопкой SAVE -->
+        <!-- Верхняя панель -->
         <Border Grid.Row="0" Background="#2D2D30" Padding="10">
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <Button Content="SAVE DATABASE" 
@@ -17,35 +42,29 @@
             </StackPanel>
         </Border>
 
-        <!-- Главный TabControl с вертикальным меню слева -->
-        <TabControl Grid.Row="1" TabStripPlacement="Left" Margin="5" Background="#1E1E1E">
+        <!-- Главный TabControl -->
+        <TabControl Grid.Row="1" TabStripPlacement="Left" Margin="0" Background="#1E1E1E">
             
-            <!-- Вкладка Heroes (Персонажи) -->
             <TabItem Header="Heroes">
                 <views:ActorsPanel DataContext="{Binding ActorsVM}" />
             </TabItem>
 
-            <!-- Вкладка Enemies (Враги) -->
             <TabItem Header="Enemies">
                 <TextBlock Text="Enemies Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </TabItem>
 
-            <!-- Вкладка Classes (Классы) -->
             <TabItem Header="Classes">
                 <TextBlock Text="Classes Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </TabItem>
 
-            <!-- Вкладка Items (Предметы) -->
             <TabItem Header="Items">
                 <TextBlock Text="Items Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </TabItem>
 
-            <!-- Вкладка Spells (Магия) -->
             <TabItem Header="Spells">
                 <TextBlock Text="Spells Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </TabItem>
 
-            <!-- Вкладка System (Система) -->
             <TabItem Header="System">
                 <TextBlock Text="System Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </TabItem>

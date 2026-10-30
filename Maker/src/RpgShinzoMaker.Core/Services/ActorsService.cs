@@ -11,7 +11,8 @@ public class ActorsService
 {
     private static readonly JsonSerializerOptions _options = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower // <--- ВОТ ЭТО
     };
 
     // --- ACTORS ---

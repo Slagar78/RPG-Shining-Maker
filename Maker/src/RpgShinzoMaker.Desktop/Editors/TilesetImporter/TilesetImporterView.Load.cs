@@ -115,8 +115,8 @@ public partial class TilesetImporterView
         var sb = new StringBuilder(s.Length);
         foreach (var c in s.ToLower())
         {
-            // Транслитерация русских букв
-            string eng = c switch
+            // Транслитерация русских букв (ЗДЕСЬ ИСПРАВЛЕНО НА string?)
+            string? eng = c switch
             {
                 'а' => "a", 'б' => "b", 'в' => "v", 'г' => "g", 'д' => "d",
                 'е' => "e", 'ё' => "e", 'ж' => "zh", 'з' => "z", 'и' => "i",

@@ -1,33 +1,43 @@
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace RpgShinzoMaker.Core.Models.Database;
 
-public class Actor
+public partial class Actor : ObservableObject
 {
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
+    [ObservableProperty]
+    [property: JsonPropertyName("id")]
+    private int _id;
 
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
+    [ObservableProperty]
+    [property: JsonPropertyName("name")]
+    private string _name = string.Empty;
 
-    [JsonPropertyName("class_id")]
-    public int ClassId { get; set; }
+    [ObservableProperty]
+    [property: JsonPropertyName("class_id")]
+    private int _classId;
 
-    [JsonPropertyName("portrait")]
-    public string Portrait { get; set; } = string.Empty;
+    [ObservableProperty]
+    [property: JsonPropertyName("portrait")]
+    private string _portrait = string.Empty;
 
-    [JsonPropertyName("mapsprite")]
-    public string Mapsprite { get; set; } = string.Empty;
+    [ObservableProperty]
+    [property: JsonPropertyName("mapsprite")]
+    private string _mapsprite = string.Empty;
 
-    [JsonPropertyName("level")]
-    public int Level { get; set; } = 1;
+    [ObservableProperty]
+    [property: JsonPropertyName("level")]
+    private int _level = 1;
 
-    [JsonPropertyName("exp")]
-    public int Exp { get; set; } = 0;
+    [ObservableProperty]
+    [property: JsonPropertyName("exp")]
+    private int _exp = 0;
 
-    [JsonPropertyName("kills")]
-    public int Kills { get; set; } = 0;
+    [ObservableProperty]
+    [property: JsonPropertyName("kills")]
+    private int _kills = 0;
 
-    [JsonPropertyName("defeats")]
-    public int Defeats { get; set; } = 0;
+    [ObservableProperty]
+    [property: JsonPropertyName("defeats")]
+    private int _defeats = 0;
 }

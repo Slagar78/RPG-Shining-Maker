@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using RpgShinzoMaker.Core.Services;
 using RpgShinzoMaker.Desktop.ViewModels;
 using RpgShinzoMaker.Desktop.Views;
 
@@ -17,6 +18,9 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // Она ищет папку data/maps вверх по дереву и запоминает корень
+            ProjectPaths.Initialize(); 
+
             desktop.MainWindow = new MainWindow
             {
                 DataContext = new MainViewModel(),

@@ -1,25 +1,31 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace RpgShinzoMaker.Core.Models.Database;
 
-public class StartInventory
+public partial class StartInventory : ObservableObject
 {
-    [JsonPropertyName("actor_id")]
-    public int ActorId { get; set; }
+    [ObservableProperty]
+    [property: JsonPropertyName("actor_id")]
+    private int _actorId;
 
-    [JsonPropertyName("start_level")]
-    public int StartLevel { get; set; } = 1;
+    [ObservableProperty]
+    [property: JsonPropertyName("start_level")]
+    private int _startLevel = 1;
 
-    [JsonPropertyName("items")]
-    public List<StartItem> Items { get; set; } = new();
+    [ObservableProperty]
+    [property: JsonPropertyName("items")]
+    private List<StartItem> _items = new();
 }
 
-public class StartItem
+public partial class StartItem : ObservableObject
 {
-    [JsonPropertyName("item")]
-    public string Item { get; set; } = "NOTHING";
+    [ObservableProperty]
+    [property: JsonPropertyName("item")]
+    private string _item = "NOTHING";
 
-    [JsonPropertyName("equipped")]
-    public bool Equipped { get; set; } = false;
+    [ObservableProperty]
+    [property: JsonPropertyName("equipped")]
+    private bool _equipped = false;
 }
