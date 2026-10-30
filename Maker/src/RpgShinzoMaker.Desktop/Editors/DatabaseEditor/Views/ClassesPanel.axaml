@@ -235,10 +235,13 @@
                                         <TextBox Grid.Column="1" Text="{Binding Level}" MaxLength="3" Margin="0,0,10,0"/>
                                         
                                         <!-- COMBOBOX С ПРИВЕДЕНИЕМ ТИПА -->
+
                                         <ComboBox Grid.Column="2" 
                                                   ItemsSource="{Binding $parent[ItemsControl].((vm:ClassesViewModel)DataContext).AvailableSpells}" 
                                                   SelectedValue="{Binding SpellId}" 
+                                                  SelectedValueBinding="{Binding Id}" 
                                                   Margin="0,0,10,0">
+
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate x:DataType="models:Spell">
                                                     <TextBlock Text="{Binding Name}"/>
