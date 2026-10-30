@@ -58,7 +58,7 @@
             </TabItem>
 
             <TabItem Header="Items">
-                <TextBlock Text="Items Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <views:ItemsPanel DataContext="{Binding ItemsVM}" />
             </TabItem>
 
             <TabItem Header="Spells">

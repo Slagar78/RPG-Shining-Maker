@@ -21,9 +21,26 @@ public partial class StartInventory : ObservableObject
 
 public partial class StartItem : ObservableObject
 {
-    [ObservableProperty]
-    [property: JsonPropertyName("item")]
     private string _item = "NOTHING";
+
+    [JsonPropertyName("item")]
+    public string Item
+    {
+        get => _item;
+        set
+        {
+            // ★ БЛОКИРУЕМ NULL: Если Авалония пытается скинуть пустоту, мы не даем ей это сделать
+            if (value == null) return;
+
+            if (SetProperty(ref _item, value))
+            {
+                if (string.IsNullOrWhiteSpace(value) || value == "NOTHING")
+                {
+                    Equipped = false;
+                }
+            }
+        }
+    }
 
     [ObservableProperty]
     [property: JsonPropertyName("equipped")]

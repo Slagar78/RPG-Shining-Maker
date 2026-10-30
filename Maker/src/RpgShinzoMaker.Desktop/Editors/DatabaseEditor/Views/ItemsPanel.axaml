@@ -1,0 +1,194 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:RpgShinzoMaker.Core.Models.Database"
+             xmlns:vm="using:RpgShinzoMaker.Desktop.ViewModels"
+             x:DataType="vm:ItemsViewModel"
+             x:Class="RpgShinzoMaker.Desktop.Editors.DatabaseEditor.Views.ItemsPanel">
+
+    <UserControl.Resources>
+        <ControlTheme x:Key="CustomItem" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="4,3"/>
+            <Setter Property="MinHeight" Value="22"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </ControlTheme>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Border.GroupBox">
+            <Setter Property="BorderBrush" Value="#3E3E42"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="Padding" Value="6"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="Background" Value="#252526"/>
+        </Style>
+        <Style Selector="TextBlock.GroupHeader">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#007ACC"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+        <!-- Стиль для маленьких числовых полей -->
+        <Style Selector="TextBox.NumBox">
+            <Setter Property="Width" Value="45"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="220, *" Background="#1E1E1E">
+        
+        <!-- ЛЕВАЯ КОЛОНКА -->
+        <Grid Grid.Column="0" RowDefinitions="Auto, *" Background="#1E1E1E" Margin="2">
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="2">
+                <Button Content="Add" Background="#4CAF50" Foreground="White" FontSize="11" Padding="8,2" Height="22" Command="{Binding AddItemCommand}"/>
+                <Button Content="Del" Background="#F44336" Foreground="White" FontSize="11" Padding="8,2" Height="22" Command="{Binding DeleteItemCommand}"/>
+            </StackPanel>
+
+            <ListBox Grid.Row="1" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" 
+                     Background="Transparent" Padding="0" SelectionMode="Single"
+                     ItemContainerTheme="{StaticResource CustomItem}">
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem:nth-child(odd)"><Setter Property="Background" Value="#252526"/></Style>
+                    <Style Selector="ListBoxItem:nth-child(even)"><Setter Property="Background" Value="#2D2D30"/></Style>
+                    <Style Selector="ListBoxItem:pointerover"><Setter Property="Background" Value="#3E3E42"/></Style>
+                    <Style Selector="ListBoxItem:selected"><Setter Property="Background" Value="#81C784"/></Style>
+                    <Style Selector="ListBoxItem:selected TextBlock">
+                        <Setter Property="Foreground" Value="Black"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
+                    </Style>
+                </ListBox.Styles>
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:Item">
+                        <Grid ColumnDefinitions="40, *">
+                            <TextBlock Grid.Column="0" Text="{Binding Id, StringFormat='{}{0:D4}'}" Foreground="#AAAAAA"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="White"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+
+        <!-- ПРАВАЯ КОЛОНКА -->
+        <ScrollViewer Grid.Column="1" IsVisible="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Margin="5">
+            <StackPanel>
+                
+                <!-- General Settings -->
+                <Border Classes="GroupBox">
+                    <StackPanel>
+                        <TextBlock Text="General Settings" Classes="GroupHeader"/>
+                        <Grid ColumnDefinitions="80, 150, 80, 120" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" Margin="0,2"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedItem.Name}" Margin="0,2,10,2"/>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Category:" Margin="0,2"/>
+                            <ComboBox Grid.Row="0" Grid.Column="3" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedItem.Category}" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Icon:" Margin="0,2"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedItem.Icon}" Margin="0,2,10,2" Grid.ColumnSpan="3"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Effect and Range -->
+                <Border Classes="GroupBox">
+                    <StackPanel>
+                        <TextBlock Text="Effect and Range" Classes="GroupHeader"/>
+                        <Grid ColumnDefinitions="80, 150, 80, 60" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Use Spell:" Margin="0,2"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableSpells}" SelectedItem="{Binding SelectedItem.UseSpell}" Margin="0,2,10,2"/>
+
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Spell Level:" Margin="0,2"/>
+                            <!-- Максимум 3 символа, ширина 45 -->
+                            <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding SelectedItem.SpellLevel}" MaxLength="3" Classes="NumBox" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Range Min:" Margin="0,2"/>
+                            <!-- Максимум 3 символа, ширина 45 -->
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedItem.RangeMin}" MaxLength="3" Classes="NumBox" Margin="0,2,10,2"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Range Max:" Margin="0,2"/>
+                            <!-- Максимум 3 символа, ширина 45 -->
+                            <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding SelectedItem.RangeMax}" MaxLength="3" Classes="NumBox" Margin="0,2"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Stats (Видимы только для оружия и колец) -->
+                <Border Classes="GroupBox" IsVisible="{Binding SelectedItem.IsEquipment}">
+                    <StackPanel>
+                        <TextBlock Text="Equipment Stats" Classes="GroupHeader"/>
+                        <Grid ColumnDefinitions="50, 60, 50, 60, 80, 100" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Price:" Margin="0,2"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedItem.Price}" Classes="NumBox" Margin="0,2,10,2"/>
+
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="ATK:" Margin="0,2"/>
+                            <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding SelectedItem.Attack}" Classes="NumBox" Margin="0,2,10,2"/>
+
+                            <TextBlock Grid.Row="0" Grid.Column="4" Text="DEF:" Margin="0,2"/>
+                            <TextBox Grid.Row="0" Grid.Column="5" Text="{Binding SelectedItem.Defense}" Classes="NumBox" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="HP:" Margin="0,2"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedItem.Hp}" Classes="NumBox" Margin="0,2,10,2"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="MP:" Margin="0,2"/>
+                            <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding SelectedItem.Mp}" Classes="NumBox" Margin="0,2,10,2"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="4" Text="AGI/MOV:" Margin="0,2"/>
+                            <StackPanel Grid.Row="1" Grid.Column="5" Orientation="Horizontal" Spacing="4">
+                                <TextBox Text="{Binding SelectedItem.Agility}" Width="40" Margin="0,2"/>
+                                <TextBox Text="{Binding SelectedItem.Mov}" Width="40" Margin="0,2"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Price для расходников -->
+                <Border Classes="GroupBox" IsVisible="{Binding !SelectedItem.IsEquipment}">
+                    <StackPanel>
+                        <TextBlock Text="Consumable Stats" Classes="GroupHeader"/>
+                        <Grid ColumnDefinitions="80, 150" RowDefinitions="Auto" HorizontalAlignment="Left">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Price:" Margin="0,2"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedItem.Price}" Classes="NumBox" Margin="0,2"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

@@ -197,7 +197,12 @@
                                     <Grid ColumnDefinitions="60, 200, 80" Margin="0,1" HorizontalAlignment="Left">
                                         <TextBlock Grid.Column="0" Text="Item:" Margin="0,2"/>
                                         <ComboBox Grid.Column="1" ItemsSource="{Binding $parent[UserControl].((vm:ActorsViewModel)DataContext).AvailableItems}" SelectedItem="{Binding Item}" Margin="0,2,10,2"/>
-                                        <CheckBox Grid.Column="2" Content="Equipped" IsChecked="{Binding Equipped}" FontSize="11" VerticalAlignment="Center"/>
+
+                                     <CheckBox Grid.Column="2" Content="Equipped" 
+                                        IsChecked="{Binding Equipped}" 
+                                        IsEnabled="{Binding Item, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" 
+                                        FontSize="11" VerticalAlignment="Center"/>
+
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

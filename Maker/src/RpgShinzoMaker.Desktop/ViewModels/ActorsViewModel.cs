@@ -14,18 +14,20 @@ public partial class ActorsViewModel : ObservableObject
 {
     private readonly ActorsService _actorsService = new();
     private readonly AssetScannerService _assetScanner = new();
+    private readonly ItemsService _itemsService = new();
     
     private readonly string _actorsPath;
     private readonly string _inventoryPath;
     private readonly string _classesPath;
     private readonly string _portraitsDir;
     private readonly string _mapspritesDir;
+    private readonly string _itemsPath;
 
     public ObservableCollection<Actor> Actors { get; } = new();
     public ObservableCollection<CharacterClass> AvailableClasses { get; } = new();
     public ObservableCollection<string> AvailablePortraits { get; } = new();
     public ObservableCollection<string> AvailableMapsprites { get; } = new();
-    public ObservableCollection<string> AvailableItems { get; } = new() { "NOTHING", "Potion", "Sword" };
+    public ObservableCollection<string> AvailableItems { get; } = new();
 
     private List<StartInventory> _startInventories = new();
 
@@ -42,6 +44,7 @@ public partial class ActorsViewModel : ObservableObject
         _classesPath = Path.Combine(ProjectPaths.DataDir, "actors", "classes.json");
         _portraitsDir = Path.Combine(ProjectPaths.AssetsDir, "ui", "portraits");
         _mapspritesDir = Path.Combine(ProjectPaths.AssetsDir, "mapsprites");
+        _itemsPath = Path.Combine(ProjectPaths.DataDir, "items", "items.json");
 
         LoadData();
     }
@@ -68,9 +71,18 @@ public partial class ActorsViewModel : ObservableObject
         foreach (var m in mapsprites) AvailableMapsprites.Add(m);
         if (AvailableMapsprites.Count == 0) AvailableMapsprites.Add("mapsprite000");
 
+        // Загружаем предметы
+        var items = _itemsService.LoadItems(_itemsPath);
+        AvailableItems.Clear();
+        AvailableItems.Add("NOTHING");
+        foreach (var item in items)
+        {
+            if (!AvailableItems.Contains(item.Name)) AvailableItems.Add(item.Name);
+        }
+
+        // Загружаем актеров
         var actors = _actorsService.LoadActors(_actorsPath);
         Actors.Clear();
-        
         if (actors != null && actors.Count > 0)
         {
             foreach (var a in actors) Actors.Add(a);
@@ -80,8 +92,10 @@ public partial class ActorsViewModel : ObservableObject
             Actors.Add(new Actor { Id = 1, Name = "Harold", ClassId = 1, Level = 1, Portrait = "Mushra", Mapsprite = "mapsprite000" });
         }
 
+        // Загружаем инвентари
         _startInventories = _actorsService.LoadStartInventory(_inventoryPath);
 
+        // Выбираем первого
         if (Actors.Count > 0) SelectedActor = Actors[0];
     }
 
@@ -121,6 +135,19 @@ public partial class ActorsViewModel : ObservableObject
             _startInventories.Add(inv);
         }
 
+        // Если в инвентаре есть предмет, которого нет в выпадающем списке (например, ты его только что создал),
+        // мы просто добавляем его в список, чтобы ComboBox его увидел. НИЧЕГО НЕ ЗАТИРАЕМ.
+        if (inv.Items != null)
+        {
+            foreach (var slot in inv.Items)
+            {
+                if (!string.IsNullOrWhiteSpace(slot.Item) && !AvailableItems.Contains(slot.Item))
+                {
+                    AvailableItems.Add(slot.Item);
+                }
+            }
+        }
+
         CurrentInventory = inv;
     }
 
@@ -155,32 +182,8 @@ public partial class ActorsViewModel : ObservableObject
         SelectedActor = Actors.FirstOrDefault();
     }
 
-    // ★★★ ВОТ ОНИ, КОМАНДЫ ДЛЯ СТРЕЛОК ★★★
-    [RelayCommand]
-    private void IncrementLevel()
-    {
-        if (SelectedActor != null && SelectedActor.Level < 999)
-            SelectedActor.Level++;
-    }
-
-    [RelayCommand]
-    private void DecrementLevel()
-    {
-        if (SelectedActor != null && SelectedActor.Level > 1)
-            SelectedActor.Level--;
-    }
-
-    [RelayCommand]
-    private void IncrementStartLevel()
-    {
-        if (CurrentInventory != null && CurrentInventory.StartLevel < 999)
-            CurrentInventory.StartLevel++;
-    }
-
-    [RelayCommand]
-    private void DecrementStartLevel()
-    {
-        if (CurrentInventory != null && CurrentInventory.StartLevel > 1)
-            CurrentInventory.StartLevel--;
-    }
+    [RelayCommand] private void IncrementLevel() { if (SelectedActor != null && SelectedActor.Level < 999) SelectedActor.Level++; }
+    [RelayCommand] private void DecrementLevel() { if (SelectedActor != null && SelectedActor.Level > 1) SelectedActor.Level--; }
+    [RelayCommand] private void IncrementStartLevel() { if (CurrentInventory != null && CurrentInventory.StartLevel < 999) CurrentInventory.StartLevel++; }
+    [RelayCommand] private void DecrementStartLevel() { if (CurrentInventory != null && CurrentInventory.StartLevel > 1) CurrentInventory.StartLevel--; }
 }

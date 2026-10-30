@@ -8,13 +8,15 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial string Greeting { get; set; } = "Welcome to Avalonia!";
 
-    // Сюда мы будем добавлять и другие вкладки (ItemsVM, SpellsVM и т.д.)
+    // Наши редакторы
     public ActorsViewModel ActorsVM { get; } = new();
+    public ItemsViewModel ItemsVM { get; } = new();
 
     [RelayCommand]
     private void Save()
     {
         // Вызываем сохранение у всех вкладок
         ActorsVM.SaveData();
+        ItemsVM.SaveData();
     }
 }
