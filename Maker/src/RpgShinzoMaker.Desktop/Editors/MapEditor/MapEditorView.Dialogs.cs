@@ -146,6 +146,7 @@ public partial class MapEditorView
                 MirrorY2 = new bool[mapW * mapH],
 
                 CellType = new int[mapW * mapH],
+                CellType2 = new int[mapW * mapH],
             };
 
             // Layer 1 = 0, Layer 2 = -1 (пусто)
@@ -499,6 +500,7 @@ public partial class MapEditorView
                 MirrorY2 = new bool[newW * newH],
 
                 CellType = new int[newW * newH],
+                CellType2 = new int[newW * newH],
             };
 
             for (int i = 0; i < newMap.TotalCells; i++)
@@ -528,6 +530,7 @@ public partial class MapEditorView
                 newMap.MirrorY2[newIdx] = oldMap.MirrorY2[oldIdx];
 
                 newMap.CellType[newIdx] = oldMap.CellType[oldIdx];
+                newMap.CellType2[newIdx] = oldMap.CellType2[oldIdx];
             }
 
             // Обрезать areas, если не влезают

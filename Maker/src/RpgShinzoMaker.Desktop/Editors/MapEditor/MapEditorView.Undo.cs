@@ -20,6 +20,7 @@ public partial class MapEditorView
         public bool MirrorX;
         public bool MirrorY;
         public int  CellType; // запоминаем и коллизию
+        public int  CellType2; // запоминаем и коллизию
     }
 
     // ─── Изменение одной ячейки ───
@@ -59,7 +60,8 @@ public partial class MapEditorView
                 Rot     = _currentMap.Rot[idx],
                 MirrorX = _currentMap.MirrorX[idx],
                 MirrorY = _currentMap.MirrorY[idx],
-                CellType = _currentMap.CellType[idx] // ★ Читаем ★
+                CellType = _currentMap.CellType[idx],   // ★ Слой 1
+                CellType2 = _currentMap.CellType2[idx]  // ★ Слой 2
             };
         }
         else
@@ -70,7 +72,8 @@ public partial class MapEditorView
                 Rot     = _currentMap.Rot2[idx],
                 MirrorX = _currentMap.MirrorX2[idx],
                 MirrorY = _currentMap.MirrorY2[idx],
-                CellType = _currentMap.CellType[idx]
+                CellType = _currentMap.CellType[idx],   // ★ Слой 1
+                CellType2 = _currentMap.CellType2[idx]  // ★ Слой 2 (было CellType)
             };
         }
     }
@@ -81,7 +84,8 @@ public partial class MapEditorView
             && a.Rot == b.Rot
             && a.MirrorX == b.MirrorX
             && a.MirrorY == b.MirrorY
-            && a.CellType == b.CellType;
+            && a.CellType == b.CellType
+            && a.CellType2 == b.CellType2;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -97,7 +101,6 @@ public partial class MapEditorView
             _currentMap.Rot[idx]     = snap.Rot;
             _currentMap.MirrorX[idx] = snap.MirrorX;
             _currentMap.MirrorY[idx] = snap.MirrorY;
-            _currentMap.CellType[idx] = snap.CellType; // ★ Восстанавливаем ★
         }
         else
         {
@@ -105,8 +108,11 @@ public partial class MapEditorView
             _currentMap.Rot2[idx]     = snap.Rot;
             _currentMap.MirrorX2[idx] = snap.MirrorX;
             _currentMap.MirrorY2[idx] = snap.MirrorY;
-            _currentMap.CellType[idx] = snap.CellType;
         }
+        
+        // Восстанавливаем коллизию для слоя
+        _currentMap.CellType[idx]  = snap.CellType;
+        _currentMap.CellType2[idx] = snap.CellType2;
     }
 
     // ══════════════════════════════════════════════════════════════

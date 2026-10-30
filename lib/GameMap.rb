@@ -65,6 +65,7 @@ class GameMap
     end
 
     @collision = data['collision'] || Array.new(@width) { Array.new(@height, 0) }
+    @collision2 = data['collision2'] || Array.new(@width) { Array.new(@height, 0) }
 
     @music_file   = entry['music']        || ""
     @music_volume = entry['music_volume'] || 0.8
@@ -280,13 +281,17 @@ class GameMap
   def passable?(x, y, from_x = nil, from_y = nil)
     return false if x < 0 || x >= @width || y < 0 || y >= @height
 
-    # Проверка переопределения (5, 6, 7, 8) ★
-    if @collision && @collision[x] && @collision[x][y]
-      override = @collision[x][y]
-      if override == 6
-        return false # Принудительная стена
-      elsif override == 5 || override == 7 || override == 8
-        return true  # Принудительно проходимо, лёд или поверх
+    # ── СЛОЙ 2 (проверяется первым) ──
+    ov2 = (@collision2 && @collision2[x] && @collision2[x][y]) || 0
+    if ov2 == 6
+      return false # Принудительная стена на слое 2
+    elsif ov2 == 5 || ov2 == 7 || ov2 == 8
+      # override слоя 2 разрешает проход
+    else
+      tile2_id = @tiles2[x][y]
+      if tile2_id && tile2_id >= 0
+        type2 = @tile_types[tile2_id] || 0
+        return false if type2 == 1 || type2 == 2
       end
     end
 
@@ -294,22 +299,22 @@ class GameMap
     if from_x && from_y && stairs_at(x, y)
       tile_id = @tiles[x][y]
       type = @tile_types[tile_id] || 0
-      # Если это стена (тип 1) – пропускаем только сбоку
       if type == 1
         return (x - from_x).abs == 1 && y == from_y
       end
     end
 
-    # Стандартные проверки слоёв
-    tile2_id = @tiles2[x][y]
-    if tile2_id && tile2_id >= 0
-      type2 = @tile_types[tile2_id] || 0
-      return false if type2 == 1 || type2 == 2
+    # ── СЛОЙ 1 ──
+    ov1 = (@collision && @collision[x] && @collision[x][y]) || 0
+    if ov1 == 6
+      return false # Принудительная стена на слое 1
+    elsif ov1 == 5 || ov1 == 7 || ov1 == 8
+      # override слоя 1 разрешает проход
+    else
+      tile_id = @tiles[x][y]
+      type = @tile_types[tile_id] || 0
+      return false if type == 1
     end
-
-    tile_id = @tiles[x][y]
-    type = @tile_types[tile_id] || 0
-    return false if type == 1
 
     true
   end
@@ -326,21 +331,22 @@ class GameMap
   def tile_type_at(x, y)
     return 1 if x < 0 || x >= @width || y < 0 || y >= @height
 
-    # ★ Если есть переопределение, возвращаем его ★
-    if @collision && @collision[x] && @collision[x][y]
-      override = @collision[x][y]
-      if override == 6
-        return 1 # Стена
-      elsif override == 5
-        return 0 # Проходимо
-      elsif override == 7
-        return 2 # Лёд
-      elsif override == 8
-        return 3 # Поверх
-      end
+    ov1 = (@collision && @collision[x] && @collision[x][y]) || 0
+    ov2 = (@collision2 && @collision2[x] && @collision2[x][y]) || 0
+
+    # Приоритет льда (7), чтобы скольжение работало на любом слое
+    if ov1 == 7 || ov2 == 7
+      return 2
     end
 
-    # Если оверрайда нет (0), работает старый код
+    code = (ov1 != 0) ? ov1 : ov2
+    
+    case code
+    when 6 then return 1 # Стена
+    when 5 then return 0 # Проходимо
+    when 8 then return 3 # Поверх
+    end
+
     tile_id = @tiles[x][y]
     @tile_types[tile_id] || 0
   end

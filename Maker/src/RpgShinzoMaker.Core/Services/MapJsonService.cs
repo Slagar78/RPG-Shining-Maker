@@ -43,6 +43,7 @@ public static class MapJsonService
             MirrorY2 = new bool[sz],
 
             CellType = new int[sz],
+            CellType2 = new int[sz],
         };
 
         // Второй слой по умолчанию пуст
@@ -58,7 +59,8 @@ public static class MapJsonService
                       map.Tiles2, map.Rot2, map.MirrorX2, map.MirrorY2, w, h);
 
         // Collision
-        LoadCellTypes(root, map.CellType, w, h);
+        LoadCellTypes(root, map.CellType, "collision", w, h);
+        LoadCellTypes(root, map.CellType2, "collision2", w, h);
 
         // Music (опционально)
         if (root["music"] is JsonObject music)
@@ -97,9 +99,9 @@ public static class MapJsonService
         }
     }
 
-    private static void LoadCellTypes(JsonObject root, int[] cell, int w, int h)
+    private static void LoadCellTypes(JsonObject root, int[] cell, string key, int w, int h)
     {
-        var arr = root["collision"]?.AsArray();
+        var arr = root[key]?.AsArray();
         if (arr == null) return;
 
         for (int x = 0; x < w; x++)
@@ -143,8 +145,10 @@ public static class MapJsonService
             sb.AppendLine("\t},");
         }
 
-        // Коллизия (без запятой в конце, так как это последний элемент)
-        sb.AppendLine("\t\"collision\":\t" + BuildIntArray(map.CellType, map.Width, map.Height));
+        // Коллизия слоя 1
+        sb.AppendLine("\t\"collision\":\t" + BuildIntArray(map.CellType, map.Width, map.Height) + ",");
+        // Коллизия слоя 2 (всегда пишем, даже если пусто)
+        sb.AppendLine("\t\"collision2\":\t" + BuildIntArray(map.CellType2, map.Width, map.Height));
         
         sb.AppendLine("}");
 

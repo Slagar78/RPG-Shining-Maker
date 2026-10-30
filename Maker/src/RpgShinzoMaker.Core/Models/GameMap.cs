@@ -36,7 +36,8 @@ public class GameMap
     public bool[] MirrorY2 { get; set; } = Array.Empty<bool>();
 
     // ── Коллизии ──
-    public int[] CellType { get; set; } = Array.Empty<int>();
+    public int[] CellType  { get; set; } = Array.Empty<int>();  // слой 1
+    public int[] CellType2 { get; set; } = Array.Empty<int>();  // слой 2
 
     // ── Утилиты ──
     public int TotalCells => Width * Height;

@@ -9,7 +9,7 @@ RPG-Shining-Maker/
 │   │   │
 │   │   ├── RpgShinzoMaker.Core/                    ← БИБЛИОТЕКА (без UI)
 │   │   │   ├── Models/
-│   │   │   │   ├── GameMap.cs                      (карта: tiles, rot, mirror, layers)
+│   │   │   │   ├── GameMap.cs                      (карта: tiles, rot, mirror, layers, collision, collision2)
 │   │   │   │   ├── MapEntry.cs                     (запись из entries.json)
 │   │   │   │   ├── TileType.cs                     (enum: Passable/Block/Slow/Under)
 │   │   │   │   │
@@ -31,9 +31,9 @@ RPG-Shining-Maker/
 │   │   │   │
 │   │   │   └── Services/
 │   │   │       ├── ProjectPaths.cs                 (поиск корня проекта)
-│   │   │       ├── MapJsonService.cs               (сохранение карт с табами)
+│   │   │       ├── MapJsonService.cs               (сохранение карт с табами, горизонтальные массивы, поддержка collision2)
 │   │   │       ├── EntriesService.cs               (сохранение entries.json с табами)
-│   │   │       ├── TileTypesService.cs             (сохранение tile_types с табами)
+│   │   │       ├── TileTypesService.cs             (сохранение tile_types с табами, сетка 32x32)
 │   │   │       ├── AreasService.cs                 (main + subAreas, свой StringBuilder)
 │   │   │       ├── EventsService.cs                (чтение/запись событий, включая Counter)
 │   │   │       ├── TilesetImportService.cs         (алгоритм нарезки PNG)
@@ -68,7 +68,7 @@ RPG-Shining-Maker/
 │   │       │   ├── MainWindow.axaml                (Оверлей SplashOverlay, подключен DatabaseEditor)
 │   │       │   ├── MainWindow.axaml.cs             (Плавное скрытие заставки через Opened)
 │   │       │   ├── MapCanvas.axaml                 
-│   │       │   └── MapCanvas.axaml.cs              (Фикс кликов по скроллбарам)
+│   │       │   └── MapCanvas.axaml.cs              (Фикс кликов по скроллбарам, оверлей коллизий L1/L2)
 │   │       │
 │   │       ├── Shared/
 │   │       │   └── Interfaces/
@@ -81,13 +81,13 @@ RPG-Shining-Maker/
 │   │           │   ├── MapEditorView.axaml.cs      
 │   │           │   ├── MapEditorView.Palette.cs    
 │   │           │   ├── MapEditorView.Map.cs        
-│   │           │   ├── MapEditorView.Painting.cs   (Сброс CellType при рисовании)
+│   │           │   ├── MapEditorView.Painting.cs   (Сброс CellType при рисовании, запись в L1 или L2)
 │   │           │   ├── MapEditorView.Select.cs     
 │   │           │   ├── MapEditorView.GridMode.cs   
 │   │           │   ├── MapEditorView.Layers.cs     
 │   │           │   ├── MapEditorView.TileEditor.cs 
 │   │           │   ├── MapEditorView.Dialogs.cs    
-│   │           │   ├── MapEditorView.Undo.cs       
+│   │           │   ├── MapEditorView.Undo.cs       (Undo/Redo с поддержкой двух слоев коллизий)
 │   │           │   └── TileItem.cs                 
 │   │           │
 │   │           ├── EventEditor/                    ← редактор событий
@@ -126,7 +126,7 @@ RPG-Shining-Maker/
 │   ├── maps/
 │   │   ├── entries.json
 │   │   └── <map_name>/
-│   │       ├── layout.json
+│   │       ├── layout.json                         (теперь содержит collision и collision2)
 │   │       ├── areas.json                          
 │   │       ├── events.json                         (хранит и type: "counter")
 │   │       ├── NPC_events.json                     
@@ -149,7 +149,7 @@ RPG-Shining-Maker/
 │
 └── Игра (отдельный проект)
     └── lib/
-        ├── GameMap.rb                              (counter_at? и массив @counter_cells)
+        ├── GameMap.rb                              (counter_at?, @counter_cells, поддержка collision2)
         ├── player.rb                               
         ├── camera.rb                               
         └── game.rb                                 (find_interactable_npc через прилавок, убран хардкод llvmpipe)
@@ -253,6 +253,7 @@ RPG-Shining-Maker/
 • Нет склеивания в одну строку.
 • Каждый элемент с новой строки.
 • Игра на Ruby читает это без ошибок.
+• Вложенные массивы (tiles, collision, collision2) пишутся горизонтально (сеткой), чтобы не растягивать файл на тысячи строк.
 
 
 📐 Правила, чтобы код не превратился в кашу
@@ -268,13 +269,17 @@ RPG-Shining-Maker/
 7   Отдельный Canvas — отдельный класс              Если редактор хочет свой рендер — создаёт свой *Canvas.
 8   FullRedraw ≠ RedrawCanvas                       FullRedraw — при смене карты, RedrawCanvas — на изменения UI.
 9   subAreas — макс 10                               Индексы 0..9. Main всегда main, sub — всегда sub.
-10  Формат JSON — читаемый                          Свой StringBuilder-форматтер с табами (\t).
+10  Формат JSON — читаемый                          Свой StringBuilder-форматтер с табами (\t). Массивы пишутся горизонтально.
 11  Безопасность имен                               При импорте имена проходят транслитерацию (RU->EN).
 12  Counter = невидимая логика                      В игре прилавок не блокирует диалог, а разрешает его сквозь себя (talk_through).
-13  Базовая графика и Оверрайды                     Кружки (0-3) меняются только в блоксете (свойства тайла), квадраты (5-8) — только на карте (оверрайд).
+13  Базовая графика и Оверрайды                     Кружки (0-3) меняются только в блоксете (свойства тайла), 
+                                                     квадраты (5-8) — только на карте (оверрайд). 
+                                                     Коллизии хранятся в двух независимых массивах: collision (L1) и collision2 (L2).
 14  Изоляция графики (Playtest)                     Для запуска из редактора без ошибок WGL используется Mesa (opengl32.dll) + llvmpipe.
 15  Кинематографичный старт                         Заставка (Splash) ждет полной загрузки окна (событие Opened), затем плавно исчезает.
 16  DatabaseEditor = MVVM                           Используется Binding, ObservableCollection и RelayCommand вместо ручного перерисовывания.
+17  Два слоя коллизий                               В редакторе при активном L1 рисуем в collision, при L2 — в collision2.
+                                                     Оверлей сетки на канвасе показывает коллизию активного слоя.
 
 
 📈 Что уже готово vs что в планах (обновлено)
@@ -302,10 +307,14 @@ DatabaseEditor (Оболочка)                              ✅
 Редактор: Заставка при запуске (Splash Screen)         ✅
 Редактор: Изоляция кликов от скроллбаров               ✅
 Редактор: Сброс коллизии при рисовании тайла           ✅
+Редактор: Два слоя коллизий (рисование в L1/L2)        ✅
+Редактор: Горизонтальное сохранение JSON (без верт. ужаса) ✅
 Сборка: Автоматическое копирование opengl32.dll        ✅
 Игра: Диалог через прилавок (строго по вертикали/гор.) ✅
 Игра: subAreas + маска + центрирование                 ✅
 Игра: Warp line-mode                                   ✅
+Игра: Чтение и применение collision2 (L1 и L2)         ✅
+Игра: Два слоя коллизий (проходимость + скольжение)    ✅
 DatabaseEditor: Вкладка Enemies (Враги)                 📋 план
 BattleEditor                                           📋 план
 SceneEditor                                            📋 план

@@ -470,10 +470,13 @@ public partial class MapCanvas : UserControl
             // ★ Получаем иконку (если у нас есть список иконок) ★
             Image? icon = (idx < _gridIcons.Count) ? _gridIcons[idx] : null;
 
+            // ★ Выбираем массив в зависимости от активного слоя ★
+            int[] activeCollision = (CurrentLayer == 0) ? _map.CellType : _map.CellType2;
+
             // ★ Проверяем оверрайд (5-8) ★
-            if (ShowGridMode && _map.CellType != null && idx < _map.CellType.Length)
+            if (ShowGridMode && activeCollision != null && idx < activeCollision.Length)
             {
-                int cellType = _map.CellType[idx];
+                int cellType = activeCollision[idx];
                 if (cellType >= 5 && cellType <= 8)
                 {
                     dot.IsVisible = false; // Прячем кружок

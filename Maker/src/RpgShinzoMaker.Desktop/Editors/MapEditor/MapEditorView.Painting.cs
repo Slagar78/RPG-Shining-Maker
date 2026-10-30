@@ -233,7 +233,10 @@ public partial class MapEditorView
             _currentMap.MirrorY2[idx] = false;
         }
         
-        _currentMap.CellType[idx] = 0; 
+        if (_currentLayer == 0)
+            _currentMap.CellType[idx] = 0;
+        else
+            _currentMap.CellType2[idx] = 0;
 
         // Снимок "после"
         var newSnap = SnapshotCell(idx, _currentLayer);
@@ -305,8 +308,11 @@ public partial class MapEditorView
             // Запоминаем "до" для Undo
             var oldSnap = SnapshotCell(idx, _currentLayer);
 
-            // Меняем значение в конкретной клетке карты
-            _currentMap.CellType[idx] = _currentCollisionType;
+            // Пишем в тот слой, который сейчас выбран (L1 или L2)
+            if (_currentLayer == 0)
+                _currentMap.CellType[idx] = _currentCollisionType;
+            else
+                _currentMap.CellType2[idx] = _currentCollisionType;
             
             // Запоминаем "после" для Undo
             var newSnap = SnapshotCell(idx, _currentLayer);
