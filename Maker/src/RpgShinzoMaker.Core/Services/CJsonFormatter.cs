@@ -30,7 +30,7 @@ public static class CJsonFormatter
                 foreach (var kvp in obj)
                 {
                     AppendTabs(sb, depth + 2);
-                    sb.Append($"\"{Escape(kvp.Key)}\":\t");
+                    sb.Append($"\"{Escape(kvp.Key)}\": ");
                     FormatNode(sb, kvp.Value, depth + 2);
                     if (i < obj.Count - 1) sb.Append(",");
                     sb.Append("\n");

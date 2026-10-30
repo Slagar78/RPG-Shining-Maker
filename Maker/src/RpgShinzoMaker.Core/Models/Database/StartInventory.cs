@@ -10,6 +10,16 @@ public partial class StartInventory : ObservableObject
     [property: JsonPropertyName("actor_id")]
     private int _actorId;
 
+    // ★ ДОБАВЛЕНО: Класс персонажа ★
+    [ObservableProperty]
+    [property: JsonPropertyName("class")]
+    private string _class;
+
+    // ★ ДОБАВЛЕНО: Уровень персонажа ★
+    [ObservableProperty]
+    [property: JsonPropertyName("level")]
+    private int _level;
+
     [ObservableProperty]
     [property: JsonPropertyName("start_level")]
     private int _startLevel = 1;
