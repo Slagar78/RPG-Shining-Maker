@@ -48,17 +48,22 @@ public static class TileTypesService
             var dir = Path.GetDirectoryName(file);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
 
-            var arr = new JsonArray();
-            foreach (var t in tileTypes) arr.Add(t);
-
             var sb = new System.Text.StringBuilder();
-            sb.Append("[\n");
-            for (int i = 0; i < arr.Count; i++)
+            sb.Append("[\n\t");
+            
+            for (int i = 0; i < tileTypes.Length; i++)
             {
-                sb.Append($"\t{arr[i]}");
-                if (i < arr.Count - 1) sb.Append(",\n");
+                if (i > 0)
+                {
+                    sb.Append(",");
+                    // Перенос строки каждые 32 тайла (чтобы было похоже на сетку 32x32)
+                    if (i % 32 == 0) sb.Append("\n\t");
+                }
+                sb.Append(tileTypes[i]);
             }
+            
             sb.Append("\n]");
+            
             File.WriteAllText(file, sb.ToString());
         }
         catch (Exception ex)
