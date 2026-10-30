@@ -15,6 +15,7 @@ public partial class ActorsViewModel : ObservableObject
     private readonly ActorsService _actorsService = new();
     private readonly AssetScannerService _assetScanner = new();
     private readonly ItemsService _itemsService = new();
+    private readonly ClassesService _classesService = new(); // <--- СЕРВИС КЛАССОВ
     
     private readonly string _actorsPath;
     private readonly string _inventoryPath;
@@ -56,10 +57,11 @@ public partial class ActorsViewModel : ObservableObject
 
     public void LoadData()
     {
-        var classes = _actorsService.LoadClasses(_classesPath);
+        // ★★★ ТЕПЕРЬ ИСПОЛЬЗУЕМ _classesService ★★★
+        var classes = _classesService.LoadClasses(_classesPath);
         AvailableClasses.Clear();
         foreach (var c in classes) AvailableClasses.Add(c);
-        if (AvailableClasses.Count == 0) AvailableClasses.Add(new CharacterClass { Id = 1, Name = "Hero" });
+        if (AvailableClasses.Count == 0) AvailableClasses.Add(new CharacterClass { Id = 0, Name = "Hero" });
 
         var portraits = _assetScanner.GetPortraits(_portraitsDir);
         AvailablePortraits.Clear();
@@ -87,7 +89,7 @@ public partial class ActorsViewModel : ObservableObject
         }
         else
         {
-            Actors.Add(new Actor { Id = 0, Name = "Harold", ClassId = 1, Level = 1, Portrait = "Mushra", Mapsprite = "mapsprite000" });
+            Actors.Add(new Actor { Id = 0, Name = "Harold", ClassId = 0, Level = 1, Portrait = "Mushra", Mapsprite = "mapsprite000" });
         }
 
         _startInventories = _actorsService.LoadStartInventory(_inventoryPath);
@@ -169,7 +171,7 @@ public partial class ActorsViewModel : ObservableObject
         {
             Id = newId,
             Name = $"Actor{newId:D2}",
-            ClassId = AvailableClasses.FirstOrDefault()?.Id ?? 1,
+            ClassId = AvailableClasses.FirstOrDefault()?.Id ?? 0,
             Portrait = AvailablePortraits.FirstOrDefault() ?? "Mushra",
             Mapsprite = AvailableMapsprites.FirstOrDefault() ?? "mapsprite000",
             Level = 1

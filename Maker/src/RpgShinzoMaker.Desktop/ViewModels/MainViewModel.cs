@@ -12,21 +12,20 @@ public partial class MainViewModel : ViewModelBase
     public ActorsViewModel ActorsVM { get; } = new();
     public ItemsViewModel ItemsVM { get; } = new();
     public SpellsViewModel SpellsVM { get; } = new();
+    public ClassesViewModel ClassesVM { get; } = new();
 
-    // Глобальная кнопка SAVE (в тулбаре)
     [RelayCommand]
     private void Save()
     {
-        // Сохраняем всё (пока только базу, позже добавим карты и эвенты)
         SaveDatabase();
     }
 
-    // Локальная кнопка SAVE DATABASE (внутри базы данных)
     [RelayCommand]
     private void SaveDatabase()
     {
         ActorsVM.SaveData();
-        SpellsVM.SaveData(); // Магия сохраняется ПЕРВОЙ, чтобы прислать сигнал предметам
-        ItemsVM.SaveData();  // Предметы сохраняются уже с обновленным списком магии
+        SpellsVM.SaveData();
+        ItemsVM.SaveData();
+        ClassesVM.SaveData();
     }
 }

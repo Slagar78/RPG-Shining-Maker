@@ -3,7 +3,7 @@
 RPG-Shining-Maker/
 │
 ├── Maker/
-│   ├── RpgShinzoMaker.slnx                       (новый формат решения)
+│   ├── RpgShinzoMaker.slnx                       (решение)
 │   │
 │   ├── src/
 │   │   │
@@ -18,55 +18,57 @@ RPG-Shining-Maker/
 │   │   │   │   ├── StairEvent.cs                   (лестница: start→end + dir)
 │   │   │   │   ├── WarpEvent.cs                    (телепорт: single 1-клетка / line область → target)
 │   │   │   │   ├── NpcEvent.cs                     (NPC: id, sprite, behavior…)
-│   │   │   │   ├── CounterEvent.cs                 ★ НОВЫЙ (прилавок: x, y для диалога через стол)
+│   │   │   │   ├── CounterEvent.cs                 (прилавок: x, y для диалога через стол)
 │   │   │   │   ├── MapEvents.cs                    (контейнер 6 типов событий)
 │   │   │   │   ├── SubArea.cs                      (прямоугольник под-области)
 │   │   │   │   │
-│   │   │   │   └── Database/                       ★ НОВАЯ ПАПКА (Модели базы данных)
-│   │   │   │       ├── Actor.cs                    ★ НОВЫЙ (id, name, class_id, portrait, mapsprite, level...)
-│   │   │   │       ├── CharacterClass.cs           ★ НОВЫЙ (id, name - облегченная версия для ComboBox)
-│   │   │   │       ├── StartInventory.cs           ★ НОВЫЙ (actor_id, start_level, items[4])
-│   │   │   │       ├── Item.cs                     ★ НОВЫЙ (id, name, category, price, range, use_spell, stats)
-│   │   │   │       └── Spell.cs                    ★ ОБНОВЛЕНО (id, name, level, mp, type, power, range, radius, icon)
+│   │   │   │   └── Database/                       (Модели базы данных)
+│   │   │   │       ├── Actor.cs                    (id, name, class_id, portrait, mapsprite, level...)
+│   │   │   │       ├── CharacterClass.cs           (id, name, full_name, battle_sprite, move, race, status, resistance, spell_list, growth)
+│   │   │   │       ├── StartInventory.cs           (actor_id, start_level, items[4])
+│   │   │   │       ├── Item.cs                     (id, name, category, price, range, use_spell, stats)
+│   │   │   │       └── Spell.cs                    (id, name, level, mp, type, power, range, radius, icon)
 │   │   │   │
 │   │   │   └── Services/
 │   │   │       ├── ProjectPaths.cs                 (поиск корня проекта)
-│   │   │       ├── MapJsonService.cs               ★ ОБНОВЛЕНО (сохранение с табами)
-│   │   │       ├── EntriesService.cs               ★ ОБНОВЛЕНО (сохранение с табами)
-│   │   │       ├── TileTypesService.cs             ★ ОБНОВЛЕНО (сохранение с табами)
+│   │   │       ├── MapJsonService.cs               (сохранение карт с табами)
+│   │   │       ├── EntriesService.cs               (сохранение entries.json с табами)
+│   │   │       ├── TileTypesService.cs             (сохранение tile_types с табами)
 │   │   │       ├── AreasService.cs                 (main + subAreas, свой StringBuilder)
-│   │   │       ├── EventsService.cs                ★ ОБНОВЛЕНО (чтение/запись Counter)
-│   │   │       ├── TilesetImportService.cs         ★ НОВЫЙ (алгоритм нарезки PNG)
-│   │   │       ├── CJsonFormatter.cs               ★ НОВЫЙ (форматтер JSON с табами)
-│   │   │       ├── ActorsService.cs                ★ НОВЫЙ (чтение/запись actors.json и start_inventory.json)
-│   │   │       ├── ItemsService.cs                 ★ НОВЫЙ (чтение/запись items.json, парсинг массива range)
-│   │   │       ├── SpellsService.cs                ★ НОВЫЙ (чтение/запись spells.json, парсинг массива range)
-│   │   │       └── AssetScannerService.cs          ★ НОВЫЙ (сканирование папок portraits, mapsprites)
+│   │   │       ├── EventsService.cs                (чтение/запись событий, включая Counter)
+│   │   │       ├── TilesetImportService.cs         (алгоритм нарезки PNG)
+│   │   │       ├── CJsonFormatter.cs               (форматтер JSON с табами)
+│   │   │       ├── ActorsService.cs                (чтение/запись actors.json и start_inventory.json)
+│   │   │       ├── ItemsService.cs                 (чтение/запись items.json, парсинг массива range)
+│   │   │       ├── SpellsService.cs                (чтение/запись spells.json, парсинг массива range)
+│   │   │       ├── ClassesService.cs               (чтение/запись classes.json)
+│   │   │       └── AssetScannerService.cs          (сканирование папок portraits, mapsprites)
 │   │   │
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
 │   │       ├── App.axaml
-│   │       ├── App.axaml.cs                        ★ ОБНОВЛЕНО (Вызов ProjectPaths.Initialize())
-│   │       ├── Program.cs                          ★ ОБНОВЛЕНО (возвращен в исходное состояние для скорости)
+│   │       ├── App.axaml.cs                        (вызов ProjectPaths.Initialize())
+│   │       ├── Program.cs                          (точка входа)
 │   │       ├── ViewLocator.cs
 │   │       │
 │   │       ├── Assets/
-│   │       │   ├── logo.png                        ★ НОВЫЙ (Заставка 1280x720)
+│   │       │   ├── logo.png                        (Заставка 1280x720)
 │   │       │   ├── avalonia-logo.ico
 │   │       │   └── icons/
 │   │       │       └── select.png
 │   │       │
 │   │       ├── ViewModels/                         
-│   │       │   ├── MainViewModel.cs                ★ ОБНОВЛЕНО (Добавлены ActorsVM, ItemsVM, SpellsVM и SaveCommand)
-│   │       │   ├── ActorsViewModel.cs              ★ НОВЫЙ (Логика для Heroes)
-│   │       │   ├── ItemsViewModel.cs               ★ НОВЫЙ (Логика для Items)
-│   │       │   ├── SpellsViewModel.cs              ★ НОВЫЙ (Логика для Spells, группировка в дерево)
+│   │       │   ├── MainViewModel.cs                (Добавлены ActorsVM, ItemsVM, SpellsVM, ClassesVM, SaveDatabaseCommand)
+│   │       │   ├── ActorsViewModel.cs              (Логика для Heroes)
+│   │       │   ├── ItemsViewModel.cs               (Логика для Items)
+│   │       │   ├── SpellsViewModel.cs              (Логика для Spells, группировка в дерево)
+│   │       │   ├── ClassesViewModel.cs             (Логика для Classes)
 │   │       │   └── ViewModelBase.cs
 │   │       │
 │   │       ├── Views/
-│   │       │   ├── MainWindow.axaml                ★ ОБНОВЛЕНО (Добавлен оверлей SplashOverlay, подключен DatabaseEditor)
-│   │       │   ├── MainWindow.axaml.cs             ★ ОБНОВЛЕНО (Плавное скрытие заставки через Opened)
+│   │       │   ├── MainWindow.axaml                (Оверлей SplashOverlay, подключен DatabaseEditor)
+│   │       │   ├── MainWindow.axaml.cs             (Плавное скрытие заставки через Opened)
 │   │       │   ├── MapCanvas.axaml                 
-│   │       │   └── MapCanvas.axaml.cs              ★ ОБНОВЛЕНО (Фикс кликов по скроллбарам)
+│   │       │   └── MapCanvas.axaml.cs              (Фикс кликов по скроллбарам)
 │   │       │
 │   │       ├── Shared/
 │   │       │   └── Interfaces/
@@ -75,11 +77,11 @@ RPG-Shining-Maker/
 │   │       └── Editors/
 │   │           │
 │   │           ├── MapEditor/                      ← редактор карт
-│   │           │   ├── MapEditorView.axaml         ★ ОБНОВЛЕНО (Толстые скроллбары)
+│   │           │   ├── MapEditorView.axaml         (Толстые скроллбары)
 │   │           │   ├── MapEditorView.axaml.cs      
 │   │           │   ├── MapEditorView.Palette.cs    
 │   │           │   ├── MapEditorView.Map.cs        
-│   │           │   ├── MapEditorView.Painting.cs   ★ ОБНОВЛЕНО (Сброс CellType при рисовании)
+│   │           │   ├── MapEditorView.Painting.cs   (Сброс CellType при рисовании)
 │   │           │   ├── MapEditorView.Select.cs     
 │   │           │   ├── MapEditorView.GridMode.cs   
 │   │           │   ├── MapEditorView.Layers.cs     
@@ -89,15 +91,15 @@ RPG-Shining-Maker/
 │   │           │   └── TileItem.cs                 
 │   │           │
 │   │           ├── EventEditor/                    ← редактор событий
-│   │           │   ├── EventEditorView.axaml       ★ ОБНОВЛЕНО (CounterPanel вынесен)
+│   │           │   ├── EventEditorView.axaml       (CounterPanel вынесен)
 │   │           │   ├── EventEditorView.axaml.cs    
 │   │           │   ├── EventEditorView.Map.cs      
-│   │           │   ├── EventEditorView.Canvas.cs   ★ ОБНОВЛЕНО (автоскролл)
+│   │           │   ├── EventEditorView.Canvas.cs   (автоскролл)
 │   │           │   ├── EventEditorView.Sections.cs 
 │   │           │   ├── EventEditorView.Fields.cs   
 │   │           │   ├── EventEditorView.Events.cs   
 │   │           │   ├── EventCanvas.axaml           
-│   │           │   └── EventCanvas.axaml.cs        ★ ОБНОВЛЕНО (Отрисовка спрайтов NPC)
+│   │           │   └── EventCanvas.axaml.cs        (Отрисовка спрайтов NPC)
 │   │           │
 │   │           ├── TilesetImporter/                ← импорт карт
 │   │           │   ├── TilesetImporterView.axaml   
@@ -105,16 +107,18 @@ RPG-Shining-Maker/
 │   │           │   ├── TilesetImporterView.Load.cs 
 │   │           │   └── TilesetImporterView.Save.cs 
 │   │           │
-│   │           └── DatabaseEditor/                 ★ НОВЫЙ (Редактор базы данных)
-│   │               ├── DatabaseEditorView.axaml    ★ НОВЫЙ (Общий контейнер с вертикальными вкладками)
-│   │               ├── DatabaseEditorView.axaml.cs ★ НОВЫЙ
-│   │               └── Views/                      ★ НОВАЯ ПАПКА (Панели для каждой категории)
-│   │                   ├── ActorsPanel.axaml       ★ НОВЫЙ (Список героев, свойства, стартовый инвентарь)
-│   │                   ├── ActorsPanel.axaml.cs    ★ НОВЫЙ
-│   │                   ├── ItemsPanel.axaml        ★ НОВЫЙ (Список предметов, свойства, статы)
-│   │                   ├── ItemsPanel.axaml.cs     ★ НОВЫЙ
-│   │                   ├── SpellsPanel.axaml       ★ НОВЫЙ (Дерево заклинаний слева, свойства справа)
-│   │                   └── SpellsPanel.axaml.cs    ★ НОВЫЙ
+│   │           └── DatabaseEditor/                 ← редактор базы данных
+│   │               ├── DatabaseEditorView.axaml    (Общий контейнер с вертикальными вкладками)
+│   │               ├── DatabaseEditorView.axaml.cs 
+│   │               └── Views/                      (Панели для каждой категории)
+│   │                   ├── ActorsPanel.axaml       (Список героев, свойства, стартовый инвентарь)
+│   │                   ├── ActorsPanel.axaml.cs    
+│   │                   ├── ItemsPanel.axaml        (Список предметов, свойства, статы)
+│   │                   ├── ItemsPanel.axaml.cs     
+│   │                   ├── SpellsPanel.axaml       (Дерево заклинаний слева, свойства справа)
+│   │                   ├── SpellsPanel.axaml.cs    
+│   │                   ├── ClassesPanel.axaml      (Список классов, статы, сопротивления, магия)
+│   │                   └── ClassesPanel.axaml.cs   
 │   │
 │   └── assets/
 │
@@ -124,31 +128,31 @@ RPG-Shining-Maker/
 │   │   └── <map_name>/
 │   │       ├── layout.json
 │   │       ├── areas.json                          
-│   │       ├── events.json                         (теперь хранит и type: "counter")
+│   │       ├── events.json                         (хранит и type: "counter")
 │   │       ├── NPC_events.json                     
 │   │       └── NPC_script.json                     
 │   ├── tile_types/
 │   │   └── <tileset>.json
-│   ├── actors/                                     ★ НОВАЯ ПАПКА
-│   │   ├── actors.json                             ★ ФАЙЛ (Список персонажей)
-│   │   ├── start_inventory.json                    ★ ФАЙЛ (Стартовый инвентарь)
-│   │   └── classes.json                            ★ ФАЙЛ (Классы)
-│   ├── items/                                      ★ НОВАЯ ПАПКА
-│   │   └── items.json                              ★ ФАЙЛ (Список предметов)
-│   ├── spells/                                     ★ НОВАЯ ПАПКА
-│   │   └── spells.json                             ★ ФАЙЛ (Список заклинаний)
+│   ├── actors/
+│   │   ├── actors.json                             (Список персонажей)
+│   │   ├── start_inventory.json                    (Стартовый инвентарь)
+│   │   └── classes.json                            (Классы)
+│   ├── items/
+│   │   └── items.json                              (Список предметов)
+│   ├── spells/
+│   │   └── spells.json                             (Список заклинаний)
 │   └── ...
 │
-├── opengl32.dll                                    ★ НОВЫЙ (Mesa llvmpipe/d3d12 для фикса WGL ошибки)
-├── @echo off.txt                                   ★ ОБНОВЛЕНО (Скрипт сборки)
-├── .gitignore                                      ★ ОБНОВЛЕНО (Добавлен !PortableRuby/bin/opengl32.dll)
+├── opengl32.dll                                    (Mesa llvmpipe/d3d12 для фикса WGL ошибки)
+├── @echo off.txt                                   (Скрипт сборки)
+├── .gitignore                                      (Добавлен !PortableRuby/bin/opengl32.dll)
 │
 └── Игра (отдельный проект)
     └── lib/
-        ├── GameMap.rb                              ★ ОБНОВЛЕНО (counter_at? и массив @counter_cells)
+        ├── GameMap.rb                              (counter_at? и массив @counter_cells)
         ├── player.rb                               
         ├── camera.rb                               
-        └── game.rb                                 ★ ОБНОВЛЕНО (find_interactable_npc через прилавок, убран хардкод llvmpipe)
+        └── game.rb                                 (find_interactable_npc через прилавок, убран хардкод llvmpipe)
 
 
 🏛️ Архитектура: оболочка и ЧЕТЫРЕ редактора (Map, Event, Import, Database)
@@ -190,7 +194,7 @@ RPG-Shining-Maker/
         ▼                       ▼                       ▼                   ▼
   ┌───────────┐           ┌───────────┐           ┌───────────┐       ┌───────────┐
   │ MapEditor │           │ EventEdit │           │ ImportEd  │       │ DataBase  │
-  │  ✓ готов  │           │  ✓ готов  │           │  ✓ готов  │       │  (в работе)│
+  │  ✓ готов  │           │  ✓ готов  │           │  ✓ готов  │       │  ✓ готов  │
   └─────┬─────┘           └─────┬─────┘           └─────┬─────┘       └─────┬─────┘
         │                       │                       │                   │
         │  использует           │  использует           │  использует       │
@@ -202,7 +206,7 @@ RPG-Shining-Maker/
 │   TileTypesService  AreasService        EventsService                           │
 │   TilesetImportService                  CJsonFormatter                          │
 │   ActorsService     ItemsService        SpellsService                           │
-│   AssetScannerService                                                           │
+│   ClassesService    AssetScannerService                                         │
 │                                                                                 │
 │   + Core.Models: GameMap, MapEntry, TileType,                                   │
 │                  RoofEvent, TileChangeEvent, StairEvent,                        │
@@ -279,9 +283,9 @@ RPG-Shining-Maker/
 Core.Models (GameMap, MapEntry, TileType)              ✅
 Core.Models (7 моделей событий, вкл. Counter)          ✅
 Core.Models (SubArea)                                  ✅
-Core.Models (Database: Actor, StartInventory, Item, Spell) ✅
+Core.Models (Database: Actor, StartInventory, Item, Spell, CharacterClass) ✅
 Core.Services (7 старых сервисов)                      ✅
-Core.Services (CJsonFormatter, ActorsService, ItemsService, SpellsService) ✅
+Core.Services (CJsonFormatter, ActorsService, ItemsService, SpellsService, ClassesService) ✅
 IEditor (интерфейс)                                    ✅
 MainWindow (оболочка)                                  ✅
 MapEditor (11 файлов)                                  ✅
@@ -290,6 +294,7 @@ DatabaseEditor (Оболочка)                              ✅
 Редактор: Вкладка Heroes (Герои)                       ✅
 Редактор: Вкладка Items (Предметы)                     ✅
 Редактор: Вкладка Spells (Магия)                       ✅
+Редактор: Вкладка Classes (Классы)                     ✅
 Редактор: Вкладка Counters (Прилавки)                  ✅
 Редактор: Отрисовка NPC спрайтов на канвасе            ✅
 Редактор: Автоскролл к выбранному событию              ✅
@@ -301,7 +306,7 @@ DatabaseEditor (Оболочка)                              ✅
 Игра: Диалог через прилавок (строго по вертикали/гор.) ✅
 Игра: subAreas + маска + центрирование                 ✅
 Игра: Warp line-mode                                   ✅
-DatabaseEditor: Вкладки Enemies, Classes                📋 план
+DatabaseEditor: Вкладка Enemies (Враги)                 📋 план
 BattleEditor                                           📋 план
 SceneEditor                                            📋 план
 ASSETS (живое дерево)                                  📋 план

@@ -4,7 +4,7 @@
 			"name":	"SDMN",
 			"full_name":	"SDMN",
 			"battle_sprite_path":	"assets/battles/battlesprites/allies/Mushra",
-			"move": 9,
+			"move":	9,
 			"move_type":	"centaur_archer",
 			"race":	"Enterran",
 			"status":	"normal",
@@ -47,15 +47,15 @@
 			},
 			"spell_list":	[{
 					"level":	1,
-					"spell":	"HEAL",
+					"spell_id":	0,
 					"spell_level":	1
 				}, {
 					"level":	1,
-					"spell":	"AURA",
+					"spell_id":	5,
 					"spell_level":	2
 				}, {
 					"level":	1,
-					"spell":	"Heal",
+					"spell_id":	2,
 					"spell_level":	3
 				}]
 		}, {
@@ -106,15 +106,15 @@
 			},
 			"spell_list":	[{
 					"level":	1,
-					"spell":	"HEAL",
+					"spell_id":	0,
 					"spell_level":	1
 				}, {
 					"level":	4,
-					"spell":	"Aura",
+					"spell_id":	4,
 					"spell_level":	1
 				}, {
 					"level":	7,
-					"spell":	"HEAL",
+					"spell_id":	1,
 					"spell_level":	2
 				}]
 		}, {
