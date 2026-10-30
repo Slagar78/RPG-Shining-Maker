@@ -109,7 +109,7 @@ class Game
       { "id" => 3, "name" => "drop",  "icon" => "assets/ui/menu/Drop.png",  "icon_anim" => "assets/ui/menu/Drop_anim.png" }
     ], @font, @large_font)
 	
-	@message_panel_tex = nil
+	  @message_panel_tex = nil
     path = "assets/ui/message_panel.png"
     if File.exist?(path)
       @message_panel_tex = LoadTexture(path)
@@ -160,6 +160,10 @@ class Game
     @pending_items_close = false
     @pending_menu_request = false
     @menu_delay = 0
+
+    # ДЛЯ ДИАЛОГОВ
+    @pending_dialog_request = false
+    @dialog_delay = 0
 
     @battle_manager = nil
     @current_battle_id = nil
@@ -229,8 +233,8 @@ class Game
 when :playing
   # Как только меню запрошено — блокируем ВСЁ до его появления.
   # Pending снимается только в update, когда игрок стоит, камера доехала
-  # и меню реально открылось. До этого момента — полный игнор ввода.
-  return if @pending_menu_request
+  # Блокируем ввод, если меню или диалог в ожидании
+  return if @pending_menu_request || @pending_dialog_request
 
   # Открывать меню мгновенно можно только если персонаж не шагает
   # И камера уже доехала до своей целевой позиции (4 тайла от края).
@@ -248,7 +252,11 @@ when :playing
 
     elsif IsKeyPressed(KEY_D) && @game_state != :dialog
       if find_interactable_npc
-        try_start_interaction
+        if can_open_now
+          try_start_interaction
+        else
+          @pending_dialog_request = true
+        end
       else
         if can_open_now
           @game_state = :menu
@@ -670,6 +678,25 @@ when :playing
       else
         # Если игрок или камера все еще в движении, сбрасываем таймер
         @menu_delay = 0
+      end
+    end
+
+    # ---ОТЛОЖЕННОЕ ОТКРЫТИЕ ДИАЛОГА (с ожиданием камеры)---
+    if @pending_dialog_request
+      # Ждем, пока игрок остановится И камера перестанет двигаться
+      if !@player.moving && @camera.cam_x == prev_cam_x && @camera.cam_y == prev_cam_y
+        @dialog_delay += dt
+        if @dialog_delay >= 3.0 / 60.0
+          @pending_dialog_request = false
+          @dialog_delay = 0
+          
+          # Проверяем, не отошел ли игрок от NPC, пока камера ехала
+          npc = find_interactable_npc
+          try_start_interaction if npc
+        end
+      else
+        # Если игрок или камера все еще в движении, сбрасываем таймер
+        @dialog_delay = 0
       end
     end
 	
