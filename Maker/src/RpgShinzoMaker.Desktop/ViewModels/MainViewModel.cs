@@ -11,6 +11,7 @@ public partial class MainViewModel : ViewModelBase
     // Наши редакторы
     public ActorsViewModel ActorsVM { get; } = new();
     public ItemsViewModel ItemsVM { get; } = new();
+    public SpellsViewModel SpellsVM { get; } = new();
 
     [RelayCommand]
     private void Save()
@@ -18,5 +19,6 @@ public partial class MainViewModel : ViewModelBase
         // Вызываем сохранение у всех вкладок
         ActorsVM.SaveData();
         ItemsVM.SaveData();
+        SpellsVM.SaveData();
     }
 }

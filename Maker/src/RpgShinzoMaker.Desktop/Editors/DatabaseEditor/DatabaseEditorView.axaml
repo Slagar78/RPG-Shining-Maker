@@ -62,7 +62,7 @@
             </TabItem>
 
             <TabItem Header="Spells">
-                <TextBlock Text="Spells Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <views:SpellsPanel DataContext="{Binding SpellsVM}" />
             </TabItem>
 
             <TabItem Header="System">

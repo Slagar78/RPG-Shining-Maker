@@ -27,7 +27,7 @@ RPG-Shining-Maker/
 │   │   │   │       ├── CharacterClass.cs           ★ НОВЫЙ (id, name - облегченная версия для ComboBox)
 │   │   │   │       ├── StartInventory.cs           ★ НОВЫЙ (actor_id, start_level, items[4])
 │   │   │   │       ├── Item.cs                     ★ НОВЫЙ (id, name, category, price, range, use_spell, stats)
-│   │   │   │       └── Spell.cs                    ★ НОВЫЙ (name, level - облегченная для выпадающего списка)
+│   │   │   │       └── Spell.cs                    ★ ОБНОВЛЕНО (id, name, level, mp, type, power, range, radius, icon)
 │   │   │   │
 │   │   │   └── Services/
 │   │   │       ├── ProjectPaths.cs                 (поиск корня проекта)
@@ -40,6 +40,7 @@ RPG-Shining-Maker/
 │   │   │       ├── CJsonFormatter.cs               ★ НОВЫЙ (форматтер JSON с табами)
 │   │   │       ├── ActorsService.cs                ★ НОВЫЙ (чтение/запись actors.json и start_inventory.json)
 │   │   │       ├── ItemsService.cs                 ★ НОВЫЙ (чтение/запись items.json, парсинг массива range)
+│   │   │       ├── SpellsService.cs                ★ НОВЫЙ (чтение/запись spells.json, парсинг массива range)
 │   │   │       └── AssetScannerService.cs          ★ НОВЫЙ (сканирование папок portraits, mapsprites)
 │   │   │
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
@@ -55,9 +56,10 @@ RPG-Shining-Maker/
 │   │       │       └── select.png
 │   │       │
 │   │       ├── ViewModels/                         
-│   │       │   ├── MainViewModel.cs                ★ ОБНОВЛЕНО (Добавлены ActorsVM, ItemsVM и SaveCommand)
+│   │       │   ├── MainViewModel.cs                ★ ОБНОВЛЕНО (Добавлены ActorsVM, ItemsVM, SpellsVM и SaveCommand)
 │   │       │   ├── ActorsViewModel.cs              ★ НОВЫЙ (Логика для Heroes)
 │   │       │   ├── ItemsViewModel.cs               ★ НОВЫЙ (Логика для Items)
+│   │       │   ├── SpellsViewModel.cs              ★ НОВЫЙ (Логика для Spells, группировка в дерево)
 │   │       │   └── ViewModelBase.cs
 │   │       │
 │   │       ├── Views/
@@ -110,7 +112,9 @@ RPG-Shining-Maker/
 │   │                   ├── ActorsPanel.axaml       ★ НОВЫЙ (Список героев, свойства, стартовый инвентарь)
 │   │                   ├── ActorsPanel.axaml.cs    ★ НОВЫЙ
 │   │                   ├── ItemsPanel.axaml        ★ НОВЫЙ (Список предметов, свойства, статы)
-│   │                   └── ItemsPanel.axaml.cs     ★ НОВЫЙ
+│   │                   ├── ItemsPanel.axaml.cs     ★ НОВЫЙ
+│   │                   ├── SpellsPanel.axaml       ★ НОВЫЙ (Дерево заклинаний слева, свойства справа)
+│   │                   └── SpellsPanel.axaml.cs    ★ НОВЫЙ
 │   │
 │   └── assets/
 │
@@ -131,6 +135,8 @@ RPG-Shining-Maker/
 │   │   └── classes.json                            ★ ФАЙЛ (Классы)
 │   ├── items/                                      ★ НОВАЯ ПАПКА
 │   │   └── items.json                              ★ ФАЙЛ (Список предметов)
+│   ├── spells/                                     ★ НОВАЯ ПАПКА
+│   │   └── spells.json                             ★ ФАЙЛ (Список заклинаний)
 │   └── ...
 │
 ├── opengl32.dll                                    ★ НОВЫЙ (Mesa llvmpipe/d3d12 для фикса WGL ошибки)
@@ -195,7 +201,8 @@ RPG-Shining-Maker/
 │   ProjectPaths      MapJsonService      EntriesService                          │
 │   TileTypesService  AreasService        EventsService                           │
 │   TilesetImportService                  CJsonFormatter                          │
-│   ActorsService     ItemsService        AssetScannerService                     │
+│   ActorsService     ItemsService        SpellsService                           │
+│   AssetScannerService                                                           │
 │                                                                                 │
 │   + Core.Models: GameMap, MapEntry, TileType,                                   │
 │                  RoofEvent, TileChangeEvent, StairEvent,                        │
@@ -272,9 +279,9 @@ RPG-Shining-Maker/
 Core.Models (GameMap, MapEntry, TileType)              ✅
 Core.Models (7 моделей событий, вкл. Counter)          ✅
 Core.Models (SubArea)                                  ✅
-Core.Models (Database: Actor, StartInventory, Item)    ✅
+Core.Models (Database: Actor, StartInventory, Item, Spell) ✅
 Core.Services (7 старых сервисов)                      ✅
-Core.Services (CJsonFormatter, ActorsService, ItemsService) ✅
+Core.Services (CJsonFormatter, ActorsService, ItemsService, SpellsService) ✅
 IEditor (интерфейс)                                    ✅
 MainWindow (оболочка)                                  ✅
 MapEditor (11 файлов)                                  ✅
@@ -282,6 +289,7 @@ EventEditor (7 файлов + EventCanvas)                   ✅
 DatabaseEditor (Оболочка)                              ✅
 Редактор: Вкладка Heroes (Герои)                       ✅
 Редактор: Вкладка Items (Предметы)                     ✅
+Редактор: Вкладка Spells (Магия)                       ✅
 Редактор: Вкладка Counters (Прилавки)                  ✅
 Редактор: Отрисовка NPC спрайтов на канвасе            ✅
 Редактор: Автоскролл к выбранному событию              ✅
@@ -293,7 +301,7 @@ DatabaseEditor (Оболочка)                              ✅
 Игра: Диалог через прилавок (строго по вертикали/гор.) ✅
 Игра: subAreas + маска + центрирование                 ✅
 Игра: Warp line-mode                                   ✅
-DatabaseEditor: Вкладки Enemies, Classes, Spells        📋 план
+DatabaseEditor: Вкладки Enemies, Classes                📋 план
 BattleEditor                                           📋 план
 SceneEditor                                            📋 план
 ASSETS (живое дерево)                                  📋 план
