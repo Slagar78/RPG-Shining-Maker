@@ -87,21 +87,21 @@
             <TabControl x:Name="EditorTabs"
                         SelectionChanged="OnTabChanged">
 
-                <TabItem Header="Карты">
+                <TabItem Header="Maps">
                     <mapEditor:MapEditorView x:Name="MapEditor"/>
                 </TabItem>
 
-                <TabItem Header="Эвенты">
+                <TabItem Header="Events">
                     <eventEditor:EventEditorView x:Name="EventEditor"/>
                 </TabItem>
                 
-                <TabItem Header="Импорт">
+                <TabItem Header="Map Importer">
                     <importer:TilesetImporterView x:Name="TilesetImporter"/>
                 </TabItem>
 
-                <TabItem Header="Бои">
+                <TabItem Header="Battles">
                     <Border Background="#1E1E1E">
-                        <TextBlock Text="Редактор боёв"
+                        <TextBlock Text="Battle Editor"
                                    Foreground="Gray"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
@@ -109,9 +109,9 @@
                     </Border>
                 </TabItem>
 
-                <TabItem Header="Сцены">
+                <TabItem Header="Scenes">
                     <Border Background="#1E1E1E">
-                        <TextBlock Text="Редактор боевых сцен"
+                        <TextBlock Text="Scene Editor"
                                    Foreground="Gray"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
@@ -120,7 +120,7 @@
                 </TabItem>
 
                 <!-- ЗАМЕНИЛИ ЗАГЛУШКУ НА РЕДАКТОР -->
-                <TabItem Header="База данных">
+                <TabItem Header="Database">
                     <dbEditor:DatabaseEditorView x:Name="DatabaseEditor"/>
                 </TabItem>
             </TabControl>
