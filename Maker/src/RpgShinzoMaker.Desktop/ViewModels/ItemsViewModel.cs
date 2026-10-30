@@ -3,10 +3,13 @@ using System.IO;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using RpgShinzoMaker.Core.Models.Database;
 using RpgShinzoMaker.Core.Services;
 
 namespace RpgShinzoMaker.Desktop.ViewModels;
+
+public class SpellsUpdatedMessage { }
 
 public partial class ItemsViewModel : ObservableObject
 {
@@ -27,13 +30,30 @@ public partial class ItemsViewModel : ObservableObject
         _itemsPath = Path.Combine(ProjectPaths.DataDir, "items", "items.json");
         _spellsPath = Path.Combine(ProjectPaths.DataDir, "spells", "spells.json");
 
+        WeakReferenceMessenger.Default.Register<ItemsViewModel, SpellsUpdatedMessage>(this, (r, m) =>
+        {
+            r.LoadSpells();
+        });
+
         LoadData();
     }
 
     public void LoadData()
     {
-        // Загружаем список заклинаний для ComboBox
+        LoadSpells();
+
+        var items = _itemsService.LoadItems(_itemsPath);
+        Items.Clear();
+        foreach (var item in items) Items.Add(item);
+
+        if (Items.Count > 0) SelectedItem = Items[0];
+    }
+
+    public void LoadSpells()
+    {
         var spells = _itemsService.LoadSpells(_spellsPath);
+        string? currentSelected = SelectedItem?.UseSpell;
+
         AvailableSpells.Clear();
         foreach (var spellName in spells.Select(s => s.Name).Distinct())
         {
@@ -41,12 +61,13 @@ public partial class ItemsViewModel : ObservableObject
         }
         if (AvailableSpells.Count == 0) AvailableSpells.Add("HEAL");
 
-        // Загружаем предметы
-        var items = _itemsService.LoadItems(_itemsPath);
-        Items.Clear();
-        foreach (var item in items) Items.Add(item);
-
-        if (Items.Count > 0) SelectedItem = Items[0];
+        if (SelectedItem != null && !string.IsNullOrWhiteSpace(currentSelected))
+        {
+            if (!AvailableSpells.Contains(currentSelected))
+            {
+                AvailableSpells.Add(currentSelected);
+            }
+        }
     }
 
     public void SaveData()
@@ -58,8 +79,10 @@ public partial class ItemsViewModel : ObservableObject
     [RelayCommand]
     private void AddItem()
     {
-        int newId = Items.Count > 0 ? Items.Max(i => i.Id) + 1 : 0;
-        
+        var existingIds = Items.Select(i => i.Id).ToHashSet();
+        int newId = 0;
+        while (existingIds.Contains(newId)) { newId++; }
+
         var newItem = new Item
         {
             Id = newId,
@@ -73,7 +96,13 @@ public partial class ItemsViewModel : ObservableObject
             Icon = "assets/items/empty.png"
         };
 
-        Items.Add(newItem);
+        int insertIndex = 0;
+        while (insertIndex < Items.Count && Items[insertIndex].Id < newId)
+        {
+            insertIndex++;
+        }
+
+        Items.Insert(insertIndex, newItem);
         SelectedItem = newItem;
     }
 

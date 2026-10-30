@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using RpgShinzoMaker.Core.Models.Database;
 using RpgShinzoMaker.Core.Services;
 
@@ -85,15 +86,16 @@ public partial class SpellsViewModel : ObservableObject
             flatSpells.AddRange(group.Levels);
         }
         _spellsService.SaveSpells(_spellsPath, flatSpells);
+
+        WeakReferenceMessenger.Default.Send(new SpellsUpdatedMessage());
     }
 
     [RelayCommand]
     private void AddSpell()
     {
+        var existingIds = SpellGroups.SelectMany(g => g.Levels).Select(s => s.Id).ToHashSet();
         int newId = 0;
-        foreach (var g in SpellGroups)
-            foreach (var s in g.Levels)
-                if (s.Id >= newId) newId = s.Id + 1;
+        while (existingIds.Contains(newId)) { newId++; }
 
         string newName = "magic00";
         int idx = 0;
@@ -119,8 +121,16 @@ public partial class SpellsViewModel : ObservableObject
 
         var newGroup = new SpellGroup { Name = newName };
         newGroup.Levels.Add(newSpell);
-        SpellGroups.Add(newGroup);
 
+        int insertIndex = 0;
+        while (insertIndex < SpellGroups.Count && 
+               SpellGroups[insertIndex].Levels.Count > 0 && 
+               SpellGroups[insertIndex].Levels[0].Id < newId)
+        {
+            insertIndex++;
+        }
+
+        SpellGroups.Insert(insertIndex, newGroup);
         SelectedTreeItem = newGroup;
     }
 
@@ -144,7 +154,6 @@ public partial class SpellsViewModel : ObservableObject
         }
     }
 
-    // ★★★ КОМАНДЫ ДЛЯ СТРЕЛОК ★★★
     [RelayCommand] private void IncLevel() { if (SelectedSpell != null) SelectedSpell.Level++; }
     [RelayCommand] private void DecLevel() { if (SelectedSpell != null && SelectedSpell.Level > 1) SelectedSpell.Level--; }
 

@@ -71,7 +71,6 @@ public partial class ActorsViewModel : ObservableObject
         foreach (var m in mapsprites) AvailableMapsprites.Add(m);
         if (AvailableMapsprites.Count == 0) AvailableMapsprites.Add("mapsprite000");
 
-        // Загружаем предметы
         var items = _itemsService.LoadItems(_itemsPath);
         AvailableItems.Clear();
         AvailableItems.Add("NOTHING");
@@ -80,7 +79,6 @@ public partial class ActorsViewModel : ObservableObject
             if (!AvailableItems.Contains(item.Name)) AvailableItems.Add(item.Name);
         }
 
-        // Загружаем актеров
         var actors = _actorsService.LoadActors(_actorsPath);
         Actors.Clear();
         if (actors != null && actors.Count > 0)
@@ -89,13 +87,24 @@ public partial class ActorsViewModel : ObservableObject
         }
         else
         {
-            Actors.Add(new Actor { Id = 1, Name = "Harold", ClassId = 1, Level = 1, Portrait = "Mushra", Mapsprite = "mapsprite000" });
+            Actors.Add(new Actor { Id = 0, Name = "Harold", ClassId = 1, Level = 1, Portrait = "Mushra", Mapsprite = "mapsprite000" });
         }
 
-        // Загружаем инвентари
         _startInventories = _actorsService.LoadStartInventory(_inventoryPath);
 
-        // Выбираем первого
+        // Собираем все предметы из инвентарей, чтобы ComboBox их видел
+        foreach (var inv in _startInventories)
+        {
+            if (inv.Items == null) continue;
+            foreach (var slot in inv.Items)
+            {
+                if (!string.IsNullOrWhiteSpace(slot.Item) && slot.Item != "NOTHING" && !AvailableItems.Contains(slot.Item))
+                {
+                    AvailableItems.Add(slot.Item);
+                }
+            }
+        }
+
         if (Actors.Count > 0) SelectedActor = Actors[0];
     }
 
@@ -135,8 +144,6 @@ public partial class ActorsViewModel : ObservableObject
             _startInventories.Add(inv);
         }
 
-        // Если в инвентаре есть предмет, которого нет в выпадающем списке (например, ты его только что создал),
-        // мы просто добавляем его в список, чтобы ComboBox его увидел. НИЧЕГО НЕ ЗАТИРАЕМ.
         if (inv.Items != null)
         {
             foreach (var slot in inv.Items)
@@ -154,8 +161,10 @@ public partial class ActorsViewModel : ObservableObject
     [RelayCommand]
     private void AddActor()
     {
-        int newId = Actors.Count > 0 ? Actors.Max(a => a.Id) + 1 : 1;
-        
+        var existingIds = Actors.Select(a => a.Id).ToHashSet();
+        int newId = 0;
+        while (existingIds.Contains(newId)) { newId++; }
+
         var newActor = new Actor
         {
             Id = newId,
@@ -166,7 +175,13 @@ public partial class ActorsViewModel : ObservableObject
             Level = 1
         };
 
-        Actors.Add(newActor);
+        int insertIndex = 0;
+        while (insertIndex < Actors.Count && Actors[insertIndex].Id < newId)
+        {
+            insertIndex++;
+        }
+
+        Actors.Insert(insertIndex, newActor);
         SelectedActor = newActor;
     }
 
