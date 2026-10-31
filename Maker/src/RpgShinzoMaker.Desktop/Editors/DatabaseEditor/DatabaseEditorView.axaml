@@ -25,7 +25,7 @@
             </TabItem>
 
             <TabItem Header="Enemies">
-                <TextBlock Text="Enemies Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <views:EnemiesPanel DataContext="{Binding EnemiesVM}"/>
             </TabItem>
 
             <TabItem Header="Classes">

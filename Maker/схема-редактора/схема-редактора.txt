@@ -25,6 +25,8 @@ RPG-Shining-Maker/
 │   │   │   │   └── Database/                       (Модели базы данных)
 │   │   │   │       ├── Actor.cs                    (id, name, forClass, exp, kills, defeats + ActorBlock для промоушенов)
 │   │   │   │       ├── CharacterClass.cs           (id, name, full_name, move, move_type, race, status, initial_status, prowess, resistance)
+│   │   │   │       ├── Enemy.cs                    (id, name, portrait, mapsprite, race, status, level, spell_power, stats(growth), resistance, prowess, items, SpellSlots, initial_status, move_type)
+│   │   │   │       ├── ProwessCatalog.cs           (статический каталог токенов: critical150_1in8, double_1in16 и т.д.)
 │   │   │   │       ├── StartInventory.cs           (actor_id, class_id, start_level, items[4])
 │   │   │   │       ├── Item.cs                     (id, name, category, price, range, use_spell, stats)
 │   │   │   │       └── Spell.cs                    (id, name, type, icon + ObservableCollection<SpellLevel> Levels)
@@ -42,6 +44,7 @@ RPG-Shining-Maker/
 │   │   │       ├── ItemsService.cs                 (чтение/запись items.json, парсинг массива range)
 │   │   │       ├── SpellsService.cs                (чтение/запись spells.json, парсинг вложенных levels с range)
 │   │   │       ├── ClassesService.cs               (чтение/запись classes.json)
+│   │   │       ├── EnemiesService.cs               (чтение/запись enemies.json, разворот/сворот spells + spell_levels, миграция flat → growth)
 │   │   │       └── AssetScannerService.cs          (сканирование папок portraits/mapsprites, фильтр _blink/_talk/_anim)
 │   │   │
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
@@ -57,11 +60,12 @@ RPG-Shining-Maker/
 │   │       │       └── select.png
 │   │       │
 │   │       ├── ViewModels/                         
-│   │       │   ├── MainViewModel.cs                (Добавлены ActorsVM, ItemsVM, SpellsVM, ClassesVM, SaveDatabaseCommand)
+│   │       │   ├── MainViewModel.cs                (Добавлены ActorsVM, ItemsVM, SpellsVM, ClassesVM, EnemiesVM, SaveDatabaseCommand)
 │   │       │   ├── ActorsViewModel.cs              (Логика для Heroes, управление блоками Base/Promo, команды стрелочек статов/магии)
 │   │       │   ├── ItemsViewModel.cs               (Логика для Items, команды стрелочек цены и 6 статов)
 │   │       │   ├── SpellsViewModel.cs              (Логика для Spells, добавление/удаление уровней)
 │   │       │   ├── ClassesViewModel.cs             (Логика для Classes, команды Move + / -)
+│   │       │   ├── EnemiesViewModel.cs             (Логика для Enemies, статы со стрелочками, prowess, resistance, spells)
 │   │       │   └── ViewModelBase.cs
 │   │       │
 │   │       ├── Views/
@@ -120,7 +124,9 @@ RPG-Shining-Maker/
 │   │                   ├── SpellsPanel.axaml       (Список заклинаний слева, свойства и таблица уровней справа)
 │   │                   ├── SpellsPanel.axaml.cs    (Блокировка ввода букв и ограничение длины в 5 символов)
 │   │                   ├── ClassesPanel.axaml      (Список классов, свойства, сопротивления с дублирующим текстом)
-│   │                   └── ClassesPanel.axaml.cs   
+│   │                   ├── ClassesPanel.axaml.cs   
+│   │                   ├── EnemiesPanel.axaml      (Список врагов, General Settings, Block Settings с портретом, Stats and Growth, Resistance 8 шт, Prowess список, Items 2x2, Spells 2x2)
+│   │                   └── EnemiesPanel.axaml.cs   (Блокировка ввода букв в NumericUpDown)
 │   │
 │   └── assets/
 │
@@ -143,6 +149,9 @@ RPG-Shining-Maker/
 │   │   └── items.json                              (Список предметов)
 │   ├── spells/
 │   │   └── spells.json                             (Заклинания с вложенными уровнями)
+│   ├── enemies/
+│   │   └── enemies.json                            (Список врагов, рост статов как у союзников, сопротивления, способности)
+│   ├── movetypes.json                              (Типы передвижения: flying, stealth и т.д.)
 │   └── ...
 │
 ├── opengl32.dll                                    (Mesa llvmpipe/d3d12 для фикса WGL ошибки)
@@ -208,14 +217,16 @@ RPG-Shining-Maker/
 │   TileTypesService  AreasService        EventsService                           │
 │   TilesetImportService                  CJsonFormatter                          │
 │   ActorsService     ItemsService        SpellsService                           │
-│   ClassesService    AssetScannerService                                         │
+│   ClassesService    EnemiesService      AssetScannerService                     │
 │                                                                                 │
 │   + Core.Models: GameMap, MapEntry, TileType,                                   │
 │                  RoofEvent, TileChangeEvent, StairEvent,                        │
 │                  WarpEvent, NpcEvent, CounterEvent,                             │
 │                  MapEvents, Areas, SubArea,                                     │
 │                  Actor, ActorBlock, ActorPromotion, StartInventory,             │
-│                  CharacterClass, Item, Spell, SpellLevel, GrowthStat            │
+│                  CharacterClass, Item, Spell, SpellLevel, GrowthStat,           │
+│                  Enemy, EnemyStats, ResistanceBlock, EnemyItem,                 │
+│                  EnemySpellSlot, ProwessCatalog                                 │
 └──────────────────────────────────────┬──────────────────────────────────────────┘
                                        │
                                        │  читают / пишут
@@ -288,6 +299,12 @@ RPG-Shining-Maker/
 20  ActorBlocks                                     В actors.json плоский список. Редактор разворачивает Base + Promotions в один объект.
 21  Конвертеры в Shared/Converters                  Все IValueConverter для UI лежат в Desktop/Shared/Converters.
 22  Портреты относительным путем                    PortraitConverter берет имя, прибавляет путь через ProjectPaths.AssetsDir → работает у всех.
+23  EnemyStats = Growth                             У врагов статы теперь с кривыми роста (start, projected, curve). 
+                                                     EnemiesService делает миграцию со старого плоского формата.
+24  Parallel Arrays (Enemies)                       Заклинания врагов в JSON хранятся в двух параллельных массивах (spells + spell_levels).
+                                                     В редакторе они объединены в один ObservableCollection<EnemySpellSlot>, 
+                                                     а сервис разворачивает и сворачивает их обратно строго по 4 слота.
+25  ProwessCatalog                                  Общий статический каталог токенов (critical150_1in8 и т.д.) для классов и врагов.
 
 
 📈 Что уже готово vs что в планах (обновлено)
@@ -297,8 +314,10 @@ Core.Models (GameMap, MapEntry, TileType)              ✅
 Core.Models (7 моделей событий, вкл. Counter)          ✅
 Core.Models (SubArea)                                  ✅
 Core.Models (Database: Actor, ActorBlock, ActorPromotion, StartInventory, Item, Spell, SpellLevel, CharacterClass, GrowthStat) ✅
+Core.Models (Database: Enemy, EnemyStats, ResistanceBlock, EnemyItem, EnemySpellSlot, ProwessCatalog) ✅
 Core.Services (7 старых сервисов)                      ✅
 Core.Services (CJsonFormatter, ActorsService, ItemsService, SpellsService, ClassesService) ✅
+Core.Services (EnemiesService: миграция flat->growth, параллельные массивы) ✅
 IEditor (интерфейс)                                    ✅
 MainWindow (оболочка)                                  ✅
 MapEditor (11 файлов)                                  ✅
@@ -309,6 +328,12 @@ Shared.Converters.PortraitConverter                    ✅
 Редактор: Вкладка Items (Предметы)                     ✅
 Редактор: Вкладка Spells (Магия)                       ✅
 Редактор: Вкладка Classes (Классы)                     ✅
+Редактор: Вкладка Enemies (Враги)                      ✅
+Редактор: Вкладка Enemies — Статы с кривыми роста      ✅
+Редактор: Вкладка Enemies — Сопротивления (8 шт)       ✅
+Редактор: Вкладка Enemies — Способности (Prowess)      ✅
+Редактор: Вкладка Enemies — Предметы 2x2               ✅
+Редактор: Вкладка Enemies — Заклинания 2x2             ✅
 Редактор: Вкладка Counters (Прилавки)                  ✅
 Редактор: Отрисовка NPC спрайтов на канвасе            ✅
 Редактор: Автоскролл к выбранному событию              ✅
@@ -332,7 +357,6 @@ Shared.Converters.PortraitConverter                    ✅
 Редактор: Стрелочки + / - снаружи полей (как в Caravan)  ✅
 Редактор: Превью портрета 67x104 в Block Settings      ✅
 Редактор: Фильтр портретов (_blink/_talk/_anim)        ✅
-DatabaseEditor: Вкладка Enemies (Враги)                 📋 план
 BattleEditor                                           📋 план
 SceneEditor                                            📋 план
 ASSETS (живое дерево)                                  📋 план

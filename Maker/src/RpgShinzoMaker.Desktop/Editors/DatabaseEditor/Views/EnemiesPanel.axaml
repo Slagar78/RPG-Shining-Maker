@@ -1,0 +1,406 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:RpgShinzoMaker.Core.Models.Database"
+             xmlns:vm="using:RpgShinzoMaker.Desktop.ViewModels"
+             xmlns:conv="using:RpgShinzoMaker.Desktop.Shared.Converters"
+             x:DataType="vm:EnemiesViewModel"
+             x:Class="RpgShinzoMaker.Desktop.Editors.DatabaseEditor.Views.EnemiesPanel">
+
+    <UserControl.Resources>
+        <conv:PortraitConverter x:Key="PortraitConverter"/>
+
+        <ControlTheme x:Key="CustomEnemyItem" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="4,3"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </ControlTheme>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="TextBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+
+        <Style Selector="TextBox.NumBox">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Width" Value="55"/>
+        </Style>
+
+        <Style Selector="Button.ArrowBtn">
+            <Setter Property="Background" Value="#444444"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="12"/>
+            <Setter Property="FontSize" Value="8"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.ArrowBtn:pointerover">
+            <Setter Property="Background" Value="#666666"/>
+        </Style>
+
+        <Style Selector="ComboBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+
+        <Style Selector="Border.GroupBox">
+            <Setter Property="BorderBrush" Value="#3E3E42"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="Background" Value="#252526"/>
+        </Style>
+        <Style Selector="TextBlock.GroupHeader">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#007ACC"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="220, *" Background="#1E1E1E">
+
+        <!-- ЛЕВАЯ КОЛОНКА: СПИСОК ВРАГОВ -->
+        <Grid Grid.Column="0" RowDefinitions="Auto, *" Background="#1E1E1E" Margin="2">
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="2">
+                <Button Content="Add" Background="#4CAF50" Foreground="White" FontSize="11" Padding="8,2" Height="22" Command="{Binding AddEnemyCommand}"/>
+                <Button Content="Del" Background="#F44336" Foreground="White" FontSize="11" Padding="8,2" Height="22" Command="{Binding DeleteEnemyCommand}"/>
+            </StackPanel>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Enemies}" SelectedItem="{Binding SelectedEnemy}" Background="Transparent" Padding="0" ItemContainerTheme="{StaticResource CustomEnemyItem}">
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem:nth-child(odd)"><Setter Property="Background" Value="#252526"/></Style>
+                    <Style Selector="ListBoxItem:nth-child(even)"><Setter Property="Background" Value="#2D2D30"/></Style>
+                    <Style Selector="ListBoxItem:pointerover"><Setter Property="Background" Value="#3E3E42"/></Style>
+                    <Style Selector="ListBoxItem:selected"><Setter Property="Background" Value="#81C784"/></Style>
+                    <Style Selector="ListBoxItem:selected TextBlock"><Setter Property="Foreground" Value="Black"/><Setter Property="FontWeight" Value="Bold"/></Style>
+                </ListBox.Styles>
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:Enemy">
+                        <Grid ColumnDefinitions="40, *">
+                            <TextBlock Grid.Column="0" Text="{Binding Id, StringFormat='{}{0:D4}'}" Foreground="#AAAAAA"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="White"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+
+        <!-- ПРАВАЯ КОЛОНКА: СВОЙСТВА -->
+        <ScrollViewer Grid.Column="1" IsVisible="{Binding SelectedEnemy, Converter={x:Static ObjectConverters.IsNotNull}}" Margin="5">
+            <Grid ColumnDefinitions="*, *" RowDefinitions="Auto">
+
+                <!-- ЛЕВАЯ ЧАСТЬ -->
+                <StackPanel Grid.Column="0" Margin="0,0,5,0">
+
+                    <!-- GENERAL SETTINGS -->
+                    <Border Classes="GroupBox">
+                        <StackPanel>
+                            <TextBlock Text="General Settings" Classes="GroupHeader"/>
+
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,2">
+                                <TextBlock Text="Name:" VerticalAlignment="Center"/>
+                                <TextBox Text="{Binding SelectedEnemy.Name}" Width="120"/>
+                                <TextBlock Text="ID:" VerticalAlignment="Center"/>
+                                <Border Background="#007ACC" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding SelectedEnemy.Id}" Foreground="White" FontWeight="Bold"/>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Level -->
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
+                                <TextBlock Text="Level:" Width="40" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Level}" MaxLength="3" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16">
+                                        <Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncLevelCommand}"/>
+                                        <Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecLevelCommand}" Margin="0,2,0,0"/>
+                                    </Grid>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Race / Status / Spell Power -->
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
+                                <TextBlock Text="Race:" VerticalAlignment="Center"/>
+                                <ComboBox ItemsSource="{Binding AvailableRaces}" SelectedItem="{Binding SelectedEnemy.Race}" IsEditable="True" Width="120"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
+                                <TextBlock Text="Status:" VerticalAlignment="Center"/>
+                                <ComboBox ItemsSource="{Binding AvailableStatuses}" SelectedItem="{Binding SelectedEnemy.Status}" IsEditable="True" Width="120"/>
+                                <TextBlock Text="Power:" VerticalAlignment="Center"/>
+                                <ComboBox ItemsSource="{Binding AvailableSpellPowers}" SelectedItem="{Binding SelectedEnemy.SpellPower}" IsEditable="True" Width="100"/>
+                            </StackPanel>
+
+                            <!-- Initial Status / Move Type -->
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
+                                <TextBlock Text="Init Status:" VerticalAlignment="Center"/>
+                                <ComboBox ItemsSource="{Binding AvailableStatuses}" SelectedItem="{Binding SelectedEnemy.InitialStatus}" IsEditable="True" Width="120"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
+                                <TextBlock Text="Move Type:" VerticalAlignment="Center"/>
+                                <ComboBox ItemsSource="{Binding AvailableMovetypes}" SelectedItem="{Binding SelectedEnemy.MoveType}" IsEditable="True" Width="120"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- BLOCK SETTINGS (портрет и спрайты) -->
+                    <Border Classes="GroupBox">
+                        <StackPanel>
+                            <TextBlock Text="Block Settings" Classes="GroupHeader"/>
+                            <Grid ColumnDefinitions="*, Auto">
+
+                                <!-- Левая часть: Mapsprite, Battle Sprite -->
+                                <Grid Grid.Column="0" ColumnDefinitions="85, *" RowDefinitions="Auto, Auto" Margin="0,0,15,0" VerticalAlignment="Top">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Mapsprite:" Margin="0,2"/>
+                                    <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableMapsprites}" SelectedItem="{Binding SelectedEnemy.Mapsprite}" Margin="0,2"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Battle Sprite:" Margin="0,2"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEnemy.BattleSpritePath}" Margin="0,2"/>
+                                </Grid>
+
+                                <!-- Правая часть: портрет -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Top" Spacing="4" Width="130">
+                                    <TextBlock Text="Portrait:" HorizontalAlignment="Center" Margin="0,0,0,2"/>
+                                    <Border BorderBrush="#555555" BorderThickness="1" CornerRadius="4" Width="69" Height="106" Background="#1E1E1E" HorizontalAlignment="Center">
+                                        <Image Width="67" Height="104" Stretch="Fill"
+                                               Source="{Binding SelectedEnemy.Portrait, Converter={StaticResource PortraitConverter}}" />
+                                    </Border>
+                                    <ComboBox ItemsSource="{Binding AvailablePortraits}" SelectedItem="{Binding SelectedEnemy.Portrait}" HorizontalAlignment="Stretch" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ITEMS (2x2) -->
+                    <Border Classes="GroupBox">
+                        <StackPanel>
+                            <TextBlock Text="Items" Classes="GroupHeader"/>
+                            <ItemsControl ItemsSource="{Binding SelectedEnemy.Items}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="2" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:EnemyItem">
+                                        <Grid ColumnDefinitions="40, *, 60" Margin="0,0,10,5" HorizontalAlignment="Stretch">
+                                            <TextBlock Grid.Column="0" Text="Item:" Margin="0,2"/>
+                                            <ComboBox Grid.Column="1" ItemsSource="{Binding $parent[UserControl].((vm:EnemiesViewModel)DataContext).AvailableItems}" SelectedItem="{Binding Item}" Margin="0,2,5,2" HorizontalAlignment="Stretch"/>
+                                            <CheckBox Grid.Column="2" Content="Eqp" IsChecked="{Binding Equipped}" IsEnabled="{Binding Item, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" FontSize="11" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+
+                <!-- ПРАВАЯ ЧАСТЬ -->
+                <StackPanel Grid.Column="1" Margin="5,0,0,0">
+
+                    <!-- STATS AND GROWTH -->
+                    <Border Classes="GroupBox">
+                        <StackPanel>
+                            <TextBlock Text="Stats and Growth" Classes="GroupHeader"/>
+                            <Grid ColumnDefinitions="50, Auto, 15, Auto, 15, 100" RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto" HorizontalAlignment="Left">
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="Start:" Foreground="Gray" Margin="0,6"/>
+                                <TextBlock Grid.Row="0" Grid.Column="3" Text="Proj:" Foreground="Gray" Margin="0,6"/>
+                                <TextBlock Grid.Row="0" Grid.Column="5" Text="Curve:" Foreground="Gray" Margin="0,6"/>
+
+                                <!-- HP -->
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="HP:" Margin="0,2"/>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Stats.HpGrowth.Start}" MaxLength="4" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16"><Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncHpStartCommand}"/><Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecHpStartCommand}" Margin="0,2,0,0"/></Grid>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Stats.HpGrowth.Projected}" MaxLength="4" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16"><Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncHpProjCommand}"/><Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecHpProjCommand}" Margin="0,2,0,0"/></Grid>
+                                </StackPanel>
+                                <ComboBox Grid.Row="1" Grid.Column="5" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedEnemy.Stats.HpGrowth.Curve}" Margin="0,2"/>
+
+                                <!-- MP -->
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="MP:" Margin="0,2"/>
+                                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Stats.MpGrowth.Start}" MaxLength="4" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16"><Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncMpStartCommand}"/><Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecMpStartCommand}" Margin="0,2,0,0"/></Grid>
+                                </StackPanel>
+                                <StackPanel Grid.Row="2" Grid.Column="3" Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Stats.MpGrowth.Projected}" MaxLength="4" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16"><Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncMpProjCommand}"/><Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecMpProjCommand}" Margin="0,2,0,0"/></Grid>
+                                </StackPanel>
+                                <ComboBox Grid.Row="2" Grid.Column="5" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedEnemy.Stats.MpGrowth.Curve}" Margin="0,2"/>
+
+                                <!-- ATK -->
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Attack:" Margin="0,2"/>
+                                <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Stats.AttackGrowth.Start}" MaxLength="4" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16"><Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncAtkStartCommand}"/><Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecAtkStartCommand}" Margin="0,2,0,0"/></Grid>
+                                </StackPanel>
+                                <StackPanel Grid.Row="3" Grid.Column="3" Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Stats.AttackGrowth.Projected}" MaxLength="4" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16"><Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncAtkProjCommand}"/><Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecAtkProjCommand}" Margin="0,2,0,0"/></Grid>
+                                </StackPanel>
+                                <ComboBox Grid.Row="3" Grid.Column="5" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedEnemy.Stats.AttackGrowth.Curve}" Margin="0,2"/>
+
+                                <!-- DEF -->
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Defense:" Margin="0,2"/>
+                                <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Stats.DefenseGrowth.Start}" MaxLength="4" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16"><Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncDefStartCommand}"/><Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecDefStartCommand}" Margin="0,2,0,0"/></Grid>
+                                </StackPanel>
+                                <StackPanel Grid.Row="4" Grid.Column="3" Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Stats.DefenseGrowth.Projected}" MaxLength="4" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16"><Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncDefProjCommand}"/><Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecDefProjCommand}" Margin="0,2,0,0"/></Grid>
+                                </StackPanel>
+                                <ComboBox Grid.Row="4" Grid.Column="5" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedEnemy.Stats.DefenseGrowth.Curve}" Margin="0,2"/>
+
+                                <!-- AGI -->
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Agility:" Margin="0,2"/>
+                                <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Stats.AgilityGrowth.Start}" MaxLength="4" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16"><Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncAgiStartCommand}"/><Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecAgiStartCommand}" Margin="0,2,0,0"/></Grid>
+                                </StackPanel>
+                                <StackPanel Grid.Row="5" Grid.Column="3" Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Stats.AgilityGrowth.Projected}" MaxLength="4" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16"><Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncAgiProjCommand}"/><Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecAgiProjCommand}" Margin="0,2,0,0"/></Grid>
+                                </StackPanel>
+                                <ComboBox Grid.Row="5" Grid.Column="5" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedEnemy.Stats.AgilityGrowth.Curve}" Margin="0,2"/>
+
+                                <!-- MOV -->
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="Move:" Margin="0,2"/>
+                                <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Stats.BaseMov}" MaxLength="2" Width="45"/>
+                                    <Grid RowDefinitions="*, *" Width="16"><Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncMovCommand}"/><Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecMovCommand}" Margin="0,2,0,0"/></Grid>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- RESISTANCE -->
+                    <Border Classes="GroupBox">
+                        <StackPanel>
+                            <TextBlock Text="Resistance" Classes="GroupHeader"/>
+                            <Grid ColumnDefinitions="80, *, 20, 80, *" RowDefinitions="Auto, Auto, Auto, Auto" HorizontalAlignment="Stretch">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Wind:" Margin="0,2"/>
+                                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableResistances}" SelectedItem="{Binding SelectedEnemy.Resistance.Wind}" Margin="0,2"/>
+                                <TextBlock Grid.Row="0" Grid.Column="3" Text="Aqua:" Margin="0,2"/>
+                                <ComboBox Grid.Row="0" Grid.Column="4" ItemsSource="{Binding AvailableResistances}" SelectedItem="{Binding SelectedEnemy.Resistance.Aqua}" Margin="0,2"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Lightning:" Margin="0,2"/>
+                                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding AvailableResistances}" SelectedItem="{Binding SelectedEnemy.Resistance.Lightning}" Margin="0,2"/>
+                                <TextBlock Grid.Row="1" Grid.Column="3" Text="Earth:" Margin="0,2"/>
+                                <ComboBox Grid.Row="1" Grid.Column="4" ItemsSource="{Binding AvailableResistances}" SelectedItem="{Binding SelectedEnemy.Resistance.Earth}" Margin="0,2"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Ice:" Margin="0,2"/>
+                                <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding AvailableResistances}" SelectedItem="{Binding SelectedEnemy.Resistance.Ice}" Margin="0,2"/>
+                                <TextBlock Grid.Row="2" Grid.Column="3" Text="Neutral:" Margin="0,2"/>
+                                <ComboBox Grid.Row="2" Grid.Column="4" ItemsSource="{Binding AvailableResistances}" SelectedItem="{Binding SelectedEnemy.Resistance.Neutral}" Margin="0,2"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Fire:" Margin="0,2"/>
+                                <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding AvailableResistances}" SelectedItem="{Binding SelectedEnemy.Resistance.Fire}" Margin="0,2"/>
+                                <TextBlock Grid.Row="3" Grid.Column="3" Text="Affliction:" Margin="0,2"/>
+                                <ComboBox Grid.Row="3" Grid.Column="4" ItemsSource="{Binding AvailableResistances}" SelectedItem="{Binding SelectedEnemy.Resistance.Affliction}" Margin="0,2"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- PROWESS -->
+                    <Border Classes="GroupBox">
+                        <StackPanel>
+                            <TextBlock Text="Prowess" Classes="GroupHeader"/>
+                            <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,0,0,5">
+                                <Button Content="+" Command="{Binding AddProwessCommand}" Width="24" Height="24" Background="#4CAF50" Foreground="White" FontWeight="Bold"/>
+                            </StackPanel>
+                            <ItemsControl ItemsSource="{Binding SelectedEnemy.Prowess}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Grid ColumnDefinitions="*, Auto" Margin="0,2" HorizontalAlignment="Stretch">
+                                            <ComboBox Grid.Column="0"
+                                                      ItemsSource="{x:Static models:ProwessCatalog.All}"
+                                                      SelectedItem="{Binding}"
+                                                      IsEditable="True"
+                                                      HorizontalAlignment="Stretch"
+                                                      Margin="0,0,5,0"/>
+                                            <Button Grid.Column="1" Content="X"
+                                                    Command="{Binding $parent[UserControl].((vm:EnemiesViewModel)DataContext).RemoveProwessCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="#F44336" Foreground="White"
+                                                    Width="24" Height="24" Padding="0" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- SPELL SLOTS (2x2) -->
+                    <Border Classes="GroupBox">
+                        <StackPanel>
+                            <TextBlock Text="Spells" Classes="GroupHeader"/>
+                            <ItemsControl ItemsSource="{Binding SelectedEnemy.SpellSlots}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="2" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:EnemySpellSlot">
+                                        <Grid ColumnDefinitions="*, Auto, Auto" Margin="0,0,10,5" HorizontalAlignment="Stretch">
+                                            <ComboBox Grid.Column="0" ItemsSource="{Binding $parent[UserControl].((vm:EnemiesViewModel)DataContext).AvailableSpells}" SelectedItem="{Binding Name}" Margin="0,2,5,2" HorizontalAlignment="Stretch"/>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,2">
+                                                <TextBox Classes="NumBox" Text="{Binding Level}" MaxLength="2" Width="40"/>
+                                                <Grid RowDefinitions="*, *" Width="16">
+                                                    <Button Grid.Row="0" Content="▲" Classes="ArrowBtn"
+                                                            Command="{Binding $parent[UserControl].((vm:EnemiesViewModel)DataContext).IncSpellSlotLevelCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                    <Button Grid.Row="1" Content="▼" Classes="ArrowBtn"
+                                                            Command="{Binding $parent[UserControl].((vm:EnemiesViewModel)DataContext).DecSpellSlotLevelCommand}"
+                                                            CommandParameter="{Binding}" Margin="0,2,0,0"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
