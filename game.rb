@@ -954,7 +954,7 @@ end
     @audio.stop
     @current_battle_id = battle_id
 
-    @battle_manager = BattleManager.new(@db, @font, @game_text, battle_id)
+    @battle_manager = BattleManager.new(@db, @font, @game_text, battle_id, @start_inventory, @party)
     @battle_manager.audio = @audio
     @battle_manager.battle_menu.font = @large_font
     @battle_manager.battle_scene.message_font = @large_font

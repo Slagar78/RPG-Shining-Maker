@@ -74,8 +74,8 @@ def recalc_current_unit_stats
     klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
     if klass
       lv = actor["level"] || 1
-      unit[:atk] = @db.stat_at_level(klass["attack_growth"], lv)
-      unit[:def] = @db.stat_at_level(klass["defense_growth"], lv)
+      unit[:atk] = @db.stat_at_level(actor["attack_growth"], lv)
+      unit[:def] = @db.stat_at_level(actor["defense_growth"], lv)
     end
   elsif unit[:enemy]
     enemy = unit[:enemy]
@@ -95,12 +95,13 @@ def recalc_current_unit_stats
   apply_equipment_bonuses(unit, inventory_items)
 end
 
-  def initialize(db = nil, font = nil, game_text = {}, battle_id = 0)
+  def initialize(db = nil, font = nil, game_text = {}, battle_id = 0, start_inventory = nil)
     @db = db
     @font = font
     @game_text = game_text
     @audio = nil
     @battle_id = battle_id.to_i
+    @party = party || []
 
     entries_path = "data/battles/entries.json"
     if File.exist?(entries_path)
@@ -148,8 +149,8 @@ end
     SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
 	
 	# Загружаем start_inventory ДО load_spriteset
-    @start_inventory = []
-    if File.exist?("data/actors/start_inventory.json")
+    @start_inventory = start_inventory || []
+    if @start_inventory.empty? && File.exist?("data/actors/start_inventory.json")
       data = JSON.parse(File.read("data/actors/start_inventory.json"))
       @start_inventory = data["start_inventory"] || []
     end
@@ -278,7 +279,10 @@ end
 
     # ========== Союзники ==========
     (data["allies"] || []).each do |info|
-      actor = @db.actors.find { |a| a["id"] == info["actor_id"] }
+      # Берем ОРИГИНАЛЬНОГО персонажа из переданной партии (со всеми его уровнями и опытом)
+      actor = @party.find { |a| a["id"] == info["actor_id"] }
+      next unless actor
+
       tex = actor ? load_mapsprite(actor["mapsprite"]) : nil
       pos = [info["x"], info["y"]]
 
@@ -287,7 +291,7 @@ end
         next
       end
 
-      # Расчёт максимальных HP/MP из класса и кривых роста
+      # 2. Расчёт максимальных HP/MP
       max_hp = 0
       max_mp = 0
       ally_battle_anim = nil
@@ -295,12 +299,13 @@ end
         klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
         if klass
           lv = actor["level"] || 1
-          max_hp = @db.stat_at_level(klass["hp_growth"], lv)
-          max_mp = @db.stat_at_level(klass["mp_growth"], lv)
+          # ВАЖНО: Берем кривые роста из actor, а не из klass!
+          max_hp = @db.stat_at_level(actor["hp_growth"], lv)
+          max_mp = @db.stat_at_level(actor["mp_growth"], lv)
 
-          # Загрузка боевой анимации из класса
-          if klass["battle_sprite_path"] && !klass["battle_sprite_path"].empty?
-            ally_battle_anim = BattleSpriteAnimation.new(klass["battle_sprite_path"])
+          # Боевой спрайт берем из actor
+          if actor["battle_sprite_path"] && !actor["battle_sprite_path"].empty?
+            ally_battle_anim = BattleSpriteAnimation.new(actor["battle_sprite_path"])
           end
         end
       end
@@ -312,9 +317,9 @@ end
         sprite_frame: 0, sprite_timer: 0, sprite_speed: 14,
         hp: max_hp, max_hp: max_hp,
         mp: max_mp, max_mp: max_mp,
-        atk: (klass ? @db.stat_at_level(klass["attack_growth"], lv) : 4),
-        def: (klass ? @db.stat_at_level(klass["defense_growth"], lv) : 5),
-        movetype: klass ? (klass["movetype"] || "regular") : "regular"
+        atk: (klass && actor["attack_growth"] ? @db.stat_at_level(actor["attack_growth"], lv) : 4),
+        def: (klass && actor["defense_growth"] ? @db.stat_at_level(actor["defense_growth"], lv) : 5),
+        movetype: klass ? (klass["move_type"] || "regular") : "regular"
       }
 
       # Находим инвентарь этого актора в start_inventory
@@ -456,7 +461,7 @@ end
         
         # 2. Берем ловкость из формулы роста класса (или ставим 10, если класса нет)
         if klass
-          unit[:agi] = @db.stat_at_level(klass["agility_growth"], actor["level"] || 1)
+          unit[:agi] = @db.stat_at_level(actor["agility_growth"], actor["level"] || 1)
         else
           unit[:agi] = 10
         end
@@ -593,82 +598,81 @@ end
   start_cursor_transition(@current_unit, nxt)
 end
 
-def current_actor_spells
-  return [] unless @current_unit && @current_unit[:actor]
-  actor = @current_unit[:actor]
-  klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
-  return [] unless klass && klass["spell_list"]
-  # Возвращаем сырой список заклинаний (без иконок)
-  klass["spell_list"].select { |s| s["level"] <= actor["level"] }
-end
+  def current_actor_spells
+    return [] unless @current_unit && @current_unit[:actor]
+    actor = @current_unit[:actor]
+    return [] unless actor["spell_list"]
+    # Возвращаем сырой список заклинаний (без иконок)
+    actor["spell_list"].select { |s| s["level"] <= actor["level"] }
+  end
 
-def current_actor_items
-  return [] unless @current_unit && @current_unit[:actor]
-  actor = @current_unit[:actor]
-  entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
-  return [] unless entry
+  def current_actor_items
+    return [] unless @current_unit && @current_unit[:actor]
+    actor = @current_unit[:actor]
+    entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
+    return [] unless entry
 
-  entry["items"].map do |item_entry|
-    item_name = item_entry["item"]
-    if item_name == "NOTHING"
-      { "item" => "NOTHING", "icon" => nil }
-    else
-      item_data = @db ? @db.find_by_name(item_name) : nil
-      icon = item_data ? item_data["icon"] : nil
-      { "item" => item_name, "icon" => icon }
+    entry["items"].map do |item_entry|
+      item_name = item_entry["item"]
+      if item_name == "NOTHING"
+        { "item" => "NOTHING", "icon" => nil }
+      else
+        item_data = @db ? @db.find_by_name(item_name) : nil
+        icon = item_data ? item_data["icon"] : nil
+        { "item" => item_name, "icon" => icon }
+      end
     end
   end
-end
 
-def apply_exp_to_actor(actor, amount, unit)
-  return unless actor && amount > 0 && unit
-  actor["exp"] ||= 0
-  actor["exp"] += amount
-  puts "#{actor['name']} получил #{amount} опыта. Всего: #{actor['exp']}"
+  def apply_exp_to_actor(actor, amount, unit)
+    return unless actor && amount > 0 && unit
+    actor["exp"] ||= 0
+    actor["exp"] += amount
+    puts "#{actor['name']} получил #{amount} опыта. Всего: #{actor['exp']}"
 
-  while actor["exp"] >= 100
-    actor["exp"] -= 100
-    level_up(actor, unit)
+    while actor["exp"] >= 100
+      actor["exp"] -= 100
+      level_up(actor, unit)
+    end
   end
-end
 
-def level_up(actor, unit)
-  old_level = actor["level"]
-  actor["level"] = (old_level || 1) + 1
-  new_level = actor["level"]
-  puts "#{actor['name']} достиг уровня #{new_level}!"
+  def level_up(actor, unit)
+    old_level = actor["level"]
+    actor["level"] = (old_level || 1) + 1
+    new_level = actor["level"]
+    puts "#{actor['name']} достиг уровня #{new_level}!"
 
-  klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
-  return unless klass
+    klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
+    return unless klass
 
-  old_max_hp = unit[:max_hp]
-  old_max_mp = unit[:max_mp]
+    old_max_hp = unit[:max_hp]
+    old_max_mp = unit[:max_mp]
 
-  new_max_hp = @db.stat_at_level(klass["hp_growth"], new_level)
-  new_max_mp = @db.stat_at_level(klass["mp_growth"], new_level)
-  new_atk    = @db.stat_at_level(klass["attack_growth"], new_level)
-  new_def    = @db.stat_at_level(klass["defense_growth"], new_level)
-  new_agi    = @db.stat_at_level(klass["agility_growth"], new_level)
-  new_mov    = klass["move"] || unit[:mov]
+    new_max_hp = @db.stat_at_level(actor["hp_growth"], new_level)
+    new_max_mp = @db.stat_at_level(actor["mp_growth"], new_level)
+    new_atk    = @db.stat_at_level(actor["attack_growth"], new_level)
+    new_def    = @db.stat_at_level(actor["defense_growth"], new_level)
+    new_agi    = @db.stat_at_level(actor["agility_growth"], new_level)
+    new_mov    = klass["move"] || unit[:mov]
 
-  unit[:max_hp] = new_max_hp
-  unit[:max_mp] = new_max_mp
-  unit[:atk]    = new_atk
-  unit[:def]    = new_def
-  unit[:agi]    = new_agi
-  unit[:mov]    = new_mov
+    unit[:max_hp] = new_max_hp
+    unit[:max_mp] = new_max_mp
+    unit[:atk]    = new_atk
+    unit[:def]    = new_def
+    unit[:agi]    = new_agi
+    unit[:mov]    = new_mov
 
-  hp_diff = new_max_hp - old_max_hp
-  mp_diff = new_max_mp - old_max_mp
-  unit[:hp] = [unit[:hp] + hp_diff, new_max_hp].min
-  unit[:mp] = [unit[:mp] + mp_diff, new_max_mp].min
+    hp_diff = new_max_hp - old_max_hp
+    mp_diff = new_max_mp - old_max_mp
+    unit[:hp] = [unit[:hp] + hp_diff, new_max_hp].min
+    unit[:mp] = [unit[:mp] + mp_diff, new_max_mp].min
 
-  # Обновляем данные актора для сохранения (опционально)
-  actor["hp"] = new_max_hp
-  actor["mp"] = new_max_mp
-  
-  recalc_current_unit_stats   # ← чтобы бонусы экипировки снова применились
-end
+    # Обновляем данные актора для сохранения (опционально)
+    actor["hp"] = new_max_hp
+    actor["mp"] = new_max_mp
+    
+    recalc_current_unit_stats   # ← чтобы бонусы экипировки снова применились
+  end
 
  def handle_input
    case @battle_state

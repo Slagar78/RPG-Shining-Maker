@@ -664,7 +664,7 @@ end
           atk_val = [@db.stat_at_level(member["attack_growth"], lv), 0].max
           def_val = [@db.stat_at_level(member["defense_growth"], lv), 0].max
           agi_val = [@db.stat_at_level(member["agility_growth"], lv), 0].max
-          mov_val = [(klass["move"] || 0), 0].max
+          mov_val = klass ? [(klass["move"] || 0), 0].max : 0
         else
           hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
         end
@@ -1023,7 +1023,7 @@ class Profile
         atk_val = [@db.stat_at_level(actor["attack_growth"], lv), 0].max
         def_val = [@db.stat_at_level(actor["defense_growth"], lv), 0].max
         agi_val = [@db.stat_at_level(actor["agility_growth"], lv), 0].max
-        mov_val = [(klass["move"] || 0), 0].max
+        mov_val = klass ? [(klass["move"] || 0), 0].max : 0
       else
         hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
       end
