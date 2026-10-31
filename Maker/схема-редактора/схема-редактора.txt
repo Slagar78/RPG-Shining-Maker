@@ -42,7 +42,7 @@ RPG-Shining-Maker/
 │   │   │       ├── ItemsService.cs                 (чтение/запись items.json, парсинг массива range)
 │   │   │       ├── SpellsService.cs                (чтение/запись spells.json, парсинг вложенных levels с range)
 │   │   │       ├── ClassesService.cs               (чтение/запись classes.json)
-│   │   │       └── AssetScannerService.cs          (сканирование папок portraits, mapsprites)
+│   │   │       └── AssetScannerService.cs          (сканирование папок portraits/mapsprites, фильтр _blink/_talk/_anim)
 │   │   │
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
 │   │       ├── App.axaml
@@ -58,10 +58,10 @@ RPG-Shining-Maker/
 │   │       │
 │   │       ├── ViewModels/                         
 │   │       │   ├── MainViewModel.cs                (Добавлены ActorsVM, ItemsVM, SpellsVM, ClassesVM, SaveDatabaseCommand)
-│   │       │   ├── ActorsViewModel.cs              (Логика для Heroes, управление блоками Base/Promo, AddActor/DeleteActor)
-│   │       │   ├── ItemsViewModel.cs               (Логика для Items)
+│   │       │   ├── ActorsViewModel.cs              (Логика для Heroes, управление блоками Base/Promo, команды стрелочек статов/магии)
+│   │       │   ├── ItemsViewModel.cs               (Логика для Items, команды стрелочек цены и 6 статов)
 │   │       │   ├── SpellsViewModel.cs              (Логика для Spells, добавление/удаление уровней)
-│   │       │   ├── ClassesViewModel.cs             (Логика для Classes)
+│   │       │   ├── ClassesViewModel.cs             (Логика для Classes, команды Move + / -)
 │   │       │   └── ViewModelBase.cs
 │   │       │
 │   │       ├── Views/
@@ -71,8 +71,10 @@ RPG-Shining-Maker/
 │   │       │   └── MapCanvas.axaml.cs              (Фикс кликов по скроллбарам, оверлей коллизий L1/L2)
 │   │       │
 │   │       ├── Shared/
-│   │       │   └── Interfaces/
-│   │       │       └── IEditor.cs                  
+│   │       │   ├── Interfaces/
+│   │       │   │   └── IEditor.cs                  
+│   │       │   └── Converters/
+│   │       │       └── PortraitConverter.cs        (string "Mushra" → Bitmap из assets/ui/portraits/Mushra.png)
 │   │       │
 │   │       └── Editors/
 │   │           │
@@ -111,9 +113,9 @@ RPG-Shining-Maker/
 │   │               ├── DatabaseEditorView.axaml    (Общий контейнер с вертикальными вкладками)
 │   │               ├── DatabaseEditorView.axaml.cs 
 │   │               └── Views/                      (Панели для каждой категории)
-│   │                   ├── ActorsPanel.axaml       (Список героев, блоки Base/Promo, статы, магия, инвентарь 2x2)
+│   │                   ├── ActorsPanel.axaml       (Список героев, блоки Base/Promo, превью портрета 67x104, статы со стрелочками, магия, инвентарь 2x2)
 │   │                   ├── ActorsPanel.axaml.cs    (Блокировка ввода букв в NumericUpDown)
-│   │                   ├── ItemsPanel.axaml        (Список предметов, свойства, статы)
+│   │                   ├── ItemsPanel.axaml        (Список предметов, свойства, статы со стрелочками)
 │   │                   ├── ItemsPanel.axaml.cs     
 │   │                   ├── SpellsPanel.axaml       (Список заклинаний слева, свойства и таблица уровней справа)
 │   │                   ├── SpellsPanel.axaml.cs    (Блокировка ввода букв и ограничение длины в 5 символов)
@@ -284,6 +286,8 @@ RPG-Shining-Maker/
 18  Единый источник истины (State)                  В игре BattleManager получает ссылки на @party и @start_inventory. Никаких копий.
 19  SpellLevels                                     У заклинания один ID и массив levels. В редакторе — таблица уровней.
 20  ActorBlocks                                     В actors.json плоский список. Редактор разворачивает Base + Promotions в один объект.
+21  Конвертеры в Shared/Converters                  Все IValueConverter для UI лежат в Desktop/Shared/Converters.
+22  Портреты относительным путем                    PortraitConverter берет имя, прибавляет путь через ProjectPaths.AssetsDir → работает у всех.
 
 
 📈 Что уже готово vs что в планах (обновлено)
@@ -300,6 +304,7 @@ MainWindow (оболочка)                                  ✅
 MapEditor (11 файлов)                                  ✅
 EventEditor (7 файлов + EventCanvas)                   ✅
 DatabaseEditor (Оболочка)                              ✅
+Shared.Converters.PortraitConverter                    ✅
 Редактор: Вкладка Heroes (Герои)                       ✅
 Редактор: Вкладка Items (Предметы)                     ✅
 Редактор: Вкладка Spells (Магия)                       ✅
@@ -324,6 +329,9 @@ DatabaseEditor (Оболочка)                              ✅
 Редактор: Блокировка ввода букв в NumericUpDown        ✅
 Редактор: Ограничение длины ввода (5 символов)         ✅
 Редактор: Стилизация NumericUpDown (скругление, отступы) ✅
+Редактор: Стрелочки + / - снаружи полей (как в Caravan)  ✅
+Редактор: Превью портрета 67x104 в Block Settings      ✅
+Редактор: Фильтр портретов (_blink/_talk/_anim)        ✅
 DatabaseEditor: Вкладка Enemies (Враги)                 📋 план
 BattleEditor                                           📋 план
 SceneEditor                                            📋 план

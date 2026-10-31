@@ -2,10 +2,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:models="using:RpgShinzoMaker.Core.Models.Database"
              xmlns:vm="using:RpgShinzoMaker.Desktop.ViewModels"
+             xmlns:conv="using:RpgShinzoMaker.Desktop.Shared.Converters"
              x:DataType="vm:ActorsViewModel"
              x:Class="RpgShinzoMaker.Desktop.Editors.DatabaseEditor.Views.ActorsPanel">
 
     <UserControl.Resources>
+        <conv:PortraitConverter x:Key="PortraitConverter"/>
+        
         <ControlTheme x:Key="CustomActorItem" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Padding" Value="4,3"/>
@@ -179,22 +182,39 @@
                     <Border Classes="GroupBox" IsVisible="{Binding SelectedBlock, Converter={x:Static ObjectConverters.IsNotNull}}">
                         <StackPanel>
                             <TextBlock Text="Block Settings" Classes="GroupHeader"/>
-                            <Grid ColumnDefinitions="85, *, 60, *" RowDefinitions="Auto, Auto, Auto" HorizontalAlignment="Stretch">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Class:" Margin="0,2"/>
-                                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableClasses}" SelectedValue="{Binding SelectedBlock.ForClass}" SelectedValueBinding="{Binding Id}" Margin="0,2,10,2">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate x:DataType="models:CharacterClass"><TextBlock Text="{Binding Name}"/></DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
+                            <Grid ColumnDefinitions="*, Auto">
+                                
+                                <!-- Левая часть: Class, Mapsprite, Battle Sprite -->
+                                <Grid Grid.Column="0" ColumnDefinitions="85, *" RowDefinitions="Auto, Auto, Auto" Margin="0,0,15,0" VerticalAlignment="Top">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Class:" Margin="0,2"/>
+                                    <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableClasses}" SelectedValue="{Binding SelectedBlock.ForClass}" SelectedValueBinding="{Binding Id}" Margin="0,2">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="models:CharacterClass"><TextBlock Text="{Binding Name}"/></DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
 
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Portrait:" Margin="0,2"/>
-                                <ComboBox Grid.Row="0" Grid.Column="3" ItemsSource="{Binding AvailablePortraits}" SelectedItem="{Binding SelectedBlock.Portrait}" Margin="0,2"/>
-                                
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Mapsprite:" Margin="0,2"/>
-                                <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" ItemsSource="{Binding AvailableMapsprites}" SelectedItem="{Binding SelectedBlock.Mapsprite}" Margin="0,2"/>
-                                
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Battle Sprite:" Margin="0,2"/>
-                                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding SelectedBlock.BattleSpritePath}" Margin="0,2"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Mapsprite:" Margin="0,2"/>
+                                    <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding AvailableMapsprites}" SelectedItem="{Binding SelectedBlock.Mapsprite}" Margin="0,2"/>
+                                    
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Battle Sprite:" Margin="0,2"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedBlock.BattleSpritePath}" Margin="0,2"/>
+                                </Grid>
+
+                                <!-- Правая часть: Надпись СВЕРХУ, Картинка ПОСЕРЕДИНЕ, Список СНИЗУ -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Top" Spacing="4" Width="130">
+                                    
+                                    <!-- Надпись Portrait -->
+                                    <TextBlock Text="Portrait:" HorizontalAlignment="Center" Margin="0,0,0,2"/>
+                                    
+                                    <!-- Картинка -->
+                                    <Border BorderBrush="#555555" BorderThickness="1" CornerRadius="4" Width="69" Height="106" Background="#1E1E1E" HorizontalAlignment="Center">
+                                        <Image Width="67" Height="104" Stretch="Fill" 
+                                               Source="{Binding SelectedBlock.Portrait, Converter={StaticResource PortraitConverter}}" />
+                                    </Border>
+                                    
+                                    <!-- Выпадающий список -->
+                                    <ComboBox ItemsSource="{Binding AvailablePortraits}" SelectedItem="{Binding SelectedBlock.Portrait}" HorizontalAlignment="Stretch" Margin="0,4,0,0"/>
+                                </StackPanel>
                             </Grid>
                         </StackPanel>
                     </Border>
