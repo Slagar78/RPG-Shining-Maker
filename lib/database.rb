@@ -39,11 +39,55 @@ class Database
   def load_actors
     if File.exist?("data/actors/actors.json")
       data = JSON.parse(File.read("data/actors/actors.json"))
-      @actors = data["actors"] || []
+      raw_actors = data["actors"] || []
+
+      @actors = []
+      current_actor = nil
+
+      # Читаем плоский список и собираем блоки в "class_blocks"
+      raw_actors.each do |entry|
+        if entry["id"]
+          # Если есть id — это начало нового персонажа
+          current_actor = entry.dup
+          current_actor["class_blocks"] = { entry["forClass"] => entry }
+          @actors << current_actor
+        elsif current_actor && entry["forClass"]
+          # Если id нет, но есть forClass — это промоушен предыдущего персонажа
+          current_actor["class_blocks"][entry["forClass"]] = entry
+        end
+      end
       puts "Загружено актёров: #{@actors.size}"
     else
       puts "Файл data/actors/actors.json не найден!"
     end
+  end
+
+  # Склеивает базовый блок и блок нужного класса
+  def get_merged_actor(base_actor, class_id)
+    # Берем базовые данные (имя, level, exp и т.д.)
+    merged = base_actor.dup
+    merged.delete("class_blocks") # чистим технический мусор
+
+    # Ищем блок с нужным классом (например, forClass: 9)
+    class_block = base_actor["class_blocks"][class_id]
+    
+    if class_block
+      # Перезаписываем статы, спрайты и портреты из блока промоушена
+      merged.merge!(class_block)
+
+      # Если стоит флаг useFirstSpellList: true, берем магию из базового блока
+      if class_block["useFirstSpellList"] == true
+        base_class_id = base_actor["forClass"]
+        base_block = base_actor["class_blocks"][base_class_id]
+        merged["spell_list"] = base_block ? (base_block["spell_list"] || []) : []
+      end
+    else
+      # Если блока для такого класса нет (например, мы хотим его базовый класс), 
+      # просто оставляем пустой список магии, если его не было
+      merged["spell_list"] ||= []
+    end
+
+    merged
   end
 
   # ---------- классы ----------

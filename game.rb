@@ -116,15 +116,34 @@ class Game
       SetTextureFilter(@message_panel_tex, TEXTURE_FILTER_POINT)
     end
 
-    @party = @db.actors
     @classes_data = @db.classes
     @class_names = {}
     @classes_data.each { |c| @class_names[c["id"]] = c["name"] }
+    
     @start_inventory = []
     if File.exist?("data/actors/start_inventory.json")
       data = JSON.parse(File.read("data/actors/start_inventory.json"))
       @start_inventory = data["start_inventory"] || []
     end
+
+    # ─── ЛОГИКА СБОРКИ ПАРТИИ ───
+    @party = @db.actors.map do |base_actor|
+      # 1. Ищем стартовые данные в инвентаре (узнаем, в каком классе персонаж стартует)
+      inv_entry = @start_inventory.find { |i| i["actor_id"] == base_actor["id"] }
+      
+      # 2. Определяем класс (из start_inventory или дефолтный из actors.json)
+      class_id = inv_entry ? inv_entry["class_id"] : base_actor["forClass"]
+      
+      # 3. Склеиваем базовые данные и блок этого класса
+      merged_actor = @db.get_merged_actor(base_actor, class_id)
+      
+      # 4. Подставляем уровень и финальный class_id
+      merged_actor["level"] = inv_entry["start_level"] if inv_entry && inv_entry["start_level"]
+      merged_actor["class_id"] = class_id
+      
+      merged_actor
+    end
+    # ──────────────────────────────────
 
     @use_menu = UseMenu.new(@font, @db, @party, @classes_data, @class_names, @start_inventory)
     @give_menu = GiveMenu.new(@font, @large_font, @db, @party, @classes_data, @class_names, @start_inventory, @game_text)

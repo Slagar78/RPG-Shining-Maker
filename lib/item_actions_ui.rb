@@ -573,11 +573,10 @@ end
     end
    # общий метод
     def draw_stats_comparison(member, item_bonus_atk, item_bonus_df, y, blink_visible)
-    klass = @classes_data.find { |c| c["id"] == member["class_id"] }
-    if klass && @db
+    if @db
       lv = [(member["level"] || 1), 1].max
-      atk = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
-      df  = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
+      atk = [@db.stat_at_level(member["attack_growth"], lv), 0].max
+      df  = [@db.stat_at_level(member["defense_growth"], lv), 0].max
     else
       atk = 0; df = 0
     end
@@ -694,17 +693,18 @@ def draw_character_list(mode: 0, item_bonus_atk: 0, item_bonus_df: 0)
 	  
       when 1
         klass = @classes_data.find { |c| c["id"] == member["class_id"] }
-        if klass && @db
+        if @db
           lv = [(member["level"] || 1), 1].max
-          hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
-          mp_val  = [@db.stat_at_level(klass["mp_growth"],  lv), 0].max
-          atk_val = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
-          def_val = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
-          agi_val = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+          hp_val  = [@db.stat_at_level(member["hp_growth"],  lv), 0].max
+          mp_val  = [@db.stat_at_level(member["mp_growth"],  lv), 0].max
+          atk_val = [@db.stat_at_level(member["attack_growth"], lv), 0].max
+          def_val = [@db.stat_at_level(member["defense_growth"], lv), 0].max
+          agi_val = [@db.stat_at_level(member["agility_growth"], lv), 0].max
           mov_val = [(klass["move"] || 0), 0].max
         else
           hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
         end
+
         bonuses = calculate_equip_bonuses(member)
         eff_hp  = [hp_val  + bonuses[:hp],      0].max
         eff_mp  = [mp_val  + bonuses[:mp],      0].max
@@ -1685,11 +1685,11 @@ class EquipMenu < ItemSubMenuBase
       items = fill_to_four(find_actor_items(@current_actor))
 
       klass = @classes_data.find { |c| c["id"] == actor_data["class_id"] }
-      if klass && @db
+      if @db
         lv = actor_data["level"] || 1
-        base_atk = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
-        base_def = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
-        base_agi = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+        base_atk = [@db.stat_at_level(actor_data["attack_growth"], lv), 0].max
+        base_def = [@db.stat_at_level(actor_data["defense_growth"], lv), 0].max
+        base_agi = [@db.stat_at_level(actor_data["agility_growth"], lv), 0].max
         base_mov = [(klass["move"] || 0), 0].max
       else
         base_atk = base_def = base_agi = base_mov = 0
@@ -1819,11 +1819,11 @@ class EquipMenu < ItemSubMenuBase
       return unless actor_data
 
       klass = @classes_data.find { |c| c["id"] == actor_data["class_id"] }
-      if klass && @db
+      if @db
         lv = actor_data["level"] || 1
-        base_atk = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
-        base_def = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
-        base_agi = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+        base_atk = [@db.stat_at_level(actor_data["attack_growth"], lv), 0].max
+        base_def = [@db.stat_at_level(actor_data["defense_growth"], lv), 0].max
+        base_agi = [@db.stat_at_level(actor_data["agility_growth"], lv), 0].max
         base_mov = [(klass["move"] || 0), 0].max
       else
         base_atk = base_def = base_agi = base_mov = 0

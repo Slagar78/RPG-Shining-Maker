@@ -402,8 +402,7 @@ end
     @blink_tex = load_blink_portrait(portrait_name)
 
     if actor
-      klass = @classes_data.find { |c| c["id"] == actor["class_id"] }
-      spell_list = (klass && klass["spell_list"]) ? klass["spell_list"] : []
+      spell_list = actor["spell_list"] || []
       @current_spells = spell_list.select { |spell| spell["level"] <= actor["level"] }
     end
   end
@@ -434,8 +433,7 @@ end
       @current_actor = @party[@selected_actor_index]["name"]
       actor = @party.find { |a| a["name"] == @current_actor }
       if actor
-        klass = @classes_data.find { |c| c["id"] == actor["class_id"] }
-        spell_list = (klass && klass["spell_list"]) ? klass["spell_list"] : []
+        spell_list = actor["spell_list"] || []
         @current_spells = spell_list.select { |spell| spell["level"] <= actor["level"] }
       else
         @current_spells = []
@@ -659,17 +657,17 @@ end
         draw_text_centered_h(member["exp"].to_s,    exp_header_center_x,   y, 18, WHITE)
       else
         klass = @classes_data.find { |c| c["id"] == member["class_id"] }
-        if klass && @db
-        lv = [(member["level"] || 1), 1].max
-        hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
-        mp_val  = [@db.stat_at_level(klass["mp_growth"],  lv), 0].max
-        atk_val = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
-        def_val = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
-        agi_val = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
-        mov_val = [(klass["move"] || 0), 0].max
-      else
-        hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
-      end
+        if @db
+          lv = [(member["level"] || 1), 1].max
+          hp_val  = [@db.stat_at_level(member["hp_growth"],  lv), 0].max
+          mp_val  = [@db.stat_at_level(member["mp_growth"],  lv), 0].max
+          atk_val = [@db.stat_at_level(member["attack_growth"], lv), 0].max
+          def_val = [@db.stat_at_level(member["defense_growth"], lv), 0].max
+          agi_val = [@db.stat_at_level(member["agility_growth"], lv), 0].max
+          mov_val = [(klass["move"] || 0), 0].max
+        else
+          hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
+        end
         bonuses = calculate_equip_bonuses(member)
         eff_hp  = [hp_val  + bonuses[:hp],      0].max
         eff_mp  = [mp_val  + bonuses[:mp],      0].max
@@ -1018,13 +1016,13 @@ class Profile
       draw_text_custom(actor_name, name_x, @right_panel_y + 12, 20, WHITE)
 
       # --- базовые статы от класса ---
-      if klass && @db
+      if @db
         lv = [(actor["level"] || 1), 1].max
-        hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
-        mp_val  = [@db.stat_at_level(klass["mp_growth"],  lv), 0].max
-        atk_val = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
-        def_val = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
-        agi_val = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+        hp_val  = [@db.stat_at_level(actor["hp_growth"],  lv), 0].max
+        mp_val  = [@db.stat_at_level(actor["mp_growth"],  lv), 0].max
+        atk_val = [@db.stat_at_level(actor["attack_growth"], lv), 0].max
+        def_val = [@db.stat_at_level(actor["defense_growth"], lv), 0].max
+        agi_val = [@db.stat_at_level(actor["agility_growth"], lv), 0].max
         mov_val = [(klass["move"] || 0), 0].max
       else
         hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
@@ -1080,8 +1078,7 @@ class Profile
       draw_text_custom(movetype_str, extra_x, y_base + small_line * 5 + 8, 15, WHITE)
 
       # Магия и Предметы
-      klass = @classes_data.find { |c| c["id"] == actor["class_id"] }
-      spell_list = (klass && klass["spell_list"]) ? klass["spell_list"] : []
+      spell_list = actor["spell_list"] || []
       spells = spell_list.select { |s| s["level"] <= actor["level"] }
 
       section_y = @right_panel_y + 200
@@ -1479,8 +1476,7 @@ end
     @blink_tex = load_blink_portrait(portrait_name)
 
     if actor
-      klass = @classes_data.find { |c| c["id"] == actor["class_id"] }
-      spell_list = (klass && klass["spell_list"]) ? klass["spell_list"] : []
+      spell_list = actor["spell_list"] || []
       @current_spells = spell_list.select { |spell| spell["level"] <= actor["level"] }
     end
   end
@@ -1509,8 +1505,7 @@ end
       @current_actor = @party[@selected_actor_index]["name"]
       actor = @party.find { |a| a["name"] == @current_actor }
       if actor
-        klass = @classes_data.find { |c| c["id"] == actor["class_id"] }
-        spell_list = (klass && klass["spell_list"]) ? klass["spell_list"] : []
+        spell_list = actor["spell_list"] || []
         @current_spells = spell_list.select { |spell| spell["level"] <= actor["level"] }
       else
         @current_spells = []
@@ -1789,13 +1784,13 @@ end
         draw_text_centered_h(member["exp"].to_s,    exp_header_center_x,   y, 18, LIME)
       else
         klass = @classes_data.find { |c| c["id"] == member["class_id"] }
-        if klass && @db
+        if @db
           lv = [(member["level"] || 1), 1].max
-          hp_val  = [@db.stat_at_level(klass["hp_growth"],  lv), 0].max
-          mp_val  = [@db.stat_at_level(klass["mp_growth"],  lv), 0].max
-          atk_val = [@db.stat_at_level(klass["attack_growth"], lv), 0].max
-          def_val = [@db.stat_at_level(klass["defense_growth"], lv), 0].max
-          agi_val = [@db.stat_at_level(klass["agility_growth"], lv), 0].max
+          hp_val  = [@db.stat_at_level(member["hp_growth"],  lv), 0].max
+          mp_val  = [@db.stat_at_level(member["mp_growth"],  lv), 0].max
+          atk_val = [@db.stat_at_level(member["attack_growth"], lv), 0].max
+          def_val = [@db.stat_at_level(member["defense_growth"], lv), 0].max
+          agi_val = [@db.stat_at_level(member["agility_growth"], lv), 0].max
           mov_val = [(klass["move"] || 0), 0].max
         else
           hp_val = mp_val = atk_val = def_val = agi_val = mov_val = 0
