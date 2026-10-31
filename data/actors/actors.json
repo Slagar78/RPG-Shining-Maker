@@ -1,134 +1,311 @@
 {
-	"actors": [{
-			"id": 0,
-			"name": "Mushra",
-			"forClass": 0,
-			"portrait": "Mushra",
-			"mapsprite": "hero",
-			"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
-			"exp": 0,
-			"kills": 0,
-			"defeats": 0,
-			"hp_growth": { "start": 3, "projected": 58, "curve": "LATE" },
-			"mp_growth": { "start": 9, "projected": 16, "curve": "EARLY" },
-			"attack_growth": { "start": 6, "projected": 40, "curve": "LINEAR" },
-			"defense_growth": { "start": 5, "projected": 36, "curve": "LINEAR" },
-			"agility_growth": { "start": 5, "projected": 32, "curve": "EARLY" },
-			"spell_list": [
-    { "level": 1, "spell_id": 0, "spell_level": 1 },
-    { "level": 1, "spell_id": 1, "spell_level": 2 },
-    { "level": 1, "spell_id": 0, "spell_level": 3 }
-  ]
-		}, {
-			"id": 1,
-			"name": "Sago",
-			"forClass": 1,
-			"portrait": "Saago",
-			"mapsprite": "mapsprite056",
-			"battle_sprite_path": "assets/battles/battlesprites/allies/Jaha",
-			"exp": 0,
-			"kills": 0,
-			"defeats": 0,
-			"hp_growth": { "start": 11, "projected": 41, "curve": "LINEAR" },
-			"mp_growth": { "start": 10, "projected": 42, "curve": "EARLY" },
-			"attack_growth": { "start": 6, "projected": 26, "curve": "LINEAR" },
-			"defense_growth": { "start": 5, "projected": 25, "curve": "LINEAR" },
-			"agility_growth": { "start": 5, "projected": 31, "curve": "LINEAR" },
-			"spell_list": [
-				{ "level": 1, "spell_id": 0, "spell_level": 1 },
-				{ "level": 4, "spell_id": 1, "spell_level": 1 },
-				{ "level": 7, "spell_id": 0, "spell_level": 2 }
-			]
-		}, {
-			"id": 2,
-			"name": "Kutal",
-			"forClass": 2,
-			"portrait": "Kutal",
-			"mapsprite": "mapsprite073",
-			"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
-			"exp": 0,
-			"kills": 0,
-			"defeats": 0,
-			"hp_growth": { "start": 11, "projected": 59, "curve": "LATE" },
-			"mp_growth": { "start": 0, "projected": 0, "curve": "NONE" },
-			"attack_growth": { "start": 5, "projected": 35, "curve": "LINEAR" },
-			"defense_growth": { "start": 5, "projected": 35, "curve": "EARLYANDLATE" },
-			"agility_growth": { "start": 7, "projected": 35, "curve": "LINEAR" },
-			"spell_list": []
-		}, {
-			"id": 3,
-			"name": "Yakumo",
-			"forClass": 3,
-			"portrait": "Yakumo",
-			"mapsprite": "mapsprite002",
-			"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
-			"exp": 0,
-			"kills": 0,
-			"defeats": 0,
-			"hp_growth": { "start": 11, "projected": 59, "curve": "LATE" },
-			"mp_growth": { "start": 0, "projected": 0, "curve": "NONE" },
-			"attack_growth": { "start": 5, "projected": 35, "curve": "LINEAR" },
-			"defense_growth": { "start": 5, "projected": 35, "curve": "EARLYANDLATE" },
-			"agility_growth": { "start": 7, "projected": 35, "curve": "LINEAR" },
-			"spell_list": []
-		}, {
-			"id": 4,
-			"name": "Daku",
-			"forClass": 4,
-			"portrait": "Daku",
-			"mapsprite": "mapsprite155",
-			"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
-			"exp": 0,
-			"kills": 0,
-			"defeats": 0,
-			"hp_growth": { "start": 11, "projected": 59, "curve": "LATE" },
-			"mp_growth": { "start": 2, "projected": 12, "curve": "NONE" },
-			"attack_growth": { "start": 5, "projected": 35, "curve": "LINEAR" },
-			"defense_growth": { "start": 5, "projected": 35, "curve": "EARLYANDLATE" },
-			"agility_growth": { "start": 7, "projected": 35, "curve": "LINEAR" },
-			"spell_list": []
-		}, {
-			"id": 5,
-			"name": "Ryuma",
-			"forClass": 5,
-			"portrait": "Ryuma",
-			"mapsprite": "mapsprite160",
-			"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
-			"exp": 0,
-			"kills": 0,
-			"defeats": 0,
-			"hp_growth": { "start": 11, "projected": 59, "curve": "LATE" },
-			"mp_growth": { "start": 0, "projected": 0, "curve": "NONE" },
-			"attack_growth": { "start": 5, "projected": 38, "curve": "LINEAR" },
-			"defense_growth": { "start": 5, "projected": 35, "curve": "EARLYANDLATE" },
-			"agility_growth": { "start": 7, "projected": 35, "curve": "LINEAR" },
-			"spell_list": []
-		}, {
-			"id": 6,
-			"name": "Rusephina",
-			"forClass": 6,
-			"portrait": "Rusephina",
-			"mapsprite": "mapsprite108",
-			"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
-			"exp": 0,
-			"kills": 0,
-			"defeats": 0,
-			"hp_growth": { "start": 11, "projected": 59, "curve": "LATE" },
-			"mp_growth": { "start": 0, "projected": 0, "curve": "NONE" },
-			"attack_growth": { "start": 5, "projected": 35, "curve": "LINEAR" },
-			"defense_growth": { "start": 5, "projected": 35, "curve": "EARLYANDLATE" },
-			"agility_growth": { "start": 7, "projected": 35, "curve": "LATE" },
-			"spell_list": []
-		}, {
-			"forClass": 9,
-			"portrait": "Rusephina_Promo",
-			"mapsprite": "mapsprite108_promo",
-			"battle_sprite_path": "assets/battles/battlesprites/allies/Rusephina_Promo",
-			"hp_growth": { "start": 25, "projected": 80, "curve": "LINEAR" },
-			"mp_growth": { "start": 10, "projected": 20, "curve": "EARLY" },
-			"attack_growth": { "start": 15, "projected": 45, "curve": "LATE" },
-			"defense_growth": { "start": 12, "projected": 50, "curve": "EARLYANDLATE" },
-			"agility_growth": { "start": 15, "projected": 40, "curve": "LINEAR" },
-			"useFirstSpellList": false
-		}]
+		"actors": [{
+					"id": 0,
+					"name": "Mushra",
+					"exp": 0,
+					"kills": 0,
+					"defeats": 0,
+					"forClass": 0,
+					"portrait": "Mushra",
+					"mapsprite": "hero",
+					"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
+					"hp_growth": {
+							"start": 3,
+							"projected": 58,
+							"curve": "LATE"
+					},
+					"mp_growth": {
+							"start": 9,
+							"projected": 16,
+							"curve": "EARLY"
+					},
+					"attack_growth": {
+							"start": 6,
+							"projected": 40,
+							"curve": "LINEAR"
+					},
+					"defense_growth": {
+							"start": 5,
+							"projected": 36,
+							"curve": "LINEAR"
+					},
+					"agility_growth": {
+							"start": 5,
+							"projected": 32,
+							"curve": "EARLY"
+					},
+					"spell_list": [{
+								"level": 1,
+								"spell_id": 0,
+								"spell_level": 1
+						}, {
+								"level": 1,
+								"spell_id": 1,
+								"spell_level": 2
+						}, {
+								"level": 1,
+								"spell_id": 0,
+								"spell_level": 3
+						}]
+			}, {
+					"id": 1,
+					"name": "Sago",
+					"exp": 0,
+					"kills": 0,
+					"defeats": 0,
+					"forClass": 1,
+					"portrait": "Saago",
+					"mapsprite": "mapsprite056",
+					"battle_sprite_path": "assets/battles/battlesprites/allies/Jaha",
+					"hp_growth": {
+							"start": 11,
+							"projected": 41,
+							"curve": "LINEAR"
+					},
+					"mp_growth": {
+							"start": 10,
+							"projected": 42,
+							"curve": "EARLY"
+					},
+					"attack_growth": {
+							"start": 6,
+							"projected": 26,
+							"curve": "LINEAR"
+					},
+					"defense_growth": {
+							"start": 5,
+							"projected": 25,
+							"curve": "LINEAR"
+					},
+					"agility_growth": {
+							"start": 5,
+							"projected": 31,
+							"curve": "LINEAR"
+					},
+					"spell_list": [{
+								"level": 1,
+								"spell_id": 0,
+								"spell_level": 1
+						}, {
+								"level": 4,
+								"spell_id": 1,
+								"spell_level": 1
+						}, {
+								"level": 7,
+								"spell_id": 0,
+								"spell_level": 2
+						}]
+			}, {
+					"id": 2,
+					"name": "Kutal",
+					"exp": 0,
+					"kills": 0,
+					"defeats": 0,
+					"forClass": 2,
+					"portrait": "Kutal",
+					"mapsprite": "mapsprite073",
+					"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
+					"hp_growth": {
+							"start": 11,
+							"projected": 59,
+							"curve": "LATE"
+					},
+					"mp_growth": {
+							"start": 0,
+							"projected": 0,
+							"curve": "NONE"
+					},
+					"attack_growth": {
+							"start": 5,
+							"projected": 35,
+							"curve": "LINEAR"
+					},
+					"defense_growth": {
+							"start": 5,
+							"projected": 35,
+							"curve": "EARLYANDLATE"
+					},
+					"agility_growth": {
+							"start": 7,
+							"projected": 35,
+							"curve": "LINEAR"
+					},
+					"spell_list": []
+			}, {
+					"id": 3,
+					"name": "Yakumo",
+					"exp": 0,
+					"kills": 0,
+					"defeats": 0,
+					"forClass": 3,
+					"portrait": "Yakumo",
+					"mapsprite": "mapsprite002",
+					"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
+					"hp_growth": {
+							"start": 11,
+							"projected": 59,
+							"curve": "LATE"
+					},
+					"mp_growth": {
+							"start": 0,
+							"projected": 0,
+							"curve": "NONE"
+					},
+					"attack_growth": {
+							"start": 5,
+							"projected": 35,
+							"curve": "LINEAR"
+					},
+					"defense_growth": {
+							"start": 5,
+							"projected": 35,
+							"curve": "EARLYANDLATE"
+					},
+					"agility_growth": {
+							"start": 7,
+							"projected": 35,
+							"curve": "LINEAR"
+					},
+					"spell_list": []
+			}, {
+					"id": 4,
+					"name": "Daku",
+					"exp": 0,
+					"kills": 0,
+					"defeats": 0,
+					"forClass": 4,
+					"portrait": "Daku",
+					"mapsprite": "mapsprite155",
+					"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
+					"hp_growth": {
+							"start": 11,
+							"projected": 59,
+							"curve": "LATE"
+					},
+					"mp_growth": {
+							"start": 2,
+							"projected": 12,
+							"curve": "NONE"
+					},
+					"attack_growth": {
+							"start": 5,
+							"projected": 35,
+							"curve": "LINEAR"
+					},
+					"defense_growth": {
+							"start": 5,
+							"projected": 35,
+							"curve": "EARLYANDLATE"
+					},
+					"agility_growth": {
+							"start": 7,
+							"projected": 35,
+							"curve": "LINEAR"
+					},
+					"spell_list": []
+			}, {
+					"id": 5,
+					"name": "Ryuma",
+					"exp": 0,
+					"kills": 0,
+					"defeats": 0,
+					"forClass": 5,
+					"portrait": "Ryuma",
+					"mapsprite": "mapsprite160",
+					"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
+					"hp_growth": {
+							"start": 11,
+							"projected": 59,
+							"curve": "LATE"
+					},
+					"mp_growth": {
+							"start": 0,
+							"projected": 0,
+							"curve": "NONE"
+					},
+					"attack_growth": {
+							"start": 5,
+							"projected": 38,
+							"curve": "LINEAR"
+					},
+					"defense_growth": {
+							"start": 5,
+							"projected": 35,
+							"curve": "EARLYANDLATE"
+					},
+					"agility_growth": {
+							"start": 7,
+							"projected": 35,
+							"curve": "LINEAR"
+					},
+					"spell_list": []
+			}, {
+					"id": 6,
+					"name": "Rusephina",
+					"exp": 0,
+					"kills": 0,
+					"defeats": 0,
+					"forClass": 6,
+					"portrait": "Rusephina",
+					"mapsprite": "mapsprite108",
+					"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
+					"hp_growth": {
+							"start": 11,
+							"projected": 59,
+							"curve": "LATE"
+					},
+					"mp_growth": {
+							"start": 0,
+							"projected": 0,
+							"curve": "NONE"
+					},
+					"attack_growth": {
+							"start": 5,
+							"projected": 35,
+							"curve": "LINEAR"
+					},
+					"defense_growth": {
+							"start": 5,
+							"projected": 35,
+							"curve": "EARLYANDLATE"
+					},
+					"agility_growth": {
+							"start": 7,
+							"projected": 38,
+							"curve": "LATE"
+					},
+					"spell_list": []
+			}, {
+					"forClass": 9,
+					"portrait": "Rusephina_Promo",
+					"mapsprite": "mapsprite108_promo",
+					"battle_sprite_path": "assets/battles/battlesprites/allies/Rusephina_Promo",
+					"hp_growth": {
+							"start": 25,
+							"projected": 80,
+							"curve": "LINEAR"
+					},
+					"mp_growth": {
+							"start": 10,
+							"projected": 20,
+							"curve": "EARLY"
+					},
+					"attack_growth": {
+							"start": 15,
+							"projected": 45,
+							"curve": "LATE"
+					},
+					"defense_growth": {
+							"start": 12,
+							"projected": 50,
+							"curve": "EARLYANDLATE"
+					},
+					"agility_growth": {
+							"start": 15,
+							"projected": 40,
+							"curve": "LINEAR"
+					},
+					"spell_list": [],
+					"useFirstSpellList": false
+			}]
 }

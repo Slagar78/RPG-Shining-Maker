@@ -10,14 +10,11 @@ public partial class StartInventory : ObservableObject
     [property: JsonPropertyName("actor_id")]
     private int _actorId;
 
-    // ★ ТЕПЕРЬ ID КЛАССА (число), А НЕ СТРОКА ★
     [ObservableProperty]
     [property: JsonPropertyName("class_id")]
     private int _classId;
 
-    [ObservableProperty]
-    [property: JsonPropertyName("level")]
-    private int _level;
+    // ❌ Свойство _level УДАЛЕНО, чтобы не засорять JSON
 
     [ObservableProperty]
     [property: JsonPropertyName("start_level")]
@@ -38,7 +35,6 @@ public partial class StartItem : ObservableObject
         get => _item;
         set
         {
-            // ★ БЛОКИРУЕМ NULL: Если Авалония пытается скинуть пустоту, мы не даем ей это сделать
             if (value == null) return;
 
             if (SetProperty(ref _item, value))

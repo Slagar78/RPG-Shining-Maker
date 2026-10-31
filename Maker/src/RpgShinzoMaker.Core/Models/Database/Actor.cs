@@ -46,8 +46,9 @@ public partial class ActorBlock : ObservableObject
     [property: JsonPropertyName("spell_list")]
     private ObservableCollection<ClassSpell> _spellList = new();
 
-    // Для промоушена, в базовом блоке мы это поле уберём при сохранении
-    [ObservableProperty] private bool _useFirstSpellList = false;
+    [ObservableProperty] 
+    [property: JsonPropertyName("useFirstSpellList")]
+    private bool _useFirstSpellList = false;
 
     [JsonIgnore]
     public string DisplayName => this is Actor ? "Base Class" : $"Promotion (Class {ForClass})";

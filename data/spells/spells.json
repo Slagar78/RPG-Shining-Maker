@@ -1,40 +1,81 @@
 {
-	"spells": [{
-			"id": 0,
-			"name": "Heal",
-			"type": "heal",
-			"icon": "assets/spells/Heal.png",
-			"levels": [
-				{ "level": 1, "mp": 3, "power": 15, "radius": 0, "range": [0, 1] },
-				{ "level": 2, "mp": 5, "power": 15, "radius": 0, "range": [0, 2] },
-				{ "level": 3, "mp": 10, "power": 30, "radius": 0, "range": [0, 3] },
-				{ "level": 4, "mp": 52, "power": 53, "radius": 12, "range": [2, 32] }
-			]
-		}, {
-			"id": 1,
-			"name": "Aura",
-			"type": "heal",
-			"icon": "assets/spells/Aura.png",
-			"levels": [
-				{ "level": 1, "mp": 7, "power": 15, "radius": 1, "range": [0, 3] },
-				{ "level": 2, "mp": 11, "power": 15, "radius": 2, "range": [0, 3] },
-				{ "level": 3, "mp": 5, "power": 5, "radius": 1, "range": [0, 3] }
-			]
-		}, {
-			"id": 2,
-			"name": "magic01",
-			"type": "heal",
-			"icon": "assets/spells/magic_empty.png",
-			"levels": [
-				{ "level": 1, "mp": 5, "power": 5, "radius": 1, "range": [0, 2] }
-			]
-		}, {
-			"id": 3,
-			"name": "Normale",
-			"type": "heal",
-			"icon": "assets/spells/magic_empty.png",
-			"levels": [
-				{ "level": 1, "mp": 5, "power": 5, "radius": 1, "range": [0, 3] }
-			]
-	}]
+		"spells": [{
+					"id": 0,
+					"name": "Heal",
+					"type": "heal",
+					"icon": "assets/spells/Heal.png",
+					"levels": [{
+								"level": 1,
+								"mp": 3,
+								"power": 15,
+								"radius": 0,
+								"range": [0, 1]
+						}, {
+								"level": 2,
+								"mp": 5,
+								"power": 15,
+								"radius": 0,
+								"range": [0, 2]
+						}, {
+								"level": 3,
+								"mp": 10,
+								"power": 30,
+								"radius": 0,
+								"range": [0, 3]
+						}, {
+								"level": 4,
+								"mp": 52,
+								"power": 53,
+								"radius": 12,
+								"range": [2, 32]
+						}]
+			}, {
+					"id": 1,
+					"name": "Aura",
+					"type": "heal",
+					"icon": "assets/spells/Aura.png",
+					"levels": [{
+								"level": 1,
+								"mp": 7,
+								"power": 15,
+								"radius": 1,
+								"range": [0, 3]
+						}, {
+								"level": 2,
+								"mp": 11,
+								"power": 15,
+								"radius": 2,
+								"range": [0, 3]
+						}, {
+								"level": 3,
+								"mp": 5,
+								"power": 5,
+								"radius": 1,
+								"range": [0, 3]
+						}]
+			}, {
+					"id": 2,
+					"name": "magic01",
+					"type": "heal",
+					"icon": "assets/spells/magic_empty.png",
+					"levels": [{
+								"level": 1,
+								"mp": 5,
+								"power": 5,
+								"radius": 1,
+								"range": [0, 2]
+						}]
+			}, {
+					"id": 3,
+					"name": "Normale",
+					"type": "heal",
+					"icon": "assets/spells/magic_empty.png",
+					"levels": [{
+								"level": 1,
+								"mp": 5,
+								"power": 5,
+								"radius": 1,
+								"range": [0, 3]
+						}]
+			}]
 }

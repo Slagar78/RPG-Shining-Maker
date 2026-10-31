@@ -1,143 +1,143 @@
 {
-	"classes": [{
-			"id": 0,
-			"name": "SDMN",
-			"full_name": "SDMN",
-			"move": 9,
-			"move_type": "centaur_archer",
-			"race": "Enterran",
-			"status": "normal",
-			"initial_status": "none",
-			"prowess": ["critical150_1in8", "double_1in16", "counter_1in16"],
-			"resistance": {
-					"wind": "none",
-					"lightning": "minor",
-					"ice": "none",
-					"fire": "major",
-					"aqua": "weakness",
-					"earth": "none",
-					"neutral": "none",
-					"affliction": "immunity"
-			}
-		}, {
-			"id": 1,
-			"name": "SRST",
-			"full_name": "Priest",
-			"move": 4,
-			"move_type": "healer",
-			"race": "Enterran",
-			"status": "normal",
-			"initial_status": "none",
-			"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-			"resistance": {
-					"wind": "none",
-					"lightning": "none",
-					"ice": "none",
-					"fire": "none",
-					"aqua": "none",
-					"earth": "none",
-					"neutral": "none",
-					"affliction": "none"
-			}
-		}, {
-			"id": 2,
-			"name": "WARR",
-			"full_name": "Knight",
-			"move": 7,
-			"move_type": "centaur",
-			"race": "Enterran",
-			"status": "normal",
-			"initial_status": "none",
-			"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-			"resistance": {
-					"wind": "none",
-					"lightning": "none",
-					"ice": "none",
-					"fire": "none",
-					"aqua": "none",
-					"earth": "none",
-					"neutral": "none",
-					"affliction": "none"
-			}
-		}, {
-			"id": 3,
-			"name": "MAGE",
-			"full_name": "Knight",
-			"move": 7,
-			"move_type": "centaur",
-			"race": "Enterran",
-			"status": "normal",
-			"initial_status": "none",
-			"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-			"resistance": {
-					"wind": "none",
-					"lightning": "none",
-					"ice": "none",
-					"fire": "none",
-					"aqua": "none",
-					"earth": "none",
-					"neutral": "none",
-					"affliction": "none"
-			}
-		}, {
-			"id": 4,
-			"name": "BRGT",
-			"full_name": "Knigh",
-			"move": 7,
-			"move_type": "centaur",
-			"race": "Enterran",
-			"status": "normal",
-			"initial_status": "none",
-			"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-			"resistance": {
-					"wind": "none",
-					"lightning": "none",
-					"ice": "none",
-					"fire": "none",
-					"aqua": "none",
-					"earth": "none",
-					"neutral": "none",
-					"affliction": "none"
-			}
-		}, {
-			"id": 5,
-			"name": "WIZ",
-			"full_name": "Knight",
-			"move": 7,
-			"move_type": "centaur",
-			"race": "Enterran",
-			"status": "normal",
-			"initial_status": "none",
-			"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-			"resistance": {
-					"wind": "none",
-					"lightning": "none",
-					"ice": "none",
-					"fire": "none",
-					"aqua": "none",
-					"earth": "none",
-					"neutral": "none",
-					"affliction": "none"
-			}
-		}, {
-			"id": 6,
-			"name": "YZF",
-			"full_name": "Knight",
-			"move": 7,
-			"move_type": "centaur",
-			"race": "Enterran",
-			"status": "normal",
-			"initial_status": "none",
-			"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
-			"resistance": {
-					"wind": "none",
-					"lightning": "none",
-					"ice": "none",
-					"fire": "none",
-					"aqua": "none",
-					"earth": "none",
-					"neutral": "none",
-					"affliction": "none"
-			}
-		}]
+		"classes": [{
+					"id": 0,
+					"name": "SDMN",
+					"full_name": "SDMN",
+					"move": 9,
+					"move_type": "centaur_archer",
+					"race": "Enterran",
+					"status": "normal",
+					"initial_status": "none",
+					"prowess": ["critical150_1in8", "double_1in16", "counter_1in16"],
+					"resistance": {
+							"wind": "none",
+							"lightning": "minor",
+							"ice": "none",
+							"fire": "major",
+							"aqua": "weakness",
+							"earth": "none",
+							"neutral": "none",
+							"affliction": "immunity"
+					}
+			}, {
+					"id": 1,
+					"name": "SRST",
+					"full_name": "Priest",
+					"move": 4,
+					"move_type": "healer",
+					"race": "Enterran",
+					"status": "normal",
+					"initial_status": "none",
+					"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
+					"resistance": {
+							"wind": "none",
+							"lightning": "none",
+							"ice": "none",
+							"fire": "none",
+							"aqua": "none",
+							"earth": "none",
+							"neutral": "none",
+							"affliction": "none"
+					}
+			}, {
+					"id": 2,
+					"name": "WARR",
+					"full_name": "Knight",
+					"move": 7,
+					"move_type": "centaur",
+					"race": "Enterran",
+					"status": "normal",
+					"initial_status": "none",
+					"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
+					"resistance": {
+							"wind": "none",
+							"lightning": "none",
+							"ice": "none",
+							"fire": "none",
+							"aqua": "none",
+							"earth": "none",
+							"neutral": "none",
+							"affliction": "none"
+					}
+			}, {
+					"id": 3,
+					"name": "MAGE",
+					"full_name": "Knight",
+					"move": 7,
+					"move_type": "centaur",
+					"race": "Enterran",
+					"status": "normal",
+					"initial_status": "none",
+					"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
+					"resistance": {
+							"wind": "none",
+							"lightning": "none",
+							"ice": "none",
+							"fire": "none",
+							"aqua": "none",
+							"earth": "none",
+							"neutral": "none",
+							"affliction": "none"
+					}
+			}, {
+					"id": 4,
+					"name": "BRGT",
+					"full_name": "Knigh",
+					"move": 7,
+					"move_type": "centaur",
+					"race": "Enterran",
+					"status": "normal",
+					"initial_status": "none",
+					"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
+					"resistance": {
+							"wind": "none",
+							"lightning": "none",
+							"ice": "none",
+							"fire": "none",
+							"aqua": "none",
+							"earth": "none",
+							"neutral": "none",
+							"affliction": "none"
+					}
+			}, {
+					"id": 5,
+					"name": "WIZ",
+					"full_name": "Knight",
+					"move": 7,
+					"move_type": "centaur",
+					"race": "Enterran",
+					"status": "normal",
+					"initial_status": "none",
+					"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
+					"resistance": {
+							"wind": "none",
+							"lightning": "none",
+							"ice": "none",
+							"fire": "none",
+							"aqua": "none",
+							"earth": "none",
+							"neutral": "none",
+							"affliction": "none"
+					}
+			}, {
+					"id": 6,
+					"name": "YZF",
+					"full_name": "Knight",
+					"move": 7,
+					"move_type": "centaur",
+					"race": "Enterran",
+					"status": "normal",
+					"initial_status": "none",
+					"prowess": ["critical150_1in32", "double_1in32", "counter_1in32"],
+					"resistance": {
+							"wind": "none",
+							"lightning": "none",
+							"ice": "none",
+							"fire": "none",
+							"aqua": "none",
+							"earth": "none",
+							"neutral": "none",
+							"affliction": "none"
+					}
+			}]
 }
