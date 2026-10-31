@@ -26,39 +26,46 @@
             <Setter Property="Foreground" Value="#E0E0E0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+        
+        <!-- ОБНОВЛЕННЫЙ СТИЛЬ TEXTBOX -->
         <Style Selector="TextBox">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Background" Value="#333333"/>
             <Setter Property="BorderBrush" Value="#555555"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="White"/>
-        </Style>
-        <Style Selector="ComboBox">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="Height" Value="24"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="#333333"/>
-            <Setter Property="BorderBrush" Value="#555555"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/> <!-- Скругление -->
         </Style>
         
+        <!-- СТИЛЬ ДЛЯ ЧИСЛОВЫХ ПОЛЕЙ -->
         <Style Selector="TextBox.NumBox">
+            <Setter Property="TextAlignment" Value="Center"/>
             <Setter Property="Width" Value="50"/>
-            <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- ОБНОВЛЕННЫЙ СТИЛЬ COMBOBOX -->
+        <Style Selector="ComboBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/> <!-- Скругление -->
         </Style>
 
         <Style Selector="Border.GroupBox">
             <Setter Property="BorderBrush" Value="#3E3E42"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="3"/>
-            <Setter Property="Padding" Value="6"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
             <Setter Property="Margin" Value="0,0,0,8"/>
             <Setter Property="Background" Value="#252526"/>
         </Style>
@@ -71,7 +78,7 @@
 
     <Grid ColumnDefinitions="220, *" Background="#1E1E1E">
         
-        <!-- ЛЕВАЯ КОЛОНКА -->
+        <!-- ЛЕВАЯ КОЛОНКА (СПИСОК) -->
         <Grid Grid.Column="0" RowDefinitions="Auto, *" Background="#1E1E1E" Margin="2">
             <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="2">
                 <Button Content="Add" Background="#4CAF50" Foreground="White" FontSize="11" Padding="8,2" Height="22" Command="{Binding AddClassCommand}"/>
@@ -101,27 +108,44 @@
             </ListBox>
         </Grid>
 
-        <!-- ПРАВАЯ КОЛОНКА -->
+        <!-- ПРАВАЯ КОЛОНКА (СВОЙСТВА) -->
         <ScrollViewer Grid.Column="1" IsVisible="{Binding SelectedClass, Converter={x:Static ObjectConverters.IsNotNull}}" Margin="5">
             <StackPanel>
                 
-                <!-- GENERAL -->
+                <!-- GENERAL SETTINGS -->
                 <Border Classes="GroupBox">
                     <StackPanel>
                         <TextBlock Text="General Settings" Classes="GroupHeader"/>
-                        <!-- ИЗМЕНЕНИЕ 1: ColumnDefinitions="80, 80, 80, 150" - вторая колонка сузилась со 150 до 80 -->
-                        <Grid ColumnDefinitions="80, 80, 80, 150" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
+                        
+                        <Grid ColumnDefinitions="Auto, 120, Auto, Auto, Auto, 150" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
                             
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" Margin="0,2"/>
-                            <!-- ИЗМЕНЕНИЕ 2: Добавлен MaxLength="8" -->
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedClass.Name}" MaxLength="8" Margin="0,2,10,2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" Margin="0,2,8,2"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedClass.Name}" MaxLength="8" Margin="0,2,15,2"/>
 
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Full Name:" Margin="0,2"/>
-                            <!-- Поле Full Name осталось без изменений (широкое) -->
-                            <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding SelectedClass.FullName}" Margin="0,2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="ID:" Margin="0,2,8,2"/>
+                            <Border Grid.Row="0" Grid.Column="3" Background="#007ACC" CornerRadius="4" Padding="8,2" VerticalAlignment="Center" Margin="0,0,15,0">
+                                <TextBlock Text="{Binding SelectedClass.Id}" Foreground="White" FontWeight="Bold" />
+                            </Border>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Move:" Margin="0,2"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedClass.Move}" Classes="NumBox" MaxLength="2" Margin="0,2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="4" Text="Full Name:" Margin="0,2,8,2"/>
+                            <TextBox Grid.Row="0" Grid.Column="5" Text="{Binding SelectedClass.FullName}" Margin="0,2"/>
+
+                            <!-- ИЗМЕНЕННЫЙ БЛОК MOVE -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Move:" Margin="0,2,8,2"/>
+                            
+                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,2">
+                                <TextBox Text="{Binding SelectedClass.Move, Mode=TwoWay}" Classes="NumBox" MaxLength="3" Width="50" />
+                                
+                                <!-- Стрелочки СНАРУЖИ поля -->
+                                <Grid RowDefinitions="*, *" Width="20">
+                                    <Button Grid.Row="0" Content="▲" Command="{Binding IncrementMoveCommand}" 
+                                            FontSize="8" Padding="0" Height="12" Background="#444444" Foreground="White" 
+                                            CornerRadius="2" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+                                    <Button Grid.Row="1" Content="▼" Command="{Binding DecrementMoveCommand}" 
+                                            FontSize="8" Padding="0" Height="12" Background="#444444" Foreground="White" 
+                                            CornerRadius="2" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Margin="0,2,0,0"/>
+                                </Grid>
+                            </StackPanel>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -150,7 +174,6 @@
                     <Border Grid.Column="1" Classes="GroupBox" Margin="4,0,0,8">
                         <StackPanel>
                             <TextBlock Text="Resistance" Classes="GroupHeader"/>
-                            <!-- ЗДЕСЬ ИЗМЕНЕНИЕ: Добавлена третья колонка * -->
                             <Grid ColumnDefinitions="80, 100, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" HorizontalAlignment="Left">
                                 
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Wind:" Margin="0,1"/>
@@ -184,7 +207,6 @@
                                 <TextBlock Grid.Row="7" Grid.Column="0" Text="Affliction:" Margin="0,1"/>
                                 <ComboBox Grid.Row="7" Grid.Column="1" ItemsSource="{Binding Resistances}" SelectedItem="{Binding SelectedClass.Resistance.Affliction}" Margin="0,1"/>
                                 <TextBlock Grid.Row="7" Grid.Column="2" Text="{Binding SelectedClass.Resistance.Affliction}" Foreground="#81C784" FontWeight="Bold" VerticalAlignment="Center" Margin="5,1"/>
-                                
                             </Grid>
                         </StackPanel>
                     </Border>

@@ -113,4 +113,29 @@ public partial class ItemsViewModel : ObservableObject
         Items.Remove(SelectedItem);
         SelectedItem = Items.FirstOrDefault();
     }
+
+    // ==========================================
+    // КОМАНДЫ ДЛЯ СТРЕЛОЧЕК (PRICE И STATS)
+    // ==========================================
+
+    [RelayCommand] private void IncrementPrice() { if (SelectedItem != null) SelectedItem.Price++; }
+    [RelayCommand] private void DecrementPrice() { if (SelectedItem != null && SelectedItem.Price > 0) SelectedItem.Price--; }
+
+    [RelayCommand] private void IncrementAttack() { if (SelectedItem != null) SelectedItem.Attack++; }
+    [RelayCommand] private void DecrementAttack() { if (SelectedItem != null) SelectedItem.Attack--; }
+
+    [RelayCommand] private void IncrementDefense() { if (SelectedItem != null) SelectedItem.Defense++; }
+    [RelayCommand] private void DecrementDefense() { if (SelectedItem != null) SelectedItem.Defense--; }
+
+    [RelayCommand] private void IncrementHp() { if (SelectedItem != null) SelectedItem.Hp++; }
+    [RelayCommand] private void DecrementHp() { if (SelectedItem != null) SelectedItem.Hp--; }
+
+    [RelayCommand] private void IncrementMp() { if (SelectedItem != null) SelectedItem.Mp++; }
+    [RelayCommand] private void DecrementMp() { if (SelectedItem != null) SelectedItem.Mp--; }
+
+    [RelayCommand] private void IncrementAgility() { if (SelectedItem != null) SelectedItem.Agility++; }
+    [RelayCommand] private void DecrementAgility() { if (SelectedItem != null) SelectedItem.Agility--; }
+
+    [RelayCommand] private void IncrementMov() { if (SelectedItem != null) SelectedItem.Mov++; }
+    [RelayCommand] private void DecrementMov() { if (SelectedItem != null) SelectedItem.Mov--; }
 }

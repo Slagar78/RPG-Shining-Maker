@@ -26,31 +26,63 @@
             <Setter Property="Foreground" Value="#E0E0E0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+        
+        <!-- СОВРЕМЕННЫЙ СТИЛЬ TEXTBOX -->
         <Style Selector="TextBox">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Background" Value="#333333"/>
             <Setter Property="BorderBrush" Value="#555555"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
         </Style>
+        
+        <!-- СТИЛЬ ДЛЯ ЧИСЛОВЫХ ПОЛЕЙ -->
+        <Style Selector="TextBox.NumBox">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Width" Value="60"/>
+        </Style>
+
+        <!-- СТИЛЬ ДЛЯ КНОПОК-СТРЕЛОЧЕК -->
+        <Style Selector="Button.ArrowBtn">
+            <Setter Property="Background" Value="#444444"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="12"/>
+            <Setter Property="FontSize" Value="8"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.ArrowBtn:pointerover">
+            <Setter Property="Background" Value="#666666"/>
+        </Style>
+
+        <!-- СОВРЕМЕННЫЙ СТИЛЬ COMBOBOX -->
         <Style Selector="ComboBox">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Background" Value="#333333"/>
             <Setter Property="BorderBrush" Value="#555555"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
         </Style>
+
         <Style Selector="Border.GroupBox">
             <Setter Property="BorderBrush" Value="#3E3E42"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="3"/>
-            <Setter Property="Padding" Value="6"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
             <Setter Property="Margin" Value="0,0,0,8"/>
             <Setter Property="Background" Value="#252526"/>
         </Style>
@@ -59,18 +91,11 @@
             <Setter Property="Foreground" Value="#007ACC"/>
             <Setter Property="Margin" Value="0,0,0,6"/>
         </Style>
-        <!-- Стиль для маленьких числовых полей -->
-        <Style Selector="TextBox.NumBox">
-            <Setter Property="Width" Value="45"/>
-            <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        </Style>
     </UserControl.Styles>
 
     <Grid ColumnDefinitions="220, *" Background="#1E1E1E">
         
-        <!-- ЛЕВАЯ КОЛОНКА -->
+        <!-- ЛЕВАЯ КОЛОНКА (СПИСОК) -->
         <Grid Grid.Column="0" RowDefinitions="Auto, *" Background="#1E1E1E" Margin="2">
             <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="2">
                 <Button Content="Add" Background="#4CAF50" Foreground="White" FontSize="11" Padding="8,2" Height="22" Command="{Binding AddItemCommand}"/>
@@ -101,89 +126,132 @@
             </ListBox>
         </Grid>
 
-        <!-- ПРАВАЯ КОЛОНКА -->
+        <!-- ПРАВАЯ КОЛОНКА (СВОЙСТВА) -->
         <ScrollViewer Grid.Column="1" IsVisible="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Margin="5">
             <StackPanel>
                 
-                <!-- General Settings -->
+                <!-- GENERAL SETTINGS -->
                 <Border Classes="GroupBox">
                     <StackPanel>
                         <TextBlock Text="General Settings" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="80, 150, 80, 120" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
+                        <Grid ColumnDefinitions="Auto, 120, Auto, Auto, Auto, 120" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
                             
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" Margin="0,2"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedItem.Name}" Margin="0,2,10,2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" Margin="0,2,8,2"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedItem.Name}" Margin="0,2,15,2"/>
                             
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Category:" Margin="0,2"/>
-                            <ComboBox Grid.Row="0" Grid.Column="3" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedItem.Category}" Margin="0,2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="ID:" Margin="0,2,8,2"/>
+                            <Border Grid.Row="0" Grid.Column="3" Background="#007ACC" CornerRadius="4" Padding="8,2" VerticalAlignment="Center" Margin="0,0,15,0">
+                                <TextBlock Text="{Binding SelectedItem.Id}" Foreground="White" FontWeight="Bold" />
+                            </Border>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Icon:" Margin="0,2"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedItem.Icon}" Margin="0,2,10,2" Grid.ColumnSpan="3"/>
+                            <TextBlock Grid.Row="0" Grid.Column="4" Text="Category:" Margin="0,2,8,2"/>
+                            <ComboBox Grid.Row="0" Grid.Column="5" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedItem.Category}" Margin="0,2"/>
+
+                            <!-- PRICE СО СТРЕЛОЧКАМИ -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Price:" Margin="0,2,8,2"/>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,2,15,2">
+                                <TextBox Text="{Binding SelectedItem.Price}" MaxLength="6" Classes="NumBox" />
+                                <Grid RowDefinitions="*, *" Width="20">
+                                    <Button Grid.Row="0" Content="▲" Command="{Binding IncrementPriceCommand}" Classes="ArrowBtn"/>
+                                    <Button Grid.Row="1" Content="▼" Command="{Binding DecrementPriceCommand}" Classes="ArrowBtn" Margin="0,2,0,0"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Icon:" Margin="0,2,8,2"/>
+                            <TextBox Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3" Text="{Binding SelectedItem.Icon}" Margin="0,2"/>
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <!-- Effect and Range -->
+                <!-- EFFECT AND RANGE -->
                 <Border Classes="GroupBox">
                     <StackPanel>
                         <TextBlock Text="Effect and Range" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="80, 150, 80, 60" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
+                        <Grid ColumnDefinitions="Auto, 180, Auto, Auto" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
                             
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Use Spell:" Margin="0,2"/>
-                            <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableSpells}" SelectedItem="{Binding SelectedItem.UseSpell}" Margin="0,2,10,2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Use Spell:" Margin="0,2,8,2"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableSpells}" SelectedItem="{Binding SelectedItem.UseSpell}" Margin="0,2,15,2" HorizontalAlignment="Stretch"/>
 
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Spell Level:" Margin="0,2"/>
-                            <!-- Максимум 3 символа, ширина 45 -->
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Spell Level:" Margin="0,2,8,2"/>
                             <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding SelectedItem.SpellLevel}" MaxLength="3" Classes="NumBox" Margin="0,2"/>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Range Min:" Margin="0,2"/>
-                            <!-- Максимум 3 символа, ширина 45 -->
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedItem.RangeMin}" MaxLength="3" Classes="NumBox" Margin="0,2,10,2"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Range Min:" Margin="0,2,8,2"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedItem.RangeMin}" MaxLength="3" Classes="NumBox" HorizontalAlignment="Left" Margin="0,2,15,2"/>
 
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Range Max:" Margin="0,2"/>
-                            <!-- Максимум 3 символа, ширина 45 -->
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Range Max:" Margin="0,2,8,2"/>
                             <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding SelectedItem.RangeMax}" MaxLength="3" Classes="NumBox" Margin="0,2"/>
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <!-- Stats (Видимы только для оружия и колец) -->
+                <!-- EQUIPMENT STATS (Видимы только для Weapon и Ring) -->
                 <Border Classes="GroupBox" IsVisible="{Binding SelectedItem.IsEquipment}">
                     <StackPanel>
                         <TextBlock Text="Equipment Stats" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="50, 60, 50, 60, 80, 100" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
+                        
+                        <!-- СЕТКА СО СТРЕЛОЧКАМИ ДЛЯ 6 СТАТОВ -->
+                        <Grid ColumnDefinitions="Auto, Auto, 15, Auto, Auto, 15, Auto, Auto" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
                             
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Price:" Margin="0,2"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedItem.Price}" Classes="NumBox" Margin="0,2,10,2"/>
-
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="ATK:" Margin="0,2"/>
-                            <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding SelectedItem.Attack}" Classes="NumBox" Margin="0,2,10,2"/>
-
-                            <TextBlock Grid.Row="0" Grid.Column="4" Text="DEF:" Margin="0,2"/>
-                            <TextBox Grid.Row="0" Grid.Column="5" Text="{Binding SelectedItem.Defense}" Classes="NumBox" Margin="0,2"/>
-
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="HP:" Margin="0,2"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedItem.Hp}" Classes="NumBox" Margin="0,2,10,2"/>
-
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="MP:" Margin="0,2"/>
-                            <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding SelectedItem.Mp}" Classes="NumBox" Margin="0,2,10,2"/>
-
-                            <TextBlock Grid.Row="1" Grid.Column="4" Text="AGI/MOV:" Margin="0,2"/>
-                            <StackPanel Grid.Row="1" Grid.Column="5" Orientation="Horizontal" Spacing="4">
-                                <TextBox Text="{Binding SelectedItem.Agility}" Width="40" Margin="0,2"/>
-                                <TextBox Text="{Binding SelectedItem.Mov}" Width="40" Margin="0,2"/>
+                            <!-- ATK -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="ATK:" Margin="0,2,8,2"/>
+                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,2">
+                                <TextBox Text="{Binding SelectedItem.Attack}" MaxLength="4" Classes="NumBox" Width="50"/>
+                                <Grid RowDefinitions="*, *" Width="20">
+                                    <Button Grid.Row="0" Content="▲" Command="{Binding IncrementAttackCommand}" Classes="ArrowBtn"/>
+                                    <Button Grid.Row="1" Content="▼" Command="{Binding DecrementAttackCommand}" Classes="ArrowBtn" Margin="0,2,0,0"/>
+                                </Grid>
                             </StackPanel>
-                        </Grid>
-                    </StackPanel>
-                </Border>
 
-                <!-- Price для расходников -->
-                <Border Classes="GroupBox" IsVisible="{Binding !SelectedItem.IsEquipment}">
-                    <StackPanel>
-                        <TextBlock Text="Consumable Stats" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="80, 150" RowDefinitions="Auto" HorizontalAlignment="Left">
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Price:" Margin="0,2"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedItem.Price}" Classes="NumBox" Margin="0,2"/>
+                            <!-- DEF -->
+                            <TextBlock Grid.Row="0" Grid.Column="3" Text="DEF:" Margin="0,2,8,2"/>
+                            <StackPanel Grid.Row="0" Grid.Column="4" Orientation="Horizontal" Spacing="2" Margin="0,2">
+                                <TextBox Text="{Binding SelectedItem.Defense}" MaxLength="4" Classes="NumBox" Width="50"/>
+                                <Grid RowDefinitions="*, *" Width="20">
+                                    <Button Grid.Row="0" Content="▲" Command="{Binding IncrementDefenseCommand}" Classes="ArrowBtn"/>
+                                    <Button Grid.Row="1" Content="▼" Command="{Binding DecrementDefenseCommand}" Classes="ArrowBtn" Margin="0,2,0,0"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- HP -->
+                            <TextBlock Grid.Row="0" Grid.Column="6" Text="HP:" Margin="0,2,8,2"/>
+                            <StackPanel Grid.Row="0" Grid.Column="7" Orientation="Horizontal" Spacing="2" Margin="0,2">
+                                <TextBox Text="{Binding SelectedItem.Hp}" MaxLength="4" Classes="NumBox" Width="50"/>
+                                <Grid RowDefinitions="*, *" Width="20">
+                                    <Button Grid.Row="0" Content="▲" Command="{Binding IncrementHpCommand}" Classes="ArrowBtn"/>
+                                    <Button Grid.Row="1" Content="▼" Command="{Binding DecrementHpCommand}" Classes="ArrowBtn" Margin="0,2,0,0"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- MP -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="MP:" Margin="0,2,8,2"/>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,2">
+                                <TextBox Text="{Binding SelectedItem.Mp}" MaxLength="4" Classes="NumBox" Width="50"/>
+                                <Grid RowDefinitions="*, *" Width="20">
+                                    <Button Grid.Row="0" Content="▲" Command="{Binding IncrementMpCommand}" Classes="ArrowBtn"/>
+                                    <Button Grid.Row="1" Content="▼" Command="{Binding DecrementMpCommand}" Classes="ArrowBtn" Margin="0,2,0,0"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- AGI -->
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="AGI:" Margin="0,2,8,2"/>
+                            <StackPanel Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Spacing="2" Margin="0,2">
+                                <TextBox Text="{Binding SelectedItem.Agility}" MaxLength="4" Classes="NumBox" Width="50"/>
+                                <Grid RowDefinitions="*, *" Width="20">
+                                    <Button Grid.Row="0" Content="▲" Command="{Binding IncrementAgilityCommand}" Classes="ArrowBtn"/>
+                                    <Button Grid.Row="1" Content="▼" Command="{Binding DecrementAgilityCommand}" Classes="ArrowBtn" Margin="0,2,0,0"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- MOV -->
+                            <TextBlock Grid.Row="1" Grid.Column="6" Text="MOV:" Margin="0,2,8,2"/>
+                            <StackPanel Grid.Row="1" Grid.Column="7" Orientation="Horizontal" Spacing="2" Margin="0,2">
+                                <TextBox Text="{Binding SelectedItem.Mov}" MaxLength="4" Classes="NumBox" Width="50"/>
+                                <Grid RowDefinitions="*, *" Width="20">
+                                    <Button Grid.Row="0" Content="▲" Command="{Binding IncrementMovCommand}" Classes="ArrowBtn"/>
+                                    <Button Grid.Row="1" Content="▼" Command="{Binding DecrementMovCommand}" Classes="ArrowBtn" Margin="0,2,0,0"/>
+                                </Grid>
+                            </StackPanel>
+                            
                         </Grid>
                     </StackPanel>
                 </Border>

@@ -11,7 +11,6 @@ public partial class ActorsPanel : UserControl
     {
         InitializeComponent();
         
-        // Перехватываем ввод текста на уровне всей панели
         AddHandler(TextInputEvent, OnTextInput, RoutingStrategies.Tunnel);
     }
 
@@ -19,26 +18,11 @@ public partial class ActorsPanel : UserControl
     {
         if (string.IsNullOrEmpty(e.Text)) return;
 
-        // Проверяем, куда именно идет ввод
-        if (e.Source is TextBox textBox)
+        if (e.Source is TextBox textBox && textBox.Classes.Contains("NumBox"))
         {
-            var parent = textBox.Parent;
-            while (parent != null)
+            if (!e.Text.All(char.IsDigit) || textBox.Text?.Length >= 5)
             {
-                if (parent is NumericUpDown)
-                {
-                    // Если мы внутри NumericUpDown, разрешаем ТОЛЬКО цифры
-                    if (!e.Text.All(char.IsDigit))
-                    {
-                        e.Handled = true; // Блокируем ввод буквы
-                    }
-                    break;
-                }
-                
-                if (parent is Control control)
-                    parent = control.Parent;
-                else
-                    break;
+                e.Handled = true;
             }
         }
     }

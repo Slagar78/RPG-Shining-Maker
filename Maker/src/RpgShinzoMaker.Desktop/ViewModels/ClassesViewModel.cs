@@ -73,4 +73,21 @@ public partial class ClassesViewModel : ObservableObject
         Classes.Remove(SelectedClass);
         SelectedClass = Classes.FirstOrDefault();
     }
+
+    // --- НОВЫЕ КОМАНДЫ ДЛЯ СТРЕЛОЧЕК MOVE ---
+
+    [RelayCommand]
+    private void IncrementMove()
+    {
+        if (SelectedClass != null)
+            SelectedClass.Move++;
+    }
+
+    [RelayCommand]
+    private void DecrementMove()
+    {
+        // Защита от ухода в минус
+        if (SelectedClass != null && SelectedClass.Move > 0)
+            SelectedClass.Move--;
+    }
 }

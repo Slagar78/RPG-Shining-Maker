@@ -34,7 +34,6 @@ public partial class ActorsViewModel : ObservableObject
     public ObservableCollection<Spell> AvailableSpells { get; } = new();
     public ObservableCollection<string> Curves { get; } = new() { "LINEAR", "LATE", "EARLY", "MIDDLE", "EARLYANDLATE", "VERY_LATE", "MIDDLE_PEAK", "NONE" };
 
-    // Список блоков (Base + Promotions) для выбранного актера
     public ObservableCollection<ActorBlock> BlocksForSelectedActor { get; } = new();
 
     private List<StartInventory> _startInventories = new();
@@ -63,7 +62,7 @@ public partial class ActorsViewModel : ObservableObject
         BlocksForSelectedActor.Clear();
         if (value != null)
         {
-            BlocksForSelectedActor.Add(value); // Base
+            BlocksForSelectedActor.Add(value);
             foreach (var promo in value.Promotions)
                 BlocksForSelectedActor.Add(promo);
             SelectedBlock = value;
@@ -106,7 +105,6 @@ public partial class ActorsViewModel : ObservableObject
 
         _startInventories = _actorsService.LoadStartInventory(_inventoryPath);
         
-        // Собираем все предметы из инвентарей, чтобы ComboBox их видел
         foreach (var inv in _startInventories)
         {
             if (inv.Items == null) continue;
@@ -161,10 +159,6 @@ public partial class ActorsViewModel : ObservableObject
         CurrentInventory = inv;
     }
 
-    // ==========================================
-    // КОМАНДЫ ДЛЯ УПРАВЛЕНИЯ АКТЁРАМИ
-    // ==========================================
-
     [RelayCommand]
     private void AddActor()
     {
@@ -204,26 +198,6 @@ public partial class ActorsViewModel : ObservableObject
         SelectedActor = Actors.FirstOrDefault();
     }
 
-    // ==========================================
-    // КОМАНДЫ ДЛЯ СТАРТОВОГО УРОВНЯ
-    // ==========================================
-
-    [RelayCommand] 
-    private void IncrementStartLevel() 
-    { 
-        if (CurrentInventory != null && CurrentInventory.StartLevel < 999) CurrentInventory.StartLevel++; 
-    }
-    
-    [RelayCommand] 
-    private void DecrementStartLevel() 
-    { 
-        if (CurrentInventory != null && CurrentInventory.StartLevel > 1) CurrentInventory.StartLevel--; 
-    }
-
-    // ==========================================
-    // КОМАНДЫ ДЛЯ ПРОМОУШЕНОВ И МАГИИ
-    // ==========================================
-
     [RelayCommand]
     private void AddPromotion()
     {
@@ -246,7 +220,7 @@ public partial class ActorsViewModel : ObservableObject
         if (SelectedActor == null || SelectedBlock is not ActorPromotion promo) return;
         SelectedActor.Promotions.Remove(promo);
         BlocksForSelectedActor.Remove(promo);
-        SelectedBlock = SelectedActor; // Возвращаемся к базовому блоку
+        SelectedBlock = SelectedActor;
     }
 
     [RelayCommand]
@@ -262,4 +236,56 @@ public partial class ActorsViewModel : ObservableObject
         if (SelectedBlock == null || spell == null) return;
         SelectedBlock.SpellList.Remove(spell);
     }
+
+    // ==========================================
+    // КОМАНДЫ ДЛЯ СТРЕЛОЧЕК (АКТЁР)
+    // ==========================================
+    [RelayCommand] private void IncrementExp() { if (SelectedActor != null) SelectedActor.Exp++; }
+    [RelayCommand] private void DecrementExp() { if (SelectedActor != null && SelectedActor.Exp > 0) SelectedActor.Exp--; }
+
+    [RelayCommand] private void IncrementKills() { if (SelectedActor != null) SelectedActor.Kills++; }
+    [RelayCommand] private void DecrementKills() { if (SelectedActor != null && SelectedActor.Kills > 0) SelectedActor.Kills--; }
+
+    [RelayCommand] private void IncrementDefeats() { if (SelectedActor != null) SelectedActor.Defeats++; }
+    [RelayCommand] private void DecrementDefeats() { if (SelectedActor != null && SelectedActor.Defeats > 0) SelectedActor.Defeats--; }
+
+    [RelayCommand] private void IncrementStartLevel() { if (CurrentInventory != null) CurrentInventory.StartLevel++; }
+    [RelayCommand] private void DecrementStartLevel() { if (CurrentInventory != null && CurrentInventory.StartLevel > 1) CurrentInventory.StartLevel--; }
+
+    // ==========================================
+    // КОМАНДЫ ДЛЯ СТРЕЛОЧЕК (STATS)
+    // ==========================================
+    [RelayCommand] private void IncHpStart() { if (SelectedBlock != null) SelectedBlock.HpGrowth.Start++; }
+    [RelayCommand] private void DecHpStart() { if (SelectedBlock != null && SelectedBlock.HpGrowth.Start > 0) SelectedBlock.HpGrowth.Start--; }
+    [RelayCommand] private void IncHpProj() { if (SelectedBlock != null) SelectedBlock.HpGrowth.Projected++; }
+    [RelayCommand] private void DecHpProj() { if (SelectedBlock != null && SelectedBlock.HpGrowth.Projected > 0) SelectedBlock.HpGrowth.Projected--; }
+
+    [RelayCommand] private void IncMpStart() { if (SelectedBlock != null) SelectedBlock.MpGrowth.Start++; }
+    [RelayCommand] private void DecMpStart() { if (SelectedBlock != null && SelectedBlock.MpGrowth.Start > 0) SelectedBlock.MpGrowth.Start--; }
+    [RelayCommand] private void IncMpProj() { if (SelectedBlock != null) SelectedBlock.MpGrowth.Projected++; }
+    [RelayCommand] private void DecMpProj() { if (SelectedBlock != null && SelectedBlock.MpGrowth.Projected > 0) SelectedBlock.MpGrowth.Projected--; }
+
+    [RelayCommand] private void IncAtkStart() { if (SelectedBlock != null) SelectedBlock.AttackGrowth.Start++; }
+    [RelayCommand] private void DecAtkStart() { if (SelectedBlock != null && SelectedBlock.AttackGrowth.Start > 0) SelectedBlock.AttackGrowth.Start--; }
+    [RelayCommand] private void IncAtkProj() { if (SelectedBlock != null) SelectedBlock.AttackGrowth.Projected++; }
+    [RelayCommand] private void DecAtkProj() { if (SelectedBlock != null && SelectedBlock.AttackGrowth.Projected > 0) SelectedBlock.AttackGrowth.Projected--; }
+
+    [RelayCommand] private void IncDefStart() { if (SelectedBlock != null) SelectedBlock.DefenseGrowth.Start++; }
+    [RelayCommand] private void DecDefStart() { if (SelectedBlock != null && SelectedBlock.DefenseGrowth.Start > 0) SelectedBlock.DefenseGrowth.Start--; }
+    [RelayCommand] private void IncDefProj() { if (SelectedBlock != null) SelectedBlock.DefenseGrowth.Projected++; }
+    [RelayCommand] private void DecDefProj() { if (SelectedBlock != null && SelectedBlock.DefenseGrowth.Projected > 0) SelectedBlock.DefenseGrowth.Projected--; }
+
+    [RelayCommand] private void IncAgiStart() { if (SelectedBlock != null) SelectedBlock.AgilityGrowth.Start++; }
+    [RelayCommand] private void DecAgiStart() { if (SelectedBlock != null && SelectedBlock.AgilityGrowth.Start > 0) SelectedBlock.AgilityGrowth.Start--; }
+    [RelayCommand] private void IncAgiProj() { if (SelectedBlock != null) SelectedBlock.AgilityGrowth.Projected++; }
+    [RelayCommand] private void DecAgiProj() { if (SelectedBlock != null && SelectedBlock.AgilityGrowth.Projected > 0) SelectedBlock.AgilityGrowth.Projected--; }
+
+    // ==========================================
+    // КОМАНДЫ ДЛЯ СТРЕЛОЧЕК (SPELL LIST)
+    // ==========================================
+    [RelayCommand] private void IncSpellLevel(ClassSpell spell) { if (spell != null) spell.Level++; }
+    [RelayCommand] private void DecSpellLevel(ClassSpell spell) { if (spell != null && spell.Level > 1) spell.Level--; }
+    
+    [RelayCommand] private void IncSpellLevelCmd(ClassSpell spell) { if (spell != null) spell.SpellLevel++; }
+    [RelayCommand] private void DecSpellLevelCmd(ClassSpell spell) { if (spell != null && spell.SpellLevel > 1) spell.SpellLevel--; }
 }
