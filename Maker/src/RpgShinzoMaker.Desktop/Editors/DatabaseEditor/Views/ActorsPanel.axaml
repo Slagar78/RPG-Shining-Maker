@@ -9,7 +9,6 @@
         <ControlTheme x:Key="CustomActorItem" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Padding" Value="4,3"/>
-            <Setter Property="MinHeight" Value="22"/>
             <Setter Property="Template">
                 <ControlTemplate>
                     <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
@@ -27,7 +26,24 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         
-        <!-- ОБЩИЕ СТИЛИ ПОЛЕЙ -->
+        <!-- СТИЛЬ ДЛЯ ЧИСЛОВЫХ ПОЛЕЙ -->
+        <Style Selector="NumericUpDown">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="ShowButtonSpinner" Value="False"/>
+        </Style>
+        <Style Selector="NumericUpDown /template/ TextBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        </Style>
+
         <Style Selector="TextBox">
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Padding" Value="4,2"/>
@@ -38,6 +54,7 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
+        
         <Style Selector="ComboBox">
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Padding" Value="4,2"/>
@@ -49,29 +66,6 @@
             <Setter Property="Foreground" Value="White"/>
         </Style>
         
-        <!-- СТИЛИ ДЛЯ МАЛЕНЬКИХ ПОЛЕЙ УРОВНЯ -->
-        <Style Selector="TextBox.LevelBox">
-            <Setter Property="Width" Value="36"/> <!-- Ровно под 3 цифры -->
-            <Setter Property="MinWidth" Value="0"/> <!-- Убиваем минимальную ширину темы -->
-            <Setter Property="Padding" Value="2,0"/> <!-- Убираем лишние отступы -->
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        </Style>
-
-        <Style Selector="Button.ArrowBtn">
-            <Setter Property="Background" Value="#444444"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Width" Value="16"/>
-            <Setter Property="Height" Value="11"/>
-            <Setter Property="FontSize" Value="8"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
-        <Style Selector="Button.ArrowBtn:pointerover">
-            <Setter Property="Background" Value="#666666"/>
-        </Style>
-
         <Style Selector="Border.GroupBox">
             <Setter Property="BorderBrush" Value="#3E3E42"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -89,34 +83,20 @@
 
     <Grid ColumnDefinitions="220, *" Background="#1E1E1E">
         
+        <!-- ЛЕВАЯ КОЛОНКА (СПИСОК) -->
         <Grid Grid.Column="0" RowDefinitions="Auto, *" Background="#1E1E1E" Margin="2">
             <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="2">
                 <Button Content="Add" Background="#4CAF50" Foreground="White" FontSize="11" Padding="8,2" Height="22" Command="{Binding AddActorCommand}"/>
                 <Button Content="Del" Background="#F44336" Foreground="White" FontSize="11" Padding="8,2" Height="22" Command="{Binding DeleteActorCommand}"/>
             </StackPanel>
-
-            <ListBox Grid.Row="1" ItemsSource="{Binding Actors}" SelectedItem="{Binding SelectedActor}" 
-                     Background="Transparent" Padding="0" SelectionMode="Single"
-                     ItemContainerTheme="{StaticResource CustomActorItem}">
+            <ListBox Grid.Row="1" ItemsSource="{Binding Actors}" SelectedItem="{Binding SelectedActor}" Background="Transparent" Padding="0" ItemContainerTheme="{StaticResource CustomActorItem}">
                 <ListBox.Styles>
-                    <Style Selector="ListBoxItem:nth-child(odd)">
-                        <Setter Property="Background" Value="#252526"/>
-                    </Style>
-                    <Style Selector="ListBoxItem:nth-child(even)">
-                        <Setter Property="Background" Value="#2D2D30"/>
-                    </Style>
-                    <Style Selector="ListBoxItem:pointerover">
-                        <Setter Property="Background" Value="#3E3E42"/>
-                    </Style>
-                    <Style Selector="ListBoxItem:selected">
-                        <Setter Property="Background" Value="#81C784"/>
-                    </Style>
-                    <Style Selector="ListBoxItem:selected TextBlock">
-                        <Setter Property="Foreground" Value="Black"/>
-                        <Setter Property="FontWeight" Value="Bold"/>
-                    </Style>
+                    <Style Selector="ListBoxItem:nth-child(odd)"><Setter Property="Background" Value="#252526"/></Style>
+                    <Style Selector="ListBoxItem:nth-child(even)"><Setter Property="Background" Value="#2D2D30"/></Style>
+                    <Style Selector="ListBoxItem:pointerover"><Setter Property="Background" Value="#3E3E42"/></Style>
+                    <Style Selector="ListBoxItem:selected"><Setter Property="Background" Value="#81C784"/></Style>
+                    <Style Selector="ListBoxItem:selected TextBlock"><Setter Property="Foreground" Value="Black"/><Setter Property="FontWeight" Value="Bold"/></Style>
                 </ListBox.Styles>
-
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="models:Actor">
                         <Grid ColumnDefinitions="40, *">
@@ -128,87 +108,197 @@
             </ListBox>
         </Grid>
 
+        <!-- ПРАВАЯ КОЛОНКА (СВОЙСТВА) -->
         <ScrollViewer Grid.Column="1" IsVisible="{Binding SelectedActor, Converter={x:Static ObjectConverters.IsNotNull}}" Margin="5">
-            <Grid RowDefinitions="Auto, Auto, Auto">
+            
+            <Grid ColumnDefinitions="*, *" RowDefinitions="Auto">
                 
-                <Border Grid.Row="0" Classes="GroupBox">
-                    <StackPanel>
-                        <TextBlock Text="General Settings" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="60, 150, 60, 120" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
+                <!-- ЛЕВАЯ ЧАСТЬ (General, Block Settings, Equipment) -->
+                <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                    
+                    <!-- GENERAL SETTINGS -->
+                    <Border Classes="GroupBox">
+                        <StackPanel>
+                            <TextBlock Text="General Settings" Classes="GroupHeader"/>
                             
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" Margin="0,2"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedActor.Name}" Margin="0,2,10,2"/>
+                            <!-- Строка 0: Name и ID прижаты друг к другу -->
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,2">
+                                <TextBlock Text="Name:" VerticalAlignment="Center"/>
+                                <TextBox Text="{Binding SelectedActor.Name}" Width="150"/>
+                                <TextBlock Text="ID:" VerticalAlignment="Center"/>
+                                <Border Background="#007ACC" CornerRadius="3" Padding="8,2" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding SelectedActor.Id}" Foreground="White" FontWeight="Bold"/>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Строка 1: Exp -->
+                            <Grid ColumnDefinitions="50, 80" HorizontalAlignment="Left" Margin="0,5,0,0">
+                                <TextBlock Grid.Column="0" Text="Exp:" VerticalAlignment="Center"/>
+                                <NumericUpDown Grid.Column="1" Value="{Binding SelectedActor.Exp}" Minimum="0" />
+                            </Grid>
+
+                            <!-- Строка 2: Kills и Defeats -->
+                            <Grid ColumnDefinitions="50, 80, 60, 80" HorizontalAlignment="Left" Margin="0,5,0,0">
+                                <TextBlock Grid.Column="0" Text="Kills:" VerticalAlignment="Center"/>
+                                <NumericUpDown Grid.Column="1" Value="{Binding SelectedActor.Kills}" Minimum="0" />
+
+                                <TextBlock Grid.Column="2" Text="Defeats:" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                <NumericUpDown Grid.Column="3" Value="{Binding SelectedActor.Defeats}" Minimum="0" />
+                            </Grid>
                             
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Class:" Margin="0,2"/>
-                            <ComboBox Grid.Row="0" Grid.Column="3" ItemsSource="{Binding AvailableClasses}" SelectedValue="{Binding SelectedActor.ClassId}" SelectedValueBinding="{Binding Id}" Margin="0,2">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:CharacterClass">
-                                        <TextBlock Text="{Binding Name}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- BLOCK SETTINGS -->
+                    <Border Classes="GroupBox" IsVisible="{Binding SelectedBlock, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <StackPanel>
+                            <TextBlock Text="Block Settings" Classes="GroupHeader"/>
+                            <!-- Колонки расширены: 85 для надписей, * для полей ввода -->
+                            <Grid ColumnDefinitions="85, *, 60, *" RowDefinitions="Auto, Auto, Auto" HorizontalAlignment="Stretch">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Class:" Margin="0,2"/>
+                                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableClasses}" SelectedValue="{Binding SelectedBlock.ForClass}" SelectedValueBinding="{Binding Id}" Margin="0,2,10,2">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="models:CharacterClass"><TextBlock Text="{Binding Name}"/></DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Portrait:" Margin="0,2"/>
+                                <ComboBox Grid.Row="0" Grid.Column="3" ItemsSource="{Binding AvailablePortraits}" SelectedItem="{Binding SelectedBlock.Portrait}" Margin="0,2"/>
+                                
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Mapsprite:" Margin="0,2"/>
+                                <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" ItemsSource="{Binding AvailableMapsprites}" SelectedItem="{Binding SelectedBlock.Mapsprite}" Margin="0,2"/>
+                                
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Battle Sprite:" Margin="0,2"/>
+                                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding SelectedBlock.BattleSpritePath}" Margin="0,2"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- INITIAL EQUIPMENT (ПЕРЕНЕСЕНО ВЛЕВО) -->
+                    <Border Classes="GroupBox">
+                        <StackPanel>
+                            <TextBlock Text="Initial Equipment" Classes="GroupHeader"/>
+                            <Grid ColumnDefinitions="80, 100, *" Margin="0,0,0,4" HorizontalAlignment="Left">
+                                <TextBlock Grid.Column="0" Text="Start Level:" Margin="0,2"/>
+                                <NumericUpDown Grid.Column="1" Value="{Binding CurrentInventory.StartLevel}" Minimum="1" Width="80" Margin="0,2,10,2" HorizontalAlignment="Left"/>
+                            </Grid>
+                            <Separator Background="#3E3E42" Margin="0,2,0,6"/>
+                            
+                            <!-- Сетка 2x2 -->
+                            <ItemsControl ItemsSource="{Binding CurrentInventory.Items}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="2" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:StartItem">
+                                        <Grid ColumnDefinitions="40, *, 60" Margin="0,0,10,5" HorizontalAlignment="Stretch">
+                                            <TextBlock Grid.Column="0" Text="Item:" Margin="0,2"/>
+                                            <ComboBox Grid.Column="1" ItemsSource="{Binding $parent[UserControl].((vm:ActorsViewModel)DataContext).AvailableItems}" SelectedItem="{Binding Item}" Margin="0,2,5,2" HorizontalAlignment="Stretch"/>
+                                            <CheckBox Grid.Column="2" Content="Eqp" IsChecked="{Binding Equipped}" IsEnabled="{Binding Item, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" FontSize="11" VerticalAlignment="Center"/>
+                                        </Grid>
                                     </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
 
-                            <!-- УРОВЕНЬ (ТЕПЕРЬ МАЛЕНЬКИЙ) -->
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Level:" Margin="0,2"/>
-                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,2,10,2" HorizontalAlignment="Left">
-                                <TextBox Classes="LevelBox" Text="{Binding SelectedActor.Level, Mode=TwoWay}" MaxLength="3" />
-                                <Grid RowDefinitions="*, *" Width="16">
-                                    <Button Grid.Row="0" Classes="ArrowBtn" Content="▲" Command="{Binding IncrementLevelCommand}" />
-                                    <Button Grid.Row="1" Classes="ArrowBtn" Content="▼" Command="{Binding DecrementLevelCommand}" Margin="0,1,0,0"/>
-                                </Grid>
+                </StackPanel>
+
+                <!-- ПРАВАЯ ЧАСТЬ (Block Selection, Stats, Spell List) -->
+                <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                    
+                    <!-- CLASS BLOCK SELECTION -->
+                    <Border Classes="GroupBox">
+                        <StackPanel>
+                            <TextBlock Text="Class Block Selection" Classes="GroupHeader"/>
+                            <Grid ColumnDefinitions="50, *" RowDefinitions="Auto, Auto" HorizontalAlignment="Stretch">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Block:" Margin="0,2"/>
+                                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding BlocksForSelectedActor}" SelectedItem="{Binding SelectedBlock}" Margin="0,2,0,5" HorizontalAlignment="Stretch">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate><TextBlock Text="{Binding DisplayName}"/></DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                
+                                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                                    <Button Content="+ Promo" Command="{Binding AddPromotionCommand}" Background="#4CAF50" Foreground="White" FontSize="11" Padding="6,2"/>
+                                    <Button Content="- Promo" Command="{Binding DeletePromotionCommand}" Background="#F44336" Foreground="White" FontSize="11" Padding="6,2"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- STATS AND GROWTH -->
+                    <Border Classes="GroupBox" IsVisible="{Binding SelectedBlock, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <StackPanel>
+                            <TextBlock Text="Stats and Growth" Classes="GroupHeader"/>
+                            <Grid ColumnDefinitions="60, 60, 60, 110" RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto" HorizontalAlignment="Left">
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="Start:" Foreground="Gray" Margin="0,6"/>
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Proj:" Foreground="Gray" Margin="0,6"/>
+                                <TextBlock Grid.Row="0" Grid.Column="3" Text="Curve:" Foreground="Gray" Margin="0,6"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="HP:" Margin="0,2"/>
+                                <NumericUpDown Grid.Row="1" Grid.Column="1" Value="{Binding SelectedBlock.HpGrowth.Start}" Minimum="0" Margin="0,2,5,2" />
+                                <NumericUpDown Grid.Row="1" Grid.Column="2" Value="{Binding SelectedBlock.HpGrowth.Projected}" Minimum="0" Margin="0,2,5,2" />
+                                <ComboBox Grid.Row="1" Grid.Column="3" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedBlock.HpGrowth.Curve}" Margin="0,2"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="MP:" Margin="0,2"/>
+                                <NumericUpDown Grid.Row="2" Grid.Column="1" Value="{Binding SelectedBlock.MpGrowth.Start}" Minimum="0" Margin="0,2,5,2" />
+                                <NumericUpDown Grid.Row="2" Grid.Column="2" Value="{Binding SelectedBlock.MpGrowth.Projected}" Minimum="0" Margin="0,2,5,2" />
+                                <ComboBox Grid.Row="2" Grid.Column="3" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedBlock.MpGrowth.Curve}" Margin="0,2"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Attack:" Margin="0,2"/>
+                                <NumericUpDown Grid.Row="3" Grid.Column="1" Value="{Binding SelectedBlock.AttackGrowth.Start}" Minimum="0" Margin="0,2,5,2" />
+                                <NumericUpDown Grid.Row="3" Grid.Column="2" Value="{Binding SelectedBlock.AttackGrowth.Projected}" Minimum="0" Margin="0,2,5,2" />
+                                <ComboBox Grid.Row="3" Grid.Column="3" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedBlock.AttackGrowth.Curve}" Margin="0,2"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Defense:" Margin="0,2"/>
+                                <NumericUpDown Grid.Row="4" Grid.Column="1" Value="{Binding SelectedBlock.DefenseGrowth.Start}" Minimum="0" Margin="0,2,5,2" />
+                                <NumericUpDown Grid.Row="4" Grid.Column="2" Value="{Binding SelectedBlock.DefenseGrowth.Projected}" Minimum="0" Margin="0,2,5,2" />
+                                <ComboBox Grid.Row="4" Grid.Column="3" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedBlock.DefenseGrowth.Curve}" Margin="0,2"/>
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Agility:" Margin="0,2"/>
+                                <NumericUpDown Grid.Row="5" Grid.Column="1" Value="{Binding SelectedBlock.AgilityGrowth.Start}" Minimum="0" Margin="0,2,5,2" />
+                                <NumericUpDown Grid.Row="5" Grid.Column="2" Value="{Binding SelectedBlock.AgilityGrowth.Projected}" Minimum="0" Margin="0,2,5,2" />
+                                <ComboBox Grid.Row="5" Grid.Column="3" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedBlock.AgilityGrowth.Curve}" Margin="0,2"/>
+                            </Grid>
+                            <CheckBox Content="Use First Spell List" IsChecked="{Binding SelectedBlock.UseFirstSpellList}" Margin="0,8,0,0" FontSize="11" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- SPELL LIST -->
+                    <Border Classes="GroupBox" IsVisible="{Binding SelectedBlock, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <StackPanel>
+                            <TextBlock Text="Spell List" Classes="GroupHeader"/>
+                            <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,0,0,5">
+                                <Button Content="+" Command="{Binding AddSpellCommand}" Width="24" Height="24" Background="#4CAF50" Foreground="White" FontWeight="Bold"/>
                             </StackPanel>
+                            <ItemsControl ItemsSource="{Binding SelectedBlock.SpellList}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:ClassSpell">
+                                        <Grid ColumnDefinitions="30, 50, *, 30, 50, 30" Margin="0,2" HorizontalAlignment="Left">
+                                            <TextBlock Grid.Column="0" Text="Lvl:" VerticalAlignment="Center"/>
+                                            <NumericUpDown Grid.Column="1" Value="{Binding Level}" Minimum="1" Margin="0,0,10,0"/>
+                                            
+                                            <ComboBox Grid.Column="2" ItemsSource="{Binding $parent[UserControl].((vm:ActorsViewModel)DataContext).AvailableSpells}" SelectedValue="{Binding SpellId}" SelectedValueBinding="{Binding Id}" Margin="0,0,10,0">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate x:DataType="models:Spell"><TextBlock Text="{Binding Name}"/></DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                            
+                                            <TextBlock Grid.Column="3" Text="Lv:" VerticalAlignment="Center" Margin="5,0"/>
+                                            <NumericUpDown Grid.Column="4" Value="{Binding SpellLevel}" Minimum="1" Margin="0,0,5,0"/>
+                                            
+                                            <Button Grid.Column="5" Content="X" Command="{Binding $parent[UserControl].((vm:ActorsViewModel)DataContext).RemoveSpellCommand}" CommandParameter="{Binding}" Background="#F44336" Foreground="White" Width="24" Height="24" Padding="0"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
 
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Portrait:" Margin="0,2"/>
-                            <ComboBox Grid.Row="1" Grid.Column="3" ItemsSource="{Binding AvailablePortraits}" SelectedItem="{Binding SelectedActor.Portrait}" Margin="0,2"/>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <Border Grid.Row="1" Classes="GroupBox">
-                    <StackPanel>
-                        <TextBlock Text="Images" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="60, 250" HorizontalAlignment="Left">
-                            <TextBlock Grid.Column="0" Text="Mapsprite:" Margin="0,2"/>
-                            <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableMapsprites}" SelectedItem="{Binding SelectedActor.Mapsprite}" Margin="0,2"/>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <Border Grid.Row="2" Classes="GroupBox">
-                    <StackPanel>
-                        <TextBlock Text="Initial Equipment" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="80, 100, *" Margin="0,0,0,4" HorizontalAlignment="Left">
-                            <TextBlock Grid.Column="0" Text="Start Level:" Margin="0,2"/>
-                            
-                            <!-- СТАРТОВЫЙ УРОВЕНЬ (ТЕПЕРЬ МАЛЕНЬКИЙ) -->
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,2,10,2" HorizontalAlignment="Left">
-                                <TextBox Classes="LevelBox" Text="{Binding CurrentInventory.StartLevel, Mode=TwoWay}" MaxLength="3" />
-                                <Grid RowDefinitions="*, *" Width="16">
-                                    <Button Grid.Row="0" Classes="ArrowBtn" Content="▲" Command="{Binding IncrementStartLevelCommand}" />
-                                    <Button Grid.Row="1" Classes="ArrowBtn" Content="▼" Command="{Binding DecrementStartLevelCommand}" Margin="0,1,0,0"/>
-                                </Grid>
-                            </StackPanel>
-                        </Grid>
-                        <Separator Background="#3E3E42" Margin="0,2,0,4"/>
-                        
-                        <ItemsControl ItemsSource="{Binding CurrentInventory.Items}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="models:StartItem">
-                                    <Grid ColumnDefinitions="60, 200, 80" Margin="0,1" HorizontalAlignment="Left">
-                                        <TextBlock Grid.Column="0" Text="Item:" Margin="0,2"/>
-                                        <ComboBox Grid.Column="1" ItemsSource="{Binding $parent[UserControl].((vm:ActorsViewModel)DataContext).AvailableItems}" SelectedItem="{Binding Item}" Margin="0,2,10,2"/>
-
-                                     <CheckBox Grid.Column="2" Content="Equipped" 
-                                        IsChecked="{Binding Equipped}" 
-                                        IsEnabled="{Binding Item, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" 
-                                        FontSize="11" VerticalAlignment="Center"/>
-
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
+                </StackPanel>
 
             </Grid>
         </ScrollViewer>

@@ -11,22 +11,15 @@ using RpgShinzoMaker.Core.Services;
 
 namespace RpgShinzoMaker.Desktop.ViewModels;
 
-public partial class SpellGroup : ObservableObject
-{
-    [ObservableProperty] private string _name = string.Empty;
-    public ObservableCollection<Spell> Levels { get; } = new();
-}
-
 public partial class SpellsViewModel : ObservableObject
 {
     private readonly SpellsService _spellsService = new();
     private readonly string _spellsPath;
     private readonly string _iconsDir = "assets/spells";
 
-    public ObservableCollection<SpellGroup> SpellGroups { get; } = new();
+    public ObservableCollection<Spell> Spells { get; } = new();
     public ObservableCollection<string> AvailableIcons { get; } = new();
 
-    [ObservableProperty] private object? _selectedTreeItem;
     [ObservableProperty] private Spell? _selectedSpell;
 
     public SpellsViewModel()
@@ -35,71 +28,45 @@ public partial class SpellsViewModel : ObservableObject
         LoadData();
     }
 
-    partial void OnSelectedTreeItemChanged(object? value)
-    {
-        if (value is SpellGroup group && group.Levels.Count > 0)
-        {
-            SelectedSpell = group.Levels[0];
-        }
-        else if (value is Spell spell)
-        {
-            SelectedSpell = spell;
-        }
-        else
-        {
-            SelectedSpell = null;
-        }
-    }
-
     public void LoadData()
     {
         var iconPath = Path.Combine(ProjectPaths.Root, _iconsDir);
+        AvailableIcons.Clear();
         if (Directory.Exists(iconPath))
         {
             foreach (var file in Directory.GetFiles(iconPath, "*.png"))
-                AvailableIcons.Add(Path.GetFileName(file));
-        }
-        if (AvailableIcons.Count == 0) AvailableIcons.Add("magic_empty.png");
-
-        var flatSpells = _spellsService.LoadSpells(_spellsPath);
-        
-        SpellGroups.Clear();
-        var grouped = flatSpells.GroupBy(s => s.Name);
-        foreach (var group in grouped)
-        {
-            var spellGroup = new SpellGroup { Name = group.Key };
-            foreach (var spell in group.OrderBy(s => s.Level))
             {
-                spellGroup.Levels.Add(spell);
+                // Формируем путь вида "assets/spells/Heal.png"
+                string relPath = $"{_iconsDir}/{Path.GetFileName(file)}".Replace("\\", "/");
+                AvailableIcons.Add(relPath);
             }
-            SpellGroups.Add(spellGroup);
         }
+        if (AvailableIcons.Count == 0) AvailableIcons.Add("assets/spells/magic_empty.png");
 
-        if (SpellGroups.Count > 0) SelectedTreeItem = SpellGroups[0];
+        var loadedSpells = _spellsService.LoadSpells(_spellsPath);
+        
+        Spells.Clear();
+        foreach (var spell in loadedSpells) Spells.Add(spell);
+
+        if (Spells.Count > 0) SelectedSpell = Spells[0];
     }
 
     public void SaveData()
     {
-        var flatSpells = new List<Spell>();
-        foreach (var group in SpellGroups)
-        {
-            flatSpells.AddRange(group.Levels);
-        }
-        _spellsService.SaveSpells(_spellsPath, flatSpells);
-
+        _spellsService.SaveSpells(_spellsPath, Spells.ToList());
         WeakReferenceMessenger.Default.Send(new SpellsUpdatedMessage());
     }
 
     [RelayCommand]
     private void AddSpell()
     {
-        var existingIds = SpellGroups.SelectMany(g => g.Levels).Select(s => s.Id).ToHashSet();
+        var existingIds = Spells.Select(s => s.Id).ToHashSet();
         int newId = 0;
         while (existingIds.Contains(newId)) { newId++; }
 
         string newName = "magic00";
         int idx = 0;
-        while (SpellGroups.Any(g => g.Name.Equals(newName, StringComparison.OrdinalIgnoreCase)))
+        while (Spells.Any(s => s.Name.Equals(newName, StringComparison.OrdinalIgnoreCase)))
         {
             idx++;
             newName = $"magic{idx:D2}";
@@ -109,66 +76,41 @@ public partial class SpellsViewModel : ObservableObject
         {
             Id = newId,
             Name = newName,
-            Level = 1,
-            Mp = 5,
             Type = "heal",
-            Power = 5,
-            RangeMin = 0,
-            RangeMax = 3,
-            Radius = 1,
             Icon = AvailableIcons.FirstOrDefault() ?? "magic_empty.png"
         };
-
-        var newGroup = new SpellGroup { Name = newName };
-        newGroup.Levels.Add(newSpell);
+        
+        // Добавляем базовый 1 уровень
+        newSpell.Levels.Add(new SpellLevel { Level = 1, Mp = 5, Power = 5, Radius = 1, RangeMin = 0, RangeMax = 3 });
 
         int insertIndex = 0;
-        while (insertIndex < SpellGroups.Count && 
-               SpellGroups[insertIndex].Levels.Count > 0 && 
-               SpellGroups[insertIndex].Levels[0].Id < newId)
-        {
+        while (insertIndex < Spells.Count && Spells[insertIndex].Id < newId)
             insertIndex++;
-        }
 
-        SpellGroups.Insert(insertIndex, newGroup);
-        SelectedTreeItem = newGroup;
+        Spells.Insert(insertIndex, newSpell);
+        SelectedSpell = newSpell;
     }
 
     [RelayCommand]
     private void DeleteSpell()
     {
-        if (SelectedTreeItem is SpellGroup group)
-        {
-            SpellGroups.Remove(group);
-            SelectedTreeItem = SpellGroups.FirstOrDefault();
-        }
-        else if (SelectedTreeItem is Spell spell)
-        {
-            var parent = SpellGroups.FirstOrDefault(g => g.Levels.Contains(spell));
-            if (parent != null)
-            {
-                parent.Levels.Remove(spell);
-                if (parent.Levels.Count == 0) SpellGroups.Remove(parent);
-                else SelectedTreeItem = parent;
-            }
-        }
+        if (SelectedSpell == null) return;
+        Spells.Remove(SelectedSpell);
+        SelectedSpell = Spells.FirstOrDefault();
     }
 
-    [RelayCommand] private void IncLevel() { if (SelectedSpell != null) SelectedSpell.Level++; }
-    [RelayCommand] private void DecLevel() { if (SelectedSpell != null && SelectedSpell.Level > 1) SelectedSpell.Level--; }
+    [RelayCommand]
+    private void AddLevel()
+    {
+        if (SelectedSpell == null) return;
+        int nextLevel = SelectedSpell.Levels.Count > 0 ? SelectedSpell.Levels.Max(l => l.Level) + 1 : 1;
+        SelectedSpell.Levels.Add(new SpellLevel { Level = nextLevel, Mp = 5, Power = 5, Radius = 1, RangeMin = 0, RangeMax = 3 });
+    }
 
-    [RelayCommand] private void IncMp() { if (SelectedSpell != null) SelectedSpell.Mp++; }
-    [RelayCommand] private void DecMp() { if (SelectedSpell != null && SelectedSpell.Mp > 0) SelectedSpell.Mp--; }
-
-    [RelayCommand] private void IncPower() { if (SelectedSpell != null) SelectedSpell.Power++; }
-    [RelayCommand] private void DecPower() { if (SelectedSpell != null && SelectedSpell.Power > 0) SelectedSpell.Power--; }
-
-    [RelayCommand] private void IncRadius() { if (SelectedSpell != null) SelectedSpell.Radius++; }
-    [RelayCommand] private void DecRadius() { if (SelectedSpell != null && SelectedSpell.Radius > 0) SelectedSpell.Radius--; }
-
-    [RelayCommand] private void IncRangeMin() { if (SelectedSpell != null) SelectedSpell.RangeMin++; }
-    [RelayCommand] private void DecRangeMin() { if (SelectedSpell != null && SelectedSpell.RangeMin > 0) SelectedSpell.RangeMin--; }
-
-    [RelayCommand] private void IncRangeMax() { if (SelectedSpell != null) SelectedSpell.RangeMax++; }
-    [RelayCommand] private void DecRangeMax() { if (SelectedSpell != null && SelectedSpell.RangeMax > 0) SelectedSpell.RangeMax--; }
+    [RelayCommand]
+    private void DeleteLevel(SpellLevel level)
+    {
+        if (SelectedSpell == null || level == null) return;
+        SelectedSpell.Levels.Remove(level);
+    }
 }

@@ -5,60 +5,65 @@
              x:DataType="vm:SpellsViewModel"
              x:Class="RpgShinzoMaker.Desktop.Editors.DatabaseEditor.Views.SpellsPanel">
 
+    <UserControl.Resources>
+        <ControlTheme x:Key="CustomSpellItem" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="4,3"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </ControlTheme>
+    </UserControl.Resources>
+
     <UserControl.Styles>
         <Style Selector="TextBlock">
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Foreground" Value="#E0E0E0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+        
+        <!-- СТИЛЬ TEXTBOX (ТЕПЕРЬ И ДЛЯ ЦИФР ТОЖЕ) -->
         <Style Selector="TextBox">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Background" Value="#333333"/>
             <Setter Property="BorderBrush" Value="#555555"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="White"/>
-        </Style>
-        <Style Selector="ComboBox">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="Height" Value="24"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="#333333"/>
-            <Setter Property="BorderBrush" Value="#555555"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="White"/>
-        </Style>
-        
-        <!-- Стили для кнопок-стрелочек и маленьких полей -->
-        <Style Selector="TextBox.NumBox">
-            <Setter Property="Width" Value="45"/>
-            <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        </Style>
-        <Style Selector="Button.ArrowBtn">
-            <Setter Property="Background" Value="#444444"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Width" Value="16"/>
-            <Setter Property="Height" Value="11"/>
-            <Setter Property="FontSize" Value="8"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
-        <Style Selector="Button.ArrowBtn:pointerover">
-            <Setter Property="Background" Value="#666666"/>
+            <Setter Property="CornerRadius" Value="4"/> <!-- Идеальное скругление -->
         </Style>
 
+        <!-- Выравнивание текста по центру для числовых полей -->
+        <Style Selector="TextBox.NumBox">
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
+        
+        <!-- СТИЛЬ COMBOBOX -->
+        <Style Selector="ComboBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        
         <Style Selector="Border.GroupBox">
             <Setter Property="BorderBrush" Value="#3E3E42"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="3"/>
-            <Setter Property="Padding" Value="6"/>
+            <Setter Property="CornerRadius" Value="4"/> 
+            <Setter Property="Padding" Value="8"/> 
             <Setter Property="Margin" Value="0,0,0,8"/>
             <Setter Property="Background" Value="#252526"/>
         </Style>
@@ -71,137 +76,109 @@
 
     <Grid ColumnDefinitions="220, *" Background="#1E1E1E">
         
-        <!-- ЛЕВАЯ КОЛОНКА (ДЕРЕВО) -->
+        <!-- ЛЕВАЯ КОЛОНКА (СПИСОК) -->
         <Grid Grid.Column="0" RowDefinitions="Auto, *" Background="#1E1E1E" Margin="2">
             <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="2">
                 <Button Content="Add" Background="#4CAF50" Foreground="White" FontSize="11" Padding="8,2" Height="22" Command="{Binding AddSpellCommand}"/>
                 <Button Content="Del" Background="#F44336" Foreground="White" FontSize="11" Padding="8,2" Height="22" Command="{Binding DeleteSpellCommand}"/>
             </StackPanel>
 
-            <TreeView Grid.Row="1" ItemsSource="{Binding SpellGroups}" SelectedItem="{Binding SelectedTreeItem}" Background="Transparent">
-                <TreeView.Styles>
-                    <Style Selector="TreeViewItem">
-                        <Setter Property="Background" Value="#252526"/>
-                    </Style>
-                    <Style Selector="TreeViewItem:pointerover">
-                        <Setter Property="Background" Value="#3E3E42"/>
-                    </Style>
-                    <Style Selector="TreeViewItem:selected">
-                        <Setter Property="Background" Value="#81C784"/>
-                    </Style>
-                    <Style Selector="TreeViewItem:selected TextBlock">
-                        <Setter Property="Foreground" Value="Black"/>
-                        <Setter Property="FontWeight" Value="Bold"/>
-                    </Style>
-                </TreeView.Styles>
-                <TreeView.DataTemplates>
-                    <TreeDataTemplate DataType="vm:SpellGroup" ItemsSource="{Binding Levels}">
-                        <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="#007ACC"/>
-                    </TreeDataTemplate>
-                    <DataTemplate DataType="models:Spell">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <TextBlock Text="Lv" Foreground="Gray"/>
-                            <TextBlock Text="{Binding Level}" Foreground="White"/>
-                        </StackPanel>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Spells}" SelectedItem="{Binding SelectedSpell}" Background="Transparent" Padding="0" ItemContainerTheme="{StaticResource CustomSpellItem}">
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem:nth-child(odd)"><Setter Property="Background" Value="#252526"/></Style>
+                    <Style Selector="ListBoxItem:nth-child(even)"><Setter Property="Background" Value="#2D2D30"/></Style>
+                    <Style Selector="ListBoxItem:pointerover"><Setter Property="Background" Value="#3E3E42"/></Style>
+                    <Style Selector="ListBoxItem:selected"><Setter Property="Background" Value="#81C784"/></Style>
+                    <Style Selector="ListBoxItem:selected TextBlock"><Setter Property="Foreground" Value="Black"/><Setter Property="FontWeight" Value="Bold"/></Style>
+                </ListBox.Styles>
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:Spell">
+                        <Grid ColumnDefinitions="30, *">
+                            <TextBlock Grid.Column="0" Text="{Binding Id}" Foreground="#AAAAAA"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="White"/>
+                        </Grid>
                     </DataTemplate>
-                </TreeView.DataTemplates>
-            </TreeView>
+                </ListBox.ItemTemplate>
+            </ListBox>
         </Grid>
 
         <!-- ПРАВАЯ КОЛОНКА (СВОЙСТВА) -->
         <ScrollViewer Grid.Column="1" IsVisible="{Binding SelectedSpell, Converter={x:Static ObjectConverters.IsNotNull}}" Margin="5">
             <StackPanel>
                 
+                <!-- GENERAL SETTINGS -->
                 <Border Classes="GroupBox">
                     <StackPanel>
                         <TextBlock Text="General Settings" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="80, 150, 80, 120" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
+                        <Grid ColumnDefinitions="Auto, 150, Auto, Auto, Auto, 150" HorizontalAlignment="Left">
                             
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" Margin="0,2"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedSpell.Name}" Margin="0,2,10,2"/>
+                            <TextBlock Grid.Column="0" Text="Name:" Margin="0,2,8,2"/>
+                            <TextBox Grid.Column="1" Text="{Binding SelectedSpell.Name}" Margin="0,2,15,2"/>
 
-                            <!-- LEVEL со стрелками -->
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Level:" Margin="0,2"/>
-                            <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" Spacing="2" Margin="0,2,10,2" HorizontalAlignment="Left">
-                                <TextBox Text="{Binding SelectedSpell.Level, Mode=TwoWay}" Classes="NumBox" MaxLength="3" />
-                                <Grid RowDefinitions="*, *" Width="16">
-                                    <Button Grid.Row="0" Classes="ArrowBtn" Content="▲" Command="{Binding IncLevelCommand}" />
-                                    <Button Grid.Row="1" Classes="ArrowBtn" Content="▼" Command="{Binding DecLevelCommand}" Margin="0,1,0,0"/>
-                                </Grid>
-                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="ID:" Margin="0,2,8,2"/>
+                            <Border Grid.Column="3" Background="#007ACC" CornerRadius="4" Padding="8,2" VerticalAlignment="Center" Margin="0,0,15,0">
+                                <TextBlock Text="{Binding SelectedSpell.Id}" Foreground="White" FontWeight="Bold" />
+                            </Border>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" Margin="0,2"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedSpell.Type}" Margin="0,2,10,2"/>
-
-                            <!-- MP COST со стрелками -->
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="MP Cost:" Margin="0,2"/>
-                            <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Horizontal" Spacing="2" Margin="0,2,10,2" HorizontalAlignment="Left">
-                                <TextBox Text="{Binding SelectedSpell.Mp, Mode=TwoWay}" Classes="NumBox" MaxLength="3" />
-                                <Grid RowDefinitions="*, *" Width="16">
-                                    <Button Grid.Row="0" Classes="ArrowBtn" Content="▲" Command="{Binding IncMpCommand}" />
-                                    <Button Grid.Row="1" Classes="ArrowBtn" Content="▼" Command="{Binding DecMpCommand}" Margin="0,1,0,0"/>
-                                </Grid>
-                            </StackPanel>
+                            <TextBlock Grid.Column="4" Text="Type:" Margin="0,2,8,2"/>
+                            <TextBox Grid.Column="5" Text="{Binding SelectedSpell.Type}" Margin="0,2"/>
                         </Grid>
                     </StackPanel>
                 </Border>
 
+                <!-- VISUALS -->
                 <Border Classes="GroupBox">
                     <StackPanel>
-                        <TextBlock Text="Effect and Range" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="80, 150, 80, 120" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
-                            
-                            <!-- POWER со стрелками -->
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Power:" Margin="0,2"/>
-                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,2,10,2" HorizontalAlignment="Left">
-                                <TextBox Text="{Binding SelectedSpell.Power, Mode=TwoWay}" Classes="NumBox" MaxLength="4" />
-                                <Grid RowDefinitions="*, *" Width="16">
-                                    <Button Grid.Row="0" Classes="ArrowBtn" Content="▲" Command="{Binding IncPowerCommand}" />
-                                    <Button Grid.Row="1" Classes="ArrowBtn" Content="▼" Command="{Binding DecPowerCommand}" Margin="0,1,0,0"/>
-                                </Grid>
-                            </StackPanel>
-
-                            <!-- RADIUS со стрелками -->
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Radius:" Margin="0,2"/>
-                            <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" Spacing="2" Margin="0,2,10,2" HorizontalAlignment="Left">
-                                <TextBox Text="{Binding SelectedSpell.Radius, Mode=TwoWay}" Classes="NumBox" MaxLength="2" />
-                                <Grid RowDefinitions="*, *" Width="16">
-                                    <Button Grid.Row="0" Classes="ArrowBtn" Content="▲" Command="{Binding IncRadiusCommand}" />
-                                    <Button Grid.Row="1" Classes="ArrowBtn" Content="▼" Command="{Binding DecRadiusCommand}" Margin="0,1,0,0"/>
-                                </Grid>
-                            </StackPanel>
-
-                            <!-- RANGE MIN со стрелками -->
-                              <TextBlock Grid.Row="1" Grid.Column="0" Text="Range Min:" Margin="0,2"/>
-                              <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,2,10,2" HorizontalAlignment="Left">
-                                  <TextBox Text="{Binding SelectedSpell.RangeMin, Mode=TwoWay}" Classes="NumBox" MaxLength="3" /> <!-- БЫЛО 2, СТАЛО 3 -->
-                                  <Grid RowDefinitions="*, *" Width="16">
-                                      <Button Grid.Row="0" Classes="ArrowBtn" Content="▲" Command="{Binding IncRangeMinCommand}" />
-                                      <Button Grid.Row="1" Classes="ArrowBtn" Content="▼" Command="{Binding DecRangeMinCommand}" Margin="0,1,0,0"/>
-                                  </Grid>
-                              </StackPanel>
-
-                              <!-- RANGE MAX со стрелками -->
-                              <TextBlock Grid.Row="1" Grid.Column="2" Text="Range Max:" Margin="0,2"/>
-                              <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Horizontal" Spacing="2" Margin="0,2,10,2" HorizontalAlignment="Left">
-                                  <TextBox Text="{Binding SelectedSpell.RangeMax, Mode=TwoWay}" Classes="NumBox" MaxLength="3" /> <!-- БЫЛО 2, СТАЛО 3 -->
-                                  <Grid RowDefinitions="*, *" Width="16">
-                                      <Button Grid.Row="0" Classes="ArrowBtn" Content="▲" Command="{Binding IncRangeMaxCommand}" />
-                                      <Button Grid.Row="1" Classes="ArrowBtn" Content="▼" Command="{Binding DecRangeMaxCommand}" Margin="0,1,0,0"/>
-                                  </Grid>
-                              </StackPanel>
-
+                        <TextBlock Text="Visuals" Classes="GroupHeader"/>
+                        <Grid ColumnDefinitions="Auto, *" HorizontalAlignment="Left">
+                            <TextBlock Grid.Column="0" Text="Icon:" Margin="0,2,8,2"/>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableIcons}" SelectedItem="{Binding SelectedSpell.Icon}" Width="300" HorizontalAlignment="Left" Margin="0,2"/>
                         </Grid>
                     </StackPanel>
                 </Border>
 
+                <!-- LEVELS TABLE -->
                 <Border Classes="GroupBox">
                     <StackPanel>
-                        <TextBlock Text="Icon" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="80, *" HorizontalAlignment="Left">
-                            <TextBlock Grid.Column="0" Text="Image:" Margin="0,2"/>
-                            <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableIcons}" SelectedItem="{Binding SelectedSpell.Icon}" Width="200" Margin="0,2"/>
+                        <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,6">
+                            <TextBlock Text="Spell Levels" Classes="GroupHeader" Margin="0"/>
+                            <Button Content="+ Add Level" Command="{Binding AddLevelCommand}" Background="#4CAF50" Foreground="White" FontSize="11" Padding="6,2" Height="22"/>
+                        </StackPanel>
+                        
+                        <!-- Заголовок таблицы -->
+                        <Grid ColumnDefinitions="50, 80, 80, 80, 80, 80, 40" Margin="0,0,0,4" HorizontalAlignment="Left">
+                            <TextBlock Grid.Column="0" Text="Lvl" FontWeight="Bold" Foreground="#007ACC"/>
+                            <TextBlock Grid.Column="1" Text="MP Cost" FontWeight="Bold" Foreground="#007ACC"/>
+                            <TextBlock Grid.Column="2" Text="Power" FontWeight="Bold" Foreground="#007ACC"/>
+                            <TextBlock Grid.Column="3" Text="Radius" FontWeight="Bold" Foreground="#007ACC"/>
+                            <TextBlock Grid.Column="4" Text="Range Min" FontWeight="Bold" Foreground="#007ACC"/>
+                            <TextBlock Grid.Column="5" Text="Range Max" FontWeight="Bold" Foreground="#007ACC"/>
                         </Grid>
+                        <Separator Background="#3E3E42" Margin="0,0,0,4"/>
+
+                        <!-- Строки таблицы уровней -->
+                        <ItemsControl ItemsSource="{Binding SelectedSpell.Levels}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:SpellLevel">
+                                    <Grid ColumnDefinitions="50, 80, 80, 80, 80, 80, 40" Margin="0,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                        
+                                        <!-- ТЕПЕРЬ ЭТО TEXTBOX С КЛАССОМ NumBox -->
+                                        <TextBox Grid.Column="0" Classes="NumBox" Text="{Binding Level}" MaxLength="5" Margin="0,0,5,0" Width="45" VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="1" Classes="NumBox" Text="{Binding Mp}" MaxLength="5" Margin="0,0,5,0" Width="70" VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="2" Classes="NumBox" Text="{Binding Power}" MaxLength="5" Margin="0,0,5,0" Width="70" VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="3" Classes="NumBox" Text="{Binding Radius}" MaxLength="5" Margin="0,0,5,0" Width="70" VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="4" Classes="NumBox" Text="{Binding RangeMin}" MaxLength="5" Margin="0,0,5,0" Width="70" VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="5" Classes="NumBox" Text="{Binding RangeMax}" MaxLength="5" Margin="0,0,15,0" Width="70" VerticalAlignment="Center"/>
+                                        
+                                        <Button Grid.Column="6" Content="X" 
+                                                Command="{Binding $parent[UserControl].((vm:SpellsViewModel)DataContext).DeleteLevelCommand}" 
+                                                CommandParameter="{Binding}" 
+                                                Background="#F44336" Foreground="White" Width="24" Height="24" Padding="0" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
                     </StackPanel>
                 </Border>
 

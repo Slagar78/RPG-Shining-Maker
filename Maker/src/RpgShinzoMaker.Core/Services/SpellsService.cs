@@ -21,20 +21,33 @@ public class SpellsService
         
         var json = File.ReadAllText(filePath);
         var root = JsonNode.Parse(json);
-        var spellsNode = root?["spells"];
+        var spellsNode = root?["spells"]?.AsArray();
         if (spellsNode == null) return new List<Spell>();
 
         var spells = new List<Spell>();
-        foreach (var node in spellsNode.AsArray())
+        foreach (var node in spellsNode)
         {
             var spell = node.Deserialize<Spell>(_options);
             if (spell != null)
             {
-                var range = node["range"]?.AsArray();
-                if (range != null && range.Count >= 2)
+                var levelsArray = node["levels"]?.AsArray();
+                if (levelsArray != null)
                 {
-                    spell.RangeMin = range[0]!.GetValue<int>();
-                    spell.RangeMax = range[1]?.GetValue<int>() ?? 0;
+                    spell.Levels.Clear();
+                    foreach (var lvlNode in levelsArray)
+                    {
+                        var lvl = lvlNode.Deserialize<SpellLevel>(_options);
+                        if (lvl != null)
+                        {
+                            var range = lvlNode["range"]?.AsArray();
+                            if (range != null && range.Count >= 2)
+                            {
+                                lvl.RangeMin = range[0]!.GetValue<int>();
+                                lvl.RangeMax = range[1]?.GetValue<int>() ?? 0;
+                            }
+                            spell.Levels.Add(lvl);
+                        }
+                    }
                 }
                 spells.Add(spell);
             }
@@ -50,12 +63,20 @@ public class SpellsService
             var node = JsonSerializer.SerializeToNode(spell, _options)?.AsObject();
             if (node != null)
             {
-                node.Remove("range_min");
-                node.Remove("range_max");
-                
-                var rangeArr = new JsonArray { spell.RangeMin, spell.RangeMax };
-                node["range"] = rangeArr;
-                
+                // Пересобираем массив levels с правильным форматом range
+                var levelsArray = new JsonArray();
+                foreach (var lvl in spell.Levels)
+                {
+                    var lvlNode = JsonSerializer.SerializeToNode(lvl, _options)?.AsObject();
+                    if (lvlNode != null)
+                    {
+                        lvlNode.Remove("range_min");
+                        lvlNode.Remove("range_max");
+                        lvlNode["range"] = new JsonArray { lvl.RangeMin, lvl.RangeMax };
+                        levelsArray.Add(lvlNode);
+                    }
+                }
+                node["levels"] = levelsArray;
                 spellsArray.Add(node);
             }
         }

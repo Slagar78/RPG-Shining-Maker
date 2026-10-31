@@ -109,58 +109,19 @@
                 <Border Classes="GroupBox">
                     <StackPanel>
                         <TextBlock Text="General Settings" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="80, 150, 80, 120" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
+                        <!-- ИЗМЕНЕНИЕ 1: ColumnDefinitions="80, 80, 80, 150" - вторая колонка сузилась со 150 до 80 -->
+                        <Grid ColumnDefinitions="80, 80, 80, 150" RowDefinitions="Auto, Auto" HorizontalAlignment="Left">
                             
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" Margin="0,2"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedClass.Name}" Margin="0,2,10,2"/>
+                            <!-- ИЗМЕНЕНИЕ 2: Добавлен MaxLength="8" -->
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedClass.Name}" MaxLength="8" Margin="0,2,10,2"/>
 
                             <TextBlock Grid.Row="0" Grid.Column="2" Text="Full Name:" Margin="0,2"/>
+                            <!-- Поле Full Name осталось без изменений (широкое) -->
                             <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding SelectedClass.FullName}" Margin="0,2"/>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Battle Sprite:" Margin="0,2"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding SelectedClass.BattleSpritePath}" Margin="0,2"/>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <!-- STATS and GROWTH -->
-                <Border Classes="GroupBox">
-                    <StackPanel>
-                        <TextBlock Text="Stats and Growth" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="70, 60, 60, 150" RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto" HorizontalAlignment="Left">
-                            
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Move:" Margin="0,2"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedClass.Move}" Classes="NumBox" MaxLength="2" Margin="0,2"/>
-
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Stat:" Foreground="Gray" Margin="0,6"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="Start:" Foreground="Gray" Margin="0,6"/>
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Projected:" Foreground="Gray" Margin="0,6"/>
-                            <TextBlock Grid.Row="1" Grid.Column="3" Text="Curve:" Foreground="Gray" Margin="0,6"/>
-
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="HP:" Margin="0,2"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedClass.HpGrowth.Start}" Classes="NumBox" MaxLength="3" Margin="0,2"/>
-                            <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding SelectedClass.HpGrowth.Projected}" Classes="NumBox" MaxLength="3" Margin="0,2"/>
-                            <ComboBox Grid.Row="2" Grid.Column="3" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedClass.HpGrowth.Curve}" Width="120" Margin="0,2"/>
-
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="MP:" Margin="0,2"/>
-                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedClass.MpGrowth.Start}" Classes="NumBox" MaxLength="3" Margin="0,2"/>
-                            <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding SelectedClass.MpGrowth.Projected}" Classes="NumBox" MaxLength="3" Margin="0,2"/>
-                            <ComboBox Grid.Row="3" Grid.Column="3" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedClass.MpGrowth.Curve}" Width="120" Margin="0,2"/>
-
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Attack:" Margin="0,2"/>
-                            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding SelectedClass.AttackGrowth.Start}" Classes="NumBox" MaxLength="3" Margin="0,2"/>
-                            <TextBox Grid.Row="4" Grid.Column="2" Text="{Binding SelectedClass.AttackGrowth.Projected}" Classes="NumBox" MaxLength="3" Margin="0,2"/>
-                            <ComboBox Grid.Row="4" Grid.Column="3" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedClass.AttackGrowth.Curve}" Width="120" Margin="0,2"/>
-
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Defense:" Margin="0,2"/>
-                            <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding SelectedClass.DefenseGrowth.Start}" Classes="NumBox" MaxLength="3" Margin="0,2"/>
-                            <TextBox Grid.Row="5" Grid.Column="2" Text="{Binding SelectedClass.DefenseGrowth.Projected}" Classes="NumBox" MaxLength="3" Margin="0,2"/>
-                            <ComboBox Grid.Row="5" Grid.Column="3" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedClass.DefenseGrowth.Curve}" Width="120" Margin="0,2"/>
-
-                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Agility:" Margin="0,2"/>
-                            <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding SelectedClass.AgilityGrowth.Start}" Classes="NumBox" MaxLength="3" Margin="0,2"/>
-                            <TextBox Grid.Row="6" Grid.Column="2" Text="{Binding SelectedClass.AgilityGrowth.Projected}" Classes="NumBox" MaxLength="3" Margin="0,2"/>
-                            <ComboBox Grid.Row="6" Grid.Column="3" ItemsSource="{Binding Curves}" SelectedItem="{Binding SelectedClass.AgilityGrowth.Curve}" Width="120" Margin="0,2"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Move:" Margin="0,2"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedClass.Move}" Classes="NumBox" MaxLength="2" Margin="0,2"/>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -170,7 +131,7 @@
                     <Border Grid.Column="0" Classes="GroupBox" Margin="0,0,4,8">
                         <StackPanel>
                             <TextBlock Text="Attributes" Classes="GroupHeader"/>
-                            <Grid ColumnDefinitions="70, *" RowDefinitions="Auto, Auto, Auto, Auto" HorizontalAlignment="Left">
+                            <Grid ColumnDefinitions="80, *" RowDefinitions="Auto, Auto, Auto, Auto" HorizontalAlignment="Left">
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Race:" Margin="0,2"/>
                                 <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Races}" SelectedItem="{Binding SelectedClass.Race}" Width="120" Margin="0,2"/>
 
@@ -189,85 +150,50 @@
                     <Border Grid.Column="1" Classes="GroupBox" Margin="4,0,0,8">
                         <StackPanel>
                             <TextBlock Text="Resistance" Classes="GroupHeader"/>
-                            <Grid ColumnDefinitions="70, 100" RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" HorizontalAlignment="Left">
+                            <!-- ЗДЕСЬ ИЗМЕНЕНИЕ: Добавлена третья колонка * -->
+                            <Grid ColumnDefinitions="80, 100, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" HorizontalAlignment="Left">
+                                
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Wind:" Margin="0,1"/>
                                 <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Resistances}" SelectedItem="{Binding SelectedClass.Resistance.Wind}" Margin="0,1"/>
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SelectedClass.Resistance.Wind}" Foreground="#81C784" FontWeight="Bold" VerticalAlignment="Center" Margin="5,1"/>
                                 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Lightning:" Margin="0,1"/>
                                 <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Resistances}" SelectedItem="{Binding SelectedClass.Resistance.Lightning}" Margin="0,1"/>
+                                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding SelectedClass.Resistance.Lightning}" Foreground="#81C784" FontWeight="Bold" VerticalAlignment="Center" Margin="5,1"/>
                                 
                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Ice:" Margin="0,1"/>
                                 <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Resistances}" SelectedItem="{Binding SelectedClass.Resistance.Ice}" Margin="0,1"/>
+                                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedClass.Resistance.Ice}" Foreground="#81C784" FontWeight="Bold" VerticalAlignment="Center" Margin="5,1"/>
                                 
                                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Fire:" Margin="0,1"/>
                                 <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Resistances}" SelectedItem="{Binding SelectedClass.Resistance.Fire}" Margin="0,1"/>
+                                <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding SelectedClass.Resistance.Fire}" Foreground="#81C784" FontWeight="Bold" VerticalAlignment="Center" Margin="5,1"/>
                                 
                                 <TextBlock Grid.Row="4" Grid.Column="0" Text="Aqua:" Margin="0,1"/>
                                 <ComboBox Grid.Row="4" Grid.Column="1" ItemsSource="{Binding Resistances}" SelectedItem="{Binding SelectedClass.Resistance.Aqua}" Margin="0,1"/>
+                                <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding SelectedClass.Resistance.Aqua}" Foreground="#81C784" FontWeight="Bold" VerticalAlignment="Center" Margin="5,1"/>
                                 
                                 <TextBlock Grid.Row="5" Grid.Column="0" Text="Earth:" Margin="0,1"/>
                                 <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding Resistances}" SelectedItem="{Binding SelectedClass.Resistance.Earth}" Margin="0,1"/>
+                                <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding SelectedClass.Resistance.Earth}" Foreground="#81C784" FontWeight="Bold" VerticalAlignment="Center" Margin="5,1"/>
                                 
                                 <TextBlock Grid.Row="6" Grid.Column="0" Text="Neutral:" Margin="0,1"/>
                                 <ComboBox Grid.Row="6" Grid.Column="1" ItemsSource="{Binding Resistances}" SelectedItem="{Binding SelectedClass.Resistance.Neutral}" Margin="0,1"/>
+                                <TextBlock Grid.Row="6" Grid.Column="2" Text="{Binding SelectedClass.Resistance.Neutral}" Foreground="#81C784" FontWeight="Bold" VerticalAlignment="Center" Margin="5,1"/>
                                 
                                 <TextBlock Grid.Row="7" Grid.Column="0" Text="Affliction:" Margin="0,1"/>
                                 <ComboBox Grid.Row="7" Grid.Column="1" ItemsSource="{Binding Resistances}" SelectedItem="{Binding SelectedClass.Resistance.Affliction}" Margin="0,1"/>
+                                <TextBlock Grid.Row="7" Grid.Column="2" Text="{Binding SelectedClass.Resistance.Affliction}" Foreground="#81C784" FontWeight="Bold" VerticalAlignment="Center" Margin="5,1"/>
+                                
                             </Grid>
                         </StackPanel>
                     </Border>
                 </Grid>
 
-                <!-- SPELL LIST -->
-                <Border Classes="GroupBox">
-                    <StackPanel>
-                        <TextBlock Text="Spell List" Classes="GroupHeader"/>
-                        <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,0,0,5">
-                            <Button Content="+" Command="{Binding AddClassSpellCommand}" Width="24" Height="24" Background="#4CAF50" Foreground="White" FontWeight="Bold"/>
-                        </StackPanel>
-                        
-                        <ItemsControl x:Name="SpellListItems" ItemsSource="{Binding SelectedClass.SpellList}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="models:ClassSpell">
-                                    <Grid ColumnDefinitions="40, 50, 180, 60, 40, 30" Margin="0,2" HorizontalAlignment="Left">
-                                        
-                                        <TextBlock Grid.Column="0" Text="Lvl:" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="1" Text="{Binding Level}" MaxLength="3" Margin="0,0,10,0"/>
-                                        
-                                        <!-- COMBOBOX С ПРИВЕДЕНИЕМ ТИПА -->
-
-                                        <ComboBox Grid.Column="2" 
-                                                  ItemsSource="{Binding $parent[ItemsControl].((vm:ClassesViewModel)DataContext).AvailableSpells}" 
-                                                  SelectedValue="{Binding SpellId}" 
-                                                  SelectedValueBinding="{Binding Id}" 
-                                                  Margin="0,0,10,0">
-
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate x:DataType="models:Spell">
-                                                    <TextBlock Text="{Binding Name}"/>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
-                                        
-                                        <TextBlock Grid.Column="3" Text="Spell Lv:" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="4" Text="{Binding SpellLevel}" MaxLength="2" Margin="0,0,10,0"/>
-                                        
-                                        <!-- КНОПКА С ПРИВЕДЕНИЕМ ТИПА -->
-                                        <Button Grid.Column="5" Content="X" 
-                                                Command="{Binding $parent[ItemsControl].((vm:ClassesViewModel)DataContext).RemoveClassSpellCommand}" 
-                                                CommandParameter="{Binding}" Background="#F44336" Foreground="White" Width="24" Height="24" Padding="0"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                    </StackPanel>
-                </Border>
-
                 <!-- PROWESS -->
                 <Border Classes="GroupBox">
                     <StackPanel>
-                        <TextBlock Text="Prowess" Classes="GroupHeader"/>
+                        <TextBlock Text="Prowess (через запятую)" Classes="GroupHeader"/>
                         <TextBox Text="{Binding SelectedClass.ProwessString}" Margin="0,2" Width="400" HorizontalAlignment="Left"/>
                     </StackPanel>
                 </Border>

@@ -8,7 +8,7 @@
 				{ "level": 1, "mp": 3, "power": 15, "radius": 0, "range": [0, 1] },
 				{ "level": 2, "mp": 5, "power": 15, "radius": 0, "range": [0, 2] },
 				{ "level": 3, "mp": 10, "power": 30, "radius": 0, "range": [0, 3] },
-				{ "level": 4, "mp": 52232, "power": 53423, "radius": 12, "range": [2, 32] }
+				{ "level": 4, "mp": 52, "power": 53, "radius": 12, "range": [2, 32] }
 			]
 		}, {
 			"id": 1,

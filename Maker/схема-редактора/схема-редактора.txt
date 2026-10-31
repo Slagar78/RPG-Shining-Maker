@@ -23,11 +23,11 @@ RPG-Shining-Maker/
 │   │   │   │   ├── SubArea.cs                      (прямоугольник под-области)
 │   │   │   │   │
 │   │   │   │   └── Database/                       (Модели базы данных)
-│   │   │   │       ├── Actor.cs                    (id, name, class_id, portrait, mapsprite, level...)
-│   │   │   │       ├── CharacterClass.cs           (id, name, full_name, battle_sprite, move, race, status, resistance, spell_list, growth)
-│   │   │   │       ├── StartInventory.cs           (actor_id, start_level, items[4])
+│   │   │   │       ├── Actor.cs                    (id, name, forClass, exp, kills, defeats + ActorBlock для промоушенов)
+│   │   │   │       ├── CharacterClass.cs           (id, name, full_name, move, move_type, race, status, initial_status, prowess, resistance)
+│   │   │   │       ├── StartInventory.cs           (actor_id, class_id, start_level, items[4])
 │   │   │   │       ├── Item.cs                     (id, name, category, price, range, use_spell, stats)
-│   │   │   │       └── Spell.cs                    (id, name, level, mp, type, power, range, radius, icon)
+│   │   │   │       └── Spell.cs                    (id, name, type, icon + ObservableCollection<SpellLevel> Levels)
 │   │   │   │
 │   │   │   └── Services/
 │   │   │       ├── ProjectPaths.cs                 (поиск корня проекта)
@@ -38,9 +38,9 @@ RPG-Shining-Maker/
 │   │   │       ├── EventsService.cs                (чтение/запись событий, включая Counter)
 │   │   │       ├── TilesetImportService.cs         (алгоритм нарезки PNG)
 │   │   │       ├── CJsonFormatter.cs               (форматтер JSON с табами)
-│   │   │       ├── ActorsService.cs                (чтение/запись actors.json и start_inventory.json)
+│   │   │       ├── ActorsService.cs                (чтение/запись actors.json с разворотом/сворачиванием промоушенов)
 │   │   │       ├── ItemsService.cs                 (чтение/запись items.json, парсинг массива range)
-│   │   │       ├── SpellsService.cs                (чтение/запись spells.json, парсинг массива range)
+│   │   │       ├── SpellsService.cs                (чтение/запись spells.json, парсинг вложенных levels с range)
 │   │   │       ├── ClassesService.cs               (чтение/запись classes.json)
 │   │   │       └── AssetScannerService.cs          (сканирование папок portraits, mapsprites)
 │   │   │
@@ -58,9 +58,9 @@ RPG-Shining-Maker/
 │   │       │
 │   │       ├── ViewModels/                         
 │   │       │   ├── MainViewModel.cs                (Добавлены ActorsVM, ItemsVM, SpellsVM, ClassesVM, SaveDatabaseCommand)
-│   │       │   ├── ActorsViewModel.cs              (Логика для Heroes)
+│   │       │   ├── ActorsViewModel.cs              (Логика для Heroes, управление блоками Base/Promo, AddActor/DeleteActor)
 │   │       │   ├── ItemsViewModel.cs               (Логика для Items)
-│   │       │   ├── SpellsViewModel.cs              (Логика для Spells, группировка в дерево)
+│   │       │   ├── SpellsViewModel.cs              (Логика для Spells, добавление/удаление уровней)
 │   │       │   ├── ClassesViewModel.cs             (Логика для Classes)
 │   │       │   └── ViewModelBase.cs
 │   │       │
@@ -111,13 +111,13 @@ RPG-Shining-Maker/
 │   │               ├── DatabaseEditorView.axaml    (Общий контейнер с вертикальными вкладками)
 │   │               ├── DatabaseEditorView.axaml.cs 
 │   │               └── Views/                      (Панели для каждой категории)
-│   │                   ├── ActorsPanel.axaml       (Список героев, свойства, стартовый инвентарь)
-│   │                   ├── ActorsPanel.axaml.cs    
+│   │                   ├── ActorsPanel.axaml       (Список героев, блоки Base/Promo, статы, магия, инвентарь 2x2)
+│   │                   ├── ActorsPanel.axaml.cs    (Блокировка ввода букв в NumericUpDown)
 │   │                   ├── ItemsPanel.axaml        (Список предметов, свойства, статы)
 │   │                   ├── ItemsPanel.axaml.cs     
-│   │                   ├── SpellsPanel.axaml       (Дерево заклинаний слева, свойства справа)
-│   │                   ├── SpellsPanel.axaml.cs    
-│   │                   ├── ClassesPanel.axaml      (Список классов, статы, сопротивления, магия)
+│   │                   ├── SpellsPanel.axaml       (Список заклинаний слева, свойства и таблица уровней справа)
+│   │                   ├── SpellsPanel.axaml.cs    (Блокировка ввода букв и ограничение длины в 5 символов)
+│   │                   ├── ClassesPanel.axaml      (Список классов, свойства, сопротивления с дублирующим текстом)
 │   │                   └── ClassesPanel.axaml.cs   
 │   │
 │   └── assets/
@@ -134,13 +134,13 @@ RPG-Shining-Maker/
 │   ├── tile_types/
 │   │   └── <tileset>.json
 │   ├── actors/
-│   │   ├── actors.json                             (Список персонажей)
+│   │   ├── actors.json                             (Список персонажей с блоками промоушенов)
 │   │   ├── start_inventory.json                    (Стартовый инвентарь)
 │   │   └── classes.json                            (Классы)
 │   ├── items/
 │   │   └── items.json                              (Список предметов)
 │   ├── spells/
-│   │   └── spells.json                             (Список заклинаний)
+│   │   └── spells.json                             (Заклинания с вложенными уровнями)
 │   └── ...
 │
 ├── opengl32.dll                                    (Mesa llvmpipe/d3d12 для фикса WGL ошибки)
@@ -212,7 +212,8 @@ RPG-Shining-Maker/
 │                  RoofEvent, TileChangeEvent, StairEvent,                        │
 │                  WarpEvent, NpcEvent, CounterEvent,                             │
 │                  MapEvents, Areas, SubArea,                                     │
-│                  Actor, StartInventory, CharacterClass, Item, Spell             │
+│                  Actor, ActorBlock, ActorPromotion, StartInventory,             │
+│                  CharacterClass, Item, Spell, SpellLevel, GrowthStat            │
 └──────────────────────────────────────┬──────────────────────────────────────────┘
                                        │
                                        │  читают / пишут
@@ -280,6 +281,9 @@ RPG-Shining-Maker/
 16  DatabaseEditor = MVVM                           Используется Binding, ObservableCollection и RelayCommand вместо ручного перерисовывания.
 17  Два слоя коллизий                               В редакторе при активном L1 рисуем в collision, при L2 — в collision2.
                                                      Оверлей сетки на канвасе показывает коллизию активного слоя.
+18  Единый источник истины (State)                  В игре BattleManager получает ссылки на @party и @start_inventory. Никаких копий.
+19  SpellLevels                                     У заклинания один ID и массив levels. В редакторе — таблица уровней.
+20  ActorBlocks                                     В actors.json плоский список. Редактор разворачивает Base + Promotions в один объект.
 
 
 📈 Что уже готово vs что в планах (обновлено)
@@ -288,7 +292,7 @@ RPG-Shining-Maker/
 Core.Models (GameMap, MapEntry, TileType)              ✅
 Core.Models (7 моделей событий, вкл. Counter)          ✅
 Core.Models (SubArea)                                  ✅
-Core.Models (Database: Actor, StartInventory, Item, Spell, CharacterClass) ✅
+Core.Models (Database: Actor, ActorBlock, ActorPromotion, StartInventory, Item, Spell, SpellLevel, CharacterClass, GrowthStat) ✅
 Core.Services (7 старых сервисов)                      ✅
 Core.Services (CJsonFormatter, ActorsService, ItemsService, SpellsService, ClassesService) ✅
 IEditor (интерфейс)                                    ✅
@@ -315,6 +319,11 @@ DatabaseEditor (Оболочка)                              ✅
 Игра: Warp line-mode                                   ✅
 Игра: Чтение и применение collision2 (L1 и L2)         ✅
 Игра: Два слоя коллизий (проходимость + скольжение)    ✅
+Игра: Единый источник истины (State Management)        ✅
+Игра: Рефакторинг spells.json (levels массив)          ✅
+Редактор: Блокировка ввода букв в NumericUpDown        ✅
+Редактор: Ограничение длины ввода (5 символов)         ✅
+Редактор: Стилизация NumericUpDown (скругление, отступы) ✅
 DatabaseEditor: Вкладка Enemies (Враги)                 📋 план
 BattleEditor                                           📋 план
 SceneEditor                                            📋 план
