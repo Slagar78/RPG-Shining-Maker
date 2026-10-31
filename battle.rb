@@ -95,7 +95,7 @@ def recalc_current_unit_stats
   apply_equipment_bonuses(unit, inventory_items)
 end
 
-  def initialize(db = nil, font = nil, game_text = {}, battle_id = 0, start_inventory = nil)
+  def initialize(db = nil, font = nil, game_text = {}, battle_id = 0, start_inventory = nil, party = nil)
     @db = db
     @font = font
     @game_text = game_text

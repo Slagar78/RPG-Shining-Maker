@@ -179,6 +179,14 @@ class Database
     @spells.find { |s| s["id"] == id }
   end
 
+  # Достает характеристики конкретного уровня заклинания
+  def find_spell_level_data(spell_id, spell_level)
+    spell = find_spell_by_id(spell_id)
+    return nil unless spell   
+    # Ищем в массиве "levels" нужный уровень
+    spell["levels"]&.find { |l| l["level"] == spell_level }
+  end
+
   # Поиск кривой роста по id (например, "LINEAR")
   def growth_curve(curve_id)
     @growth_curves.find { |c| c["id"] == curve_id }

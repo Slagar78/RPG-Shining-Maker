@@ -1,93 +1,40 @@
 {
-		"spells": [{
-					"id": 0,
-					"name": "Heal",
-					"level": 1,
-					"mp": 3,
-					"type": "heal",
-					"power": 15,
-					"radius": 0,
-					"icon": "assets/spells/Aura.png",
-					"range": [0, 1]
-			}, {
-					"id": 1,
-					"name": "Heal",
-					"level": 2,
-					"mp": 5,
-					"type": "heal",
-					"power": 15,
-					"radius": 0,
-					"icon": "assets/spells/Heal.png",
-					"range": [0, 2]
-			}, {
-					"id": 2,
-					"name": "Heal",
-					"level": 3,
-					"mp": 10,
-					"type": "heal",
-					"power": 30,
-					"radius": 0,
-					"icon": "assets/spells/Heal.png",
-					"range": [0, 3]
-			}, {
-					"id": 9,
-					"name": "Heal",
-					"level": 4,
-					"mp": 52232,
-					"type": "heal",
-					"power": 53423,
-					"radius": 12,
-					"icon": "assets/spells/icon012.png",
-					"range": [2, 32]
-			}, {
-					"id": 4,
-					"name": "Aura",
-					"level": 1,
-					"mp": 7,
-					"type": "heal",
-					"power": 15,
-					"radius": 1,
-					"icon": "assets/spells/Aura.png",
-					"range": [0, 3]
-			}, {
-					"id": 5,
-					"name": "Aura",
-					"level": 2,
-					"mp": 11,
-					"type": "heal",
-					"power": 15,
-					"radius": 2,
-					"icon": "assets/spells/Aura.png",
-					"range": [0, 3]
-			}, {
-					"id": 10,
-					"name": "Aura",
-					"level": 3,
-					"mp": 5,
-					"type": "heal",
-					"power": 5,
-					"radius": 1,
-					"icon": "assets/spells/magic_empty.png",
-					"range": [0, 3]
-			}, {
-					"id": 7,
-					"name": "magic01",
-					"level": 1,
-					"mp": 5,
-					"type": "heal",
-					"power": 5,
-					"radius": 1,
-					"icon": "assets/spells/magic_empty.png",
-					"range": [0, 2]
-			}, {
-					"id": 11,
-					"name": "Normale",
-					"level": 1,
-					"mp": 5,
-					"type": "heal",
-					"power": 5,
-					"radius": 1,
-					"icon": "assets/spells/magic_empty.png",
-					"range": [0, 3]
-			}]
+	"spells": [{
+			"id": 0,
+			"name": "Heal",
+			"type": "heal",
+			"icon": "assets/spells/Heal.png",
+			"levels": [
+				{ "level": 1, "mp": 3, "power": 15, "radius": 0, "range": [0, 1] },
+				{ "level": 2, "mp": 5, "power": 15, "radius": 0, "range": [0, 2] },
+				{ "level": 3, "mp": 10, "power": 30, "radius": 0, "range": [0, 3] },
+				{ "level": 4, "mp": 52232, "power": 53423, "radius": 12, "range": [2, 32] }
+			]
+		}, {
+			"id": 1,
+			"name": "Aura",
+			"type": "heal",
+			"icon": "assets/spells/Aura.png",
+			"levels": [
+				{ "level": 1, "mp": 7, "power": 15, "radius": 1, "range": [0, 3] },
+				{ "level": 2, "mp": 11, "power": 15, "radius": 2, "range": [0, 3] },
+				{ "level": 3, "mp": 5, "power": 5, "radius": 1, "range": [0, 3] }
+			]
+		}, {
+			"id": 2,
+			"name": "magic01",
+			"type": "heal",
+			"icon": "assets/spells/magic_empty.png",
+			"levels": [
+				{ "level": 1, "mp": 5, "power": 5, "radius": 1, "range": [0, 2] }
+			]
+		}, {
+			"id": 3,
+			"name": "Normale",
+			"type": "heal",
+			"icon": "assets/spells/magic_empty.png",
+			"levels": [
+				{ "level": 1, "mp": 5, "power": 5, "radius": 1, "range": [0, 3] }
+			]
+	}]
 }
