@@ -35,11 +35,11 @@ class Game
     # ─── Стартовая карта по ID ───
     start_id = @db.globals["start_map_id"] || 0
     
-    # Если файла нет, rescue [] вернет пустой массив вместо краша
-    entries = JSON.parse(File.read("data/maps/entries.json")) rescue []
+    # Сохраняем список карт в переменную класса
+    @map_entries = JSON.parse(File.read("data/maps/entries.json")) rescue []
     
     # Ищем по ID, если нет — берем первую попавшуюся
-    map_entry = entries.find { |e| e["id"] == start_id } || entries.first
+    map_entry = @map_entries.find { |e| e["id"] == start_id } || @map_entries.first
     raise "CRITICAL ERROR: data/maps/entries.json is empty or missing!" unless map_entry
 
     @game_map = GameMap.new(map_entry["folder"], @flags)
@@ -619,8 +619,12 @@ when :playing
         # КОНЕЦ РАЗДЕЛЕНИЯ
 
         if triggered
-          # Если target_map не указан в JSON, остаемся на текущей карте
-          target_map = warp['target_map'] || @current_map_id
+          # Ищем карту в entries.json по числовому ID
+          target_entry = @map_entries.find { |e| e["id"] == warp['target_map_id'] }
+          
+          # Если ID не найден (или null), остаемся на текущей карте
+          target_map = target_entry ? target_entry["folder"] : @current_map_id
+          
           target_x = warp['target_x']
           target_y = warp['target_y']
 

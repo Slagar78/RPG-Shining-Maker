@@ -255,7 +255,7 @@
 		"type":	"warp",
 		"trigger_x":	3,
 		"trigger_y":	3,
-		"target_map":	"Granseal",
+		"target_map_id":	0,
 		"target_x":	55,
 		"target_y":	3,
 		"facing":	3
@@ -267,7 +267,7 @@
 		"trigger_y":	25,
 		"end_x":	0,
 		"end_y":	29,
-		"target_map":	"overworld",
+		"target_map_id":	1,
 		"target_x":	29,
 		"target_y":	32,
 		"facing":	1
@@ -276,7 +276,7 @@
 		"type":	"warp",
 		"trigger_x":	54,
 		"trigger_y":	3,
-		"target_map":	"Granseal",
+		"target_map_id":	0,
 		"target_x":	4,
 		"target_y":	4,
 		"facing":	0
@@ -285,7 +285,7 @@
 		"type":	"warp",
 		"trigger_x":	46,
 		"trigger_y":	7,
-		"target_map":	"Granseal",
+		"target_map_id":	0,
 		"target_x":	58,
 		"target_y":	13,
 		"facing":	1
@@ -294,7 +294,7 @@
 		"type":	"warp",
 		"trigger_x":	59,
 		"trigger_y":	12,
-		"target_map":	"Granseal",
+		"target_map_id":	0,
 		"target_x":	45,
 		"target_y":	7,
 		"facing":	1
