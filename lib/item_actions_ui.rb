@@ -832,12 +832,7 @@ class GiveMenu < ItemSubMenuBase
     @blink_timer = 0
     @blink_duration = 0
     @give_state = :select_target # Сразу переходим к выбору персонажа!
-    item_id = if item_name_or_id.is_a?(Integer)
-                item_name_or_id
-              else
-                it = @db.find_by_name(item_name_or_id)
-                it ? it.id : -1
-              end
+    item_id = item_name_or_id
     @selected_give_item = { "item_id" => item_id, "equipped" => false }
     @give_selected_item_index = nil
     @donor_actor = nil # Магазин - это донор
@@ -1707,10 +1702,10 @@ class EquipMenu < ItemSubMenuBase
         entry = items[@selected_slot_index]
         bonus_atk = 0
         bonus_def = 0
-        if entry && entry["item"] != "NOTHING"
-          data = find_item_by_name(entry["item"])
+        if entry && !@db.item_is_nothing?(entry)
+          data = find_item_by_id(entry["item_id"])
           if data && data["category"] == "Weapon"
-            bonus_atk = (data["attack"] || 0).to_i
+            bonus_atk = (data["attack"]  || 0).to_i
             bonus_def = (data["defense"] || 0).to_i
           end
         end
@@ -2333,13 +2328,8 @@ class DropMenu < ItemSubMenuBase
     items = inv_entry["items"]
     idx = items.index { |entry| entry["item_id"] == @selected_drop_item["item_id"] }
     if idx
-      if items[idx]["equipped"]
-        items[idx]["equipped"] = false
-      end
-      items.delete_at(idx)
-      while items.length < 4
-        items << { "item_id" => -1, "equipped" => false }
-      end
+      # На месте удалённого — пустой слот. Остальные остаются на своих местах.
+      items[idx] = { "item_id" => -1, "equipped" => false }
     end
 
     inv_entry["items"] = items
