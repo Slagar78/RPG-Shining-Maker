@@ -116,8 +116,8 @@ public partial class ResistanceBlock : ObservableObject
 public partial class EnemyItem : ObservableObject
 {
     [ObservableProperty]
-    [property: JsonPropertyName("item")]
-    private string _item = "Nothing";
+    [property: JsonPropertyName("item_id")]
+    private int _itemId = -1; // -1 означает "Nothing" (пусто)
 
     [ObservableProperty]
     [property: JsonPropertyName("equipped")]

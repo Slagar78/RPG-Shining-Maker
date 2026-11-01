@@ -217,8 +217,16 @@
                                     <DataTemplate x:DataType="models:EnemyItem">
                                         <Grid ColumnDefinitions="40, *, 60" Margin="0,0,10,5" HorizontalAlignment="Stretch">
                                             <TextBlock Grid.Column="0" Text="Item:" Margin="0,2"/>
-                                            <ComboBox Grid.Column="1" ItemsSource="{Binding $parent[UserControl].((vm:EnemiesViewModel)DataContext).AvailableItems}" SelectedItem="{Binding Item}" Margin="0,2,5,2" HorizontalAlignment="Stretch"/>
-                                            <CheckBox Grid.Column="2" Content="Eqp" IsChecked="{Binding Equipped}" IsEnabled="{Binding Item, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" FontSize="11" VerticalAlignment="Center"/>
+                                            
+                                            <!-- Привязка по ID -->
+                                            <ComboBox Grid.Column="1" 
+                                                      ItemsSource="{Binding $parent[UserControl].((vm:EnemiesViewModel)DataContext).AvailableItems}" 
+                                                      SelectedValue="{Binding ItemId}" 
+                                                      SelectedValueBinding="{Binding Id}" 
+                                                      DisplayMemberBinding="{Binding Name}"
+                                                      Margin="0,2,5,2" HorizontalAlignment="Stretch"/>
+                                                      
+                                            <CheckBox Grid.Column="2" Content="Eqp" IsChecked="{Binding Equipped}" FontSize="11" VerticalAlignment="Center"/>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

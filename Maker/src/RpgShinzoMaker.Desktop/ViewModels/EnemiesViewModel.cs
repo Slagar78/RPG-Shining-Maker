@@ -32,7 +32,7 @@ public partial class EnemiesViewModel : ObservableObject
     // Справочники для ComboBox
     public ObservableCollection<string> AvailablePortraits { get; } = new();
     public ObservableCollection<string> AvailableMapsprites { get; } = new();
-    public ObservableCollection<string> AvailableItems { get; } = new();
+    public ObservableCollection<Item> AvailableItems { get; } = new(); // Изменено на Item
     public ObservableCollection<string> AvailableSpells { get; } = new();
     public ObservableCollection<string> AvailableRaces { get; } = new();
     public ObservableCollection<string> AvailableMovetypes { get; } = new();
@@ -73,12 +73,14 @@ public partial class EnemiesViewModel : ObservableObject
         AvailableMapsprites.Clear();
         foreach (var m in _assetScanner.GetMapsprites(_mapspritesDir)) AvailableMapsprites.Add(m);
 
-        // Предметы — по именам, "Nothing" первым (Title Case — как у врагов)
+        // Предметы — теперь объекты Item
         AvailableItems.Clear();
-        AvailableItems.Add(ProwessCatalog.EmptySlot);
+        AvailableItems.Add(new Item { Id = -1, Name = "Nothing" }); // Пустышка
         foreach (var item in _itemsService.LoadItems(_itemsPath))
-            if (!string.IsNullOrWhiteSpace(item.Name) && !AvailableItems.Contains(item.Name))
-                AvailableItems.Add(item.Name);
+        {
+            if (!string.IsNullOrWhiteSpace(item.Name))
+                AvailableItems.Add(item);
+        }
 
         // Заклинания — по именам
         AvailableSpells.Clear();
@@ -104,14 +106,9 @@ public partial class EnemiesViewModel : ObservableObject
         Enemies.Clear();
         foreach (var e in enemies) Enemies.Add(e);
 
-        // Дополняем справочники именами из уже загруженных врагов
-        // (на случай кастомных предметов/магии, которых нет в каталоге)
+        // Заклинания дополняем из уже загруженных врагов (на случай кастомных)
         foreach (var e in Enemies)
         {
-            foreach (var it in e.Items)
-                if (!string.IsNullOrWhiteSpace(it.Item) && !AvailableItems.Contains(it.Item))
-                    AvailableItems.Add(it.Item);
-
             foreach (var sp in e.SpellSlots)
                 if (!string.IsNullOrWhiteSpace(sp.Name) && !AvailableSpells.Contains(sp.Name))
                     AvailableSpells.Add(sp.Name);
@@ -170,7 +167,8 @@ public partial class EnemiesViewModel : ObservableObject
         };
 
         for (int i = 0; i < 4; i++)
-            enemy.Items.Add(new EnemyItem { Item = ProwessCatalog.EmptySlot, Equipped = false });
+            enemy.Items.Add(new EnemyItem { ItemId = -1, Equipped = false });
+            
         for (int i = 0; i < 4; i++)
             enemy.SpellSlots.Add(new EnemySpellSlot { Name = ProwessCatalog.EmptySlot, Level = 1 });
 

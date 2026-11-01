@@ -10,11 +10,11 @@
 			"level":	14,
 			"spell_power":	"enhanced",
 			"stats":	{
-				"max_hp":	2,
-				"max_mp":	50,
-				"base_att":	38,
-				"base_def":	30,
-				"base_agi":	29,
+				"hp_growth":	{ "start":	2, "projected":	12, "curve":	"LINEAR" },
+				"mp_growth":	{ "start":	50, "projected":	80, "curve":	"LINEAR" },
+				"attack_growth":	{ "start":	38, "projected":	60, "curve":	"LINEAR" },
+				"defense_growth":	{ "start":	30, "projected":	50, "curve":	"LINEAR" },
+				"agility_growth":	{ "start":	29, "projected":	45, "curve":	"LINEAR" },
 				"base_mov":	7
 			},
 			"resistance":	{
@@ -29,16 +29,16 @@
 			},
 			"prowess":	["critical150_1in8", "double_1in16", "counter_1in16"],
 			"items":	[{
-					"item":	"Laser Blade",
-					"equipped":	true
-				}, {
-					"item":	"Nothing",
+					"item_id":	1,
 					"equipped":	false
 				}, {
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}, {
-					"item":	"Nothing",
+					"item_id":	-1,
+					"equipped":	false
+				}, {
+					"item_id":	-1,
 					"equipped":	false
 				}],
 			"spells":	["Nothing", "Aura", "Nothing", "Nothing"],
@@ -56,11 +56,11 @@
 			"level":	10,
 			"spell_power":	"regular",
 			"stats":	{
-				"max_hp":	5,
-				"max_mp":	12,
-				"base_att":	30,
-				"base_def":	1,
-				"base_agi":	18,
+				"hp_growth":	{ "start":	5, "projected":	30, "curve":	"LINEAR" },
+				"mp_growth":	{ "start":	12, "projected":	30, "curve":	"LINEAR" },
+				"attack_growth":	{ "start":	30, "projected":	50, "curve":	"LINEAR" },
+				"defense_growth":	{ "start":	1, "projected":	20, "curve":	"LINEAR" },
+				"agility_growth":	{ "start":	18, "projected":	35, "curve":	"LINEAR" },
 				"base_mov":	4
 			},
 			"resistance":	{
@@ -75,16 +75,16 @@
 			},
 			"prowess":	["critical_poison", "double_1in32", "counter_1in32"],
 			"items":	[{
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}, {
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}, {
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}, {
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}],
 			"spells":	["Drain", "Nothing", "Nothing", "Nothing"],
@@ -99,14 +99,14 @@
 			"battle_sprite_path":	"assets/battles/battlesprites/enemies/Gizmo",
 			"race":	"Cadrian",
 			"status":	"normal",
-			"level":	10,
+			"level":	1,
 			"spell_power":	"regular",
 			"stats":	{
-				"max_hp":	50,
-				"max_mp":	12,
-				"base_att":	30,
-				"base_def":	1,
-				"base_agi":	18,
+				"hp_growth":	{ "start":	50, "projected":	90, "curve":	"LINEAR" },
+				"mp_growth":	{ "start":	12, "projected":	30, "curve":	"LINEAR" },
+				"attack_growth":	{ "start":	30, "projected":	55, "curve":	"LINEAR" },
+				"defense_growth":	{ "start":	1, "projected":	20, "curve":	"LINEAR" },
+				"agility_growth":	{ "start":	18, "projected":	35, "curve":	"LINEAR" },
 				"base_mov":	4
 			},
 			"resistance":	{
@@ -121,16 +121,16 @@
 			},
 			"prowess":	["critical_poison", "double_1in32", "counter_1in32"],
 			"items":	[{
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}, {
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}, {
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}, {
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}],
 			"spells":	["Drain", "Nothing", "Nothing", "Nothing"],
@@ -145,14 +145,14 @@
 			"battle_sprite_path":	"assets/battles/battlesprites/enemies/Gizmo",
 			"race":	"Cadrian",
 			"status":	"normal",
-			"level":	1,
+			"level":	2,
 			"spell_power":	"regular",
 			"stats":	{
-				"max_hp":	5,
-				"max_mp":	5,
-				"base_att":	4,
-				"base_def":	4,
-				"base_agi":	10,
+				"hp_growth":	{ "start":	5, "projected":	25, "curve":	"LINEAR" },
+				"mp_growth":	{ "start":	5, "projected":	25, "curve":	"LINEAR" },
+				"attack_growth":	{ "start":	4, "projected":	20, "curve":	"LINEAR" },
+				"defense_growth":	{ "start":	4, "projected":	20, "curve":	"LINEAR" },
+				"agility_growth":	{ "start":	10, "projected":	25, "curve":	"LINEAR" },
 				"base_mov":	3
 			},
 			"resistance":	{
@@ -167,16 +167,16 @@
 			},
 			"prowess":	["critical_poison", "double_1in32", "counter_1in32"],
 			"items":	[{
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}, {
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}, {
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}, {
-					"item":	"Nothing",
+					"item_id":	-1,
 					"equipped":	false
 				}],
 			"spells":	["Drain", "Nothing", "Nothing", "Nothing"],

@@ -143,7 +143,27 @@ class Database
   def load_enemies
     if File.exist?("data/enemies/enemies.json")
       data = JSON.parse(File.read("data/enemies/enemies.json"))
-      @enemies = data["enemies"].map { |h| OpenStruct.new(h) }
+      raw_enemies = data["enemies"] || []
+
+      raw_enemies.each do |e|
+        stats = e["stats"]
+        next unless stats
+
+        # Если статы в новом growth-формате (из редактора)
+        if stats["hp_growth"]
+          lv = e["level"] || 1
+          
+          # Разворачиваем growth в плоские статы, которые ждет battle.rb
+          stats["max_hp"]   = stat_at_level(stats["hp_growth"], lv)
+          stats["max_mp"]   = stat_at_level(stats["mp_growth"], lv)
+          stats["base_att"] = stat_at_level(stats["attack_growth"], lv)
+          stats["base_def"] = stat_at_level(stats["defense_growth"], lv)
+          stats["base_agi"] = stat_at_level(stats["agility_growth"], lv)
+          # base_mov уже плоский (int), его не трогаем
+        end
+      end
+
+      @enemies = raw_enemies.map { |h| OpenStruct.new(h) }
       puts "Загружено врагов: #{@enemies.size}"
     else
       @enemies = []

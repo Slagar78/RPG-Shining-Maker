@@ -119,10 +119,6 @@ class EnemyProfile
     @mapsprite_cache[cache_key] = tex
   end
 
-  def find_item_by_name(name)
-    @db ? @db.find_by_name(name) : nil
-  end
-
   def calculate_equip_bonuses
     return { attack: 0, defense: 0, hp: 0, mp: 0, agility: 0, mov: 0 } unless @enemy
     items = @enemy["items"] || []
@@ -135,9 +131,13 @@ class EnemyProfile
 
     items.each do |item_entry|
       next unless item_entry["equipped"]
-      next if item_entry["item"] == "Nothing"
-      item_data = find_item_by_name(item_entry["item"])
+      
+      item_id = item_entry["item_id"]
+      next if item_id.nil? || item_id == -1
+
+      item_data = @db ? @db.item(item_id) : nil
       next unless item_data
+
       total_attack  += (item_data["attack"]  || 0).to_i
       total_defense += (item_data["defense"] || 0).to_i
       total_hp      += (item_data["hp"]      || 0).to_i
@@ -262,7 +262,7 @@ class EnemyProfile
     race_x = @right_panel_x + 25 + Raylib.MeasureTextEx(@font, name + "  ", 20, 1).x
     draw_text_custom(race, race_x, header_y, 20, GOLD)
 
-    # Статы врага
+    # Статы врага (плоские, уже пересчитанные из growth)
     stats = @enemy["stats"] || {}
     base_hp  = stats["max_hp"] || 0
     base_mp  = stats["max_mp"] || 0
@@ -336,20 +336,27 @@ class EnemyProfile
       draw_text_custom("Nothing", magic_x, section_y + 30, 18, ORANGE)
     end
 
-    # Предметы
-    has_any_item = items.any? { |entry| entry["item"] != "Nothing" }
+    # ========== ПРЕДМЕТЫ (ИСПРАВЛЕНО ПОД ID) ==========
+    has_any_item = items.any? { |entry| entry["item_id"] && entry["item_id"] != -1 }
     if has_any_item
       items.first(4).each_with_index do |item_entry, i|
-        next if item_entry["item"] == "Nothing"
+        item_id = item_entry["item_id"]
+        next if item_id.nil? || item_id == -1
+
         y = section_y + 30 + i * 52
-        item_data = find_item_by_name(item_entry["item"])
-        item_icon = item_data ? load_icon(item_data["icon"]) : nil
+        item_data = @db ? @db.item(item_id) : nil
+        next unless item_data
+
+        item_icon = load_icon(item_data["icon"])
         if item_icon
           src = Raylib::Rectangle.create(0, 0, 32, 48)
           dst = Raylib::Rectangle.create(items_x - 50, y, 32, 48)
           Raylib.DrawTexturePro(item_icon, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
         end
-        name = item_entry["item"]
+        
+        # Берем имя из базы данных
+        name = item_data["name"]
+        
         if item_entry["equipped"]
           draw_text_custom("E", items_x - 15, y + 12, 18, YELLOW)
         end
@@ -383,7 +390,9 @@ class EnemyProfile
     end
   end
 
+  # Добавлена защита от nil
   def draw_item_name(text, x, y, size, color)
+    return if text.nil?
     if text.include?(' ')
       first_word = text[0...text.index(' ')].strip
       second_word = text[text.index(' ') + 1..-1].strip

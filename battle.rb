@@ -53,47 +53,53 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
 
     inventory_items.each do |item_data|
       next unless item_data["equipped"]
-      item_name = item_data["item"]
-      next if item_name == "NOTHING" || item_name == "Nothing" || item_name.nil?
+      
+      # Читаем ID. Если внезапно остался старый формат (строка) — обрабатываем и его.
+      item_id = item_data["item_id"] || item_data["item"]
+      
+      # Пропускаем пустые слоты (-1, "Nothing" и т.д.)
+      next if item_id.nil? || item_id == -1 || item_id == "NOTHING" || item_id == "Nothing"
 
-      item = @db.find_by_name(item_name)   # ищем предмет в базе (по полю "name")
+      # Ищем предмет по ID в базе данных
+      item = @db.item(item_id) 
       next unless item
 
-      unit[:atk] += item["attack"].to_i    # бонус атаки
-      unit[:def] += item["defense"].to_i   # бонус защиты
+      # Применяем бонусы
+      unit[:atk] += (item["attack"] || 0).to_i
+      unit[:def] += (item["defense"] || 0).to_i
     end
   end
   
-def recalc_current_unit_stats
-  unit = @current_unit
-  return unless unit
+  def recalc_current_unit_stats
+    unit = @current_unit
+    return unless unit
 
-  # Сбрасываем до базовых значений (как при загрузке)
-  if unit[:actor]
-    actor = unit[:actor]
-    klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
-    if klass
-      lv = actor["level"] || 1
-      unit[:atk] = @db.stat_at_level(actor["attack_growth"], lv)
-      unit[:def] = @db.stat_at_level(actor["defense_growth"], lv)
+    # Сбрасываем до базовых значений (как при загрузке)
+    if unit[:actor]
+      actor = unit[:actor]
+      klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
+      if klass
+        lv = actor["level"] || 1
+        unit[:atk] = @db.stat_at_level(actor["attack_growth"], lv)
+        unit[:def] = @db.stat_at_level(actor["defense_growth"], lv)
+      end
+    elsif unit[:enemy]
+      enemy = unit[:enemy]
+      unit[:atk] = enemy["stats"]["base_att"]
+      unit[:def] = enemy["stats"]["base_def"]
     end
-  elsif unit[:enemy]
-    enemy = unit[:enemy]
-    unit[:atk] = enemy["stats"]["base_att"]
-    unit[:def] = enemy["stats"]["base_def"]
-  end
 
-  # Определяем инвентарь и применяем бонусы от надетого
-  inventory_items = nil
-  if unit[:actor]
-    entry = @start_inventory.find { |e| e["actor_id"] == unit[:actor]["id"] }
-    inventory_items = entry["items"] if entry
-  elsif unit[:enemy]
-    inventory_items = unit[:enemy]["items"]
-  end
+    # Определяем инвентарь и применяем бонусы от надетого
+    inventory_items = nil
+    if unit[:actor]
+      entry = @start_inventory.find { |e| e["actor_id"] == unit[:actor]["id"] }
+      inventory_items = entry["items"] if entry
+    elsif unit[:enemy]
+      inventory_items = unit[:enemy]["items"]
+    end
 
-  apply_equipment_bonuses(unit, inventory_items)
-end
+    apply_equipment_bonuses(unit, inventory_items)
+  end
 
   def initialize(db = nil, font = nil, game_text = {}, battle_id = 0, start_inventory = nil, party = nil)
     @db = db
