@@ -46,38 +46,35 @@ Raylib.DrawRectangle(
   )
   end
 
-  # --- подсветка клеток (Закругленные плитки с видимыми углами) ---
+  # --- подсветка клеток (Полупрозрачная заливка + рамка) ---
   if @manager.highlight_tiles.any? && @manager.current_unit
     # Пульсация
     pulse_alpha = (Math.sin(@manager.highlight_timer * 0.15) * 40 + 120).to_i.clamp(0, 255)
 
-    # Заливка
+    # ЗАЛИВКА
     fill_color = Raylib::Color.new
     fill_color.r = 80
     fill_color.g = 180
     fill_color.b = 255
-    fill_color.a = pulse_alpha
+    fill_color.a = (pulse_alpha * 0.4).to_i  # 0.4 делает заливку полупрозрачной (не закрашивает траву)
 
-    # Рамка
+    # РАМКА
     line_color = Raylib::Color.new
     line_color.r = 200
     line_color.g = 240
     line_color.b = 255
-    line_color.a = 200 
+    line_color.a = pulse_alpha 
 
-    # НАСТРОЙКИ ДЛЯ ВИДИМОГО ЗАКРУГЛЕНИЯ:
-    roundness = 0.4  # Увеличили до 0.4 (было 0.2). Теперь углы будут явно круглыми.
-    segments = 12    # Плавность линий (чем больше, тем ровнее)
-    thickness = 1.5  # Толщина рамки
-    
-    # ДОБАВИЛИ ОТСТУП В 2 ПИКСЕЛЯ, ЧТОБЫ ПЛИТКИ НЕ СЛИВАЛИСЬ
+    # Настройки
+    roundness = 0.4
+    segments = 12
+    thickness = 1.5
     padding = 2.0 
 
     @manager.highlight_tiles.each do |tx, ty|
       screen_x = tx * BattleManager::TILE_SIZE + int_cam_x
       screen_y = ty * BattleManager::TILE_SIZE + int_cam_y
       
-      # Уменьшаем размер тайла на отступ (48 - 2*2 = 44 пикселя)
       dst = Raylib::Rectangle.create(
         screen_x + padding, 
         screen_y + padding, 
@@ -85,10 +82,10 @@ Raylib.DrawRectangle(
         BattleManager::TILE_SIZE - padding * 2
       )
       
-      # 1. Рисуем закругленную заливку
+      # 1. Рисуем полупрозрачную голубую заливку
       Raylib.DrawRectangleRounded(dst, roundness, segments, fill_color)
       
-      # 2. Рисуем закругленную рамку
+      # 2. Рисуем рамку
       Raylib.DrawRectangleRoundedLinesEx(dst, roundness, segments, thickness, line_color)
     end
   end
