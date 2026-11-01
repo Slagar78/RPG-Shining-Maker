@@ -258,7 +258,7 @@
 		"target_map_id":	0,
 		"target_x":	55,
 		"target_y":	3,
-		"facing":	3
+		"facing":	2
 	},
 	{
 		"type":	"warp",

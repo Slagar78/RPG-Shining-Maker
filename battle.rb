@@ -40,7 +40,7 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
             :battle_scene, :target_highlight, :highlight_tex,
             :attack_target, :hp_mp_panel, :target_hp_panel,
             :fade_alpha, :db, :battle_x, :battle_y, :info_panel_unit,
-            :battle_w, :battle_h			  
+            :battle_w, :battle_h
   attr_accessor :audio
   attr_accessor :battle_scene_font
 
@@ -154,7 +154,7 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
     @layer2 = @game_map.build_layer2
     SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
 	
-	# Загружаем start_inventory ДО load_spriteset
+	  # Загружаем start_inventory ДО load_spriteset
     @start_inventory = start_inventory || []
     if @start_inventory.empty? && File.exist?("data/actors/start_inventory.json")
       data = JSON.parse(File.read("data/actors/start_inventory.json"))
@@ -203,7 +203,7 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
     @attack_targets = []
     @attack_target_index = 0
     load_aoe_textures
-	@highlight_tex = @aoe_textures[0]
+	  @highlight_tex = @aoe_textures[0]
 
     @message_panel_tex = Raylib.LoadTexture("assets/ui/message_panel.png")
     Raylib.SetTextureFilter(@message_panel_tex, Raylib::TEXTURE_FILTER_POINT)

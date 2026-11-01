@@ -2,7 +2,7 @@
 		"id":	0,
 		"folder":	"Granseal",
 		"name":	"Granseal",
-		"music":	"assets/sounds/Track1.mp3",
+		"music":	"assets/sounds/SF_Feather.mp3",
 		"music_volume":	0.8,
 		"areas":	"data/maps/Granseal/areas.json"
 	}, {
