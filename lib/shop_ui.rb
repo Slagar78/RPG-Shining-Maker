@@ -161,7 +161,8 @@ class ShopMenu
     @text_reveal_index = 0
     @text_reveal_timer = 0
     @text_full_shown   = false
-    
+
+    @buy_item_id    = nil  
     @buy_item_name = ""
     @buy_item_price = 0
     
@@ -294,10 +295,10 @@ class ShopMenu
     @sub_state      = :main
     @sub_action     = nil
 
-    item_names = shop_data["items"] || []
-    @shop_icons = item_names.map { |name| load_item_icon(name) }
-    @shop_prices = item_names.map do |name|
-      data = @db ? @db.find_by_name(name) : nil
+    item_ids = shop_data["items"] || []
+    @shop_icons = item_ids.map { |id| load_item_icon(id) }
+    @shop_prices = item_ids.map do |id|
+      data = @db ? @db.find_item_by_id(id) : nil
       data ? (data["price"] || 0).to_i : 0
     end
     @selected_item_index = 0
@@ -330,6 +331,9 @@ class ShopMenu
     @sub_action   = nil
     @shop_icons   = []
     @shop_prices  = []
+    @buy_item_id    = nil
+    @buy_item_name  = ""
+    @buy_item_price = 0
     @selected_item_index = 0
     @shop_scroll_index   = 0
     @input_timer_left    = 0
@@ -444,8 +448,9 @@ def handle_input(dt = 1.0 / 60.0)
       end
 
       if @shop_icons.any? && @selected_item_index < @shop_icons.size
-        @buy_item_name = @current_shop["items"][@selected_item_index]
-        item_data = @db ? @db.find_by_name(@buy_item_name) : nil
+        @buy_item_id = @current_shop["items"][@selected_item_index]
+        item_data = @db ? @db.find_item_by_id(@buy_item_id) : nil
+        @buy_item_name  = item_data ? (item_data["name"] || "???") : "???"
         @buy_item_price = item_data ? (item_data["price"] || 0).to_i : 0
         @sub_state = :confirm_buy
         @text_reveal_index = 0
@@ -472,7 +477,7 @@ def handle_input(dt = 1.0 / 60.0)
         gold_amount = @db&.globals ? (@db.globals["gold"] || 0) : 0
         if gold_amount >= @buy_item_price
           @sub_state = :select_target
-          @target_menu.open_for_shop(@buy_item_name)
+          @target_menu.open_for_shop(@buy_item_id)
         else
           @sub_state = :insufficient_funds
         end
@@ -665,12 +670,10 @@ end
   # Иконки предметов
   # ─────────────────────────────────────────────────────────
 
-  def load_item_icon(item_name)
-    return @icon_cache[item_name] if @icon_cache.key?(item_name)
-
-    item_data = @db ? @db.find_by_name(item_name) : nil
+  def load_item_icon(item_id)
+    return @icon_cache[item_id] if @icon_cache.key?(item_id)
+    item_data = @db ? @db.find_item_by_id(item_id) : nil
     path = item_data ? item_data["icon"] : nil
-
     tex = nil
     if path && File.exist?(path)
       img = Raylib.LoadImage(path)
@@ -678,8 +681,7 @@ end
       Raylib.UnloadImage(img)
       Raylib.SetTextureFilter(tex, Raylib::TEXTURE_FILTER_POINT)
     end
-
-    @icon_cache[item_name] = tex
+    @icon_cache[item_id] = tex
     tex
   end
 

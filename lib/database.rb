@@ -191,10 +191,6 @@ class Database
     @items.find { |i| i.id == id }
   end
 
-  def find_by_name(name)
-    @items.find { |i| i.name == name }
-  end
-
   def find_item_by_id(id)
     return nil if id.nil? || id == -1
     @items.find { |i| i.id == id }

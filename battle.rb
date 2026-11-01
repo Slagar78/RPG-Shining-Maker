@@ -54,11 +54,11 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
     inventory_items.each do |item_data|
       next unless item_data["equipped"]
       
-      # Читаем ID. Если внезапно остался старый формат (строка) — обрабатываем и его.
-      item_id = item_data["item_id"] || item_data["item"]
+      # Читаем строго ID.
+      item_id = item_data["item_id"]
       
-      # Пропускаем пустые слоты (-1, "Nothing" и т.д.)
-      next if item_id.nil? || item_id == -1 || item_id == "NOTHING" || item_id == "Nothing"
+      # Пропускаем пустые слоты
+      next if item_id.nil? || item_id == -1
 
       # Ищем предмет по ID в базе данных
       item = @db.item(item_id) 

@@ -4,24 +4,13 @@
       "id": 0,
       "name": "Granseal Weapons",
       "type": "weapon",
-      "items": [
-        "Short Sword",
-        "Axe",
-        "Black Ring",
-        "Angel Wing"
-      ]
+      "items": [5, 7, 6, 4]
     },
     {
       "id": 1,
       "name": "Granseal Items",
       "type": "item",
-      "items": [
-        "Medical Herb",
-        "Healing Seed",
-        "Healing Drop",
-        "Antidote",
-        "Angel Wing"
-      ]
+      "items": [0, 1, 2, 3, 4]
     }
   ]
 }

@@ -27,7 +27,7 @@ RPG-Shining-Maker/
 │   │   │   │       ├── CharacterClass.cs           (id, name, full_name, move, move_type, race, status, initial_status, prowess, resistance)
 │   │   │   │       ├── Enemy.cs                    (id, name, portrait, mapsprite, race, status, level, spell_power, stats(growth), resistance, prowess, items (item_id), SpellSlots (spell_id), initial_status, move_type)
 │   │   │   │       ├── ProwessCatalog.cs           (статический каталог токенов: critical150_1in8, double_1in16 и т.д.)
-│   │   │   │       ├── StartInventory.cs           (actor_id, class_id, start_level, items[4])
+│   │   │   │       ├── StartInventory.cs           (actor_id, class_id, start_level, items[4] (item_id, equipped))
 │   │   │   │       ├── Item.cs                     (id, name, category, price, range, use_spell, stats)
 │   │   │   │       └── Spell.cs                    (id, name, type, icon + ObservableCollection<SpellLevel> Levels)
 │   │   │   │
@@ -40,7 +40,7 @@ RPG-Shining-Maker/
 │   │   │       ├── EventsService.cs                (чтение/запись событий, включая Counter)
 │   │   │       ├── TilesetImportService.cs         (алгоритм нарезки PNG)
 │   │   │       ├── CJsonFormatter.cs               (форматтер JSON с табами)
-│   │   │       ├── ActorsService.cs                (чтение/запись actors.json с разворотом/сворачиванием промоушенов)
+│   │   │       ├── ActorsService.cs                (чтение/запись actors.json и start_inventory.json, разворот промоушенов, парсинг item_id)
 │   │   │       ├── ItemsService.cs                 (чтение/запись items.json, парсинг массива range)
 │   │   │       ├── SpellsService.cs                (чтение/запись spells.json, парсинг вложенных levels с range)
 │   │   │       ├── ClassesService.cs               (чтение/запись classes.json)
@@ -61,7 +61,7 @@ RPG-Shining-Maker/
 │   │       │
 │   │       ├── ViewModels/                         
 │   │       │   ├── MainViewModel.cs                (Добавлены ActorsVM, ItemsVM, SpellsVM, ClassesVM, EnemiesVM, SaveDatabaseCommand)
-│   │       │   ├── ActorsViewModel.cs              (Логика для Heroes, управление блоками Base/Promo, команды стрелочек статов/магии)
+│   │       │   ├── ActorsViewModel.cs              (Логика для Heroes, инвентарь по ID, управление блоками Base/Promo, команды стрелочек)
 │   │       │   ├── ItemsViewModel.cs               (Логика для Items, команды стрелочек цены и 6 статов)
 │   │       │   ├── SpellsViewModel.cs              (Логика для Spells, добавление/удаление уровней)
 │   │       │   ├── ClassesViewModel.cs             (Логика для Classes, команды Move + / -)
@@ -117,7 +117,7 @@ RPG-Shining-Maker/
 │   │               ├── DatabaseEditorView.axaml    (Общий контейнер с вертикальными вкладками)
 │   │               ├── DatabaseEditorView.axaml.cs 
 │   │               └── Views/                      (Панели для каждой категории)
-│   │                   ├── ActorsPanel.axaml       (Список героев, блоки Base/Promo, превью портрета 67x104, статы со стрелочками, магия, инвентарь 2x2)
+│   │                   ├── ActorsPanel.axaml       (Список героев, блоки Base/Promo, превью портрета, статы, магия, инвентарь 2x2 (item_id))
 │   │                   ├── ActorsPanel.axaml.cs    (Блокировка ввода букв в NumericUpDown)
 │   │                   ├── ItemsPanel.axaml        (Список предметов, свойства, статы со стрелочками)
 │   │                   ├── ItemsPanel.axaml.cs     
@@ -125,7 +125,7 @@ RPG-Shining-Maker/
 │   │                   ├── SpellsPanel.axaml.cs    (Блокировка ввода букв и ограничение длины в 5 символов)
 │   │                   ├── ClassesPanel.axaml      (Список классов, свойства, сопротивления с дублирующим текстом)
 │   │                   ├── ClassesPanel.axaml.cs   
-│   │                   ├── EnemiesPanel.axaml      (Список врагов, General Settings, Block Settings с портретом, Stats and Growth, Resistance 8 шт, Prowess список, Items 2x2 (по ID), Spells 2x2 (по ID))
+│   │                   ├── EnemiesPanel.axaml      (Список врагов, General Settings, Block Settings, Stats and Growth, Resistance 8 шт, Prowess список, Items 2x2 (по ID), Spells 2x2 (по ID))
 │   │                   └── EnemiesPanel.axaml.cs   (Блокировка ввода букв в NumericUpDown)
 │   │
 │   └── assets/
@@ -143,14 +143,16 @@ RPG-Shining-Maker/
 │   │   └── <tileset>.json
 │   ├── actors/
 │   │   ├── actors.json                             (Список персонажей с блоками промоушенов)
-│   │   ├── start_inventory.json                    (Стартовый инвентарь)
+│   │   ├── start_inventory.json                    (Стартовый инвентарь ТОЛЬКО по item_id, -1 = пусто)
 │   │   └── classes.json                            (Классы)
 │   ├── items/
 │   │   └── items.json                              (Список предметов)
 │   ├── spells/
 │   │   └── spells.json                             (Заклинания с вложенными уровнями)
 │   ├── enemies/
-│   │   └── enemies.json                            (Список врагов, рост статов как у союзников, сопротивления, способности, предметы и магия по ID)
+│   │   └── enemies.json                            (Враги, рост статов, сопротивления, предметы и магия по ID)
+│   ├── shop/
+│   │   └── shops.json                              (Магазины, списки товаров ТОЛЬКО по item_id)
 │   ├── movetypes.json                              (Типы передвижения: flying, stealth и т.д.)
 │   └── ...
 │
@@ -160,11 +162,25 @@ RPG-Shining-Maker/
 │
 └── Игра (отдельный проект)
     └── lib/
+        ├── database.rb                             (Хелперы find_item_by_id, item_display_name, item_is_nothing?)
         ├── GameMap.rb                              (counter_at?, @counter_cells, поддержка collision2)
         ├── player.rb                               
+        ├── NPC.rb
         ├── camera.rb                               
+        ├── ui.rb                                   (Status, Profile, Magic - все резолвят предметы/магию по ID)
+        ├── item_actions_ui.rb                      (Use/Give/Drop/Equip, работа с item_id, -1 = пусто)
+        ├── shop_ui.rb                              (Магазин Buy/Sell, чтение shops.json по ID)
         ├── enemy_profile.rb                        (профиль врага, чтение магии и предметов по ID)
-        ├── ui.rb                                   (профиль союзника, меню магии, чтение магии по ID)
+        ├── dialog_manager.rb
+        ├── battle.rb
+        ├── battleManager/                          
+        │   ├── battle_ui.rb
+        │   ├── battle_give.rb                      (Передача предметов по item_id)
+        │   ├── battle_drop.rb                      (Выбрасывание по item_id)
+        │   ├── battle_equip.rb                     (Экипировка по item_id)
+        │   ├── battle_renderer.rb
+        │   ├── battle_player.rb
+        │   └── ...
         └── game.rb                                 (find_interactable_npc через прилавок, убран хардкод llvmpipe)
 
 
@@ -273,12 +289,38 @@ RPG-Shining-Maker/
 	"spell_levels":	[2, 1, 1, 1]
 }
 
+Пример start_inventory.json:
+{
+	"start_inventory": [{
+		"actor_id": 0,
+		"class_id": 0,
+		"start_level": 1,
+		"items": [{
+			"item_id": 5,
+			"equipped": true
+		}, {
+			"item_id": -1,
+			"equipped": false
+		}]
+	}]
+}
+
+Пример shops.json:
+{
+	"shops": [{
+		"id": 0,
+		"name": "Granseal Weapons",
+		"type": "weapon",
+		"items": [5, 7, 6, 4]
+	}]
+}
+
 Правила:
 • Используются табы (\t) для отступов.
 • Нет склеивания в одну строку.
 • Каждый элемент с новой строки.
 • Игра на Ruby читает это без ошибок.
-• Вложенные массивы (tiles, collision, collision2) пишутся горизонтально (сеткой), чтобы не растягивать файл на тысячи строк.
+• Вложенные массивы (tiles, collision, collision2) пишутся горизонтально (сеткой).
 
 
 📐 Правила, чтобы код не превратился в кашу
@@ -315,9 +357,9 @@ RPG-Shining-Maker/
 24  Parallel Arrays (Enemies)                       Заклинания врагов в JSON хранятся в двух параллельных массивах (spells + spell_levels).
                                                      В редакторе они объединены в ObservableCollection<EnemySpellSlot>.
 25  ProwessCatalog                                  Общий статический каталог токенов (critical150_1in8 и т.д.) для классов и врагов.
-26  Связь по ID (Items & Spells)                    В enemies.json предметы и магия теперь хранятся ТОЛЬКО как ID (item_id, spell_id).
-                                                     Игра и редактор ищут имена и иконки через эти ID (по базам items.json и spells.json). 
-                                                     Строковые имена больше не используются.
+26  Связь по ID (Items & Spells)                    В enemies.json, start_inventory.json и shops.json предметы хранятся ТОЛЬКО как ID (item_id). 
+                                                     Пустой слот = -1. Игра (меню, бой, магазин) и редактор ищут имена и иконки через item_id
+                                                     в базе items.json. Строковые имена в этих файлах больше не используются.
 
 📈 Что уже готово vs что в планах (обновлено)
 
@@ -336,7 +378,7 @@ MapEditor (11 файлов)                                  ✅
 EventEditor (7 файлов + EventCanvas)                   ✅
 DatabaseEditor (Оболочка)                              ✅
 Shared.Converters.PortraitConverter                    ✅
-Редактор: Вкладка Heroes (Герои)                       ✅
+Редактор: Вкладка Heroes (Герои, инвентарь по ID)      ✅
 Редактор: Вкладка Items (Предметы)                     ✅
 Редактор: Вкладка Spells (Магия)                       ✅
 Редактор: Вкладка Classes (Классы)                     ✅
@@ -354,9 +396,9 @@ Shared.Converters.PortraitConverter                    ✅
 Редактор: Изоляция кликов от скроллбаров               ✅
 Редактор: Сброс коллизии при рисовании тайла           ✅
 Редактор: Два слоя коллизий (рисование в L1/L2)        ✅
-Редактор: Горизонтальное сохранение JSON (без верт. ужаса) ✅
+Редактор: Горизонтальное сохранение JSON               ✅
 Сборка: Автоматическое копирование opengl32.dll        ✅
-Игра: Диалог через прилавок (строго по вертикали/гор.) ✅
+Игра: Диалог через прилавок (строго по верт/гор)       ✅
 Игра: subAreas + маска + центрирование                 ✅
 Игра: Warp line-mode                                   ✅
 Игра: Чтение и применение collision2 (L1 и L2)         ✅
@@ -365,10 +407,13 @@ Shared.Converters.PortraitConverter                    ✅
 Игра: Рефакторинг spells.json (levels массив)          ✅
 Игра: Профиль врага читает магию и предметы по ID      ✅
 Игра: Удалён мёртвый код find_spell_icon               ✅
+Игра: Миграция start_inventory и shops на item_id      ✅
+Игра: Все меню (Use/Give/Equip/Drop) читают item_id    ✅
+Игра: Боевые модули (give/drop/equip) работают по ID   ✅
 Редактор: Блокировка ввода букв в NumericUpDown        ✅
 Редактор: Ограничение длины ввода (5 символов)         ✅
-Редактор: Стилизация NumericUpDown (скругление, отступы) ✅
-Редактор: Стрелочки + / - снаружи полей (как в Caravan)  ✅
+Редактор: Стилизация NumericUpDown                     ✅
+Редактор: Стрелочки + / - снаружи полей                ✅
 Редактор: Превью портрета 67x104 в Block Settings      ✅
 Редактор: Фильтр портретов (_blink/_talk/_anim)        ✅
 BattleEditor                                           📋 план
