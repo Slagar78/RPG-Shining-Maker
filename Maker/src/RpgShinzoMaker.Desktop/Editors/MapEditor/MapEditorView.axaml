@@ -72,7 +72,7 @@
 
     <Panel>
 
-        <Grid ColumnDefinitions="305,4,*,4,192">
+        <Grid ColumnDefinitions="310,4,*,4,192">
 
             <!-- ═══════════════════════════════════════════════════════ -->
             <!-- КОЛОНКА 0: БЛОКСЕТ -->
@@ -421,7 +421,7 @@
                                                 x:Name="TypeIcon3"
                                                 Classes="typeIcon"
                                                 Width="18" Height="18"
-                                                Background="#E67E22"
+                                                Background="#F1C40F"
                                                 Margin="2,0"
                                                 BorderBrush="#555555"
                                                 BorderThickness="2"

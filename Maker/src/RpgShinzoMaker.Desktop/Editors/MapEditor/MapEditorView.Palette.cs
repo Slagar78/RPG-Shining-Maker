@@ -240,7 +240,7 @@ public partial class MapEditorView
             0 => ((IBrush)new SolidColorBrush(Color.Parse("#4CAF50")), isOverride ? "Map: Passable" : "Passable"),
             1 => (new SolidColorBrush(Color.Parse("#E74C3C")),         isOverride ? "Map: Block" : "Block"),
             2 => (new SolidColorBrush(Color.Parse("#3498DB")),         isOverride ? "Map: Slow" : "Slow"),
-            3 => (new SolidColorBrush(Color.Parse("#E67E22")),         isOverride ? "Map: Under" : "Under"),
+            3 => (new SolidColorBrush(Color.Parse("#F1C40F")),         isOverride ? "Map: Under" : "Under"), // ЖЕЛТЫЙ
             _ => (Brushes.Gray, "Unknown")
         };
         TypePreviewEllipse.Fill = brush;

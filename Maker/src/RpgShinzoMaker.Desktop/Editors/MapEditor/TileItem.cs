@@ -72,7 +72,7 @@ public class TileItem : INotifyPropertyChanged
         0 => new SolidColorBrush(Color.Parse("#4CAF50")), // Passable — зелёный
         1 => new SolidColorBrush(Color.Parse("#E74C3C")), // Block    — красный
         2 => new SolidColorBrush(Color.Parse("#3498DB")), // Slow     — синий
-        3 => new SolidColorBrush(Color.Parse("#E67E22")), // Under    — оранжевый
+        3 => new SolidColorBrush(Color.Parse("#F1C40F")), // Under    — ЖЕЛТЫЙ
         _ => Brushes.Gray
     };
 

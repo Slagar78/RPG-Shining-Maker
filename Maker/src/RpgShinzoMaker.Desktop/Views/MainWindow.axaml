@@ -16,6 +16,7 @@
         WindowStartupLocation="CenterScreen">
 
     <Window.Styles>
+        <!-- Скроллбары (оставили как было) -->
         <Style Selector="ScrollBar">
             <Setter Property="Opacity" Value="1"/>
             <Setter Property="Background" Value="#1E1E1E"/>
@@ -36,6 +37,60 @@
         <Style Selector="ScrollBar /template/ Thumb:pressed">
             <Setter Property="Background" Value="#005A9E"/>
         </Style>
+
+        <!-- ★ СТИЛИ ДЛЯ ВКЛАДОК ★ -->
+        <Style Selector="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+        <!-- Невыбранные вкладки -->
+        <Style Selector="TabItem">
+            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="Foreground" Value="#888888"/>
+            <!-- Отступ сверху, чтобы не прилипали к тулбару -->
+            <Setter Property="Margin" Value="2,4,0,0"/>
+            <!-- Высота (сделали ниже) -->
+            <Setter Property="Padding" Value="16,6"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <!-- Скругляем ТОЛЬКО верхние углы: TopLeft, TopRight, BottomRight, BottomLeft -->
+            <Setter Property="CornerRadius" Value="6,6,0,0"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <!-- BorderThickness="0,2,0,0" создает место для цветной полоски сверху -->
+                    <Border Name="PART_Border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}"
+                            BorderThickness="0,2,0,0" 
+                            BorderBrush="Transparent">
+                        <ContentPresenter Content="{TemplateBinding Header}"
+                                          TextElement.Foreground="{TemplateBinding Foreground}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <!-- Эффект при наведении (Hover) -->
+        <Style Selector="TabItem:pointerover /template/ Border#PART_Border">
+            <Setter Property="Background" Value="#2D2D30"/>
+        </Style>
+        <Style Selector="TabItem:pointerover">
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+        </Style>
+
+        <!-- ВЫБРАННАЯ ВКЛАДКА (Active) -->
+        <Style Selector="TabItem:selected /template/ Border#PART_Border">
+            <Setter Property="Background" Value="#2D2D30"/> <!-- Сливается с фоном редактора -->
+            <Setter Property="BorderBrush" Value="#007ACC"/> <!-- Синяя полоска сверху -->
+        </Style>
+        <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
     </Window.Styles>
 
     <Grid ColumnDefinitions="*,4,320">

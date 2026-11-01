@@ -516,10 +516,10 @@ public partial class MapCanvas : UserControl
             int type = TileTypes[tileId];
             dot.Fill = type switch
             {
-                0 => new SolidColorBrush(Color.Parse("#4CAF50")),
-                1 => new SolidColorBrush(Color.Parse("#E74C3C")),
-                2 => new SolidColorBrush(Color.Parse("#3498DB")),
-                3 => new SolidColorBrush(Color.Parse("#E67E22")),
+                0 => new SolidColorBrush(Color.Parse("#4CAF50")), // Зеленый
+                1 => new SolidColorBrush(Color.Parse("#E74C3C")), // Красный
+                2 => new SolidColorBrush(Color.Parse("#3498DB")), // Синий
+                3 => new SolidColorBrush(Color.Parse("#F1C40F")), // ЖЕЛТЫЙ
                 _ => Brushes.Transparent
             };
             dot.IsVisible = type >= 0 && type <= 3;

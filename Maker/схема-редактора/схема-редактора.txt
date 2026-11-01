@@ -80,13 +80,13 @@ RPG-Shining-Maker/
 ┌─────────────────────────────────────────────────────────────┐
 │                     MainWindow (Shell)                      │
 │  [SAVE] [▶ Play Game] [⚔ Battle Test]                       │
-│  ┌─── TabControl ───────────────────────────────────────┐   │
-│  │ [Карты] [Эвенты] [Импорт] [Бои] [Сцены] [База]       │   │
+│  ┌─── TabControl (Стиль VS Code) ──────────────────────┐   │
+│  │ [Maps] [Events] [Importer] [Battles] [Scenes] [DB]   │   │
 │  │                                                      │   │
-│  │  MapEditorView  (IEditor)  ← вкладка «Карты»         │   │
-│  │  EventEditorView(IEditor)  ← вкладка «Эвенты»        │   │
-│  │  TilesetImporter(IEditor)  ← вкладка «Импорт»        │   │
-│  │  DatabaseEditor (IEditor)  ← вкладка «База»          │   │
+│  │  MapEditorView  (IEditor)  ← вкладка «Maps»          │   │
+│  │  EventEditorView(IEditor)  ← вкладка «Events»        │   │
+│  │  TilesetImporter(IEditor)  ← вкладка «Importer»      │   │
+│  │  DatabaseEditor (IEditor)  ← вкладка «Database»      │   │
 │  └──────────────────────────────────────────────────────┘   │
 │  Правый док: [ASSETS] / [СВОЙСТВА]                          │
 └───────────────────────────┬─────────────────────────────────┘
@@ -106,8 +106,11 @@ RPG-Shining-Maker/
 
 📁 Формат JSON: Сохранение с табами (CJsonFormatter)
 
-Пример entries.json:
+Пример data/maps/entries.json:
 [{ "id": 0, "folder": "Granseal", "name": "Granseal", ... }]
+
+Пример data/battles/entries.json:
+[{ "folder": "battle00", "name": "Battle #0", "map_id": 1, "music": "...", ... }]
 
 Пример события в events.json (обычное):
 { "type": "counter", "x": 5, "y": 10 }
@@ -165,6 +168,8 @@ RPG-Shining-Maker/
 27  Глобальные настройки по ID                      В global.json start_map_id (число) вместо строки. Игра ищет папку через entries.json.
 28  Варпы по ID                                     В events.json target_map_id (число) вместо target_map. Игра ищет папку через entries.json.
 29  Современный UI в MapEditor                      Использовать стили ModernComboBox для нижней панели (Map, Size, Tileset, Music).
+30  Современные вкладки (VS Code style)             Переопределять TabItem Template в MainWindow.axaml (скругление сверху, синяя полоса).
+31  Универсальный поиск карты в GameMap             GameMap.new принимает и строку (folder), и число (id). Сохраняет @map_id и @db_id.
 
 📈 Что уже готово vs что в планах
 
@@ -176,6 +181,7 @@ GlobalService (Чтение/запись global.json)              ✅
 
 ОБОЛОЧКА И РЕДАКТОРЫ
 IEditor, MainWindow (Splash, Toolbar, StatusBar)       ✅
+Современные вкладки VS Code style                      ✅
 MapEditor (11 файлов, современная нижняя панель)       ✅
 EventEditor (7 файлов + EventCanvas)                   ✅
 TilesetImporter (4 файла)                              ✅
@@ -194,6 +200,7 @@ DatabaseEditor (Оболочка, вертикальные вкладки)      
 Два слоя коллизий (проходимость + скольжение)          ✅
 Чтение global.json по start_map_id                     ✅
 Варпы читают target_map_id через entries.json          ✅
+Битвы читают map_id (ID) через entries.json            ✅
 BattleManager (give/drop/equip) по item_id             ✅
 
 В ПЛАНАХ
