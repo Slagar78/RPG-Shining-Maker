@@ -83,7 +83,33 @@ public class ActorsService
         var root = JsonNode.Parse(json);
         var invNode = root?["start_inventory"];
         if (invNode == null) return new List<StartInventory>();
-        return invNode.Deserialize<List<StartInventory>>(_options) ?? new List<StartInventory>();
+
+        var result = new List<StartInventory>();
+        foreach (var node in invNode.AsArray())
+        {
+            var inv = new StartInventory
+            {
+                ActorId    = node?["actor_id"]?.GetValue<int>()    ?? 0,
+                ClassId    = node?["class_id"]?.GetValue<int>()    ?? 0,
+                StartLevel = node?["start_level"]?.GetValue<int>() ?? 1,
+                Items      = new List<StartItem>()
+            };
+
+            var itemsArr = node?["items"]?.AsArray();
+            if (itemsArr != null)
+            {
+                foreach (var itemNode in itemsArr)
+                {
+                    inv.Items.Add(new StartItem
+                    {
+                        ItemId   = itemNode?["item_id"]?.GetValue<int>()   ?? StartItem.NothingId,
+                        Equipped = itemNode?["equipped"]?.GetValue<bool>() ?? false
+                    });
+                }
+            }
+            result.Add(inv);
+        }
+        return result;
     }
 
     public void SaveStartInventory(string filePath, List<StartInventory> inventory)

@@ -30,7 +30,7 @@ public partial class ActorsViewModel : ObservableObject
     public ObservableCollection<CharacterClass> AvailableClasses { get; } = new();
     public ObservableCollection<string> AvailablePortraits { get; } = new();
     public ObservableCollection<string> AvailableMapsprites { get; } = new();
-    public ObservableCollection<string> AvailableItems { get; } = new();
+    public ObservableCollection<Item> AvailableItems { get; } = new();
     public ObservableCollection<Spell> AvailableSpells { get; } = new();
     public ObservableCollection<string> Curves { get; } = new() { "LINEAR", "LATE", "EARLY", "MIDDLE", "EARLYANDLATE", "VERY_LATE", "MIDDLE_PEAK", "NONE" };
 
@@ -93,29 +93,15 @@ public partial class ActorsViewModel : ObservableObject
 
         var items = _itemsService.LoadItems(_itemsPath);
         AvailableItems.Clear();
-        AvailableItems.Add("NOTHING");
-        foreach (var item in items)
-        {
-            if (!AvailableItems.Contains(item.Name)) AvailableItems.Add(item.Name);
-        }
+        AvailableItems.Add(new Item { Id = StartItem.NothingId, Name = "NOTHING", Category = "consumable" });
+        foreach (var item in items.OrderBy(i => i.Id))
+            AvailableItems.Add(item);
 
         var actors = _actorsService.LoadActors(_actorsPath);
         Actors.Clear();
         foreach (var a in actors) Actors.Add(a);
 
         _startInventories = _actorsService.LoadStartInventory(_inventoryPath);
-        
-        foreach (var inv in _startInventories)
-        {
-            if (inv.Items == null) continue;
-            foreach (var slot in inv.Items)
-            {
-                if (!string.IsNullOrWhiteSpace(slot.Item) && slot.Item != "NOTHING" && !AvailableItems.Contains(slot.Item))
-                {
-                    AvailableItems.Add(slot.Item);
-                }
-            }
-        }
 
         if (Actors.Count > 0) SelectedActor = Actors[0];
     }
@@ -139,21 +125,10 @@ public partial class ActorsViewModel : ObservableObject
                 StartLevel = 1, 
                 Items = new List<StartItem>() 
             };
-            for(int i=0; i<4; i++) 
-                inv.Items.Add(new StartItem { Item = "NOTHING" });
+            for (int i = 0; i < 4; i++)
+                inv.Items.Add(new StartItem { ItemId = StartItem.NothingId });
             
             _startInventories.Add(inv);
-        }
-        
-        if (inv.Items != null)
-        {
-            foreach (var slot in inv.Items)
-            {
-                if (!string.IsNullOrWhiteSpace(slot.Item) && !AvailableItems.Contains(slot.Item))
-                {
-                    AvailableItems.Add(slot.Item);
-                }
-            }
         }
         
         CurrentInventory = inv;

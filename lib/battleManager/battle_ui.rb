@@ -261,15 +261,16 @@ def handle_input
       # Переключаемся, только если в целевом слоте есть предмет
       if target && target != @item_selected
         item = @items[target]
-        if item && item["item"] != "NOTHING"
+        if item && item["item_id"] && item["item_id"] != -1
           @item_selected = target
           @anim_timer = 0
         end
       end
 
       # Подтверждение — только если слот не пустой
+      sel = @items[@item_selected]
       if (Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)) &&
-         @items[@item_selected]&.dig("item") != "NOTHING"
+         sel && sel["item_id"] && sel["item_id"] != -1
         @pending_grid_item = [selected_item, @item_grid_mode]
       end
       return

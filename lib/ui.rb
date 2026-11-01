@@ -279,8 +279,8 @@ class StatusOverlay
     entry ? entry["items"] || [] : []
   end
 
-  def find_item_by_name(name)
-    @db ? @db.find_by_name(name) : nil
+  def find_item_by_id(id)
+    @db ? @db.find_item_by_id(id) : nil
   end
 
   def calculate_equip_bonuses(actor)
@@ -297,8 +297,8 @@ class StatusOverlay
 
   inv_entry["items"].each do |item_entry|
     next unless item_entry["equipped"]
-    next if item_entry["item"] == "NOTHING"
-    item_data = find_item_by_name(item_entry["item"])
+    next if @db.item_is_nothing?(item_entry)
+    item_data = find_item_by_id(item_entry["item_id"])
     next unless item_data
     total_attack  += (item_data["attack"]  || 0).to_i
     total_defense += (item_data["defense"] || 0).to_i
@@ -576,12 +576,12 @@ end
       draw_text_custom("Nothing", @upper_x + 25, @upper_y + 72, 20, ORANGE)
     end
 
-    has_any_item = @current_items && @current_items.any? { |entry| entry["item"] != "NOTHING" }
+    has_any_item = @current_items && @current_items.any? { |entry| !@db.item_is_nothing?(entry) }
     if has_any_item
       @current_items.each_with_index do |item_entry, i|
-        next if item_entry["item"] == "NOTHING"
+        next if @db.item_is_nothing?(item_entry)
         y = @upper_y + 64 + i * 33
-        draw_item_name(item_entry["item"], @upper_x + 195, y, 18, WHITE)
+        draw_item_name(@db.item_display_name(item_entry["item_id"]), @upper_x + 195, y, 18, WHITE)
         if item_entry["equipped"]
           draw_text_custom("E", @upper_x + 180, y, 18, YELLOW)
         end
@@ -796,9 +796,8 @@ class Profile
     @gold_panel_x = @gold_hidden_x
   end
 
-  # Теперь поиск предметов идёт через центральную базу @db
-  def find_item_by_name(name)
-    @db ? @db.find_by_name(name) : nil
+  def find_item_by_id(id)
+    @db ? @db.find_item_by_id(id) : nil
   end
 
   def calculate_equip_bonuses(actor)
@@ -815,8 +814,8 @@ class Profile
 
     inv_entry["items"].each do |item_entry|
       next unless item_entry["equipped"]
-      next if item_entry["item"] == "NOTHING"
-      item_data = find_item_by_name(item_entry["item"])
+      next if @db.item_is_nothing?(item_entry)
+      item_data = find_item_by_id(item_entry["item_id"])
       next unless item_data
       total_attack  += (item_data["attack"]  || 0).to_i
       total_defense += (item_data["defense"] || 0).to_i
@@ -1111,19 +1110,19 @@ class Profile
       # Предметы (правый столбец)
       inv_entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
       items = inv_entry ? inv_entry["items"] : []
-      has_any_item = items.any? { |entry| entry["item"] != "NOTHING" }
+      has_any_item = items.any? { |entry| !@db.item_is_nothing?(entry) }
       if has_any_item
         items.first(4).each_with_index do |item_entry, i|
-          next if item_entry["item"] == "NOTHING"
+          next if @db.item_is_nothing?(item_entry)
           y = section_y + 30 + i * 52
-          item_data = find_item_by_name(item_entry["item"])
+          item_data = find_item_by_id(item_entry["item_id"])
           item_icon = item_data ? load_icon(item_data["icon"]) : nil
           if item_icon
             src = Raylib::Rectangle.create(0, 0, 32, 48)
             dst = Raylib::Rectangle.create(right_x - 50, y, 32, 48)
-            Raylib.DrawTexturePro(item_icon, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+            Raylib::DrawTexturePro(item_icon, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
           end
-          name = item_entry["item"]
+          name = @db.item_display_name(item_entry["item_id"])
           if item_entry["equipped"]
             draw_text_custom("E", right_x - 15, y + 12, 18, YELLOW)
           end
@@ -1335,8 +1334,8 @@ class MagicOverlay
     entry ? entry["items"] || [] : []
   end
 
-  def find_item_by_name(name)
-    @db ? @db.find_by_name(name) : nil
+  def find_item_by_id(id)
+    @db ? @db.find_item_by_id(id) : nil
   end
 
   def calculate_equip_bonuses(actor)
@@ -1353,8 +1352,8 @@ class MagicOverlay
 
   inv_entry["items"].each do |item_entry|
     next unless item_entry["equipped"]
-    next if item_entry["item"] == "NOTHING"
-    item_data = find_item_by_name(item_entry["item"])
+    next if @db.item_is_nothing?(item_entry)
+    item_data = find_item_by_id(item_entry["item_id"])
     next unless item_data
     total_attack  += (item_data["attack"]  || 0).to_i
     total_defense += (item_data["defense"] || 0).to_i

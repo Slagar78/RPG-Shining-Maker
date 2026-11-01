@@ -80,8 +80,8 @@ module ItemUIHelpers
     entry["items"] || []
   end
 
-  def find_item_by_name(name)
-    @db.find_by_name(name) if @db
+  def find_item_by_id(id)
+    @db.find_item_by_id(id) if @db
   end
 end
 
@@ -106,9 +106,8 @@ class ItemSubMenuBase
 
   inv_entry["items"].each do |item_entry|
     next unless item_entry["equipped"]
-    next if item_entry["item"] == "NOTHING"
-
-    item_data = find_item_by_name(item_entry["item"])
+    next if @db.item_is_nothing?(item_entry)
+    item_data = find_item_by_id(item_entry["item_id"])
     next unless item_data
 
     total_attack  += (item_data["attack"]  || 0).to_i
@@ -435,7 +434,7 @@ end
         if @current_items && @selected_item_index < @current_items.length
           item_entry = @current_items[@selected_item_index]
           actor = @party[@selected_actor_index]
-          if actor && item_entry && item_entry["item"] != "NOTHING"
+          if actor && item_entry && !@db.item_is_nothing?(item_entry)
             confirm_action(item_entry, actor)
           end
         end
@@ -507,11 +506,10 @@ end
   ]
 
   # Если все слоты пустые – показываем одну надпись NOTHING
-  if @current_items.nil? || @current_items.none? { |entry| entry && entry["item"] != "NOTHING" }
+  if @current_items.nil? || @current_items.none? { |entry| entry && !@db.item_is_nothing?(entry) }
     draw_text_custom("NOTHING", @upper_x + 195, @upper_y + 48, 18, ORANGE)
   end
 
-  # Текст справа (такой же столбец, как у магии)
   text_x = @upper_x + 195
   text_y = @upper_y + 48
   text_line_h = 36
@@ -521,9 +519,9 @@ end
     item_entry = @current_items ? @current_items[i] : nil
 
     # Определяем, какую иконку рисовать
-    if item_entry && item_entry["item"] != "NOTHING"
+    if item_entry && !@db.item_is_nothing?(item_entry)
       # Есть предмет: пробуем загрузить его иконку
-      item_data = find_item_by_name(item_entry["item"])
+      item_data = find_item_by_id(item_entry["item_id"])
       icon_path = item_data ? item_data["icon"] : nil
       icon_tex = load_icon(icon_path)  # вернёт nil, если файл не найден
     else
@@ -536,18 +534,18 @@ end
     if tex_to_draw
       src = Raylib::Rectangle.create(0, 0, 32, 48)
       dst = Raylib::Rectangle.create(ipos[:x], ipos[:y], 32, 48)
-      Raylib.DrawTexturePro(tex_to_draw, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+      Raylib::DrawTexturePro(tex_to_draw, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
     else
       # Если совсем ничего нет – оставляем серый квадрат (на всякий случай)
-      Raylib.DrawRectangle(ipos[:x], ipos[:y], 32, 48, Raylib::GRAY)
-      Raylib.DrawRectangleLines(ipos[:x], ipos[:y], 32, 48, Raylib::DARKGRAY)
+      Raylib::DrawRectangle(ipos[:x], ipos[:y], 32, 48, Raylib::GRAY)
+      Raylib::DrawRectangleLines(ipos[:x], ipos[:y], 32, 48, Raylib::DARKGRAY)
     end
 
     # Название предмета (справа) – только для заполненных слотов
-    if item_entry && item_entry["item"] != "NOTHING"
+    if item_entry && !@db.item_is_nothing?(item_entry)
       y_text = text_y + i * text_line_h
       text_color = (i == @selected_item_index && @focus == :items) ? Raylib::LIME : Raylib::WHITE
-      draw_item_name(item_entry["item"], text_x, y_text, 18, text_color)
+      draw_item_name(@db.item_display_name(item_entry["item_id"]), text_x, y_text, 18, text_color)
       if item_entry["equipped"]
         draw_text_custom("E", text_x - 15, y_text + 4, 18, YELLOW)
       end
@@ -779,11 +777,11 @@ class UseMenu < ItemSubMenuBase
   end
 
   def filter_items(items)
-    items.reject { |entry| entry["item"] == "NOTHING" }
+    items.reject { |entry| @db.item_is_nothing?(entry) }
   end
 
   def confirm_action(item_entry, actor)
-    puts "Used item #{item_entry["item"]} on #{actor["name"]}"
+    puts "Used item #{@db.item_display_name(item_entry["item_id"])} on #{actor["name"]}"
   end
 end
 
@@ -822,7 +820,7 @@ class GiveMenu < ItemSubMenuBase
     Raylib.SetTextureFilter(@message_panel_tex, 0) if @message_panel_tex
   end
 
-  def open_for_shop(item_name)
+  def open_for_shop(item_name_or_id)
     @visible = true
     @item_given_successfully = false
     @anim_phase = 1
@@ -834,7 +832,13 @@ class GiveMenu < ItemSubMenuBase
     @blink_timer = 0
     @blink_duration = 0
     @give_state = :select_target # Сразу переходим к выбору персонажа!
-    @selected_give_item = { "item" => item_name, "equipped" => false }
+    item_id = if item_name_or_id.is_a?(Integer)
+                item_name_or_id
+              else
+                it = @db.find_by_name(item_name_or_id)
+                it ? it.id : -1
+              end
+    @selected_give_item = { "item_id" => item_id, "equipped" => false }
     @give_selected_item_index = nil
     @donor_actor = nil # Магазин - это донор
     @selected_actor_index = 0
@@ -1023,7 +1027,7 @@ class GiveMenu < ItemSubMenuBase
         current_donor_items = fill_to_four(find_actor_items(@donor_actor["name"]))
         idx = @give_selected_item_index
         return unless idx && idx >= 0 && idx < 4 && current_donor_items[idx]
-        return if current_donor_items[idx]["item"] == "NOTHING"
+        return if @db.item_is_nothing?(current_donor_items[idx])
 
         base_x = @upper_x + 40
         base_y = @upper_y + 60
@@ -1099,7 +1103,7 @@ def prepare_message_text
   case @give_state
   when :show_message
     template = @game_text["0000"] || "Pass the {ITEM}{N}to whom?"
-    item_name = @selected_give_item ? @selected_give_item["item"] : "???"
+    item_name = @selected_give_item ? @db.item_display_name(@selected_give_item["item_id"]) : "???"
     template.gsub('{ITEM}', item_name)
   when :result_message
     template = @game_text[@result_message_id] || "Transfer complete."
@@ -1113,7 +1117,7 @@ end
 
   def item_affects_attack_defense?
     return false unless @selected_give_item
-    item_data = find_item_by_name(@selected_give_item["item"])
+    item_data = find_item_by_id(@selected_give_item["item_id"])
     return false unless item_data
     %w[Weapon Ring].include?(item_data["category"])
   end
@@ -1121,7 +1125,7 @@ end
   def fill_to_four(arr)
     arr = arr.dup
     while arr.length < 4
-      arr << { "item" => "NOTHING", "equipped" => false }
+      arr << { "item_id" => -1, "equipped" => false }
     end
     arr
   end
@@ -1133,7 +1137,7 @@ end
     # ── РЕЖИМ МАГАЗИНА (донора нет) ──
     if @donor_actor.nil?
       target_items = fill_to_four(find_actor_items(actor["name"]))
-      empty_slot = target_items.index { |entry| entry["item"] == "NOTHING" }
+      empty_slot = target_items.index { |entry| @db.item_is_nothing?(entry) }
 
       if empty_slot
         item_to_give = @selected_give_item.dup
@@ -1144,7 +1148,10 @@ end
         @item_given_successfully = true
 
         @result_message_id = "0015" # {TARGET} received the {ITEM}.
-        @result_params = { '{ITEM}' => item_to_give["item"], '{TARGET}' => actor["name"] }
+        @result_params = {
+          '{ITEM}'   => @db.item_display_name(item_to_give["item_id"]),
+          '{TARGET}' => actor["name"]
+        }
       else
         @result_message_id = "0016" # The {TARGET}'s inventory is full.
         @result_params = { '{TARGET}' => actor["name"] }
@@ -1160,31 +1167,29 @@ end
 
     donor_items = fill_to_four(find_actor_items(@donor_actor["name"]))
     target_items = fill_to_four(find_actor_items(actor["name"]))
-
     idx = @give_selected_item_index
-    return unless idx && idx >= 0 && idx < 4 && donor_items[idx] && donor_items[idx]["item"] == @selected_give_item["item"]
-
-    empty_slot = target_items.index { |entry| entry["item"] == "NOTHING" }
+    return unless idx && idx >= 0 && idx < 4 && donor_items[idx] && donor_items[idx]["item_id"] == @selected_give_item["item_id"]
+    empty_slot = target_items.index { |entry| @db.item_is_nothing?(entry) }
 
     if empty_slot
       item_to_give = donor_items[idx].dup
       item_to_give["equipped"] = false       # <-- снимаем экипировку
-      donor_items[idx] = { "item" => "NOTHING", "equipped" => false }
+      donor_items[idx] = { "item_id" => -1, "equipped" => false }
       target_items[empty_slot] = item_to_give
       update_inventory(@donor_actor["id"], donor_items)
       update_inventory(actor["id"], target_items)
 
       @result_message_id = "0001"
       @result_params = {
-        '{DONOR}' => @donor_actor["name"],
-        '{ITEM}' => item_to_give["item"],
+        '{DONOR}'  => @donor_actor["name"],
+        '{ITEM}'   => @db.item_display_name(item_to_give["item_id"]),
         '{TARGET}' => actor["name"]
       }
     else
       donor_item = donor_items[idx]
-      target_item = target_items[idx] || { "item" => "NOTHING", "equipped" => false }
+      target_item = target_items[idx] || { "item_id" => -1, "equipped" => false }
       donor_item["equipped"] = false
-      target_item["equipped"] = false if target_item["item"] != "NOTHING"
+      target_item["equipped"] = false unless @db.item_is_nothing?(target_item)
       donor_items[idx] = target_item.dup
       target_items[idx] = donor_item.dup
       update_inventory(@donor_actor["id"], donor_items)
@@ -1192,15 +1197,15 @@ end
 
       @result_message_id = "0002"
       @result_params = {
-        '{DONOR}' => @donor_actor["name"],
-        '{ITEM}' => donor_item["item"],
-        '{RECEIVED_ITEM}' => target_item["item"] != "NOTHING" ? target_item["item"] : "Nothing",
-        '{TARGET}' => actor["name"]
+        '{DONOR}'         => @donor_actor["name"],
+        '{ITEM}'          => @db.item_display_name(donor_item["item_id"]),
+        '{RECEIVED_ITEM}' => @db.item_is_nothing?(target_item) ? "Nothing" : @db.item_display_name(target_item["item_id"]),
+        '{TARGET}'        => actor["name"]
       }
     end
 
     @give_state = :result_message
-	@reveal_index = 0
+	  @reveal_index = 0
     @reveal_timer = 0
     @full_text_shown = false
     @result_message_timer = 0
@@ -1218,7 +1223,7 @@ def draw_lower_content
     give_atk = 0
     give_def = 0
     if @selected_give_item
-      item_data = find_item_by_name(@selected_give_item["item"])
+      item_data = find_item_by_id(@selected_give_item["item_id"])
       if item_data
         give_atk = (item_data["attack"] || 0).to_i
         give_def = (item_data["defense"] || 0).to_i
@@ -1296,7 +1301,7 @@ def draw_lower_content
 end
   
   def confirm_action(item_entry, actor)
-    return if item_entry["item"] == "NOTHING"
+    return if @db.item_is_nothing?(item_entry)
     @selected_give_item = item_entry
     @give_selected_item_index = @selected_item_index
     @donor_actor = actor
@@ -1365,8 +1370,8 @@ class EquipMenu < ItemSubMenuBase
   def weapon_available?
     items = fill_to_four(find_actor_items(@current_actor))
     items.any? do |entry|
-      entry["item"] != "NOTHING" &&
-      (data = find_item_by_name(entry["item"])) &&
+      !@db.item_is_nothing?(entry) &&
+      (data = find_item_by_id(entry["item_id"])) &&
       data["category"] == "Weapon"
     end
   end
@@ -1378,8 +1383,8 @@ class EquipMenu < ItemSubMenuBase
   def ring_available?
     items = find_actor_items(@current_actor)
     items.any? do |entry|
-      entry["item"] != "NOTHING" &&
-      (data = find_item_by_name(entry["item"])) &&
+      !@db.item_is_nothing?(entry) &&
+      (data = find_item_by_id(entry["item_id"])) &&
       data["category"] == "Ring"
     end
   end
@@ -1411,8 +1416,8 @@ class EquipMenu < ItemSubMenuBase
     weapon_slots = []
     (0..3).each do |i|
       entry = items[i]
-      next if entry["item"] == "NOTHING"
-      data = find_item_by_name(entry["item"])
+      next if @db.item_is_nothing?(entry)
+      data = find_item_by_id(entry["item_id"])
       if data && data["category"] == "Weapon"
         weapon_slots << i
       end
@@ -1426,12 +1431,12 @@ class EquipMenu < ItemSubMenuBase
   # Строим список колец, СОХРАНЯЯ их реальные индексы в инвентаре (0–3)
   def build_ring_navigable_indices
     all_items = find_actor_items(@current_actor)
-    @ring_items = Array.new(4) { { "item" => "NOTHING", "equipped" => false } }
+    @ring_items = Array.new(4) { { "item_id" => -1, "equipped" => false } }
     ring_slot_indices = []
 
     all_items.each_with_index do |entry, idx|
-      next if idx >= 4 || entry["item"] == "NOTHING"
-      data = find_item_by_name(entry["item"])
+      next if idx >= 4 || @db.item_is_nothing?(entry)
+      data = find_item_by_id(entry["item_id"])
       if data && data["category"] == "Ring"
         @ring_items[idx] = entry.merge("original_index" => idx)
         ring_slot_indices << idx
@@ -1516,8 +1521,8 @@ class EquipMenu < ItemSubMenuBase
         if @selected_slot_index == 4
           (0..3).each do |i|
             entry = items[i]
-            next if entry["item"] == "NOTHING"
-            data = find_item_by_name(entry["item"])
+            next if @db.item_is_nothing?(entry)
+            data = find_item_by_id(entry["item_id"])
             if data && data["category"] == "Weapon"
               entry["equipped"] = false
             end
@@ -1529,14 +1534,14 @@ class EquipMenu < ItemSubMenuBase
         else
           slot = @selected_slot_index
           entry = items[slot]
-          if entry && entry["item"] != "NOTHING"
-            data = find_item_by_name(entry["item"])
+          if entry && !@db.item_is_nothing?(entry)
+            data = find_item_by_id(entry["item_id"])
             if data && data["category"] == "Weapon"
               (0..3).each do |i|
                 next if i == slot
                 e = items[i]
-                next if e["item"] == "NOTHING"
-                d = find_item_by_name(e["item"])
+                next if @db.item_is_nothing?(e)
+                d = find_item_by_id(e["item_id"])
                 if d && d["category"] == "Weapon"
                   e["equipped"] = false
                 end
@@ -1578,20 +1583,20 @@ class EquipMenu < ItemSubMenuBase
         if @selected_ring_index == 4   # No Ring
           items = find_actor_items(@current_actor)
           items.each do |entry|
-            next if entry["item"] == "NOTHING"
-            data = find_item_by_name(entry["item"])
+            next if @db.item_is_nothing?(entry)
+            data = find_item_by_id(entry["item_id"])
             entry["equipped"] = false if data && data["category"] == "Ring"
           end
           update_inventory(actor["id"], items)
           @current_items = items
         else
           chosen_entry = @ring_items[@selected_ring_index]
-          if chosen_entry && chosen_entry["item"] != "NOTHING"
+          if chosen_entry && !@db.item_is_nothing?(chosen_entry)
             items = find_actor_items(@current_actor)
             # Снимаем все кольца
             items.each do |entry|
-              next if entry["item"] == "NOTHING"
-              data = find_item_by_name(entry["item"])
+              next if @db.item_is_nothing?(entry)
+              data = find_item_by_id(entry["item_id"])
               entry["equipped"] = false if data && data["category"] == "Ring"
             end
             # Надеваем выбранное, используя его оригинальный индекс
@@ -1599,7 +1604,7 @@ class EquipMenu < ItemSubMenuBase
             if original_idx && items[original_idx]
               items[original_idx]["equipped"] = true
             else
-              real_item = items.find { |e| e["item"] == chosen_entry["item"] }
+              real_item = items.find { |e| e["item_id"] == chosen_entry["item_id"] }
               real_item["equipped"] = true if real_item
             end
             update_inventory(actor["id"], items)
@@ -1628,13 +1633,13 @@ class EquipMenu < ItemSubMenuBase
       if Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D)
         if @available_equipment && @selected_item_index < @available_equipment.length
           item_entry = @available_equipment[@selected_item_index]
-          if item_entry && item_entry["item"] != "NOTHING"
+          if item_entry && !@db.item_is_nothing?(item_entry)
             actor = @party[@selected_actor_index]
             items = fill_to_four(find_actor_items(@current_actor))
             (0..3).each do |i|
               e = items[i]
-              next if e["item"] == "NOTHING"
-              d = find_item_by_name(e["item"])
+              next if @db.item_is_nothing?(e)
+              d = find_item_by_id(e["item_id"])
               if d && d["category"] == "Weapon"
                 e["equipped"] = false
               end
@@ -1726,7 +1731,11 @@ class EquipMenu < ItemSubMenuBase
         draw_text_custom("Unarmed", @upper_x + 25, @upper_y + 35, 18, YELLOW)
       else
         current_item = items[@selected_slot_index]
-        eq_text = current_item && current_item["item"] != "NOTHING" ? "Equipped: #{current_item["item"]}" : "Empty"
+        eq_text = if current_item && !@db.item_is_nothing?(current_item)
+                    "Equipped: #{@db.item_display_name(current_item["item_id"])}"
+                  else
+                    "Empty"
+                  end
         draw_text_custom(eq_text, @upper_x + 25, @upper_y + 35, 18, YELLOW)
       end
 
@@ -1748,8 +1757,8 @@ class EquipMenu < ItemSubMenuBase
           icon_tex = @equippable_icon || @empty_item_tex
         else
           item_entry = items[i]
-          if item_entry && item_entry["item"] != "NOTHING"
-            item_data = find_item_by_name(item_entry["item"])
+          if item_entry && !@db.item_is_nothing?(item_entry)
+            item_data = find_item_by_id(item_entry["item_id"])
             if item_data && item_data["category"] == "Weapon"
               icon_path = item_data["icon"]
               icon_tex = load_icon(icon_path) || @empty_item_tex
@@ -1793,8 +1802,8 @@ class EquipMenu < ItemSubMenuBase
         bonus_def = 0
         bonus_agi = 0
         bonus_mov = 0
-        if entry && entry["item"] != "NOTHING"
-          data = find_item_by_name(entry["item"])
+        if entry && !@db.item_is_nothing?(entry)
+          data = find_item_by_id(entry["item_id"])
           if data && data["category"] == "Weapon"
             bonus_att = (data["attack"]  || 0).to_i
             bonus_def = (data["defense"] || 0).to_i
@@ -1831,11 +1840,11 @@ class EquipMenu < ItemSubMenuBase
 
       items = find_actor_items(@current_actor)
       equipped_ring = items.find do |entry|
-        next false if entry["item"] == "NOTHING"
-        data = find_item_by_name(entry["item"])
+        next false if @db.item_is_nothing?(entry)
+        data = find_item_by_id(entry["item_id"])
         data && data["category"] == "Ring" && entry["equipped"]
       end
-      ring_name = equipped_ring ? equipped_ring["item"] : "(Empty)"
+      ring_name = equipped_ring ? @db.item_display_name(equipped_ring["item_id"]) : "(Empty)"
 
       class_name = @class_names[actor_data["class_id"]] || "???"
       lv = [(actor_data["level"] || 1), 1].max
@@ -1862,8 +1871,8 @@ class EquipMenu < ItemSubMenuBase
           icon_tex = @equippable_icon || @empty_item_tex
         else
           entry = @ring_items[i]   # i от 0 до 3, берём из подготовленного массива
-          if entry && entry["item"] != "NOTHING"
-            item_data = find_item_by_name(entry["item"])
+          if entry && !@db.item_is_nothing?(entry)
+            item_data = find_item_by_id(entry["item_id"])
             icon_path = item_data ? item_data["icon"] : nil
             icon_tex = load_icon(icon_path) || @empty_item_tex
           else
@@ -1910,8 +1919,8 @@ class EquipMenu < ItemSubMenuBase
         ring_bonus_def = 0
         ring_bonus_agi = 0
         ring_bonus_mov = 0
-        if chosen && chosen["item"] != "NOTHING"
-          data = find_item_by_name(chosen["item"])
+        if chosen && !@db.item_is_nothing?(chosen)
+          data = find_item_by_id(chosen["item_id"])
           if data
             ring_bonus_att = (data["attack"]  || 0).to_i
             ring_bonus_def = (data["defense"]  || 0).to_i
@@ -1949,9 +1958,9 @@ class EquipMenu < ItemSubMenuBase
     agi = 0
     mov = 0
     items.each do |entry|
-      next if entry["item"] == "NOTHING"
+      next if @db.item_is_nothing?(entry)
       next unless entry["equipped"]
-      data = find_item_by_name(entry["item"])
+      data = find_item_by_id(entry["item_id"])
       next unless data && data["category"] == "Weapon"
       atk += (data["attack"]  || 0).to_i
       defn += (data["defense"] || 0).to_i
@@ -1971,10 +1980,11 @@ class EquipMenu < ItemSubMenuBase
   def fill_to_four(arr)
     arr = arr.dup
     while arr.length < 4
-      arr << { "item" => "NOTHING", "equipped" => false }
+      arr << { "item_id" => -1, "equipped" => false }
     end
     arr
   end
+
 end
 # ----------------------------------------------------------------
 # class DropMenu (Выбрасывание + Продажа в магазине)
@@ -2197,7 +2207,7 @@ class DropMenu < ItemSubMenuBase
       @confirm_anim_timer += dt * 60.0
       unless @text_full_shown
         template = @game_text["0003"] || "The {ITEM} {N}will be discarded. OK ?"
-        item_name = @selected_drop_item ? @selected_drop_item["item"] : "???"
+        item_name = @selected_drop_item ? @db.item_display_name(@selected_drop_item["item_id"]) : "???"
         full_text = template.gsub("{ITEM}", item_name)
         
         @text_reveal_timer += dt * 60.0
@@ -2235,7 +2245,7 @@ class DropMenu < ItemSubMenuBase
                    else
                      @game_text["0004"] || "The {ITEM} {N}is discarded."
                    end
-        item_name = @selected_drop_item ? @selected_drop_item["item"] : "???"
+        item_name = @selected_drop_item ? @db.item_display_name(@selected_drop_item["item_id"]) : "???"
         full_text = template.gsub("{ITEM}", item_name)
         
         @text_reveal_timer += dt * 60.0
@@ -2277,13 +2287,13 @@ class DropMenu < ItemSubMenuBase
   end
 
   def confirm_action(item_entry, actor)
-    return if item_entry["item"] == "NOTHING"
+    return if @db.item_is_nothing?(item_entry)
     @selected_drop_item = item_entry
     @selected_drop_actor = actor
     
     if @sell_mode
       # Считаем цену
-      item_data = find_item_by_name(item_entry["item"])
+      item_data = find_item_by_id(item_entry["item_id"])
       base_price = item_data ? (item_data["price"] || 0).to_i : 0
       
       multiplier = case item_data["category"]
@@ -2321,16 +2331,17 @@ class DropMenu < ItemSubMenuBase
     return unless inv_entry
 
     items = inv_entry["items"]
-    idx = items.index { |entry| entry["item"] == @selected_drop_item["item"] }
+    idx = items.index { |entry| entry["item_id"] == @selected_drop_item["item_id"] }
     if idx
       if items[idx]["equipped"]
         items[idx]["equipped"] = false
       end
       items.delete_at(idx)
       while items.length < 4
-        items << { "item" => "NOTHING", "equipped" => false }
+        items << { "item_id" => -1, "equipped" => false }
       end
     end
+
     inv_entry["items"] = items
 
     # НАЧИСЛЯЕМ ЗОЛОТО ЕСЛИ ПРОДАЕМ
@@ -2372,7 +2383,7 @@ class DropMenu < ItemSubMenuBase
                  ""
                end
 
-    item_name = @selected_drop_item ? @selected_drop_item["item"] : "???"
+    item_name = @selected_drop_item ? @db.item_display_name(@selected_drop_item["item_id"]) : "???"
     text = template.gsub("{ITEM}", item_name)
     display_text = text[0, @text_reveal_index] || ""
     

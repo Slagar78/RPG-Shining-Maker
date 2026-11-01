@@ -4,16 +4,16 @@
 					"class_id": 0,
 					"start_level": 1,
 					"items": [{
-								"item": "Short Sword",
+								"item_id": 5,
 								"equipped": true
 						}, {
-								"item": "Antidote",
+								"item_id": 3,
 								"equipped": false
 						}, {
-								"item": "Medical Herb",
+								"item_id": 0,
 								"equipped": false
 						}, {
-								"item": "Healing Seed",
+								"item_id": 1,
 								"equipped": false
 						}]
 			}, {
@@ -21,16 +21,16 @@
 					"class_id": 1,
 					"start_level": 1,
 					"items": [{
-								"item": "Black Ring",
+								"item_id": 6,
 								"equipped": true
 						}, {
-								"item": "Medical Herb",
+								"item_id": 0,
 								"equipped": false
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}, {
-								"item": "Short Sword",
+								"item_id": 5,
 								"equipped": false
 						}]
 			}, {
@@ -38,16 +38,16 @@
 					"class_id": 2,
 					"start_level": 1,
 					"items": [{
-								"item": "Short Sword",
+								"item_id": 5,
 								"equipped": true
 						}, {
-								"item": "Medical Herb",
+								"item_id": 0,
 								"equipped": false
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}]
 			}, {
@@ -55,16 +55,16 @@
 					"class_id": 3,
 					"start_level": 1,
 					"items": [{
-								"item": "Antidote",
+								"item_id": 3,
 								"equipped": false
 						}, {
-								"item": "Black Ring",
+								"item_id": 6,
 								"equipped": true
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}]
 			}, {
@@ -72,16 +72,16 @@
 					"class_id": 4,
 					"start_level": 1,
 					"items": [{
-								"item": "Black Ring",
+								"item_id": 6,
 								"equipped": true
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}]
 			}, {
@@ -89,16 +89,16 @@
 					"class_id": 5,
 					"start_level": 1,
 					"items": [{
-								"item": "Medical Herb",
+								"item_id": 0,
 								"equipped": false
 						}, {
-								"item": "Black Ring",
+								"item_id": 6,
 								"equipped": true
 						}, {
-								"item": "Healing Drop",
+								"item_id": 2,
 								"equipped": false
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}]
 			}, {
@@ -106,16 +106,16 @@
 					"class_id": 6,
 					"start_level": 10,
 					"items": [{
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}, {
-								"item": "NOTHING",
+								"item_id": -1,
 								"equipped": false
 						}]
 			}]

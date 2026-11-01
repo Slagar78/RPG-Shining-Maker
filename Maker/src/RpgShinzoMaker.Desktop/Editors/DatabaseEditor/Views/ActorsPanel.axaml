@@ -219,7 +219,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- INITIAL EQUIPMENT -->
+                  <!-- INITIAL EQUIPMENT -->
                     <Border Classes="GroupBox">
                         <StackPanel>
                             <TextBlock Text="Initial Equipment" Classes="GroupHeader"/>
@@ -246,8 +246,23 @@
                                     <DataTemplate x:DataType="models:StartItem">
                                         <Grid ColumnDefinitions="40, *, 60" Margin="0,0,10,5" HorizontalAlignment="Stretch">
                                             <TextBlock Grid.Column="0" Text="Item:" Margin="0,2"/>
-                                            <ComboBox Grid.Column="1" ItemsSource="{Binding $parent[UserControl].((vm:ActorsViewModel)DataContext).AvailableItems}" SelectedItem="{Binding Item}" Margin="0,2,5,2" HorizontalAlignment="Stretch"/>
-                                            <CheckBox Grid.Column="2" Content="Eqp" IsChecked="{Binding Equipped}" IsEnabled="{Binding Item, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" FontSize="11" VerticalAlignment="Center"/>
+
+                                                  <ComboBox Grid.Column="1"
+                                                            ItemsSource="{Binding $parent[UserControl].((vm:ActorsViewModel)DataContext).AvailableItems}"
+                                                            SelectedValue="{Binding ItemId}"
+                                                            SelectedValueBinding="{Binding Id}"
+                                                            Margin="0,2,5,2" HorizontalAlignment="Stretch">
+                                                      <ComboBox.ItemTemplate>
+                                                          <DataTemplate x:DataType="models:Item">
+                                                              <TextBlock Text="{Binding Name}"/>
+                                                          </DataTemplate>
+                                                      </ComboBox.ItemTemplate>
+                                                  </ComboBox>
+
+                                            <CheckBox Grid.Column="2" Content="Eqp"
+                                                      IsChecked="{Binding Equipped}"
+                                                      IsEnabled="{Binding HasItem}"
+                                                      FontSize="11" VerticalAlignment="Center"/>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

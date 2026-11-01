@@ -48,13 +48,13 @@ module BattleEquip
     weapons = []
     rings = []
     items.each_with_index do |item_entry, idx|
-      next if item_entry["item"] == "NOTHING"
-      data = @db.find_by_name(item_entry["item"])
+      next if @db.item_is_nothing?(item_entry)
+      data = @db.find_item_by_id(item_entry["item_id"])
       next unless data
       if data["category"] == "Weapon"
-        weapons << { item: item_entry["item"], slot_index: idx }
+        weapons << { item_id: item_entry["item_id"], slot_index: idx }
       elsif data["category"] == "Ring"
-        rings << { item: item_entry["item"], slot_index: idx }
+        rings << { item_id: item_entry["item_id"], slot_index: idx }
       end
     end
 
@@ -171,8 +171,8 @@ end
     entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
     return unless entry
     entry["items"].each do |item_entry|
-      next if item_entry["item"] == "NOTHING"
-      data = @db.find_by_name(item_entry["item"])
+      next if @db.item_is_nothing?(item_entry)
+      data = @db.find_item_by_id(item_entry["item_id"])
       next unless data && data["category"] == category
       item_entry["equipped"] = false
     end
@@ -188,13 +188,13 @@ end
 
     # Снимаем все предметы этой категории
     items.each_with_index do |item_entry, idx|
-      next if item_entry["item"] == "NOTHING"
-      data = @db.find_by_name(item_entry["item"])
+      next if @db.item_is_nothing?(item_entry)
+      data = @db.find_item_by_id(item_entry["item_id"])
       next unless data && data["category"] == category
       item_entry["equipped"] = false
     end
     # Надеваем выбранный
-    if items[slot_index] && items[slot_index]["item"] != "NOTHING"
+    if items[slot_index] && !@db.item_is_nothing?(items[slot_index])
       items[slot_index]["equipped"] = true
 	  recalc_current_unit_stats
     end
@@ -247,15 +247,15 @@ end
       item_entry = items[i]
       show_tex = nil
 
-      if item_entry && item_entry["item"] != "NOTHING"
-        data = @db.find_by_name(item_entry["item"])
+      if item_entry && !@db.item_is_nothing?(item_entry)
+        data = @db.find_item_by_id(item_entry["item_id"])
         if data && data["category"] == (mode == :weapon ? "Weapon" : "Ring")
           icon_path = data["icon"]
           show_tex = @battle_menu.load_item_icon({ "icon" => icon_path })
         end
       end
-      show_tex ||= @equip_empty_tex
 
+      show_tex ||= @equip_empty_tex
       src = Raylib::Rectangle.create(0, 0, 32, 48)
       dst = Raylib::Rectangle.create(pos[:x] - 16, pos[:y] - 24, 32, 48)
       Raylib.DrawTexturePro(show_tex, src, dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)

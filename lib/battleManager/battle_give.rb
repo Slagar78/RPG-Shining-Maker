@@ -74,32 +74,31 @@ module BattleGive
     donor_items = donor_entry["items"]
     target_items = target_entry["items"]
 
-    idx = donor_items.index { |entry| entry["item"] == @pending_give_item["item"] }
+    idx = donor_items.index { |entry| entry["item_id"] == @pending_give_item["item_id"] }
     return unless idx
-
-    free_slot = target_items.index { |entry| entry["item"] == "NOTHING" }
+    free_slot = target_items.index { |entry| @db.item_is_nothing?(entry) }
 
     if free_slot
       # Простая передача
       item_to_give = donor_items[idx].dup
       item_to_give["equipped"] = false
-      donor_items[idx] = { "item" => "NOTHING", "equipped" => false }
+      donor_items[idx] = { "item_id" => -1, "equipped" => false }
       target_items[free_slot] = item_to_give
       # Запуск анимации
-      start_give_animation(donor, target_unit, @pending_give_item["item"],
+      start_give_animation(donor, target_unit, @pending_give_item["item_id"],
                            idx, free_slot, "0001", {
         '{DONOR}' => donor_actor["name"],
-        '{ITEM}' => @pending_give_item["item"],
+        '{ITEM}' => @db.item_display_name(@pending_give_item["item_id"]),
         '{TARGET}' => target_actor["name"]
       })
     else
       @give_swap_target_unit = target_unit
       target_items_list = target_items.map do |item_entry|
-        item_name = item_entry["item"]
-        next nil if item_name == "NOTHING"
-        item_data = @db.find_by_name(item_name)
+        item_id = item_entry["item_id"]
+        next nil if item_id.nil? || item_id == -1
+        item_data = @db.find_item_by_id(item_id)
         icon = item_data ? item_data["icon"] : nil
-        { "item" => item_name, "icon" => icon }
+        { "item_id" => item_id, "icon" => icon }
       end.compact
       @battle_menu.open_item_grid(:give_swap, target_items_list)
       @battle_state = :item_grid_select
@@ -124,8 +123,8 @@ module BattleGive
     donor_items = donor_entry["items"]
     target_items = target_entry["items"]
 
-    donor_idx = donor_items.index { |e| e["item"] == @pending_give_item["item"] }
-    target_idx = target_items.index { |e| e["item"] == chosen_target_item["item"] }
+    donor_idx = donor_items.index { |e| e["item_id"] == @pending_give_item["item_id"] }
+    target_idx = target_items.index { |e| e["item_id"] == chosen_target_item["item_id"] }
     return unless donor_idx && target_idx
 
     donor_items[donor_idx], target_items[target_idx] = target_items[target_idx], donor_items[donor_idx]
@@ -133,15 +132,15 @@ module BattleGive
     target_items[target_idx]["equipped"] = false
 
     # Запуск анимации обмена
-    donor_item_name = @pending_give_item["item"]
-    target_item_name = chosen_target_item["item"]
-    start_give_animation(donor, target, donor_item_name,
+    donor_item_id   = @pending_give_item["item_id"]
+    target_item_id  = chosen_target_item["item_id"]
+    start_give_animation(donor, target, donor_item_id,
                          donor_idx, target_idx, "0002", {
-      '{DONOR}' => donor_actor["name"],
-      '{ITEM}' => donor_item_name,
-      '{RECEIVED_ITEM}' => target_item_name,
-      '{TARGET}' => target_actor["name"]
-    }, target_item_name, donor_idx, target_idx)
+      '{DONOR}'         => donor_actor["name"],
+      '{ITEM}'          => @db.item_display_name(donor_item_id),
+      '{RECEIVED_ITEM}' => @db.item_display_name(target_item_id),
+      '{TARGET}'        => target_actor["name"]
+    }, target_item_id, donor_idx, target_idx)
     @pending_give_item = nil
     @give_targets = []
     @target_highlight = nil
@@ -263,10 +262,10 @@ end
   end
 
   # ---------- новые методы анимации ----------
-  def get_item_texture(item_name)
-    return @empty_item_tex if item_name.nil? || item_name == "NOTHING"
-    return @item_icon_cache[item_name] if @item_icon_cache.key?(item_name)
-    item_data = @db.find_by_name(item_name)
+  def get_item_texture(item_id)
+    return @empty_item_tex if item_id.nil? || item_id == -1
+    return @item_icon_cache[item_id] if @item_icon_cache.key?(item_id)
+    item_data = @db.find_item_by_id(item_id)
     path = item_data ? item_data["icon"] : nil
     tex = nil
     if path && File.exist?(path)
@@ -275,7 +274,7 @@ end
       UnloadImage(img)
       SetTextureFilter(tex, TEXTURE_FILTER_POINT)
     end
-    @item_icon_cache[item_name] = tex
+    @item_icon_cache[item_id] = tex
   end
 
   def actor_items_array(unit)
@@ -284,30 +283,30 @@ end
     entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
     return [] unless entry
     entry["items"].map do |e|
-      name = e["item"]
+      id = e["item_id"]
       icon_path = nil
-      if name != "NOTHING"
-        data = @db.find_by_name(name)
+      if id && id != -1
+        data = @db.find_item_by_id(id)
         icon_path = data ? data["icon"] : nil
       end
-      { "item" => name, "icon" => icon_path }
+      { "item_id" => id, "icon" => icon_path }
     end
   end
 
-  def start_give_animation(donor, target, item_name, donor_slot, target_slot, msg_id, msg_params,
-                           swap_item_name = nil, swap_donor_slot = -1, swap_target_slot = -1)
+  def start_give_animation(donor, target, item_id, donor_slot, target_slot, msg_id, msg_params,
+                           swap_item_id = nil, swap_donor_slot = -1, swap_target_slot = -1)
     @give_anim_active = true
     @give_anim_timer = 0
     @give_anim_donor_slot = donor_slot
     @give_anim_target_slot = target_slot
-    @give_anim_item_tex = get_item_texture(item_name)
+    @give_anim_item_tex = get_item_texture(item_id)
     @give_anim_donor_items = actor_items_array(donor)
     @give_anim_target_items = actor_items_array(target)
     @give_anim_message_id = msg_id
     @give_anim_message_params = msg_params
 
-    if swap_item_name
-      @give_anim_swap_item_tex = get_item_texture(swap_item_name)
+    if swap_item_id
+      @give_anim_swap_item_tex = get_item_texture(swap_item_id)
       @give_anim_swap_donor_slot = swap_donor_slot
       @give_anim_swap_target_slot = swap_target_slot
     else
@@ -405,7 +404,7 @@ end
         end
       else
         # Обычные слоты
-        tex = get_item_texture(entry ? entry["item"] : "NOTHING")
+        tex = get_item_texture(entry ? entry["item_id"] : -1)
         alpha = 255
       end
 

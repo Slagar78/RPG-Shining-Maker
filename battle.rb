@@ -583,26 +583,26 @@ end
   end
 
   def end_current_turn
-  if @current_unit && @battle_player
-    new_x = @battle_player.x
-    new_y = @battle_player.y
-    if cell_free?(new_x, new_y, @current_unit)
-      @current_unit[:x] = new_x
-      @current_unit[:y] = new_y
-      puts "✅ #{@current_unit[:actor] ? 'Игрок' : 'Враг'} завершил ход на (#{new_x},#{new_y})"
-    else
-      @current_unit[:x] = @start_x
-      @current_unit[:y] = @start_y
-      @battle_player.teleport(@start_x, @start_y)
-      puts "❌ Клетка занята, возврат на (#{@start_x},#{@start_y})"
-      @audio.play_sfx("error") if @audio
+    if @current_unit && @battle_player
+      new_x = @battle_player.x
+      new_y = @battle_player.y
+      if cell_free?(new_x, new_y, @current_unit)
+        @current_unit[:x] = new_x
+        @current_unit[:y] = new_y
+        puts "✅ #{@current_unit[:actor] ? 'Игрок' : 'Враг'} завершил ход на (#{new_x},#{new_y})"
+      else
+        @current_unit[:x] = @start_x
+        @current_unit[:y] = @start_y
+        @battle_player.teleport(@start_x, @start_y)
+        puts "❌ Клетка занята, возврат на (#{@start_x},#{@start_y})"
+        @audio.play_sfx("error") if @audio
+      end
     end
+    start_panel_slide_out
+    @battle_player = nil
+    nxt = next_unit
+    start_cursor_transition(@current_unit, nxt)
   end
-  start_panel_slide_out
-  @battle_player = nil
-  nxt = next_unit
-  start_cursor_transition(@current_unit, nxt)
-end
 
   def current_actor_spells
     return [] unless @current_unit && @current_unit[:actor]
@@ -619,13 +619,13 @@ end
     return [] unless entry
 
     entry["items"].map do |item_entry|
-      item_name = item_entry["item"]
-      if item_name == "NOTHING"
-        { "item" => "NOTHING", "icon" => nil }
+      item_id = item_entry["item_id"]
+      if item_id.nil? || item_id == -1
+        { "item_id" => -1, "icon" => nil }
       else
-        item_data = @db ? @db.find_by_name(item_name) : nil
+        item_data = @db ? @db.find_item_by_id(item_id) : nil
         icon = item_data ? item_data["icon"] : nil
-        { "item" => item_name, "icon" => icon }
+        { "item_id" => item_id, "icon" => icon }
       end
     end
   end

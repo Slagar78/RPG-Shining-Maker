@@ -195,6 +195,21 @@ class Database
     @items.find { |i| i.name == name }
   end
 
+  def find_item_by_id(id)
+    return nil if id.nil? || id == -1
+    @items.find { |i| i.id == id }
+  end
+
+  def item_display_name(item_id)
+    return "NOTHING" if item_id.nil? || item_id == -1
+    it = find_item_by_id(item_id)
+    it ? it.name : "???"
+  end
+
+  def item_is_nothing?(entry)
+    entry.nil? || entry["item_id"].nil? || entry["item_id"] == -1
+  end
+
   def find_spell_by_id(id)
     @spells.find { |s| s["id"] == id }
   end

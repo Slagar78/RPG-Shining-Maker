@@ -56,7 +56,12 @@ module BattleDrop
 
     # подготовка текста для печати
     template = @game_text["0003"] || "The {ITEM} {N}will be discarded. OK ?"
-    text = template.gsub("{ITEM}", item ? item["item"] : "???")
+    item_name = if item && item["item_id"] && item["item_id"] != -1
+                  @db.item_display_name(item["item_id"])
+                else
+                  "???"
+                end
+    text = template.gsub("{ITEM}", item_name)
     @drop_confirm_full_lines = text.split('{N}')
     @drop_confirm_char_index = 0
     @drop_confirm_char_timer = 0
@@ -123,28 +128,33 @@ def update_drop_confirm(dt = 1.0 / 60.0)
     end
   end
 
-def perform_drop
-  return unless @drop_confirm_item && @current_unit && @current_unit[:actor]
-  actor = @current_unit[:actor]
-  entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
-  return unless entry
+  def perform_drop
+    return unless @drop_confirm_item && @current_unit && @current_unit[:actor]
+    actor = @current_unit[:actor]
+    entry = @start_inventory.find { |inv| inv["actor_id"] == actor["id"] }
+    return unless entry
 
-  items = entry["items"]
-  idx = items.index { |e| e["item"] == @drop_confirm_item["item"] }
-  if idx
-    if items[idx]["equipped"]
-      items[idx]["equipped"] = false
+    items = entry["items"]
+    idx = items.index { |e| e["item_id"] == @drop_confirm_item["item_id"] }
+    if idx
+      if items[idx]["equipped"]
+        items[idx]["equipped"] = false
+      end
+      # Замена на пустой слот без сдвига
+      items[idx] = { "item_id" => -1, "equipped" => false }
     end
-    # Замена на пустой слот без сдвига
-    items[idx] = { "item" => "NOTHING", "equipped" => false }
-  end
 
-  start_drop_result
-end
+    start_drop_result
+  end
 
   def start_drop_result
     template = @game_text["0004"] || "The {ITEM} {N}is discarded."
-    text = template.gsub("{ITEM}", @drop_confirm_item["item"])
+    item_name = if @drop_confirm_item && @drop_confirm_item["item_id"]
+                  @db.item_display_name(@drop_confirm_item["item_id"])
+                else
+                  "???"
+                end
+    text = template.gsub("{ITEM}", item_name)
     @drop_msg_full_lines = text.split('{N}')
     @drop_msg_char_index = 0
     @drop_msg_char_timer = 0

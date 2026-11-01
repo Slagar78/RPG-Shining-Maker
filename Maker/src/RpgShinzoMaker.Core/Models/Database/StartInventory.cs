@@ -14,8 +14,6 @@ public partial class StartInventory : ObservableObject
     [property: JsonPropertyName("class_id")]
     private int _classId;
 
-    // ❌ Свойство _level УДАЛЕНО, чтобы не засорять JSON
-
     [ObservableProperty]
     [property: JsonPropertyName("start_level")]
     private int _startLevel = 1;
@@ -27,27 +25,23 @@ public partial class StartInventory : ObservableObject
 
 public partial class StartItem : ObservableObject
 {
-    private string _item = "NOTHING";
+    public const int NothingId = -1;
 
-    [JsonPropertyName("item")]
-    public string Item
-    {
-        get => _item;
-        set
-        {
-            if (value == null) return;
-
-            if (SetProperty(ref _item, value))
-            {
-                if (string.IsNullOrWhiteSpace(value) || value == "NOTHING")
-                {
-                    Equipped = false;
-                }
-            }
-        }
-    }
+    [ObservableProperty]
+    [property: JsonPropertyName("item_id")]
+    private int _itemId = NothingId;
 
     [ObservableProperty]
     [property: JsonPropertyName("equipped")]
     private bool _equipped = false;
+
+    [JsonIgnore]
+    public bool HasItem => ItemId != NothingId;
+
+    partial void OnItemIdChanged(int value)
+    {
+        if (value == NothingId)
+            Equipped = false;
+        OnPropertyChanged(nameof(HasItem));
+    }
 }
