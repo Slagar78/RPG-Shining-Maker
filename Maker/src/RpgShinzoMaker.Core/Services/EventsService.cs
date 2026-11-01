@@ -232,7 +232,7 @@ public static class EventsService
             Mode      = obj["mode"]?.GetValue<string>() ?? "",
             TriggerX  = obj["trigger_x"]?.GetValue<int>()   ?? -1,
             TriggerY  = obj["trigger_y"]?.GetValue<int>()   ?? -1,
-            TargetMap = obj["target_map"]?.GetValue<string>() ?? "",
+            TargetMapId = obj["target_map_id"]?.GetValue<int>() ?? 0,
             TargetX   = obj["target_x"]?.GetValue<int>()     ?? 0,
             TargetY   = obj["target_y"]?.GetValue<int>()     ?? 0,
             Facing    = facing,
@@ -371,7 +371,7 @@ private static void SaveEventsFileTo(string file, MapEvents events)
             obj["trigger_y"] = w.TriggerY;
         }
 
-        obj["target_map"] = w.TargetMap;
+        obj["target_map_id"] = w.TargetMapId;
         obj["target_x"]   = w.TargetX;
         obj["target_y"]   = w.TargetY;
         obj["facing"]     = w.Facing;

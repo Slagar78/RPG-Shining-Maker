@@ -49,7 +49,7 @@
             <Setter Property="Background" Value="#555555"/>
         </Style>
 
-        <!-- Современный ComboBox (фикс высоты) -->
+        <!-- Современный ComboBox -->
         <Style Selector="ComboBox.ModernComboBox">
             <Setter Property="Background" Value="#2D2D30"/>
             <Setter Property="BorderBrush" Value="#3E3E42"/>

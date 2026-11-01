@@ -17,7 +17,8 @@ public class WarpEvent
     public int EndX { get; set; } = -1;
     public int EndY { get; set; } = -1;
 
-    public string TargetMap { get; set; } = "";
+    // Теперь ID карты вместо имени
+    public int TargetMapId { get; set; } = 0;
     public int TargetX { get; set; } = 0;
     public int TargetY { get; set; } = 0;
 

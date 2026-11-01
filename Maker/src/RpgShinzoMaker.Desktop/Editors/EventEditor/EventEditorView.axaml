@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:eventEditor="using:RpgShinzoMaker.Desktop.Editors.EventEditor"
+             xmlns:models="using:RpgShinzoMaker.Core.Models"
              x:Class="RpgShinzoMaker.Desktop.Editors.EventEditor.EventEditorView">
 
     <UserControl.Styles>
@@ -272,6 +273,7 @@
                                             <TextBlock x:Name="W_ModeLabel" Text="single" VerticalAlignment="Center" Foreground="#CCCCCC" Margin="6,0,0,0"/>
                                         </StackPanel>
                                     </Grid>
+                                    
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Trigger X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
@@ -280,6 +282,7 @@
                                             <TextBox x:Name="W_TriggerY" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTriggerXYChanged"/>
                                         </StackPanel>
                                     </Grid>
+                                    
                                     <Grid x:Name="W_EndPanel" ColumnDefinitions="100,*" IsVisible="False">
                                         <TextBlock Grid.Column="0" Text="End X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
@@ -288,10 +291,19 @@
                                             <TextBox x:Name="W_EndY" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWEndXYChanged"/>
                                         </StackPanel>
                                     </Grid>
+                                    
+                                    <!-- ★ ОБНОВЛЕННЫЙ COMBOBOX ДЛЯ ID КАРТЫ ★ -->
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Target Map:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
-                                        <ComboBox Grid.Column="1" x:Name="W_TargetMapCombo" HorizontalAlignment="Stretch" SelectionChanged="OnWTargetMapChanged"/>
+                                        <ComboBox Grid.Column="1" x:Name="W_TargetMapCombo" HorizontalAlignment="Stretch" SelectionChanged="OnWTargetMapChanged">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate x:DataType="models:MapEntry">
+                                                    <TextBlock Text="{Binding Name}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
                                     </Grid>
+                                    
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Target X,Y:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
@@ -300,6 +312,7 @@
                                             <TextBox x:Name="W_TargetY" Width="40" MaxLength="3" TextInput="OnCoordTextInput" TextChanged="OnWTargetXYChanged"/>
                                         </StackPanel>
                                     </Grid>
+                                    
                                     <Grid ColumnDefinitions="100,*">
                                         <TextBlock Grid.Column="0" Text="Facing:" Foreground="#CCCCCC" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3">

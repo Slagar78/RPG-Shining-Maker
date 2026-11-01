@@ -82,162 +82,162 @@ public partial class EventEditorView
     //   ROOF — загрузка в поля
     // ══════════════════════════════════════════════════════════════
     private void LoadRoof()
-{
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count)
     {
-        ClearRoofFields();
-        return;
-    }
-
-    var r = _events.Roofs[_selectedIndex];
-
-    SetPair(Roof_StartX, Roof_StartY, r.StartX, r.StartY, allowEmpty: false);
-    SetPair(Roof_EndX,   Roof_EndY,   r.EndX,   r.EndY,   allowEmpty: false);
-
-    // Сбросить выделения списков
-    _selectedRoofTriggerIndex = r.Triggers.Count > 0 ? 0 : -1;
-    _selectedRoofExitIndex    = r.Exits.Count    > 0 ? 0 : -1;
-
-    RefreshRoofTriggerList();
-    RefreshRoofExitList();
-    UpdateRoofTriggerFields();
-    UpdateRoofExitFields();
-}
-
-/// <summary>Пересобирает список триггеров, сохраняя выделение.</summary>
-private void RefreshRoofTriggerList()
-{
-    if (Roof_TriggersList == null) return;
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-
-    var r = _events.Roofs[_selectedIndex];
-    var labels = new List<string>();
-    for (int i = 0; i < r.Triggers.Count; i++)
-    {
-        var t = r.Triggers[i];
-        labels.Add($"#{i}   ({t.X},{t.Y})");
-    }
-
-    Roof_TriggersList.SelectionChanged -= OnRoofTriggerSelected;
-    Roof_TriggersList.ItemsSource = labels;
-    Roof_TriggersList.SelectedIndex = _selectedRoofTriggerIndex;
-    Roof_TriggersList.SelectionChanged += OnRoofTriggerSelected;
-
-    if (Roof_TriggersCount != null)
-        Roof_TriggersCount.Text = $"{r.Triggers.Count} / 10";
-}
-
-/// <summary>Пересобирает список выходов, сохраняя выделение.</summary>
-private void RefreshRoofExitList()
-{
-    if (Roof_ExitsList == null) return;
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-
-    var r = _events.Roofs[_selectedIndex];
-    var labels = new List<string>();
-    for (int i = 0; i < r.Exits.Count; i++)
-    {
-        var e = r.Exits[i];
-        labels.Add($"#{i}   ({e.X},{e.Y})");
-    }
-
-    Roof_ExitsList.SelectionChanged -= OnRoofExitSelected;
-    Roof_ExitsList.ItemsSource = labels;
-    Roof_ExitsList.SelectedIndex = _selectedRoofExitIndex;
-    Roof_ExitsList.SelectionChanged += OnRoofExitSelected;
-
-    if (Roof_ExitsCount != null)
-        Roof_ExitsCount.Text = $"{r.Exits.Count} / 10";
-}
-
-/// <summary>Заполняет X/Y триггера для выбранного элемента.</summary>
-private void UpdateRoofTriggerFields()
-{
-    if (Roof_TriggerX == null || Roof_TriggerY == null) return;
-
-    bool has = _selectedIndex >= 0 && _selectedIndex < _events.Roofs.Count
-                                   && _selectedRoofTriggerIndex >= 0
-                                   && _selectedRoofTriggerIndex < _events.Roofs[_selectedIndex].Triggers.Count;
-
-    Roof_TriggerX.IsEnabled = has;
-    Roof_TriggerY.IsEnabled = has;
-
-    // ─── Save/Restore: если снаружи уже подавлено — оставляем подавленным ───
-    bool saved = _suppressFieldEvents;
-    _suppressFieldEvents = true;
-    try
-    {
-        if (!has)
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count)
         {
-            Roof_TriggerX.Text = "";
-            Roof_TriggerY.Text = "";
+            ClearRoofFields();
+            return;
         }
-        else
-        {
-            var t = _events.Roofs[_selectedIndex].Triggers[_selectedRoofTriggerIndex];
-            Roof_TriggerX.Text = t.X.ToString();
-            Roof_TriggerY.Text = t.Y.ToString();
-        }
+
+        var r = _events.Roofs[_selectedIndex];
+
+        SetPair(Roof_StartX, Roof_StartY, r.StartX, r.StartY, allowEmpty: false);
+        SetPair(Roof_EndX,   Roof_EndY,   r.EndX,   r.EndY,   allowEmpty: false);
+
+        // Сбросить выделения списков
+        _selectedRoofTriggerIndex = r.Triggers.Count > 0 ? 0 : -1;
+        _selectedRoofExitIndex    = r.Exits.Count    > 0 ? 0 : -1;
+
+        RefreshRoofTriggerList();
+        RefreshRoofExitList();
+        UpdateRoofTriggerFields();
+        UpdateRoofExitFields();
     }
-    finally
+
+    /// <summary>Пересобирает список триггеров, сохраняя выделение.</summary>
+    private void RefreshRoofTriggerList()
     {
-        _suppressFieldEvents = saved;
-    }
-}
+        if (Roof_TriggersList == null) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
 
-/// <summary>Заполняет X/Y выхода для выбранного элемента.</summary>
-private void UpdateRoofExitFields()
-{
-    if (Roof_ExitX == null || Roof_ExitY == null) return;
-
-    bool has = _selectedIndex >= 0 && _selectedIndex < _events.Roofs.Count
-                                   && _selectedRoofExitIndex >= 0
-                                   && _selectedRoofExitIndex < _events.Roofs[_selectedIndex].Exits.Count;
-
-    Roof_ExitX.IsEnabled = has;
-    Roof_ExitY.IsEnabled = has;
-
-    // ─── Save/Restore: если снаружи уже подавлено — оставляем подавленным ───
-    bool saved = _suppressFieldEvents;
-    _suppressFieldEvents = true;
-    try
-    {
-        if (!has)
+        var r = _events.Roofs[_selectedIndex];
+        var labels = new List<string>();
+        for (int i = 0; i < r.Triggers.Count; i++)
         {
-            Roof_ExitX.Text = "";
-            Roof_ExitY.Text = "";
+            var t = r.Triggers[i];
+            labels.Add($"#{i}   ({t.X},{t.Y})");
         }
-        else
+
+        Roof_TriggersList.SelectionChanged -= OnRoofTriggerSelected;
+        Roof_TriggersList.ItemsSource = labels;
+        Roof_TriggersList.SelectedIndex = _selectedRoofTriggerIndex;
+        Roof_TriggersList.SelectionChanged += OnRoofTriggerSelected;
+
+        if (Roof_TriggersCount != null)
+            Roof_TriggersCount.Text = $"{r.Triggers.Count} / 10";
+    }
+
+    /// <summary>Пересобирает список выходов, сохраняя выделение.</summary>
+    private void RefreshRoofExitList()
+    {
+        if (Roof_ExitsList == null) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+
+        var r = _events.Roofs[_selectedIndex];
+        var labels = new List<string>();
+        for (int i = 0; i < r.Exits.Count; i++)
         {
-            var e = _events.Roofs[_selectedIndex].Exits[_selectedRoofExitIndex];
-            Roof_ExitX.Text = e.X.ToString();
-            Roof_ExitY.Text = e.Y.ToString();
+            var e = r.Exits[i];
+            labels.Add($"#{i}   ({e.X},{e.Y})");
+        }
+
+        Roof_ExitsList.SelectionChanged -= OnRoofExitSelected;
+        Roof_ExitsList.ItemsSource = labels;
+        Roof_ExitsList.SelectedIndex = _selectedRoofExitIndex;
+        Roof_ExitsList.SelectionChanged += OnRoofExitSelected;
+
+        if (Roof_ExitsCount != null)
+            Roof_ExitsCount.Text = $"{r.Exits.Count} / 10";
+    }
+
+    /// <summary>Заполняет X/Y триггера для выбранного элемента.</summary>
+    private void UpdateRoofTriggerFields()
+    {
+        if (Roof_TriggerX == null || Roof_TriggerY == null) return;
+
+        bool has = _selectedIndex >= 0 && _selectedIndex < _events.Roofs.Count
+                                       && _selectedRoofTriggerIndex >= 0
+                                       && _selectedRoofTriggerIndex < _events.Roofs[_selectedIndex].Triggers.Count;
+
+        Roof_TriggerX.IsEnabled = has;
+        Roof_TriggerY.IsEnabled = has;
+
+        // ─── Save/Restore: если снаружи уже подавлено — оставляем подавленным ───
+        bool saved = _suppressFieldEvents;
+        _suppressFieldEvents = true;
+        try
+        {
+            if (!has)
+            {
+                Roof_TriggerX.Text = "";
+                Roof_TriggerY.Text = "";
+            }
+            else
+            {
+                var t = _events.Roofs[_selectedIndex].Triggers[_selectedRoofTriggerIndex];
+                Roof_TriggerX.Text = t.X.ToString();
+                Roof_TriggerY.Text = t.Y.ToString();
+            }
+        }
+        finally
+        {
+            _suppressFieldEvents = saved;
         }
     }
-    finally
+
+    /// <summary>Заполняет X/Y выхода для выбранного элемента.</summary>
+    private void UpdateRoofExitFields()
     {
-        _suppressFieldEvents = saved;
+        if (Roof_ExitX == null || Roof_ExitY == null) return;
+
+        bool has = _selectedIndex >= 0 && _selectedIndex < _events.Roofs.Count
+                                       && _selectedRoofExitIndex >= 0
+                                       && _selectedRoofExitIndex < _events.Roofs[_selectedIndex].Exits.Count;
+
+        Roof_ExitX.IsEnabled = has;
+        Roof_ExitY.IsEnabled = has;
+
+        // ─── Save/Restore: если снаружи уже подавлено — оставляем подавленным ───
+        bool saved = _suppressFieldEvents;
+        _suppressFieldEvents = true;
+        try
+        {
+            if (!has)
+            {
+                Roof_ExitX.Text = "";
+                Roof_ExitY.Text = "";
+            }
+            else
+            {
+                var e = _events.Roofs[_selectedIndex].Exits[_selectedRoofExitIndex];
+                Roof_ExitX.Text = e.X.ToString();
+                Roof_ExitY.Text = e.Y.ToString();
+            }
+        }
+        finally
+        {
+            _suppressFieldEvents = saved;
+        }
     }
-}
 
-private void ClearRoofFields()
-{
-    _selectedRoofTriggerIndex = -1;
-    _selectedRoofExitIndex = -1;
+    private void ClearRoofFields()
+    {
+        _selectedRoofTriggerIndex = -1;
+        _selectedRoofExitIndex = -1;
 
-    Roof_StartX.Text = ""; Roof_StartY.Text = "";
-    Roof_EndX.Text   = ""; Roof_EndY.Text   = "";
+        Roof_StartX.Text = ""; Roof_StartY.Text = "";
+        Roof_EndX.Text   = ""; Roof_EndY.Text   = "";
 
-    if (Roof_TriggersList != null) Roof_TriggersList.ItemsSource = null;
-    if (Roof_ExitsList    != null) Roof_ExitsList.ItemsSource = null;
-    if (Roof_TriggersCount != null) Roof_TriggersCount.Text = "0 / 10";
-    if (Roof_ExitsCount    != null) Roof_ExitsCount.Text = "0 / 10";
+        if (Roof_TriggersList != null) Roof_TriggersList.ItemsSource = null;
+        if (Roof_ExitsList    != null) Roof_ExitsList.ItemsSource = null;
+        if (Roof_TriggersCount != null) Roof_TriggersCount.Text = "0 / 10";
+        if (Roof_ExitsCount    != null) Roof_ExitsCount.Text = "0 / 10";
 
-    if (Roof_TriggerX != null) { Roof_TriggerX.Text = ""; Roof_TriggerX.IsEnabled = false; }
-    if (Roof_TriggerY != null) { Roof_TriggerY.Text = ""; Roof_TriggerY.IsEnabled = false; }
-    if (Roof_ExitX    != null) { Roof_ExitX.Text    = ""; Roof_ExitX.IsEnabled    = false; }
-    if (Roof_ExitY    != null) { Roof_ExitY.Text    = ""; Roof_ExitY.IsEnabled    = false; }
-}
+        if (Roof_TriggerX != null) { Roof_TriggerX.Text = ""; Roof_TriggerX.IsEnabled = false; }
+        if (Roof_TriggerY != null) { Roof_TriggerY.Text = ""; Roof_TriggerY.IsEnabled = false; }
+        if (Roof_ExitX    != null) { Roof_ExitX.Text    = ""; Roof_ExitX.IsEnabled    = false; }
+        if (Roof_ExitY    != null) { Roof_ExitY.Text    = ""; Roof_ExitY.IsEnabled    = false; }
+    }
 
     private static void SetPair(TextBox xBox, TextBox yBox, int x, int y, bool allowEmpty)
     {
@@ -290,140 +290,141 @@ private void ClearRoofFields()
         _events.Roofs[_selectedIndex].EndY = ParseCoord(Roof_EndY.Text, fallback: 1);
         OnFieldChanged();
     }
+    
     // ══════════════════════════════════════════════════════════════
-//   ROOF — выбранный триггер / выход
-// ══════════════════════════════════════════════════════════════
-private void OnRoofTriggerSelected(object? sender, SelectionChangedEventArgs e)
-{
-    if (_suppressFieldEvents) return;
-    _selectedRoofTriggerIndex = Roof_TriggersList.SelectedIndex;
-    UpdateRoofTriggerFields();
-}
+    //   ROOF — выбранный триггер / выход
+    // ══════════════════════════════════════════════════════════════
+    private void OnRoofTriggerSelected(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        _selectedRoofTriggerIndex = Roof_TriggersList.SelectedIndex;
+        UpdateRoofTriggerFields();
+    }
 
-private void OnRoofExitSelected(object? sender, SelectionChangedEventArgs e)
-{
-    if (_suppressFieldEvents) return;
-    _selectedRoofExitIndex = Roof_ExitsList.SelectedIndex;
-    UpdateRoofExitFields();
-}
+    private void OnRoofExitSelected(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        _selectedRoofExitIndex = Roof_ExitsList.SelectedIndex;
+        UpdateRoofExitFields();
+    }
 
-// ══════════════════════════════════════════════════════════════
-//   ROOF — Add / Delete триггеров и выходов
-// ══════════════════════════════════════════════════════════════
-private void OnRoofTriggerAdd(object? sender, RoutedEventArgs e)
-{
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-    var r = _events.Roofs[_selectedIndex];
-    if (r.Triggers.Count >= 10) return;
+    // ══════════════════════════════════════════════════════════════
+    //   ROOF — Add / Delete триггеров и выходов
+    // ══════════════════════════════════════════════════════════════
+    private void OnRoofTriggerAdd(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+        var r = _events.Roofs[_selectedIndex];
+        if (r.Triggers.Count >= 10) return;
 
-    r.Triggers.Add(new TriggerPoint(0, 0));
-    _selectedRoofTriggerIndex = r.Triggers.Count - 1;
-    RefreshRoofTriggerList();
-    UpdateRoofTriggerFields();
-    OnFieldChanged();
-}
-
-private void OnRoofTriggerDelete(object? sender, RoutedEventArgs e)
-{
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-    var r = _events.Roofs[_selectedIndex];
-    if (_selectedRoofTriggerIndex < 0 || _selectedRoofTriggerIndex >= r.Triggers.Count) return;
-
-    r.Triggers.RemoveAt(_selectedRoofTriggerIndex);
-    if (_selectedRoofTriggerIndex >= r.Triggers.Count)
+        r.Triggers.Add(new TriggerPoint(0, 0));
         _selectedRoofTriggerIndex = r.Triggers.Count - 1;
+        RefreshRoofTriggerList();
+        UpdateRoofTriggerFields();
+        OnFieldChanged();
+    }
 
-    RefreshRoofTriggerList();
-    UpdateRoofTriggerFields();
-    OnFieldChanged();
-}
+    private void OnRoofTriggerDelete(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+        var r = _events.Roofs[_selectedIndex];
+        if (_selectedRoofTriggerIndex < 0 || _selectedRoofTriggerIndex >= r.Triggers.Count) return;
 
-private void OnRoofExitAdd(object? sender, RoutedEventArgs e)
-{
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-    var r = _events.Roofs[_selectedIndex];
-    if (r.Exits.Count >= 10) return;
+        r.Triggers.RemoveAt(_selectedRoofTriggerIndex);
+        if (_selectedRoofTriggerIndex >= r.Triggers.Count)
+            _selectedRoofTriggerIndex = r.Triggers.Count - 1;
 
-    r.Exits.Add(new TriggerPoint(0, 0));
-    _selectedRoofExitIndex = r.Exits.Count - 1;
-    RefreshRoofExitList();
-    UpdateRoofExitFields();
-    OnFieldChanged();
-}
+        RefreshRoofTriggerList();
+        UpdateRoofTriggerFields();
+        OnFieldChanged();
+    }
 
-private void OnRoofExitDelete(object? sender, RoutedEventArgs e)
-{
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-    var r = _events.Roofs[_selectedIndex];
-    if (_selectedRoofExitIndex < 0 || _selectedRoofExitIndex >= r.Exits.Count) return;
+    private void OnRoofExitAdd(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+        var r = _events.Roofs[_selectedIndex];
+        if (r.Exits.Count >= 10) return;
 
-    r.Exits.RemoveAt(_selectedRoofExitIndex);
-    if (_selectedRoofExitIndex >= r.Exits.Count)
+        r.Exits.Add(new TriggerPoint(0, 0));
         _selectedRoofExitIndex = r.Exits.Count - 1;
+        RefreshRoofExitList();
+        UpdateRoofExitFields();
+        OnFieldChanged();
+    }
 
-    RefreshRoofExitList();
-    UpdateRoofExitFields();
-    OnFieldChanged();
-}
+    private void OnRoofExitDelete(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+        var r = _events.Roofs[_selectedIndex];
+        if (_selectedRoofExitIndex < 0 || _selectedRoofExitIndex >= r.Exits.Count) return;
 
-// ══════════════════════════════════════════════════════════════
-//   ROOF — изменение X/Y выбранного триггера / выхода
-// ══════════════════════════════════════════════════════════════
-private void OnRoofTriggerXChanged(object? sender, TextChangedEventArgs e)
-{
-    if (_suppressFieldEvents) return;
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-    if (_selectedRoofTriggerIndex < 0) return;
+        r.Exits.RemoveAt(_selectedRoofExitIndex);
+        if (_selectedRoofExitIndex >= r.Exits.Count)
+            _selectedRoofExitIndex = r.Exits.Count - 1;
 
-    var r = _events.Roofs[_selectedIndex];
-    if (_selectedRoofTriggerIndex >= r.Triggers.Count) return;
+        RefreshRoofExitList();
+        UpdateRoofExitFields();
+        OnFieldChanged();
+    }
 
-    r.Triggers[_selectedRoofTriggerIndex].X = ParseCoord(Roof_TriggerX.Text, fallback: 0);
-    RefreshRoofTriggerList();
-    OnFieldChanged();
-}
+    // ══════════════════════════════════════════════════════════════
+    //   ROOF — изменение X/Y выбранного триггера / выхода
+    // ══════════════════════════════════════════════════════════════
+    private void OnRoofTriggerXChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+        if (_selectedRoofTriggerIndex < 0) return;
 
-private void OnRoofTriggerYChanged(object? sender, TextChangedEventArgs e)
-{
-    if (_suppressFieldEvents) return;
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-    if (_selectedRoofTriggerIndex < 0) return;
+        var r = _events.Roofs[_selectedIndex];
+        if (_selectedRoofTriggerIndex >= r.Triggers.Count) return;
 
-    var r = _events.Roofs[_selectedIndex];
-    if (_selectedRoofTriggerIndex >= r.Triggers.Count) return;
+        r.Triggers[_selectedRoofTriggerIndex].X = ParseCoord(Roof_TriggerX.Text, fallback: 0);
+        RefreshRoofTriggerList();
+        OnFieldChanged();
+    }
 
-    r.Triggers[_selectedRoofTriggerIndex].Y = ParseCoord(Roof_TriggerY.Text, fallback: 0);
-    RefreshRoofTriggerList();
-    OnFieldChanged();
-}
+    private void OnRoofTriggerYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+        if (_selectedRoofTriggerIndex < 0) return;
 
-private void OnRoofExitXChanged(object? sender, TextChangedEventArgs e)
-{
-    if (_suppressFieldEvents) return;
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-    if (_selectedRoofExitIndex < 0) return;
+        var r = _events.Roofs[_selectedIndex];
+        if (_selectedRoofTriggerIndex >= r.Triggers.Count) return;
 
-    var r = _events.Roofs[_selectedIndex];
-    if (_selectedRoofExitIndex >= r.Exits.Count) return;
+        r.Triggers[_selectedRoofTriggerIndex].Y = ParseCoord(Roof_TriggerY.Text, fallback: 0);
+        RefreshRoofTriggerList();
+        OnFieldChanged();
+    }
 
-    r.Exits[_selectedRoofExitIndex].X = ParseCoord(Roof_ExitX.Text, fallback: 0);
-    RefreshRoofExitList();
-    OnFieldChanged();
-}
+    private void OnRoofExitXChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+        if (_selectedRoofExitIndex < 0) return;
 
-private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
-{
-    if (_suppressFieldEvents) return;
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
-    if (_selectedRoofExitIndex < 0) return;
+        var r = _events.Roofs[_selectedIndex];
+        if (_selectedRoofExitIndex >= r.Exits.Count) return;
 
-    var r = _events.Roofs[_selectedIndex];
-    if (_selectedRoofExitIndex >= r.Exits.Count) return;
+        r.Exits[_selectedRoofExitIndex].X = ParseCoord(Roof_ExitX.Text, fallback: 0);
+        RefreshRoofExitList();
+        OnFieldChanged();
+    }
 
-    r.Exits[_selectedRoofExitIndex].Y = ParseCoord(Roof_ExitY.Text, fallback: 0);
-    RefreshRoofExitList();
-    OnFieldChanged();
-}
+    private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Roofs.Count) return;
+        if (_selectedRoofExitIndex < 0) return;
+
+        var r = _events.Roofs[_selectedIndex];
+        if (_selectedRoofExitIndex >= r.Exits.Count) return;
+
+        r.Exits[_selectedRoofExitIndex].Y = ParseCoord(Roof_ExitY.Text, fallback: 0);
+        RefreshRoofExitList();
+        OnFieldChanged();
+    }
 
     // ══════════════════════════════════════════════════════════════
     //   TILE CHANGE — загрузка в поля
@@ -506,7 +507,7 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
 
             SetWarpModeUI("");
 
-            PopulateTargetMapCombo(null);
+            PopulateTargetMapCombo(0); // 0 = ID по умолчанию
             W_TargetX.Text = "0";
             W_TargetY.Text = "0";
             SetWarpFacingUI(0);
@@ -531,7 +532,7 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
             W_EndY.Text = "";
         }
 
-        PopulateTargetMapCombo(w.TargetMap);
+        PopulateTargetMapCombo(w.TargetMapId);
         W_TargetX.Text = w.TargetX.ToString();
         W_TargetY.Text = w.TargetY.ToString();
         SetWarpFacingUI(w.Facing);
@@ -541,23 +542,18 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
     /// Заполняет ComboBox Target Map названиями карт из entries.json.
     /// Выбирает нужную (или -1, если current пустой / не найден).
     /// </summary>
-    private void PopulateTargetMapCombo(string? current)
+    private void PopulateTargetMapCombo(int currentId)
     {
         if (W_TargetMapCombo == null) return;
 
-        // Временно снимаем подписку, чтобы не было рекурсии при заполнении
+        // Временно снимаем подписку, чтобы не было рекурсии
         W_TargetMapCombo.SelectionChanged -= OnWTargetMapChanged;
 
-        var names = new List<string>();
-        foreach (var e in _mapEntries) names.Add(e.Name);
+        // Передаем список самих объектов MapEntry, а не строк
+        W_TargetMapCombo.ItemsSource = _mapEntries;
 
-        W_TargetMapCombo.ItemsSource = names;
-
-        int idx = -1;
-        if (!string.IsNullOrEmpty(current))
-            idx = names.IndexOf(current);
-
-        W_TargetMapCombo.SelectedIndex = idx;
+        // Ищем карту по ID и выбираем её
+        W_TargetMapCombo.SelectedItem = _mapEntries.FirstOrDefault(m => m.Id == currentId);
 
         W_TargetMapCombo.SelectionChanged += OnWTargetMapChanged;
     }
@@ -594,7 +590,7 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
     // ══════════════════════════════════════════════════════════════
     //   ОБРАБОТЧИКИ TILE CHANGE
     // ══════════════════════════════════════════════════════════════
-        private void OnTCTriggerXChanged(object? sender, TextChangedEventArgs e)
+    private void OnTCTriggerXChanged(object? sender, TextChangedEventArgs e)
     {
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.TileChanges.Count) return;
@@ -783,71 +779,72 @@ private void OnRoofExitYChanged(object? sender, TextChangedEventArgs e)
         if (_suppressFieldEvents) return;
         if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
 
-        string name = (W_TargetMapCombo?.SelectedItem as string) ?? "";
-        _events.Warps[_selectedIndex].TargetMap = name;
-    }
-
-
-// ══════════════════════════════════════════════════════════════
-//   WARP — Mode (single / line)
-// ══════════════════════════════════════════════════════════════
-private void OnWModeSingleClick(object? sender, RoutedEventArgs e) => SetWarpMode("");
-private void OnWModeLineClick(object? sender, RoutedEventArgs e)   => SetWarpMode("line");
-
-private void SetWarpMode(string mode)
-{
-    // Сначала UI — даже если события подавлены
-    SetWarpModeUI(mode);
-
-    if (_suppressFieldEvents) return;
-    if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
-
-    var w = _events.Warps[_selectedIndex];
-    w.Mode = mode;
-
-    if (mode == "line")
-    {
-        // Инициализируем End из Trigger, если ещё не задано
-        if (w.EndX < 0) w.EndX = w.TriggerX >= 0 ? w.TriggerX : 0;
-        if (w.EndY < 0) w.EndY = w.TriggerY >= 0 ? w.TriggerY : 0;
-
-        bool saved = _suppressFieldEvents;
-        _suppressFieldEvents = true;
-        try
+        // Сохраняем ID выбранной карты
+        if (W_TargetMapCombo.SelectedItem is MapEntry selectedMap)
         {
-            W_EndX.Text = w.EndX.ToString();
-            W_EndY.Text = w.EndY.ToString();
+            _events.Warps[_selectedIndex].TargetMapId = selectedMap.Id;
         }
-        finally { _suppressFieldEvents = saved; }
     }
 
-    OnFieldChanged();
-}
+    // ══════════════════════════════════════════════════════════════
+    //   WARP — Mode (single / line)
+    // ══════════════════════════════════════════════════════════════
+    private void OnWModeSingleClick(object? sender, RoutedEventArgs e) => SetWarpMode("");
+    private void OnWModeLineClick(object? sender, RoutedEventArgs e)   => SetWarpMode("line");
 
-private void SetWarpModeUI(string mode)
-{
-    if (W_ModeSingleBtn == null || W_ModeLineBtn == null) return;
-    if (W_ModeLabel == null || W_EndPanel == null) return;
+    private void SetWarpMode(string mode)
+    {
+        // Сначала UI — даже если события подавлены
+        SetWarpModeUI(mode);
 
-    bool isLine = mode == "line";
+        if (_suppressFieldEvents) return;
+        if (_selectedIndex < 0 || _selectedIndex >= _events.Warps.Count) return;
 
-    var activeBg = new SolidColorBrush(Color.Parse("#3E5F8A"));
-    var idleBg   = new SolidColorBrush(Color.Parse("#3E3E42"));
-    var activeFg = new SolidColorBrush(Color.Parse("#FFFFFF"));
-    var idleFg   = new SolidColorBrush(Color.Parse("#CCCCCC"));
+        var w = _events.Warps[_selectedIndex];
+        w.Mode = mode;
 
-    W_ModeSingleBtn.IsChecked  = !isLine;
-    W_ModeSingleBtn.Background = isLine ? idleBg : activeBg;
-    W_ModeSingleBtn.Foreground = isLine ? idleFg : activeFg;
+        if (mode == "line")
+        {
+            // Инициализируем End из Trigger, если ещё не задано
+            if (w.EndX < 0) w.EndX = w.TriggerX >= 0 ? w.TriggerX : 0;
+            if (w.EndY < 0) w.EndY = w.TriggerY >= 0 ? w.TriggerY : 0;
 
-    W_ModeLineBtn.IsChecked  = isLine;
-    W_ModeLineBtn.Background = isLine ? activeBg : idleBg;
-    W_ModeLineBtn.Foreground = isLine ? activeFg : idleFg;
+            bool saved = _suppressFieldEvents;
+            _suppressFieldEvents = true;
+            try
+            {
+                W_EndX.Text = w.EndX.ToString();
+                W_EndY.Text = w.EndY.ToString();
+            }
+            finally { _suppressFieldEvents = saved; }
+        }
 
-    W_ModeLabel.Text = isLine ? "line" : "single";
-    W_EndPanel.IsVisible = isLine;
-}
+        OnFieldChanged();
+    }
 
+    private void SetWarpModeUI(string mode)
+    {
+        if (W_ModeSingleBtn == null || W_ModeLineBtn == null) return;
+        if (W_ModeLabel == null || W_EndPanel == null) return;
+
+        bool isLine = mode == "line";
+
+        var activeBg = new SolidColorBrush(Color.Parse("#3E5F8A"));
+        var idleBg   = new SolidColorBrush(Color.Parse("#3E3E42"));
+        var activeFg = new SolidColorBrush(Color.Parse("#FFFFFF"));
+        var idleFg   = new SolidColorBrush(Color.Parse("#CCCCCC"));
+
+        W_ModeSingleBtn.IsChecked  = !isLine;
+        W_ModeSingleBtn.Background = isLine ? idleBg : activeBg;
+        W_ModeSingleBtn.Foreground = isLine ? idleFg : activeFg;
+
+        W_ModeLineBtn.IsChecked  = isLine;
+        W_ModeLineBtn.Background = isLine ? activeBg : idleBg;
+        W_ModeLineBtn.Foreground = isLine ? activeFg : idleFg;
+
+        W_ModeLabel.Text = isLine ? "line" : "single";
+        W_EndPanel.IsVisible = isLine;
+    }
 
     // ══════════════════════════════════════════════════════════════
     //   ОБРАБОТЧИКИ WARP — Facing (0=down, 1=left, 2=right, 3=up)
@@ -1096,6 +1093,7 @@ private void SetWarpModeUI(string mode)
         var v = ParseInt(Npc_Radius.Text ?? "");
         if (v.HasValue) _events.Npcs[_selectedIndex].Radius = v.Value;
     }
+    
     private void RefreshScriptList()
     {
         if (_selectedIndex < 0 || _selectedIndex >= _events.Npcs.Count) return;
@@ -1110,7 +1108,7 @@ private void SetWarpModeUI(string mode)
         LoadScriptStepIntoFields();
     }
 
-        private void LoadScriptStepIntoFields()
+    private void LoadScriptStepIntoFields()
     {
         _suppressFieldEvents = true;
         try
@@ -1366,7 +1364,6 @@ private void SetWarpModeUI(string mode)
         RefreshScriptList();
         OnFieldChanged();
     } 
-    
     
     // ══════════════════════════════════════════════════════════════
     //   СПРАЙТ NPC — PREVIEW И ПЕРЕКЛЮЧЕНИЕ

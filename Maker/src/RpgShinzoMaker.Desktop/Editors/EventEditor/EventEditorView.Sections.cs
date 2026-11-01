@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using System.Linq;
 using RpgShinzoMaker.Core.Models;
 
 namespace RpgShinzoMaker.Desktop.Editors.EventEditor;
@@ -143,10 +144,14 @@ public partial class EventEditorView
             case "warp":
                 foreach (var w in _events.Warps)
                 {
+                    // Ищем имя карты по её ID. Если не нашли — пишем "ID: 0"
+                    var targetMap = _mapEntries.FirstOrDefault(m => m.Id == w.TargetMapId);
+                    string mapName = targetMap != null ? targetMap.Name : $"ID:{w.TargetMapId}";
+
                     if (w.Mode == "line")
-                        result.Add($"[line] ({w.TriggerX},{w.TriggerY})→({w.EndX},{w.EndY}) → {w.TargetMap}");
+                        result.Add($"[line] ({w.TriggerX},{w.TriggerY})→({w.EndX},{w.EndY}) → {mapName}");
                     else
-                        result.Add($"({w.TriggerX},{w.TriggerY}) → {w.TargetMap}");
+                        result.Add($"({w.TriggerX},{w.TriggerY}) → {mapName}");
                 }
                 break;
 
