@@ -1409,18 +1409,19 @@ class EquipMenu < ItemSubMenuBase
   def build_navigable_indices
     items = fill_to_four(find_actor_items(@current_actor))
     weapon_slots = []
+    equipped_slot = nil
     (0..3).each do |i|
       entry = items[i]
       next if @db.item_is_nothing?(entry)
       data = find_item_by_id(entry["item_id"])
       if data && data["category"] == "Weapon"
         weapon_slots << i
+        equipped_slot = i if entry["equipped"]
       end
     end
     @navigable_indices = weapon_slots + [4]
-    unless @navigable_indices.include?(@selected_slot_index)
-      @selected_slot_index = @navigable_indices.first || 4
-    end
+    # Курсор на надетом оружии; если ничего не надето — на "Unarmed"
+    @selected_slot_index = equipped_slot || 4
   end
 
   # Строим список колец, СОХРАНЯЯ их реальные индексы в инвентаре (0–3)
@@ -1428,6 +1429,7 @@ class EquipMenu < ItemSubMenuBase
     all_items = find_actor_items(@current_actor)
     @ring_items = Array.new(4) { { "item_id" => -1, "equipped" => false } }
     ring_slot_indices = []
+    equipped_ring = nil
 
     all_items.each_with_index do |entry, idx|
       next if idx >= 4 || @db.item_is_nothing?(entry)
@@ -1435,11 +1437,13 @@ class EquipMenu < ItemSubMenuBase
       if data && data["category"] == "Ring"
         @ring_items[idx] = entry.merge("original_index" => idx)
         ring_slot_indices << idx
+        equipped_ring = idx if entry["equipped"]
       end
     end
 
     @ring_navigable_indices = ring_slot_indices + [4]   # 4 = No Ring
-    @selected_ring_index = @ring_navigable_indices.first || 4
+    # Курсор на надетом кольце; если ничего не надето — на "No Ring"
+    @selected_ring_index = equipped_ring || 4
   end
 
   def return_to_actor_selection
@@ -1695,26 +1699,6 @@ class EquipMenu < ItemSubMenuBase
         base_atk = base_def = base_agi = base_mov = 0
       end
 
-      if @selected_slot_index == 4
-        future_atk = base_atk
-        future_def = base_def
-      else
-        entry = items[@selected_slot_index]
-        bonus_atk = 0
-        bonus_def = 0
-        if entry && !@db.item_is_nothing?(entry)
-          data = find_item_by_id(entry["item_id"])
-          if data && data["category"] == "Weapon"
-            bonus_atk = (data["attack"]  || 0).to_i
-            bonus_def = (data["defense"] || 0).to_i
-          end
-        end
-        future_atk = base_atk + bonus_atk
-        future_def = base_def + bonus_def
-      end
-
-      future_atk = [future_atk, 0].max
-      future_def = [future_def, 0].max
 
       class_id   = actor_data["class_id"]
       class_name = @class_names[class_id] || "???"

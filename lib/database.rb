@@ -223,18 +223,20 @@ class Database
     @growth_curves.find { |c| c["id"] == curve_id }
   end
 
-  # Получить значение стата на заданном уровне (1..30)
   def stat_at_level(growth, level)
-    return growth["start"] if level <= 1
+    return 0 if growth.nil?
+    start = (growth["start"] || 0).to_i
+    return start if level <= 1
     curve = growth_curve(growth["curve"])
-    return growth["start"] unless curve
+    return start unless curve
 
-    diff = growth["projected"] - growth["start"]
+    projected = (growth["projected"] || start).to_i
+    diff = projected - start
     index = level - 2
-    return growth["projected"] if index >= curve["levels"].length
+    return projected if index >= curve["levels"].length
 
-    a = curve["levels"][index][0]
-    growth["start"] + (a * diff / 256.0).round
+    a = (curve["levels"][index][0] || 0).to_i
+    start + (a * diff / 256.0).round
   end
 
   # Шанс уклонения от магии для типа передвижения
