@@ -21,7 +21,7 @@ RPG-Shining-Maker/
 │   │   │       ├── MapJsonService, EntriesService, TileTypesService, AreasService, EventsService, TilesetImportService
 │   │   │       ├── ActorsService, ItemsService, SpellsService, ClassesService, EnemiesService
 │   │   │       ├── GlobalService.cs                (чтение/запись global.json)
-│   │   │       └── AssetScannerService.cs
+│   │   │       └── AssetScannerService.cs          (GetMusicFiles, GetPortraits и т.д.)
 │   │   │
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
 │   │       ├── App.axaml, Program.cs, ViewLocator.cs
@@ -72,7 +72,7 @@ RPG-Shining-Maker/
     ├── enemy_profile.rb, dialog_manager.rb
     ├── battle.rb
     ├── battleManager/                              (battle_ui, give, drop, equip, renderer, player)
-    └── game.rb                                     (Поиск стартовой карты по ID)
+    └── game.rb                                     (Поиск стартовой карты по ID, Варпы по target_map_id)
 
 
 🏛️ Архитектура: оболочка и ПЯТЬ редакторов
@@ -109,8 +109,11 @@ RPG-Shining-Maker/
 Пример entries.json:
 [{ "id": 0, "folder": "Granseal", "name": "Granseal", ... }]
 
-Пример события в events.json:
+Пример события в events.json (обычное):
 { "type": "counter", "x": 5, "y": 10 }
+
+Пример варпа в events.json (теперь по ID, а не по имени):
+{ "type": "warp", "trigger_x": 3, "trigger_y": 3, "target_map_id": 0, "target_x": 55, "target_y": 3, "facing": 3 }
 
 Пример врага в enemies.json:
 { "id": 0, "name": "Gyasa", "items": [{ "item_id": 5, "equipped": true }], "spells": [1, -1, -1, -1], "spell_levels": [2, 1, 1, 1] }
@@ -160,6 +163,8 @@ RPG-Shining-Maker/
 25  ProwessCatalog                                  Общий статический каталог токенов.
 26  Связь по ID (Items & Spells)                    В enemies, start_inventory, shops — ТОЛЬКО item_id (-1 = пусто).
 27  Глобальные настройки по ID                      В global.json start_map_id (число) вместо строки. Игра ищет папку через entries.json.
+28  Варпы по ID                                     В events.json target_map_id (число) вместо target_map. Игра ищет папку через entries.json.
+29  Современный UI в MapEditor                      Использовать стили ModernComboBox для нижней панели (Map, Size, Tileset, Music).
 
 📈 Что уже готово vs что в планах
 
@@ -171,7 +176,7 @@ GlobalService (Чтение/запись global.json)              ✅
 
 ОБОЛОЧКА И РЕДАКТОРЫ
 IEditor, MainWindow (Splash, Toolbar, StatusBar)       ✅
-MapEditor (11 файлов)                                  ✅
+MapEditor (11 файлов, современная нижняя панель)       ✅
 EventEditor (7 файлов + EventCanvas)                   ✅
 TilesetImporter (4 файла)                              ✅
 DatabaseEditor (Оболочка, вертикальные вкладки)        ✅
@@ -188,6 +193,7 @@ DatabaseEditor (Оболочка, вертикальные вкладки)      
 Диалог через прилавок, subAreas, Warp line-mode        ✅
 Два слоя коллизий (проходимость + скольжение)          ✅
 Чтение global.json по start_map_id                     ✅
+Варпы читают target_map_id через entries.json          ✅
 BattleManager (give/drop/equip) по item_id             ✅
 
 В ПЛАНАХ

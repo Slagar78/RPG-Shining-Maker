@@ -131,7 +131,7 @@ class Database
       puts "Загружены глобальные настройки"
     else
       @globals = {
-        "start_map" => "Granseal",
+        "start_map_id" => 0,
         "start_x" => 10,
         "start_y" => 10,
         "gold" => 100

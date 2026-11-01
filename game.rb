@@ -544,8 +544,9 @@ when :playing
         # ВАЖНО: убрал отсюда @audio.play, он теперь ниже
       end
 
-      # 👇 ПРОВЕРКА БИТВЫ ПРЯМО НА ЧЁРНОМ ЭКРАНЕ 👇
-      battle_id = battle_id_for_map(@game_map.map_id)
+      # ПРОВЕРКА БИТВЫ ПРЯМО НА ЧЁРНОМ ЭКРАНЕ
+      battle_id = battle_id_for_map(@game_map.db_id)
+
       if battle_id && @flags.battle_unlocked?(battle_id) && !@flags.battle_completed?(battle_id)
         # Нашли битву! Запускаем бой, НЕ включаем :in (экран остается черным)
         @battle_pending_after_warp = true
@@ -644,9 +645,9 @@ when :playing
       end
    end
 
-    # Автозапуск битвы (если игрок зашел пешком, а не через варп)
+    # Автозапуск битвы (если игрок зашел пешком, а не через warp)
     if @game_state == :playing && @game_map && !@player.moving
-      battle_id = battle_id_for_map(@game_map.map_id)
+      battle_id = battle_id_for_map(@game_map.db_id)
       if battle_id && @flags.battle_unlocked?(battle_id) && !@flags.battle_completed?(battle_id)
         launch_battle(battle_id)
         return

@@ -13,6 +13,7 @@ class GameMap
   attr_reader :layer2, :top_layer, :static_bg
   attr_reader :npcs
   attr_reader :map_id
+  attr_reader :db_id
 
   def initialize(map_id = "Granseal", flags = {})
     @flags = flags
@@ -27,14 +28,22 @@ class GameMap
     end
 
     entries = JSON.parse(File.read(entries_path))
-    entry = entries.find { |e| e["folder"] == map_id }
+    
+    # Проверяем: если передали число (ID), ищем по ID. Если строку - ищем по папке.
+    if map_id.is_a?(Numeric)
+      entry = entries.find { |e| e["id"] == map_id }
+    else
+      entry = entries.find { |e| e["folder"] == map_id }
+    end
+    
     unless entry
-      puts "Map with folder '#{map_id}' not found in entries.json"
+      puts "Map with folder/id '#{map_id}' not found in entries.json"
       create_fallback_map
       return
     end
     
-    @map_id = entry['folder']
+    @map_id = entry['folder'] # Имя папки (например, "overworld")
+    @db_id  = entry['id']     # Числовой ID (например, 1)
 
     layout_path = "data/maps/#{entry['folder']}/layout.json"
     unless File.exist?(layout_path)
