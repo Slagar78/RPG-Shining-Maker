@@ -162,13 +162,6 @@ class EnemyProfile
     @icon_cache[path] = tex
   end
 
-  def find_spell_icon(name, level)
-    spells = @db ? @db.spells : nil
-    spells ||= []
-    spell = spells.find { |s| s["name"].casecmp?(name) && s["level"] == level }
-    spell ? spell["icon"] : nil
-  end
-
   def update(dt = 1.0 / 60.0)
     return unless @visible
     speed = 38 * dt * 60.0
@@ -309,7 +302,7 @@ class EnemyProfile
     # Магия и Предметы
     spells_list = @enemy["spells"] || []
     spell_levels = @enemy["spell_levels"] || []
-    valid_spells = spells_list.each_with_index.reject { |name, i| name == "Nothing" }.map { |name, i| { "spell" => name, "level" => spell_levels[i] || 1 } }
+    valid_spells = spells_list.each_with_index.reject { |id, i| id.nil? || id == -1 }.map { |id, i| { "spell_id" => id, "level" => spell_levels[i] || 1 } }
     items = @enemy["items"] || []
 
     magic_x = @right_panel_x + 55
@@ -323,13 +316,16 @@ class EnemyProfile
     if valid_spells.any?
       valid_spells.first(4).each_with_index do |spell, i|
         y = section_y + 30 + i * 52
-        icon = load_icon(find_spell_icon(spell["spell"], spell["level"]))
+        spell_data = @db ? @db.find_spell_by_id(spell["spell_id"]) : nil
+        next unless spell_data
+
+        icon = load_icon(spell_data["icon"])
         if icon
           src = Raylib::Rectangle.create(0, 0, 32, 48)
           dst = Raylib::Rectangle.create(magic_x - 30, y, 32, 48)
           Raylib.DrawTexturePro(icon, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
         end
-        draw_text_custom(spell["spell"], magic_x + 10, y + 6, 18, WHITE)
+        draw_text_custom(spell_data["name"], magic_x + 10, y + 6, 18, WHITE)
         draw_text_custom("Lv #{spell["level"]}", magic_x + 10, y + 26, 18, WHITE)
       end
     else

@@ -34,7 +34,6 @@ public partial class Enemy : ObservableObject
     [property: JsonPropertyName("status")]
     private string _status = "normal";
 
-    // Задаётся в битве, в редакторе только хранится
     [ObservableProperty]
     [property: JsonPropertyName("level")]
     private int _level = 1;
@@ -59,8 +58,6 @@ public partial class Enemy : ObservableObject
     [property: JsonPropertyName("items")]
     private ObservableCollection<EnemyItem> _items = new();
 
-    // В JSON хранятся двумя параллельными массивами: spells[] + spell_levels[].
-    // Разворачиваются/сворачиваются в EnemiesService.
     [JsonIgnore]
     public ObservableCollection<EnemySpellSlot> SpellSlots { get; } = new();
 
@@ -75,30 +72,12 @@ public partial class Enemy : ObservableObject
 
 public partial class EnemyStats : ObservableObject
 {
-    [ObservableProperty]
-    [property: JsonPropertyName("hp_growth")]
-    private GrowthStat _hpGrowth = new();
-
-    [ObservableProperty]
-    [property: JsonPropertyName("mp_growth")]
-    private GrowthStat _mpGrowth = new();
-
-    [ObservableProperty]
-    [property: JsonPropertyName("attack_growth")]
-    private GrowthStat _attackGrowth = new();
-
-    [ObservableProperty]
-    [property: JsonPropertyName("defense_growth")]
-    private GrowthStat _defenseGrowth = new();
-
-    [ObservableProperty]
-    [property: JsonPropertyName("agility_growth")]
-    private GrowthStat _agilityGrowth = new();
-
-    // Движение от уровня не растёт — оставляем плоским
-    [ObservableProperty]
-    [property: JsonPropertyName("base_mov")]
-    private int _baseMov = 4;
+    [ObservableProperty] [property: JsonPropertyName("hp_growth")]      private GrowthStat _hpGrowth = new();
+    [ObservableProperty] [property: JsonPropertyName("mp_growth")]      private GrowthStat _mpGrowth = new();
+    [ObservableProperty] [property: JsonPropertyName("attack_growth")]  private GrowthStat _attackGrowth = new();
+    [ObservableProperty] [property: JsonPropertyName("defense_growth")] private GrowthStat _defenseGrowth = new();
+    [ObservableProperty] [property: JsonPropertyName("agility_growth")] private GrowthStat _agilityGrowth = new();
+    [ObservableProperty] [property: JsonPropertyName("base_mov")]       private int _baseMov = 4;
 }
 
 public partial class ResistanceBlock : ObservableObject
@@ -117,7 +96,7 @@ public partial class EnemyItem : ObservableObject
 {
     [ObservableProperty]
     [property: JsonPropertyName("item_id")]
-    private int _itemId = -1; // -1 означает "Nothing" (пусто)
+    private int _itemId = -1;
 
     [ObservableProperty]
     [property: JsonPropertyName("equipped")]
@@ -127,8 +106,8 @@ public partial class EnemyItem : ObservableObject
 public partial class EnemySpellSlot : ObservableObject
 {
     [ObservableProperty]
-    [property: JsonPropertyName("name")]
-    private string _name = "Nothing";
+    [property: JsonPropertyName("spell_id")]
+    private int _spellId = -1;
 
     [ObservableProperty]
     [property: JsonPropertyName("level")]

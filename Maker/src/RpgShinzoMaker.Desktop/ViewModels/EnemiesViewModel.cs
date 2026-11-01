@@ -32,8 +32,8 @@ public partial class EnemiesViewModel : ObservableObject
     // Справочники для ComboBox
     public ObservableCollection<string> AvailablePortraits { get; } = new();
     public ObservableCollection<string> AvailableMapsprites { get; } = new();
-    public ObservableCollection<Item> AvailableItems { get; } = new(); // Изменено на Item
-    public ObservableCollection<string> AvailableSpells { get; } = new();
+    public ObservableCollection<Item> AvailableItems { get; } = new();
+    public ObservableCollection<Spell> AvailableSpells { get; } = new(); // Изменено на Spell
     public ObservableCollection<string> AvailableRaces { get; } = new();
     public ObservableCollection<string> AvailableMovetypes { get; } = new();
 
@@ -73,21 +73,23 @@ public partial class EnemiesViewModel : ObservableObject
         AvailableMapsprites.Clear();
         foreach (var m in _assetScanner.GetMapsprites(_mapspritesDir)) AvailableMapsprites.Add(m);
 
-        // Предметы — теперь объекты Item
+        // Предметы
         AvailableItems.Clear();
-        AvailableItems.Add(new Item { Id = -1, Name = "Nothing" }); // Пустышка
+        AvailableItems.Add(new Item { Id = -1, Name = "Nothing" });
         foreach (var item in _itemsService.LoadItems(_itemsPath))
         {
             if (!string.IsNullOrWhiteSpace(item.Name))
                 AvailableItems.Add(item);
         }
 
-        // Заклинания — по именам
+        // Заклинания
         AvailableSpells.Clear();
-        AvailableSpells.Add(ProwessCatalog.EmptySlot);
+        AvailableSpells.Add(new Spell { Id = -1, Name = "Nothing" });
         foreach (var spell in _spellsService.LoadSpells(_spellsPath))
-            if (!string.IsNullOrWhiteSpace(spell.Name) && !AvailableSpells.Contains(spell.Name))
-                AvailableSpells.Add(spell.Name);
+        {
+            if (!string.IsNullOrWhiteSpace(spell.Name))
+                AvailableSpells.Add(spell);
+        }
 
         // Расы — Distinct из classes.json
         AvailableRaces.Clear();
@@ -98,21 +100,13 @@ public partial class EnemiesViewModel : ObservableObject
                      .OrderBy(r => r))
             AvailableRaces.Add(race);
 
-        // Типы передвижения — из movetypes.json (поле "key")
+        // Типы передвижения — из movetypes.json
         LoadMovetypes();
 
         // Загружаем врагов
         var enemies = _enemiesService.LoadEnemies(_enemiesPath);
         Enemies.Clear();
         foreach (var e in enemies) Enemies.Add(e);
-
-        // Заклинания дополняем из уже загруженных врагов (на случай кастомных)
-        foreach (var e in Enemies)
-        {
-            foreach (var sp in e.SpellSlots)
-                if (!string.IsNullOrWhiteSpace(sp.Name) && !AvailableSpells.Contains(sp.Name))
-                    AvailableSpells.Add(sp.Name);
-        }
 
         if (Enemies.Count > 0) SelectedEnemy = Enemies[0];
     }
@@ -134,7 +128,7 @@ public partial class EnemiesViewModel : ObservableObject
         }
         catch
         {
-            // битый файл — просто оставляем пустым
+            // битый файл
         }
     }
 
@@ -170,7 +164,7 @@ public partial class EnemiesViewModel : ObservableObject
             enemy.Items.Add(new EnemyItem { ItemId = -1, Equipped = false });
             
         for (int i = 0; i < 4; i++)
-            enemy.SpellSlots.Add(new EnemySpellSlot { Name = ProwessCatalog.EmptySlot, Level = 1 });
+            enemy.SpellSlots.Add(new EnemySpellSlot { SpellId = -1, Level = 1 });
 
         int insert = 0;
         while (insert < Enemies.Count && Enemies[insert].Id < newId) insert++;
@@ -241,12 +235,12 @@ public partial class EnemiesViewModel : ObservableObject
     [RelayCommand] private void IncAgiProj()  { if (SelectedEnemy != null) SelectedEnemy.Stats.AgilityGrowth.Projected++; }
     [RelayCommand] private void DecAgiProj()  { if (SelectedEnemy != null && SelectedEnemy.Stats.AgilityGrowth.Projected > 0) SelectedEnemy.Stats.AgilityGrowth.Projected--; }
 
-    // MOV (плоский int, без growth)
+    // MOV
     [RelayCommand] private void IncMov() { if (SelectedEnemy != null) SelectedEnemy.Stats.BaseMov++; }
     [RelayCommand] private void DecMov() { if (SelectedEnemy != null && SelectedEnemy.Stats.BaseMov > 1) SelectedEnemy.Stats.BaseMov--; }
 
     // ==========================================
-    // LEVEL (в битве назначается, пока только редактируемое поле)
+    // LEVEL
     // ==========================================
     [RelayCommand] private void IncLevel() { if (SelectedEnemy != null) SelectedEnemy.Level++; }
     [RelayCommand] private void DecLevel() { if (SelectedEnemy != null && SelectedEnemy.Level > 1) SelectedEnemy.Level--; }

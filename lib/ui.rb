@@ -1201,28 +1201,15 @@ class Profile
     @icon_cache[path] = tex
   end
 
-  # Поиск иконки заклинания (теперь через @db)
-  def find_spell_icon(name, level)
-    spells = @db ? @db.spells : nil
-    spells ||= begin
-      if File.exist?("data/spells/spells.json")
-        JSON.parse(File.read("data/spells/spells.json"))["spells"] || []
-      else
-        []
-      end
-    end
-    spell = spells.find { |s| s["name"].casecmp?(name) && s["level"] == level }
-    spell ? spell["icon"] : nil
-  end
   
   def unload
-    UnloadTexture(@right_panel_tex) if @right_panel_tex
-    UnloadTexture(@sub_panel_tex)   if @sub_panel_tex
-    UnloadTexture(@frame_tex)       if @frame_tex
-    @icon_cache.each_value      { |t| UnloadTexture(t) if t } if @icon_cache
-    @mapsprite_cache.each_value { |t| UnloadTexture(t) if t } if @mapsprite_cache
+      UnloadTexture(@right_panel_tex) if @right_panel_tex
+      UnloadTexture(@sub_panel_tex)   if @sub_panel_tex
+      UnloadTexture(@frame_tex)       if @frame_tex
+      @icon_cache.each_value      { |t| UnloadTexture(t) if t } if @icon_cache
+      @mapsprite_cache.each_value { |t| UnloadTexture(t) if t } if @mapsprite_cache
+    end
   end
-end
 
 # ============================================
 # MagicOverlay
@@ -1817,32 +1804,20 @@ end
   # Загрузка иконок и поиск иконок заклинаний
   # -----------------------------------------------------------------
   def load_icon(path)
-    return nil unless path && !path.empty?
-    return @icon_cache[path] if @icon_cache.key?(path)
-    tex = nil
-    if File.exist?(path)
-      img = Raylib.LoadImage(path)
-      tex = Raylib.LoadTextureFromImage(img)
-      Raylib.UnloadImage(img)
-      Raylib.SetTextureFilter(tex, 0)
+      return nil unless path && !path.empty?
+      return @icon_cache[path] if @icon_cache.key?(path)
+      tex = nil
+      if File.exist?(path)
+        img = Raylib.LoadImage(path)
+        tex = Raylib.LoadTextureFromImage(img)
+        Raylib.UnloadImage(img)
+        Raylib.SetTextureFilter(tex, 0)
+      end
+      @icon_cache[path] = tex
+      tex
     end
-    @icon_cache[path] = tex
-    tex
   end
 
-  def find_spell_icon(name, level)
-    spells = @db ? @db.spells : nil
-    spells ||= begin
-      if File.exist?("data/spells/spells.json")
-        JSON.parse(File.read("data/spells/spells.json"))["spells"] || []
-      else
-        []
-      end
-    end
-    spell = spells.find { |s| s["name"].casecmp?(name) && s["level"] == level }
-    spell ? spell["icon"] : nil
-  end
-end
 # ============================================
 # SearchOverlay (диалоговое окно для плитки "Поиск местности")
 # ============================================
