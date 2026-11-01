@@ -14,6 +14,7 @@ public partial class MainViewModel : ViewModelBase
     public SpellsViewModel SpellsVM { get; } = new();
     public ClassesViewModel ClassesVM { get; } = new();
     public EnemiesViewModel EnemiesVM { get; } = new();
+    public SystemViewModel SystemVM { get; } = new();
 
     [RelayCommand]
     private void Save()
@@ -29,5 +30,6 @@ public partial class MainViewModel : ViewModelBase
         ItemsVM.SaveData();
         ClassesVM.SaveData();
         EnemiesVM.SaveData();
+        SystemVM.SaveData();
     }
 }

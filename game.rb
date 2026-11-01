@@ -31,7 +31,18 @@ class Game
     @db = Database.new
     require_relative 'lib/flags'
     @flags = Flags.new
-    @game_map = GameMap.new(@db.globals["start_map"] || "Granseal", @flags)
+
+    # ─── Стартовая карта по ID ───
+    start_id = @db.globals["start_map_id"] || 0
+    
+    # Если файла нет, rescue [] вернет пустой массив вместо краша
+    entries = JSON.parse(File.read("data/maps/entries.json")) rescue []
+    
+    # Ищем по ID, если нет — берем первую попавшуюся
+    map_entry = entries.find { |e| e["id"] == start_id } || entries.first
+    raise "CRITICAL ERROR: data/maps/entries.json is empty or missing!" unless map_entry
+
+    @game_map = GameMap.new(map_entry["folder"], @flags)
     @current_map_id = @game_map.map_id
 
     @game_text = {}

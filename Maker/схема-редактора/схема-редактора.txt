@@ -3,425 +3,195 @@
 RPG-Shining-Maker/
 │
 ├── Maker/
-│   ├── RpgShinzoMaker.slnx                       (решение)
+│   ├── RpgShinzoMaker.slnx
 │   │
 │   ├── src/
-│   │   │
 │   │   ├── RpgShinzoMaker.Core/                    ← БИБЛИОТЕКА (без UI)
 │   │   │   ├── Models/
-│   │   │   │   ├── GameMap.cs                      (карта: tiles, rot, mirror, layers, collision, collision2)
-│   │   │   │   ├── MapEntry.cs                     (запись из entries.json)
-│   │   │   │   ├── TileType.cs                     (enum: Passable/Block/Slow/Under)
-│   │   │   │   │
-│   │   │   │   ├── RoofEvent.cs                    (крыша: rect + триггеры/выходы)
-│   │   │   │   ├── TileChangeEvent.cs              (изменение тайла по триггеру)
-│   │   │   │   ├── StairEvent.cs                   (лестница: start→end + dir)
-│   │   │   │   ├── WarpEvent.cs                    (телепорт: single 1-клетка / line область → target)
-│   │   │   │   ├── NpcEvent.cs                     (NPC: id, sprite, behavior…)
-│   │   │   │   ├── CounterEvent.cs                 (прилавок: x, y для диалога через стол)
-│   │   │   │   ├── MapEvents.cs                    (контейнер 6 типов событий)
-│   │   │   │   ├── SubArea.cs                      (прямоугольник под-области)
-│   │   │   │   │
-│   │   │   │   └── Database/                       (Модели базы данных)
-│   │   │   │       ├── Actor.cs                    (id, name, forClass, exp, kills, defeats + ActorBlock для промоушенов)
-│   │   │   │       ├── CharacterClass.cs           (id, name, full_name, move, move_type, race, status, initial_status, prowess, resistance)
-│   │   │   │       ├── Enemy.cs                    (id, name, portrait, mapsprite, race, status, level, spell_power, stats(growth), resistance, prowess, items (item_id), SpellSlots (spell_id), initial_status, move_type)
-│   │   │   │       ├── ProwessCatalog.cs           (статический каталог токенов: critical150_1in8, double_1in16 и т.д.)
-│   │   │   │       ├── StartInventory.cs           (actor_id, class_id, start_level, items[4] (item_id, equipped))
-│   │   │   │       ├── Item.cs                     (id, name, category, price, range, use_spell, stats)
-│   │   │   │       └── Spell.cs                    (id, name, type, icon + ObservableCollection<SpellLevel> Levels)
+│   │   │   │   ├── GameMap.cs, MapEntry.cs, TileType.cs
+│   │   │   │   ├── RoofEvent, TileChangeEvent, StairEvent, WarpEvent, NpcEvent, CounterEvent, MapEvents, SubArea
+│   │   │   │   ├── GlobalSettings.cs               (start_map_id, start_x, start_y, gold)
+│   │   │   │   └── Database/
+│   │   │   │       ├── Actor.cs, CharacterClass.cs, Enemy.cs
+│   │   │   │       ├── ProwessCatalog.cs, StartInventory.cs
+│   │   │   │       └── Item.cs, Spell.cs
 │   │   │   │
 │   │   │   └── Services/
-│   │   │       ├── ProjectPaths.cs                 (поиск корня проекта)
-│   │   │       ├── MapJsonService.cs               (сохранение карт с табами, горизонтальные массивы, поддержка collision2)
-│   │   │       ├── EntriesService.cs               (сохранение entries.json с табами)
-│   │   │       ├── TileTypesService.cs             (сохранение tile_types с табами, сетка 32x32)
-│   │   │       ├── AreasService.cs                 (main + subAreas, свой StringBuilder)
-│   │   │       ├── EventsService.cs                (чтение/запись событий, включая Counter)
-│   │   │       ├── TilesetImportService.cs         (алгоритм нарезки PNG)
-│   │   │       ├── CJsonFormatter.cs               (форматтер JSON с табами)
-│   │   │       ├── ActorsService.cs                (чтение/запись actors.json и start_inventory.json, разворот промоушенов, парсинг item_id)
-│   │   │       ├── ItemsService.cs                 (чтение/запись items.json, парсинг массива range)
-│   │   │       ├── SpellsService.cs                (чтение/запись spells.json, парсинг вложенных levels с range)
-│   │   │       ├── ClassesService.cs               (чтение/запись classes.json)
-│   │   │       ├── EnemiesService.cs               (чтение/запись enemies.json, разворот/сворот spells + spell_levels, хранение по ID)
-│   │   │       └── AssetScannerService.cs          (сканирование папок portraits/mapsprites, фильтр _blink/_talk/_anim)
+│   │   │       ├── ProjectPaths.cs, CJsonFormatter.cs
+│   │   │       ├── MapJsonService, EntriesService, TileTypesService, AreasService, EventsService, TilesetImportService
+│   │   │       ├── ActorsService, ItemsService, SpellsService, ClassesService, EnemiesService
+│   │   │       ├── GlobalService.cs                (чтение/запись global.json)
+│   │   │       └── AssetScannerService.cs
 │   │   │
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
-│   │       ├── App.axaml
-│   │       ├── App.axaml.cs                        (вызов ProjectPaths.Initialize())
-│   │       ├── Program.cs                          (точка входа)
-│   │       ├── ViewLocator.cs
-│   │       │
+│   │       ├── App.axaml, Program.cs, ViewLocator.cs
 │   │       ├── Assets/
-│   │       │   ├── logo.png                        (Заставка 1280x720)
-│   │       │   ├── avalonia-logo.ico
-│   │       │   └── icons/
-│   │       │       └── select.png
-│   │       │
-│   │       ├── ViewModels/                         
-│   │       │   ├── MainViewModel.cs                (Добавлены ActorsVM, ItemsVM, SpellsVM, ClassesVM, EnemiesVM, SaveDatabaseCommand)
-│   │       │   ├── ActorsViewModel.cs              (Логика для Heroes, инвентарь по ID, управление блоками Base/Promo, команды стрелочек)
-│   │       │   ├── ItemsViewModel.cs               (Логика для Items, команды стрелочек цены и 6 статов)
-│   │       │   ├── SpellsViewModel.cs              (Логика для Spells, добавление/удаление уровней)
-│   │       │   ├── ClassesViewModel.cs             (Логика для Classes, команды Move + / -)
-│   │       │   ├── EnemiesViewModel.cs             (Логика для Enemies, статы со стрелочками, prowess, resistance, списки предметов и магии (по ID))
-│   │       │   └── ViewModelBase.cs
-│   │       │
+│   │       ├── ViewModels/
+│   │       │   ├── MainViewModel.cs                (Actors, Items, Spells, Classes, Enemies, System)
+│   │       │   ├── ActorsViewModel, ItemsViewModel, SpellsViewModel, ClassesViewModel, EnemiesViewModel
+│   │       │   └── SystemViewModel.cs              (Start Map ID, X, Y, Gold)
 │   │       ├── Views/
-│   │       │   ├── MainWindow.axaml                (Оверлей SplashOverlay, подключен DatabaseEditor)
-│   │       │   ├── MainWindow.axaml.cs             (Плавное скрытие заставки через Opened)
-│   │       │   ├── MapCanvas.axaml                 
-│   │       │   └── MapCanvas.axaml.cs              (Фикс кликов по скроллбарам, оверлей коллизий L1/L2)
-│   │       │
+│   │       │   └── MainWindow.axaml (.cs), MapCanvas.axaml (.cs)
 │   │       ├── Shared/
-│   │       │   ├── Interfaces/
-│   │       │   │   └── IEditor.cs                  
-│   │       │   └── Converters/
-│   │       │       └── PortraitConverter.cs        (string "Mushra" → Bitmap из assets/ui/portraits/Mushra.png)
-│   │       │
+│   │       │   ├── Interfaces/IEditor.cs
+│   │       │   └── Converters/PortraitConverter.cs
 │   │       └── Editors/
-│   │           │
-│   │           ├── MapEditor/                      ← редактор карт
-│   │           │   ├── MapEditorView.axaml         (Толстые скроллбары)
-│   │           │   ├── MapEditorView.axaml.cs      
-│   │           │   ├── MapEditorView.Palette.cs    
-│   │           │   ├── MapEditorView.Map.cs        
-│   │           │   ├── MapEditorView.Painting.cs   (Сброс CellType при рисовании, запись в L1 или L2)
-│   │           │   ├── MapEditorView.Select.cs     
-│   │           │   ├── MapEditorView.GridMode.cs   
-│   │           │   ├── MapEditorView.Layers.cs     
-│   │           │   ├── MapEditorView.TileEditor.cs 
-│   │           │   ├── MapEditorView.Dialogs.cs    
-│   │           │   ├── MapEditorView.Undo.cs       (Undo/Redo с поддержкой двух слоев коллизий)
-│   │           │   └── TileItem.cs                 
-│   │           │
-│   │           ├── EventEditor/                    ← редактор событий
-│   │           │   ├── EventEditorView.axaml       (CounterPanel вынесен)
-│   │           │   ├── EventEditorView.axaml.cs    
-│   │           │   ├── EventEditorView.Map.cs      
-│   │           │   ├── EventEditorView.Canvas.cs   (автоскролл)
-│   │           │   ├── EventEditorView.Sections.cs 
-│   │           │   ├── EventEditorView.Fields.cs   
-│   │           │   ├── EventEditorView.Events.cs   
-│   │           │   ├── EventCanvas.axaml           
-│   │           │   └── EventCanvas.axaml.cs        (Отрисовка спрайтов NPC)
-│   │           │
-│   │           ├── TilesetImporter/                ← импорт карт
-│   │           │   ├── TilesetImporterView.axaml   
-│   │           │   ├── TilesetImporterView.axaml.cs
-│   │           │   ├── TilesetImporterView.Load.cs 
-│   │           │   └── TilesetImporterView.Save.cs 
-│   │           │
-│   │           └── DatabaseEditor/                 ← редактор базы данных
-│   │               ├── DatabaseEditorView.axaml    (Общий контейнер с вертикальными вкладками)
-│   │               ├── DatabaseEditorView.axaml.cs 
-│   │               └── Views/                      (Панели для каждой категории)
-│   │                   ├── ActorsPanel.axaml       (Список героев, блоки Base/Promo, превью портрета, статы, магия, инвентарь 2x2 (item_id))
-│   │                   ├── ActorsPanel.axaml.cs    (Блокировка ввода букв в NumericUpDown)
-│   │                   ├── ItemsPanel.axaml        (Список предметов, свойства, статы со стрелочками)
-│   │                   ├── ItemsPanel.axaml.cs     
-│   │                   ├── SpellsPanel.axaml       (Список заклинаний слева, свойства и таблица уровней справа)
-│   │                   ├── SpellsPanel.axaml.cs    (Блокировка ввода букв и ограничение длины в 5 символов)
-│   │                   ├── ClassesPanel.axaml      (Список классов, свойства, сопротивления с дублирующим текстом)
-│   │                   ├── ClassesPanel.axaml.cs   
-│   │                   ├── EnemiesPanel.axaml      (Список врагов, General Settings, Block Settings, Stats and Growth, Resistance 8 шт, Prowess список, Items 2x2 (по ID), Spells 2x2 (по ID))
-│   │                   └── EnemiesPanel.axaml.cs   (Блокировка ввода букв в NumericUpDown)
+│   │           ├── MapEditor/                      (11 файлов)
+│   │           ├── EventEditor/                    (7 файлов + EventCanvas)
+│   │           ├── TilesetImporter/                (4 файла)
+│   │           └── DatabaseEditor/
+│   │               ├── DatabaseEditorView.axaml (.cs)
+│   │               └── Views/
+│   │                   ├── ActorsPanel.axaml (.cs)
+│   │                   ├── ItemsPanel.axaml (.cs)
+│   │                   ├── SpellsPanel.axaml (.cs)
+│   │                   ├── ClassesPanel.axaml (.cs)
+│   │                   ├── EnemiesPanel.axaml (.cs)
+│   │                   └── SystemPanel.axaml (.cs) (Глобальные настройки)
 │   │
 │   └── assets/
 │
 ├── data/
-│   ├── maps/
-│   │   ├── entries.json
-│   │   └── <map_name>/
-│   │       ├── layout.json                         (теперь содержит collision и collision2)
-│   │       ├── areas.json                          
-│   │       ├── events.json                         (хранит и type: "counter")
-│   │       ├── NPC_events.json                     
-│   │       └── NPC_script.json                     
+│   ├── global.json                                 (start_map_id, start_x, start_y, gold)
+│   ├── maps/                                       (entries.json, layout, areas, events, NPC)
 │   ├── tile_types/
-│   │   └── <tileset>.json
-│   ├── actors/
-│   │   ├── actors.json                             (Список персонажей с блоками промоушенов)
-│   │   ├── start_inventory.json                    (Стартовый инвентарь ТОЛЬКО по item_id, -1 = пусто)
-│   │   └── classes.json                            (Классы)
-│   ├── items/
-│   │   └── items.json                              (Список предметов)
-│   ├── spells/
-│   │   └── spells.json                             (Заклинания с вложенными уровнями)
-│   ├── enemies/
-│   │   └── enemies.json                            (Враги, рост статов, сопротивления, предметы и магия по ID)
-│   ├── shop/
-│   │   └── shops.json                              (Магазины, списки товаров ТОЛЬКО по item_id)
-│   ├── movetypes.json                              (Типы передвижения: flying, stealth и т.д.)
-│   └── ...
+│   ├── actors/                                     (actors.json, start_inventory.json, classes.json)
+│   ├── items/items.json
+│   ├── spells/spells.json
+│   ├── enemies/enemies.json
+│   ├── shop/shops.json                             (ID предметов)
+│   └── movetypes.json
 │
-├── opengl32.dll                                    (Mesa llvmpipe/d3d12 для фикса WGL ошибки)
+├── opengl32.dll                                    (Mesa llvmpipe)
 ├── @echo off.txt                                   (Скрипт сборки)
-├── .gitignore                                      (Добавлен !PortableRuby/bin/opengl32.dll)
 │
-└── Игра (отдельный проект)
-    └── lib/
-        ├── database.rb                             (Хелперы find_item_by_id, item_display_name, item_is_nothing?)
-        ├── GameMap.rb                              (counter_at?, @counter_cells, поддержка collision2)
-        ├── player.rb                               
-        ├── NPC.rb
-        ├── camera.rb                               
-        ├── ui.rb                                   (Status, Profile, Magic - все резолвят предметы/магию по ID)
-        ├── item_actions_ui.rb                      (Use/Give/Drop/Equip, работа с item_id, -1 = пусто)
-        ├── shop_ui.rb                              (Магазин Buy/Sell, чтение shops.json по ID)
-        ├── enemy_profile.rb                        (профиль врага, чтение магии и предметов по ID)
-        ├── dialog_manager.rb
-        ├── battle.rb
-        ├── battleManager/                          
-        │   ├── battle_ui.rb
-        │   ├── battle_give.rb                      (Передача предметов по item_id)
-        │   ├── battle_drop.rb                      (Выбрасывание по item_id)
-        │   ├── battle_equip.rb                     (Экипировка по item_id)
-        │   ├── battle_renderer.rb
-        │   ├── battle_player.rb
-        │   └── ...
-        └── game.rb                                 (find_interactable_npc через прилавок, убран хардкод llvmpipe)
+└── Игра (отдельный проект)/lib/
+    ├── database.rb                                 (find_item_by_id, item_display_name, item_is_nothing?)
+    ├── GameMap.rb, player.rb, NPC.rb, camera.rb
+    ├── ui.rb, item_actions_ui.rb, shop_ui.rb
+    ├── enemy_profile.rb, dialog_manager.rb
+    ├── battle.rb
+    ├── battleManager/                              (battle_ui, give, drop, equip, renderer, player)
+    └── game.rb                                     (Поиск стартовой карты по ID)
 
 
-🏛️ Архитектура: оболочка и ЧЕТЫРЕ редактора (Map, Event, Import, Database)
+🏛️ Архитектура: оболочка и ПЯТЬ редакторов
 
-┌─────────────────────────────────────────────────────────────────┐
-│                     MainWindow (Shell)                          │
-│  ┌────────────────────────────────────────────────────────┐     │
-│  │ Тулбар: [SAVE] [▶ Play Game] [⚔ Battle]               │     │
-│  ├────────────────────────────────────────────────────────┤     │
-│  │  ┌─── TabControl (EditorTabs) ───────────────────────┐ │     │
-│  │  │ [Карты] [Эвенты] [Импорт] [Бои] [Сцены] [База]    │ │     │
-│  │  │                                                   │ │     │
-│  │  │  MapEditorView  (IEditor)  ← вкладка «Карты»      │ │     │
-│  │  │  EventEditorView(IEditor)  ← вкладка «Эвенты»     │ │     │
-│  │  │  TilesetImporter(IEditor)  ← вкладка «Импорт»     │ │     │
-│  │  │  DatabaseEditor (IEditor)  ← вкладка «База»       │ │     │
-│  │  │                                                   │ │     │
-│  │  └───────────────────────────────────────────────────┘ │     │
-│  ├────────────────────────────────────────────────────────┤     │
-│  │  Статус-бар: [Готово] [Позиция: X,Y  Зум: 2x]  [Shinzo]│     │
-│  └────────────────────────────────────────────────────────┘     │
-│                                                                 │
-│  Правый док: [ASSETS] / [СВОЙСТВА]                              │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │
-                                │  SAVE → editor.Save()
-                                │  Статус ← editor.StatusChanged
-                                │  Tab switch → editor.OnActivate()
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     IEditor (интерфейс)                         │
-│  Save() / Reload() / OnActivate() / OnDeactivate()              │
-│  + event StatusChanged(string)                                  │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │
-                                │  реализуют
-                                ▼
-        ┌───────────────────────┬───────────────────────┬───────────────────┐
-        ▼                       ▼                       ▼                   ▼
-  ┌───────────┐           ┌───────────┐           ┌───────────┐       ┌───────────┐
-  │ MapEditor │           │ EventEdit │           │ ImportEd  │       │ DataBase  │
-  │  ✓ готов  │           │  ✓ готов  │           │  ✓ готов  │       │  ✓ готов  │
-  └─────┬─────┘           └─────┬─────┘           └─────┬─────┘       └─────┬─────┘
-        │                       │                       │                   │
-        │  использует           │  использует           │  использует       │
-        ▼                       ▼                       ▼                   ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           Core.Services                                         │
-│                                                                                 │
-│   ProjectPaths      MapJsonService      EntriesService                          │
-│   TileTypesService  AreasService        EventsService                           │
-│   TilesetImportService                  CJsonFormatter                          │
-│   ActorsService     ItemsService        SpellsService                           │
-│   ClassesService    EnemiesService      AssetScannerService                     │
-│                                                                                 │
-│   + Core.Models: GameMap, MapEntry, TileType,                                   │
-│                  RoofEvent, TileChangeEvent, StairEvent,                        │
-│                  WarpEvent, NpcEvent, CounterEvent,                             │
-│                  MapEvents, Areas, SubArea,                                     │
-│                  Actor, ActorBlock, ActorPromotion, StartInventory,             │
-│                  CharacterClass, Item, Spell, SpellLevel, GrowthStat,           │
-│                  Enemy, EnemyStats, ResistanceBlock, EnemyItem,                 │
-│                  EnemySpellSlot, ProwessCatalog                                 │
-└──────────────────────────────────────┬──────────────────────────────────────────┘
-                                       │
-                                       │  читают / пишут
-                                       ▼
-                                ┌─────────────┐
-                                │   data/     │
-                                │  *.json     │
-                                └─────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                     MainWindow (Shell)                      │
+│  [SAVE] [▶ Play Game] [⚔ Battle Test]                       │
+│  ┌─── TabControl ───────────────────────────────────────┐   │
+│  │ [Карты] [Эвенты] [Импорт] [Бои] [Сцены] [База]       │   │
+│  │                                                      │   │
+│  │  MapEditorView  (IEditor)  ← вкладка «Карты»         │   │
+│  │  EventEditorView(IEditor)  ← вкладка «Эвенты»        │   │
+│  │  TilesetImporter(IEditor)  ← вкладка «Импорт»        │   │
+│  │  DatabaseEditor (IEditor)  ← вкладка «База»          │   │
+│  └──────────────────────────────────────────────────────┘   │
+│  Правый док: [ASSETS] / [СВОЙСТВА]                          │
+└───────────────────────────┬─────────────────────────────────┘
+                            │  SAVE → editor.Save() / StatusChanged / OnActivate()
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     IEditor (интерфейс)                     │
+└───────────────────────────┬─────────────────────────────────┘
+                            │  реализуют
+        ┌───────────────────┼───────────────────┬───────────────────┐
+        ▼                   ▼                   ▼                   ▼
+  ┌───────────┐       ┌───────────┐       ┌───────────┐       ┌───────────┐
+  │ MapEditor │       │ EventEdit │       │ ImportEd  │       │ DataBase  │
+  │  ✓ готов  │       │  ✓ готов  │       │  ✓ готов  │       │  ✓ готов  │
+  └───────────┘       └───────────┘       └───────────┘       └───────────┘
 
 
-📁 Формат JSON: Сохранение с табами
-
-Мы отказались от WriteIndented и переписали сохранение вручную.
-Теперь файлы сохраняются в точности как в C-программе (cJSON).
+📁 Формат JSON: Сохранение с табами (CJsonFormatter)
 
 Пример entries.json:
-[{
-		"id":	0,
-		"folder":	"Granseal",
-		"name":	"Granseal",
-		"music":	"assets/sounds/Track1.mp3",
-		"music_volume":	0.8,
-		"areas":	"data/maps/Granseal/areas.json"
-	}, {
-		"id":	1,
-		"folder":	"map00"
-	}]
+[{ "id": 0, "folder": "Granseal", "name": "Granseal", ... }]
 
-Пример нового события в events.json:
-{
-	"type":	"counter",
-	"x":	5,
-	"y":	10
-}
+Пример события в events.json:
+{ "type": "counter", "x": 5, "y": 10 }
 
 Пример врага в enemies.json:
-{
-	"id":	0,
-	"name":	"Gyasa",
-	"items":	[{ "item_id": 5, "equipped": true }],
-	"spells":	[1, -1, -1, -1],
-	"spell_levels":	[2, 1, 1, 1]
-}
+{ "id": 0, "name": "Gyasa", "items": [{ "item_id": 5, "equipped": true }], "spells": [1, -1, -1, -1], "spell_levels": [2, 1, 1, 1] }
 
 Пример start_inventory.json:
-{
-	"start_inventory": [{
-		"actor_id": 0,
-		"class_id": 0,
-		"start_level": 1,
-		"items": [{
-			"item_id": 5,
-			"equipped": true
-		}, {
-			"item_id": -1,
-			"equipped": false
-		}]
-	}]
-}
+{ "start_inventory": [{ "actor_id": 0, "class_id": 0, "start_level": 1, "items": [{ "item_id": 5, "equipped": true }, { "item_id": -1, "equipped": false }] }] }
 
 Пример shops.json:
-{
-	"shops": [{
-		"id": 0,
-		"name": "Granseal Weapons",
-		"type": "weapon",
-		"items": [5, 7, 6, 4]
-	}]
-}
+{ "shops": [{ "id": 0, "name": "Granseal Weapons", "type": "weapon", "items": [5, 7, 6, 4] }] }
+
+Пример global.json:
+{ "start_map_id": 0, "start_x": 12, "start_y": 14, "gold": 50 }
 
 Правила:
-• Используются табы (\t) для отступов.
-• Нет склеивания в одну строку.
-• Каждый элемент с новой строки.
-• Игра на Ruby читает это без ошибок.
-• Вложенные массивы (tiles, collision, collision2) пишутся горизонтально (сеткой).
+• Табы (\t), каждый элемент с новой строки.
+• Вложенные массивы (tiles, collision, collision2) пишутся горизонтально.
+• Игра на Ruby читает без ошибок.
 
 
 📐 Правила, чтобы код не превратился в кашу
 
 #   Правило                                        Как соблюдать
-1   Один редактор — одна папка                     TilesetImporter лежит в Editors/TilesetImporter/.
-2   Partial-файлы для больших редакторов            MapEditor = 11 файлов, EventEditor = 7 файлов,
-                                                     TilesetImporter = 4 файла. DatabaseEditor тоже делится на Views/.
-3   Core — общий для всех                           Модели и сервисы в Core/. Любой редактор их использует.
-4   MainWindow знает только IEditor                  Никаких ссылок на конкретные классы редакторов.
-5   Общение между редакторами — через Core          Импортер вызывает MapJsonService.Save и EntriesService.Save.
-6   События для взаимодействия с оболочкой          Редактор кидает StatusChanged — MainWindow его ловит.
-7   Отдельный Canvas — отдельный класс              Если редактор хочет свой рендер — создаёт свой *Canvas.
-8   FullRedraw ≠ RedrawCanvas                       FullRedraw — при смене карты, RedrawCanvas — на изменения UI.
-9   subAreas — макс 10                               Индексы 0..9. Main всегда main, sub — всегда sub.
-10  Формат JSON — читаемый                          Свой StringBuilder-форматтер с табами (\t). Массивы пишутся горизонтально.
-11  Безопасность имен                               При импорте имена проходят транслитерацию (RU->EN).
-12  Counter = невидимая логика                      В игре прилавок не блокирует диалог, а разрешает его сквозь себя (talk_through).
-13  Базовая графика и Оверрайды                     Кружки (0-3) меняются только в блоксете (свойства тайла), 
-                                                     квадраты (5-8) — только на карте (оверрайд). 
-                                                     Коллизии хранятся в двух независимых массивах: collision (L1) и collision2 (L2).
-14  Изоляция графики (Playtest)                     Для запуска из редактора без ошибок WGL используется Mesa (opengl32.dll) + llvmpipe.
-15  Кинематографичный старт                         Заставка (Splash) ждет полной загрузки окна (событие Opened), затем плавно исчезает.
-16  DatabaseEditor = MVVM                           Используется Binding, ObservableCollection и RelayCommand вместо ручного перерисовывания.
-17  Два слоя коллизий                               В редакторе при активном L1 рисуем в collision, при L2 — в collision2.
-                                                     Оверлей сетки на канвасе показывает коллизию активного слоя.
-18  Единый источник истины (State)                  В игре BattleManager получает ссылки на @party и @start_inventory. Никаких копий.
-19  SpellLevels                                     У заклинания один ID и массив levels. В редакторе — таблица уровней.
-20  ActorBlocks                                     В actors.json плоский список. Редактор разворачивает Base + Promotions в один объект.
-21  Конвертеры в Shared/Converters                  Все IValueConverter для UI лежат в Desktop/Shared/Converters.
-22  Портреты относительным путем                    PortraitConverter берет имя, прибавляет путь через ProjectPaths.AssetsDir → работает у всех.
-23  EnemyStats = Growth                             У врагов статы с кривыми роста (start, projected, curve). 
-                                                     EnemiesService при чтении подставляет значения.
-24  Parallel Arrays (Enemies)                       Заклинания врагов в JSON хранятся в двух параллельных массивах (spells + spell_levels).
-                                                     В редакторе они объединены в ObservableCollection<EnemySpellSlot>.
-25  ProwessCatalog                                  Общий статический каталог токенов (critical150_1in8 и т.д.) для классов и врагов.
-26  Связь по ID (Items & Spells)                    В enemies.json, start_inventory.json и shops.json предметы хранятся ТОЛЬКО как ID (item_id). 
-                                                     Пустой слот = -1. Игра (меню, бой, магазин) и редактор ищут имена и иконки через item_id
-                                                     в базе items.json. Строковые имена в этих файлах больше не используются.
+1   Один редактор — одна папка                     TilesetImporter в Editors/TilesetImporter/.
+2   Partial-файлы для больших редакторов            MapEditor = 11, EventEditor = 7, Importer = 4, Database = Views/.
+3   Core — общий для всех                           Модели и сервисы в Core/.
+4   MainWindow знает только IEditor                 Никаких ссылок на конкретные классы.
+5   Общение редакторов — через Core                 Импортер вызывает MapJsonService, EntriesService.
+6   События для оболочки                            StatusChanged — MainWindow ловит.
+7   Отдельный Canvas — отдельный класс              Свой *Canvas для кастомного рендера.
+8   FullRedraw ≠ RedrawCanvas                       FullRedraw — смена карты, RedrawCanvas — UI.
+9   subAreas — макс 10                              Индексы 0..9. Main и sub строго разделены.
+10  Формат JSON — читаемый                          Свой StringBuilder с табами. Массивы горизонтально.
+11  Безопасность имен                               При импорте RU->EN транслитерация.
+12  Counter = невидимая логика                      Прилавок разрешает диалог сквозь себя (talk_through).
+13  Базовая графика и Оверрайды                     Кружки (0-3) в блоксете, квадраты (5-8) на карте.
+14  Изоляция графики (Playtest)                     Mesa (opengl32.dll) + llvmpipe для WGL.
+15  Кинематографичный старт                         Splash ждет Opened, затем плавно исчезает.
+16  DatabaseEditor = MVVM                           Binding, ObservableCollection, RelayCommand.
+17  Два слоя коллизий                               L1 (collision), L2 (collision2). Оверлей показывает активный.
+18  Единый источник истины                          BattleManager получает ссылки на @party и @start_inventory.
+19  SpellLevels                                     У заклинания один ID и массив levels.
+20  ActorBlocks                                     actors.json — плоский список, редактор разворачивает.
+21  Конвертеры в Shared/Converters                  Все IValueConverter в Desktop/Shared/Converters.
+22  Портреты относительным путем                    PortraitConverter + ProjectPaths.AssetsDir.
+23  EnemyStats = Growth                             Статы с кривыми роста. EnemiesService подставляет значения.
+24  Parallel Arrays (Enemies)                       spells + spell_levels. В редакторе — ObservableCollection.
+25  ProwessCatalog                                  Общий статический каталог токенов.
+26  Связь по ID (Items & Spells)                    В enemies, start_inventory, shops — ТОЛЬКО item_id (-1 = пусто).
+27  Глобальные настройки по ID                      В global.json start_map_id (число) вместо строки. Игра ищет папку через entries.json.
 
-📈 Что уже готово vs что в планах (обновлено)
+📈 Что уже готово vs что в планах
 
 Компонент                                              Статус
-Core.Models (GameMap, MapEntry, TileType)              ✅
-Core.Models (7 моделей событий, вкл. Counter)          ✅
-Core.Models (SubArea)                                  ✅
-Core.Models (Database: Actor, ActorBlock, ActorPromotion, StartInventory, Item, Spell, SpellLevel, CharacterClass, GrowthStat) ✅
-Core.Models (Database: Enemy, EnemyStats, ResistanceBlock, EnemyItem, EnemySpellSlot, ProwessCatalog) ✅
-Core.Services (7 старых сервисов)                      ✅
-Core.Services (CJsonFormatter, ActorsService, ItemsService, SpellsService, ClassesService) ✅
-Core.Services (EnemiesService: ID предметов/магии, growth статы, параллельные массивы) ✅
-IEditor (интерфейс)                                    ✅
-MainWindow (оболочка)                                  ✅
+ЯДРО И СЕРВИСЫ
+Core.Models (Карты, События, БД, GlobalSettings)       ✅
+Core.Services (JSON, Карты, Актеры, Враги, Магазины)   ✅
+GlobalService (Чтение/запись global.json)              ✅
+
+ОБОЛОЧКА И РЕДАКТОРЫ
+IEditor, MainWindow (Splash, Toolbar, StatusBar)       ✅
 MapEditor (11 файлов)                                  ✅
 EventEditor (7 файлов + EventCanvas)                   ✅
-DatabaseEditor (Оболочка)                              ✅
-Shared.Converters.PortraitConverter                    ✅
-Редактор: Вкладка Heroes (Герои, инвентарь по ID)      ✅
-Редактор: Вкладка Items (Предметы)                     ✅
-Редактор: Вкладка Spells (Магия)                       ✅
-Редактор: Вкладка Classes (Классы)                     ✅
-Редактор: Вкладка Enemies (Враги)                      ✅
-Редактор: Вкладка Enemies — Статы с кривыми роста      ✅
-Редактор: Вкладка Enemies — Сопротивления (8 шт)       ✅
-Редактор: Вкладка Enemies — Способности (Prowess)      ✅
-Редактор: Вкладка Enemies — Предметы по ID             ✅
-Редактор: Вкладка Enemies — Магия по ID                ✅
-Редактор: Вкладка Counters (Прилавки)                  ✅
-Редактор: Отрисовка NPC спрайтов на канвасе            ✅
-Редактор: Автоскролл к выбранному событию              ✅
-Редактор: Скрытие Script Inspector вне вкладки NPC     ✅
-Редактор: Заставка при запуске (Splash Screen)         ✅
-Редактор: Изоляция кликов от скроллбаров               ✅
-Редактор: Сброс коллизии при рисовании тайла           ✅
-Редактор: Два слоя коллизий (рисование в L1/L2)        ✅
-Редактор: Горизонтальное сохранение JSON               ✅
-Сборка: Автоматическое копирование opengl32.dll        ✅
-Игра: Диалог через прилавок (строго по верт/гор)       ✅
-Игра: subAreas + маска + центрирование                 ✅
-Игра: Warp line-mode                                   ✅
-Игра: Чтение и применение collision2 (L1 и L2)         ✅
-Игра: Два слоя коллизий (проходимость + скольжение)    ✅
-Игра: Единый источник истины (State Management)        ✅
-Игра: Рефакторинг spells.json (levels массив)          ✅
-Игра: Профиль врага читает магию и предметы по ID      ✅
-Игра: Удалён мёртвый код find_spell_icon               ✅
-Игра: Миграция start_inventory и shops на item_id      ✅
-Игра: Все меню (Use/Give/Equip/Drop) читают item_id    ✅
-Игра: Боевые модули (give/drop/equip) работают по ID   ✅
-Редактор: Блокировка ввода букв в NumericUpDown        ✅
-Редактор: Ограничение длины ввода (5 символов)         ✅
-Редактор: Стилизация NumericUpDown                     ✅
-Редактор: Стрелочки + / - снаружи полей                ✅
-Редактор: Превью портрета 67x104 в Block Settings      ✅
-Редактор: Фильтр портретов (_blink/_talk/_anim)        ✅
-BattleEditor                                           📋 план
-SceneEditor                                            📋 план
-ASSETS (живое дерево)                                  📋 план
-СВОЙСТВА (инфо о выбранном)                            📋 план
-MESSAGE / TEXTS (редактор диалогов)                    📋 план
-Клик по канвасу → заполнить поле                       📋 план
-Undo/Redo в EventEditor                                📋 план
-Визуальные subAreas на канвасе                         📋 план (не срочно)
-Валидация subAreas (пересечения, границы)              📋 план (не срочно)
+TilesetImporter (4 файла)                              ✅
+DatabaseEditor (Оболочка, вертикальные вкладки)        ✅
+Вкладка Heroes (инвентарь по ID)                       ✅
+Вкладка Items                                          ✅
+Вкладка Spells                                         ✅
+Вкладка Classes                                        ✅
+Вкладка Enemies (статы, сопротивления, магия по ID)    ✅
+Вкладка System (Start Map ID, X, Y, Gold)              ✅
+
+ИГРА (RUBY)
+Рефакторинг: всё (инвентарь, магазины, бой) на ID      ✅
+Единый источник истины (State Management)              ✅
+Диалог через прилавок, subAreas, Warp line-mode        ✅
+Два слоя коллизий (проходимость + скольжение)          ✅
+Чтение global.json по start_map_id                     ✅
+BattleManager (give/drop/equip) по item_id             ✅
+
+В ПЛАНАХ
+BattleEditor, SceneEditor                              📋
+ASSETS (живое дерево), СВОЙСТВА (инфо)                 📋
+MESSAGE / TEXTS (редактор диалогов)                    📋
+Undo/Redo в EventEditor, Визуальные subAreas           📋

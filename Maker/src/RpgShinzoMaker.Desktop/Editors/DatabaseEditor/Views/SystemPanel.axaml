@@ -1,0 +1,139 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:RpgShinzoMaker.Core.Models"
+             xmlns:vm="using:RpgShinzoMaker.Desktop.ViewModels"
+             x:DataType="vm:SystemViewModel"
+             x:Class="RpgShinzoMaker.Desktop.Editors.DatabaseEditor.Views.SystemPanel">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        
+        <Style Selector="TextBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        
+        <Style Selector="TextBox.NumBox">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Width" Value="55"/>
+        </Style>
+
+        <Style Selector="Button.ArrowBtn">
+            <Setter Property="Background" Value="#444444"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="12"/>
+            <Setter Property="FontSize" Value="8"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.ArrowBtn:pointerover">
+            <Setter Property="Background" Value="#666666"/>
+        </Style>
+
+        <Style Selector="ComboBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        
+        <Style Selector="Border.GroupBox">
+            <Setter Property="BorderBrush" Value="#3E3E42"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="Background" Value="#252526"/>
+        </Style>
+        <Style Selector="TextBlock.GroupHeader">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#007ACC"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid Background="#1E1E1E" Margin="10">
+        <!-- Ограничиваем ширину панели, чтобы не растягивалась на весь экран -->
+        <Border Classes="GroupBox" VerticalAlignment="Top" HorizontalAlignment="Left" Width="450">
+            <StackPanel Spacing="12">
+                <TextBlock Text="Global Settings" Classes="GroupHeader"/>
+
+                <!-- Start Map -->
+                <Grid ColumnDefinitions="100, *">
+                    <TextBlock Text="Start Map:"/>
+                    <ComboBox Grid.Column="1"
+                              ItemsSource="{Binding AvailableMaps}"
+                              SelectedValue="{Binding Settings.StartMapId}"
+                              SelectedValueBinding="{Binding Id}"
+                              HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="models:MapEntry">
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+
+                <!-- Start X -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Start X:" Width="100"/>
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <TextBox Classes="NumBox" Text="{Binding Settings.StartX}"/>
+                        <Grid RowDefinitions="*, *" Width="18">
+                            <Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncrementStartXCommand}"/>
+                            <Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecrementStartXCommand}" Margin="0,2,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Start Y -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Start Y:" Width="100"/>
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <TextBox Classes="NumBox" Text="{Binding Settings.StartY}"/>
+                        <Grid RowDefinitions="*, *" Width="18">
+                            <Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncrementStartYCommand}"/>
+                            <Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecrementStartYCommand}" Margin="0,2,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Gold -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Gold:" Width="100"/>
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <TextBox Classes="NumBox" Width="70" Text="{Binding Settings.Gold}"/>
+                        <Grid RowDefinitions="*, *" Width="18">
+                            <Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncrementGoldCommand}"/>
+                            <Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecrementGoldCommand}" Margin="0,2,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

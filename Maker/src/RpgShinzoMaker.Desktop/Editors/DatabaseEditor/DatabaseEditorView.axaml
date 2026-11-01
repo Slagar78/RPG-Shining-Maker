@@ -41,7 +41,7 @@
             </TabItem>
 
             <TabItem Header="System">
-                <TextBlock Text="System Panel will be here" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <views:SystemPanel DataContext="{Binding SystemVM}" />
             </TabItem>
 
         </TabControl>
