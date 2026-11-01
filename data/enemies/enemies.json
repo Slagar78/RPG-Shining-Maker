@@ -1,187 +1,267 @@
 {
-	"enemies":	[{
-			"id":	0,
-			"name":	"Gyasa",
-			"portrait":	"Gyasa",
-			"mapsprite":	"mapsprite090",
-			"battle_sprite_path":	"assets/battles/battlesprites/enemies/Gyasa",
-			"race":	"Enterran",
-			"status":	"normal",
-			"level":	14,
-			"spell_power":	"enhanced",
-			"stats":	{
-				"hp_growth":	{ "start":	2, "projected":	12, "curve":	"LINEAR" },
-				"mp_growth":	{ "start":	50, "projected":	80, "curve":	"LINEAR" },
-				"attack_growth":	{ "start":	38, "projected":	60, "curve":	"LINEAR" },
-				"defense_growth":	{ "start":	30, "projected":	50, "curve":	"LINEAR" },
-				"agility_growth":	{ "start":	29, "projected":	45, "curve":	"LINEAR" },
-				"base_mov":	7
-			},
-			"resistance":	{
-				"wind":	"none",
-				"lightning":	"minor",
-				"ice":	"none",
-				"fire":	"major",
-				"aqua":	"weakness",
-				"earth":	"none",
-				"neutral":	"none",
-				"affliction":	"immunity"
-			},
-			"prowess":	["critical150_1in8", "double_1in16", "counter_1in16"],
-			"items":	[{
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}],
-			"spells":	[1, -1, -1, -1],
-			"spell_levels":	[1, 1, 1, 1],
-			"initial_status":	"none",
-			"move_type":	"flying"
-		}, {
-			"id":	1,
-			"name":	"Dark King",
-			"portrait":	"Huper_Ryuma",
-			"mapsprite":	"mapsprite107",
-			"battle_sprite_path":	"assets/battles/battlesprites/enemies/Dark_King",
-			"race":	"Cadrian",
-			"status":	"normal",
-			"level":	10,
-			"spell_power":	"regular",
-			"stats":	{
-				"hp_growth":	{ "start":	5, "projected":	30, "curve":	"LINEAR" },
-				"mp_growth":	{ "start":	12, "projected":	30, "curve":	"LINEAR" },
-				"attack_growth":	{ "start":	30, "projected":	50, "curve":	"LINEAR" },
-				"defense_growth":	{ "start":	1, "projected":	20, "curve":	"LINEAR" },
-				"agility_growth":	{ "start":	18, "projected":	35, "curve":	"LINEAR" },
-				"base_mov":	4
-			},
-			"resistance":	{
-				"wind":	"none",
-				"lightning":	"minor",
-				"ice":	"none",
-				"fire":	"major",
-				"aqua":	"weakness",
-				"earth":	"none",
-				"neutral":	"none",
-				"affliction":	"immunity"
-			},
-			"prowess":	["critical_poison", "double_1in32", "counter_1in32"],
-			"items":	[{
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}],
-			"spells":	[-1, -1, -1, -1],
-			"spell_levels":	[1, 1, 1, 1],
-			"initial_status":	"none",
-			"move_type":	"stealth"
-		}, {
-			"id":	2,
-			"name":	"Gizmo",
-			"portrait":	"Samurai_Ryuma",
-			"mapsprite":	"Gizmo",
-			"battle_sprite_path":	"assets/battles/battlesprites/enemies/Gizmo",
-			"race":	"Cadrian",
-			"status":	"normal",
-			"level":	1,
-			"spell_power":	"regular",
-			"stats":	{
-				"hp_growth":	{ "start":	50, "projected":	90, "curve":	"LINEAR" },
-				"mp_growth":	{ "start":	12, "projected":	30, "curve":	"LINEAR" },
-				"attack_growth":	{ "start":	30, "projected":	55, "curve":	"LINEAR" },
-				"defense_growth":	{ "start":	1, "projected":	20, "curve":	"LINEAR" },
-				"agility_growth":	{ "start":	18, "projected":	35, "curve":	"LINEAR" },
-				"base_mov":	4
-			},
-			"resistance":	{
-				"wind":	"none",
-				"lightning":	"minor",
-				"ice":	"none",
-				"fire":	"major",
-				"aqua":	"weakness",
-				"earth":	"none",
-				"neutral":	"none",
-				"affliction":	"immunity"
-			},
-			"prowess":	["critical_poison", "double_1in32", "counter_1in32"],
-			"items":	[{
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}],
-			"spells":	[-1, -1, -1, -1],
-			"spell_levels":	[1, 1, 1, 1],
-			"initial_status":	"none",
-			"move_type":	"stealth"
-		}, {
-			"id":	3,
-			"name":	"New Enemy",
-			"portrait":	"Huper_Rusephina",
-			"mapsprite":	"mapsprite107",
-			"battle_sprite_path":	"assets/battles/battlesprites/enemies/Gizmo",
-			"race":	"Cadrian",
-			"status":	"normal",
-			"level":	2,
-			"spell_power":	"regular",
-			"stats":	{
-				"hp_growth":	{ "start":	5, "projected":	25, "curve":	"LINEAR" },
-				"mp_growth":	{ "start":	5, "projected":	25, "curve":	"LINEAR" },
-				"attack_growth":	{ "start":	4, "projected":	20, "curve":	"LINEAR" },
-				"defense_growth":	{ "start":	4, "projected":	20, "curve":	"LINEAR" },
-				"agility_growth":	{ "start":	10, "projected":	25, "curve":	"LINEAR" },
-				"base_mov":	3
-			},
-			"resistance":	{
-				"wind":	"none",
-				"lightning":	"minor",
-				"ice":	"none",
-				"fire":	"major",
-				"aqua":	"weakness",
-				"earth":	"none",
-				"neutral":	"none",
-				"affliction":	"immunity"
-			},
-			"prowess":	["critical_poison", "double_1in32", "counter_1in32"],
-			"items":	[{
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}, {
-					"item_id":	-1,
-					"equipped":	false
-				}],
-			"spells":	[-1, -1, -1, -1],
-			"spell_levels":	[1, 1, 1, 1],
-			"initial_status":	"none",
-			"move_type":	"stealth"
-		}]
+		"enemies": [{
+					"id": 0,
+					"name": "Gyasa",
+					"portrait": "Gyasa",
+					"mapsprite": "mapsprite090",
+					"battle_sprite_path": "assets/battles/battlesprites/enemies/Gyasa",
+					"race": "Enterran",
+					"status": "normal",
+					"level": 14,
+					"spell_power": "enhanced",
+					"stats": {
+							"hp_growth": {
+									"start": 2,
+									"projected": 12,
+									"curve": "LINEAR"
+							},
+							"mp_growth": {
+									"start": 50,
+									"projected": 80,
+									"curve": "LINEAR"
+							},
+							"attack_growth": {
+									"start": 38,
+									"projected": 60,
+									"curve": "LINEAR"
+							},
+							"defense_growth": {
+									"start": 30,
+									"projected": 50,
+									"curve": "LINEAR"
+							},
+							"agility_growth": {
+									"start": 29,
+									"projected": 45,
+									"curve": "LINEAR"
+							},
+							"base_mov": 8
+					},
+					"resistance": {
+							"wind": "none",
+							"lightning": "minor",
+							"ice": "none",
+							"fire": "major",
+							"aqua": "weakness",
+							"earth": "none",
+							"neutral": "none",
+							"affliction": "immunity"
+					},
+					"prowess": ["critical150_1in8", "double_1in16", "counter_1in16"],
+					"items": [{
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}],
+					"initial_status": "none",
+					"move_type": "flying",
+					"spells": [1, -1, -1, -1],
+					"spell_levels": [1, 1, 1, 1]
+			}, {
+					"id": 1,
+					"name": "Dark King",
+					"portrait": "Huper_Ryuma",
+					"mapsprite": "mapsprite107",
+					"battle_sprite_path": "assets/battles/battlesprites/enemies/Dark_King",
+					"race": "Cadrian",
+					"status": "normal",
+					"level": 10,
+					"spell_power": "regular",
+					"stats": {
+							"hp_growth": {
+									"start": 5,
+									"projected": 30,
+									"curve": "LINEAR"
+							},
+							"mp_growth": {
+									"start": 12,
+									"projected": 30,
+									"curve": "LINEAR"
+							},
+							"attack_growth": {
+									"start": 30,
+									"projected": 50,
+									"curve": "LINEAR"
+							},
+							"defense_growth": {
+									"start": 1,
+									"projected": 20,
+									"curve": "LINEAR"
+							},
+							"agility_growth": {
+									"start": 18,
+									"projected": 35,
+									"curve": "LINEAR"
+							},
+							"base_mov": 4
+					},
+					"resistance": {
+							"wind": "none",
+							"lightning": "minor",
+							"ice": "none",
+							"fire": "major",
+							"aqua": "weakness",
+							"earth": "none",
+							"neutral": "none",
+							"affliction": "immunity"
+					},
+					"prowess": ["critical_poison", "double_1in32", "counter_1in32"],
+					"items": [{
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}],
+					"initial_status": "none",
+					"move_type": "stealth",
+					"spells": [-1, -1, -1, -1],
+					"spell_levels": [1, 1, 1, 1]
+			}, {
+					"id": 2,
+					"name": "Gizmo",
+					"portrait": "Samurai_Ryuma",
+					"mapsprite": "Gizmo",
+					"battle_sprite_path": "assets/battles/battlesprites/enemies/Gizmo",
+					"race": "Cadrian",
+					"status": "normal",
+					"level": 1,
+					"spell_power": "regular",
+					"stats": {
+							"hp_growth": {
+									"start": 50,
+									"projected": 90,
+									"curve": "LINEAR"
+							},
+							"mp_growth": {
+									"start": 12,
+									"projected": 30,
+									"curve": "LINEAR"
+							},
+							"attack_growth": {
+									"start": 30,
+									"projected": 55,
+									"curve": "LINEAR"
+							},
+							"defense_growth": {
+									"start": 1,
+									"projected": 20,
+									"curve": "LINEAR"
+							},
+							"agility_growth": {
+									"start": 18,
+									"projected": 35,
+									"curve": "LINEAR"
+							},
+							"base_mov": 4
+					},
+					"resistance": {
+							"wind": "none",
+							"lightning": "minor",
+							"ice": "none",
+							"fire": "major",
+							"aqua": "weakness",
+							"earth": "none",
+							"neutral": "none",
+							"affliction": "immunity"
+					},
+					"prowess": ["critical_poison", "double_1in32", "counter_1in32"],
+					"items": [{
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}],
+					"initial_status": "none",
+					"move_type": "stealth",
+					"spells": [-1, -1, -1, -1],
+					"spell_levels": [1, 1, 1, 1]
+			}, {
+					"id": 3,
+					"name": "New Enemy",
+					"portrait": "Huper_Rusephina",
+					"mapsprite": "mapsprite107",
+					"battle_sprite_path": "assets/battles/battlesprites/enemies/Gizmo",
+					"race": "Cadrian",
+					"status": "normal",
+					"level": 2,
+					"spell_power": "regular",
+					"stats": {
+							"hp_growth": {
+									"start": 5,
+									"projected": 25,
+									"curve": "LINEAR"
+							},
+							"mp_growth": {
+									"start": 5,
+									"projected": 25,
+									"curve": "LINEAR"
+							},
+							"attack_growth": {
+									"start": 4,
+									"projected": 20,
+									"curve": "LINEAR"
+							},
+							"defense_growth": {
+									"start": 4,
+									"projected": 20,
+									"curve": "LINEAR"
+							},
+							"agility_growth": {
+									"start": 10,
+									"projected": 25,
+									"curve": "LINEAR"
+							},
+							"base_mov": 3
+					},
+					"resistance": {
+							"wind": "none",
+							"lightning": "minor",
+							"ice": "none",
+							"fire": "major",
+							"aqua": "weakness",
+							"earth": "none",
+							"neutral": "none",
+							"affliction": "immunity"
+					},
+					"prowess": ["critical_poison", "double_1in32", "counter_1in32"],
+					"items": [{
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}, {
+								"item_id": -1,
+								"equipped": false
+						}],
+					"initial_status": "none",
+					"move_type": "stealth",
+					"spells": [-1, -1, -1, -1],
+					"spell_levels": [1, 1, 1, 1]
+			}]
 }
