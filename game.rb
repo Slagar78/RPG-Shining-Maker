@@ -13,6 +13,7 @@ require_relative 'lib/GameMap'
 require_relative 'lib/intro'
 require_relative 'lib/dialog_manager'
 require_relative 'lib/shop_ui'
+require_relative 'lib/church_ui'
 require_relative 'battle'   # ← BattleManager доступен как класс
 require 'json'
 require 'open3'   # ← для запуска battle.rb как subprocess
@@ -168,6 +169,8 @@ class Game
     @shop_menu = ShopMenu.new(@font, @db, @large_font, @game_text, @party, @start_inventory, @classes_data, @class_names, @font_gold)
     @shops = ShopMenu.load_all
     @dialog_manager = nil
+    @church_menu = ChurchMenu.new(@font, @large_font, @db, @party, @start_inventory, @game_text)
+    @dialog_manager = nil
 
     @anim_timer = 0.0
     @anim_delay = 0.33
@@ -217,7 +220,7 @@ class Game
     UnloadRenderTexture(@top_layer) if @top_layer
     UnloadRenderTexture(@layer2) if @layer2
     @game_map.roof_layers.each { |l| UnloadRenderTexture(l) if l }
-	UnloadRenderTexture(@canvas) if @canvas
+    UnloadRenderTexture(@canvas) if @canvas
     CloseWindow()
   end
 
@@ -746,6 +749,12 @@ when :playing
     @shop_menu.handle_input(dt)
     @shop_menu.update(dt)
   end
+
+  # Церковь — аналогично
+  if @church_menu.visible
+    @church_menu.handle_input(dt)
+    @church_menu.update(dt)
+  end
   
 	  if @dialog_manager.finished?
     @dialog_manager = nil
@@ -872,8 +881,9 @@ when :playing
 
 	
 	if @game_state == :dialog && @dialog_manager
-	  @dialog_manager.draw
+    @dialog_manager.draw
     @shop_menu.draw if @shop_menu.visible
+    @church_menu.draw if @church_menu.visible
 	end
 
     case @game_state
@@ -1041,7 +1051,8 @@ end
       npc.direction,
       @flags,
       @shop_menu,
-      @shops
+      @shops,
+      @church_menu
     )
     @game_state = :dialog
   end

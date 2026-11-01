@@ -73,9 +73,10 @@
 			{
 				"type":	"turn_player_to_npc"
 			},
+      { "type": "say", "text_id": "0001" },
 			{
-				"type":	"say",
-				"text_id":	"0001"
+				"type": "open_church"
+				
 			},
 			{
 				"type":	"end",

@@ -9,7 +9,7 @@ class DialogManager
 
   def initialize(script, npc, player, game_map, local_text, global_text,
                  message_panel_tex, font, leader_name, original_npc_direction,
-                 flags = nil, shop_menu = nil, shops = nil)
+                 flags = nil, shop_menu = nil, shops = nil, church_menu = nil)
     @script = script
     @npc = npc
     @player = player
@@ -26,6 +26,9 @@ class DialogManager
     @shop_menu = shop_menu
     @shops     = shops
     @waiting_for_shop = false
+
+    @church_menu = church_menu
+    @waiting_for_church = false
 
     @index = 0
     @finished = false
@@ -60,6 +63,15 @@ class DialogManager
       return
     end
 
+    # ── 
+    if @waiting_for_church
+      if @church_menu && !@church_menu.visible
+        @waiting_for_church = false
+        @index += 1
+      end
+      return
+    end
+
     # ЖДЕМ ЗАДЕРЖКУ ПЕРЕД СЛЕДУЮЩИМ ТЕКСТОМ
     if @next_text_delay > 0
       @next_text_delay -= dt
@@ -88,6 +100,9 @@ class DialogManager
       when 'open_shop'
         handle_shop(cmd)
         break if @waiting_for_shop   # выходим из цикла, дальше — ждём магазин
+      when 'open_church'
+        handle_church(cmd)
+        break if @waiting_for_church
       when 'end'
         @finished = true
         break
@@ -126,7 +141,7 @@ class DialogManager
 
   def draw
     # Пока магазин открыт — диалог не рисуется, магазин сам себя рисует.
-    return if @waiting_for_shop
+    return if @waiting_for_shop || @waiting_for_church
     return unless @waiting_for_input || @finished || @next_text_delay > 0
     return if @finished
 
@@ -191,6 +206,10 @@ class DialogManager
     @waiting_for_shop
   end
 
+  def waiting_for_church?
+    @waiting_for_church
+  end
+
   private
 
   def handle_shop(cmd)
@@ -208,6 +227,17 @@ class DialogManager
       # Магазин не найден — пропускаем команду, чтобы не застрять.
       @index += 1
     end
+  end
+
+  def handle_church(cmd)
+    if @church_menu.nil?
+      puts "WARNING: open_church, но church_menu не передан в DialogManager."
+      @index += 1
+      return
+    end
+
+    @church_menu.open
+    @waiting_for_church = true
   end
 
   def handle_say(cmd)
