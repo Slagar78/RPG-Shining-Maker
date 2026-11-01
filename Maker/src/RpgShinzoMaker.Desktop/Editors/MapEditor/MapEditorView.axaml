@@ -48,6 +48,26 @@
         <Style Selector="ScrollBar /template/ RepeatButton:pointerover">
             <Setter Property="Background" Value="#555555"/>
         </Style>
+
+        <!-- Современный ComboBox (фикс высоты) -->
+        <Style Selector="ComboBox.ModernComboBox">
+            <Setter Property="Background" Value="#2D2D30"/>
+            <Setter Property="BorderBrush" Value="#3E3E42"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8,0"/> <!-- Убрали вертикальный отступ -->
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <!-- Жестко задаем высоту и выравниваем контент по центру -->
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        
+        <Style Selector="ComboBox.ModernComboBox:pointerover /template/ Border#Background">
+            <Setter Property="BorderBrush" Value="#007ACC"/>
+            <Setter Property="Background" Value="#3E3E42"/>
+        </Style>
+
     </UserControl.Styles>
 
     <Panel>
@@ -430,28 +450,29 @@
             <Grid Grid.Column="2" RowDefinitions="*,Auto">
                 <views:MapCanvas x:Name="MapCanvasControl" Grid.Row="0"/>
 
-                <Border Grid.Row="1" Background="#252526" Padding="8,6">
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <TextBlock Text="Карта:" Foreground="White" VerticalAlignment="Center"/>
-                        <ComboBox x:Name="MapSelector"
-                                  MinWidth="180"
-                                  VerticalAlignment="Center"
-                                  SelectionChanged="OnMapSelectorChanged"/>
-                        <TextBlock Text="Размер:" Foreground="White" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="MapSizeText"
-                                   Text="—"
-                                   Foreground="#4CAF50"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="Тайлсет:" Foreground="White" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="MapTilesetText"
-                                   Text="—"
-                                   Foreground="#4CAF50"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="Музыка:" Foreground="White" VerticalAlignment="Center"/>
-                        <ComboBox x:Name="MapMusicSelector"
-                                  MinWidth="180"
-                                  VerticalAlignment="Center"
-                                  SelectionChanged="OnMapMusicChanged"/>
+                <Border Grid.Row="1" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" Padding="12,8">
+                    <StackPanel Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+                        
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <TextBlock Text="Map:" Foreground="#AAAAAA" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="MapSelector" Classes="ModernComboBox" MinWidth="160" VerticalAlignment="Center" SelectionChanged="OnMapSelectorChanged"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <TextBlock Text="Size:" Foreground="#AAAAAA" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="MapSizeText" Text="—" Foreground="#4CAF50" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <TextBlock Text="Tileset:" Foreground="#AAAAAA" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="MapTilesetText" Text="—" Foreground="#4CAF50" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <TextBlock Text="Music:" Foreground="#AAAAAA" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="MapMusicSelector" Classes="ModernComboBox" MinWidth="160" VerticalAlignment="Center" SelectionChanged="OnMapMusicChanged"/>
+                        </StackPanel>
+                        
                     </StackPanel>
                 </Border>
             </Grid>

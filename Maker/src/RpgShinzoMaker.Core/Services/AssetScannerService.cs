@@ -34,4 +34,20 @@ public class AssetScannerService
         }
         return result.OrderBy(x => x).ToList();
     }
+
+    // МЕТОД ДЛЯ МУЗЫКИ 
+    public List<string> GetMusicFiles(string musicDirectory)
+    {
+        var result = new List<string>();
+        if (!Directory.Exists(musicDirectory)) return result;
+
+        var files = Directory.GetFiles(musicDirectory, "*.*")
+                             .Where(f => f.EndsWith(".mp3") || f.EndsWith(".ogg"));
+                             
+        foreach (var file in files)
+        {
+            result.Add(Path.GetFileName(file)); 
+        }
+        return result.OrderBy(x => x).ToList();
+    }
 }
