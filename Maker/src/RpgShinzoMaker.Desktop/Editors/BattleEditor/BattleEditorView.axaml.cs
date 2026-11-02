@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using RpgShinzoMaker.Core.Models;
 using RpgShinzoMaker.Desktop.Shared.Interfaces;
 
@@ -9,15 +10,6 @@ namespace RpgShinzoMaker.Desktop.Editors.BattleEditor;
 
 /// <summary>
 /// Боевой редактор. Корневой partial-класс: общие поля, конструктор, IEditor.
-/// Вся конкретная логика разнесена по partial-файлам:
-///   - BattleEditorView.Battles.cs — загрузка entries.json, switch_battle
-///   - BattleEditorView.Map.cs     — тайлсет, зум, режимы Map/Battle/Terrain
-///   - BattleEditorView.Canvas.cs  — Overlay поверх MapCanvas
-///   - BattleEditorView.Units.cs   — панели Allies/Enemies
-///   - BattleEditorView.Terrain.cs — кисть terrain
-///   - BattleEditorView.Zone.cs    — выделение боевой зоны
-///   - BattleEditorView.Inspector.cs — ID ◄►
-///   - BattleEditorView.Save.cs    — сохранение 3 JSON
 /// </summary>
 public partial class BattleEditorView : UserControl, IEditor
 {
@@ -49,16 +41,13 @@ public partial class BattleEditorView : UserControl, IEditor
     private int  _inspectorPanel;
     private int  _inspectorSlotIdx = -1;
 
-    // ─── Активный слот ───
-    private int _activePanel;
-    private int _selectedSlot = -1;
-
-    // ─── Скролл-мост к внутреннему ScrollViewer MapCanvas ───
+    // ─── Скролл-мост ───
     private Avalonia.Controls.ScrollViewer? _mapScrollViewer;
 
     // ─── Overlay ───
     private readonly List<OverlayElement> _overlayElements = new();
     private bool _initialized;
+    private BattleUnit? _hoveredUnit;
 
     private class OverlayElement
     {
@@ -76,11 +65,6 @@ public partial class BattleEditorView : UserControl, IEditor
     {
         InitializeComponent();
 
-        AlliesPanel.ItemsSource  = _allies;
-        EnemiesPanel.ItemsSource = _enemies;
-
-        // Инициализация только когда контрол попал в визуальное дерево —
-        // иначе ScrollViewer внутри MapCanvas ещё не создан.
         this.AttachedToVisualTree += (_, _) =>
         {
             if (_initialized) return;
@@ -99,8 +83,5 @@ public partial class BattleEditorView : UserControl, IEditor
     public void OnActivate()   { }
     public void OnDeactivate() { }
 
-    // ══════════════════════════════════════════════════════════
-    //   Общая кнопка Save (связана с XAML)
-    // ══════════════════════════════════════════════════════════
-    private void OnSaveClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => SaveAll();
+    private void OnSaveClick(object? sender, RoutedEventArgs e) => SaveAll();
 }

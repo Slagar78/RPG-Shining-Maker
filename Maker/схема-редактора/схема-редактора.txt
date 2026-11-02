@@ -43,12 +43,12 @@ RPG-Shining-Maker/
 │   │           ├── MapEditor/                      (11 файлов)
 │   │           ├── EventEditor/                    (7 файлов + EventCanvas)
 │   │           ├── TilesetImporter/                (4 файла)
-│   │           ├── BattleEditor/                   (11 файлов, новый)
+│   │           ├── BattleEditor/                   (10 файлов, готов)
 │   │           │   ├── BattleEditorView.axaml (.cs)
 │   │           │   ├── BattleEditorView.Battles.cs (загрузка entries.json)
 │   │           │   ├── BattleEditorView.Map.cs     (карта, тайлы, зум, режимы)
-│   │           │   ├── BattleEditorView.Canvas.cs  (OverlayCanvas + ScrollViewer bridge)
-│   │           │   ├── BattleEditorView.Units.cs   (Allies/Enemies, Add/Del)
+│   │           │   ├── BattleEditorView.Canvas.cs  (Overlay + ScrollViewer bridge + Drag&Drop)
+│   │           │   ├── BattleEditorView.Units.cs   (Allies/Enemies, Add/Del, лимиты)
 │   │           │   ├── BattleEditorView.Terrain.cs (кисти B/F/W)
 │   │           │   ├── BattleEditorView.Zone.cs    (Drag боевой зоны)
 │   │           │   ├── BattleEditorView.Inspector.cs (◄ ID ►)
@@ -209,6 +209,9 @@ RPG-Shining-Maker/
 31  Универсальный поиск карты в GameMap             GameMap.new принимает и строку (folder), и число (id). Сохраняет @map_id и @db_id.
 32  BattleEditor = Overlay поверх MapCanvas         Не трогать MapCanvas. Канвас оверлея в том же Grid, синхронизация через ScrollViewer.ScrollChanged + Zoom.
 33  BattleEditor: сохранение чужих ключей           SpritesetService сохраняет ai_points / ai_regions как были, меняет только allies и enemies.
+34  Drag & Drop в BattleEditor                      Зажал ЛКМ на юните — тянешь. У краёв экрана карта скроллится сама (Photoshop-style).
+35  Лимиты юнитов в битве                           30 союзников (Allies) и 48 врагов (Enemies) максимум.
+36  Визуал BattleEditor                              Рамки выбора фиолетовые (#BF00FF), со скруглением (CornerRadius 6). Слоты в панели 34x34.
 
 
 📈 Что уже готово vs что в планах
@@ -229,8 +232,9 @@ EventEditor (7 файлов + EventCanvas)                   ✅
 TilesetImporter (4 файла)                              ✅
 BattleEditor (10 файлов + модель BattleUnit)           ✅
 Вкладка Battles (Map/Battle/Terrain/Zone/Save/Zoom)    ✅
-Панели Allies/Enemies (сетки, Add/Del, Inspector ◄►)   ✅
-Overlay (юниты, зона, terrain-маркеры)                 ✅
+Панели Allies/Enemies (34x34, фиолетовый выбор, +/-)   ✅
+Overlay (юниты, зона, terrain, пульсирующая рамка)     ✅
+Drag & Drop юнитов (с авто-скроллом как в Photoshop)   ✅
 Сохранение battles/entries.json                        ✅
 Сохранение spriteset.json (только allies/enemies)      ✅
 Сохранение terrain.json                                ✅

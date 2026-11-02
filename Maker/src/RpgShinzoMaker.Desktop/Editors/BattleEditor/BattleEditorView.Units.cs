@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json.Nodes;
+using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using RpgShinzoMaker.Core.Services;
 
@@ -9,7 +10,6 @@ namespace RpgShinzoMaker.Desktop.Editors.BattleEditor;
 
 public partial class BattleEditorView
 {
-    // Загрузка слотов из spriteset.json
     private void LoadSpritesetAndTerrain(string folder)
     {
         _allies.Clear();
@@ -34,17 +34,18 @@ public partial class BattleEditorView
             _enemies.Add(new BattleUnit { Id = e.Id, Name = enemy.Name, Sprite = enemy.Sprite, X = e.X, Y = e.Y, Used = true, IsEnemy = true });
         }
 
-        // Создаём пустые слоты до 16 и 20 (для сетки в панелях)
-        while (_allies.Count < 16) _allies.Add(new BattleUnit());
-        while (_enemies.Count < 20) _enemies.Add(new BattleUnit());
+        // Лимиты: 30 союзников, 48 врагов
+        while (_allies.Count < 30) _allies.Add(new BattleUnit());
+        while (_enemies.Count < 48) _enemies.Add(new BattleUnit());
 
-        // Загружаем картинки
         foreach (var u in _allies) LoadUnitSprite(u);
         foreach (var u in _enemies) LoadUnitSprite(u);
 
-        // Исправлено предупреждение CS8602 (добавлена проверка на null)
         if (_currentMap != null)
             _terrain = TerrainService.Load(folder, _currentMap.Width, _currentMap.Height);
+            
+        if (AlliesList != null) AlliesList.ItemsSource = _allies;
+        if (EnemiesList != null) EnemiesList.ItemsSource = _enemies;
     }
 
     private void LoadUnitSprite(BattleUnit unit)
@@ -53,50 +54,116 @@ public partial class BattleEditorView
         
         string folder = unit.IsEnemy ? "mapsprites_enemy" : "mapsprites";
         string path = Path.Combine(ProjectPaths.AssetsDir, folder, unit.Sprite + ".png");
+        
         if (File.Exists(path))
         {
-            try { unit.Image = new Bitmap(path); } catch { }
+            try 
+            { 
+                var fullBmp = new Bitmap(path);
+                int frameSize = 48;
+                int col = 0;
+                int row = 2;
+
+                if (fullBmp.PixelSize.Width >= frameSize && fullBmp.PixelSize.Height >= (row + 1) * frameSize)
+                {
+                    var cropRect = new Avalonia.PixelRect(col * frameSize, row * frameSize, frameSize, frameSize);
+                    unit.Image = new CroppedBitmap(fullBmp, cropRect);
+                }
+                else
+                {
+                    unit.Image = fullBmp;
+                }
+            } 
+            catch { } 
         }
     }
 
-    // ─── Кнопки Add / Del ───
+    private void OnAllySelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (AlliesList.SelectedItem is BattleUnit unit && unit.Used)
+        {
+            if (EnemiesList != null) EnemiesList.SelectedItem = null;
+            ShowInspector(unit);
+            RebuildOverlay();
+            CenterOnUnit(unit); // Автоскролл к юниту
+        }
+    }
+
+    private void OnEnemySelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (EnemiesList.SelectedItem is BattleUnit unit && unit.Used)
+        {
+            if (AlliesList != null) AlliesList.SelectedItem = null;
+            ShowInspector(unit);
+            RebuildOverlay();
+            CenterOnUnit(unit); // Автоскролл к юниту
+        }
+    }
+
+    // ★ Метод автоскролла к юниту ★
+    private void CenterOnUnit(BattleUnit unit)
+    {
+        if (_mapScrollViewer == null || _currentMap == null || _currentBattleIndex < 0) return;
+        var entry = _battleEntries[_currentBattleIndex];
+        int ts = Ts;
+        
+        double gx = (unit.X + entry.BattleX) * ts + ts / 2.0;
+        double gy = (unit.Y + entry.BattleY) * ts + ts / 2.0;
+        
+        double targetX = gx - _mapScrollViewer.Viewport.Width / 2;
+        double targetY = gy - _mapScrollViewer.Viewport.Height / 2;
+        
+        // Ограничиваем скролл размерами карты
+        if (_mapScrollViewer.Extent.Width > 0)
+            targetX = Math.Max(0, Math.Min(targetX, _mapScrollViewer.Extent.Width - _mapScrollViewer.Viewport.Width));
+        if (_mapScrollViewer.Extent.Height > 0)
+            targetY = Math.Max(0, Math.Min(targetY, _mapScrollViewer.Extent.Height - _mapScrollViewer.Viewport.Height));
+        
+        _mapScrollViewer.Offset = new Avalonia.Vector(targetX, targetY);
+    }
+
     private void OnAddAllyClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (_allies.All(a => a.Used)) return; // Нет мест
+        if (_allies.All(a => a.Used)) return;
         var actors = LoadActorsJson();
         if (actors.Count == 0) return;
 
-        // Ищем свободный ID (не занятый другими союзниками)
         int newId = -1;
         for (int i = 0; i < actors.Count; i++)
         {
             if (!_allies.Any(a => a.Used && a.Id == i)) { newId = i; break; }
         }
-        if (newId == -1) return; // Все заняты
+        if (newId == -1) return;
 
         var actor = actors[newId];
         var freeSlot = _allies.First(a => !a.Used);
         freeSlot.Id = newId;
         freeSlot.Name = actor.Name;
         freeSlot.Sprite = actor.Sprite;
-        freeSlot.X = 0; freeSlot.Y = 0;
+        
+        int count = _allies.Count(a => a.Used);
+        freeSlot.X = 2 + (count % 4);
+        freeSlot.Y = 2 + (count / 4);
+
         freeSlot.Used = true;
         freeSlot.IsEnemy = false;
         LoadUnitSprite(freeSlot);
 
-        _activePanel = 0;
-        _selectedSlot = _allies.IndexOf(freeSlot);
-        ShowInspector(freeSlot);
+        AlliesList.ItemsSource = null;
+        AlliesList.ItemsSource = _allies;
+        AlliesList.SelectedItem = freeSlot;
         RebuildOverlay();
     }
 
     private void OnDeleteAllyClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (_activePanel == 0 && _selectedSlot >= 0 && _allies[_selectedSlot].Used)
+        if (AlliesList.SelectedItem is BattleUnit unit && unit.Used)
         {
-            _allies[_selectedSlot].Used = false;
-            _allies[_selectedSlot].Image = null;
+            unit.Used = false;
+            unit.Image = null;
             InspectorPanel.IsVisible = false;
+            AlliesList.ItemsSource = null;
+            AlliesList.ItemsSource = _allies;
             RebuildOverlay();
         }
     }
@@ -107,37 +174,40 @@ public partial class BattleEditorView
         var enemies = LoadEnemiesJson();
         if (enemies.Count == 0) return;
 
-        int newId = (_inspectorPanel == 1 && _inspectorSlotIdx >= 0 && _enemies[_inspectorSlotIdx].Used) 
-            ? _enemies[_inspectorSlotIdx].Id : 0;
-
+        int newId = (EnemiesList.SelectedItem is BattleUnit selected && selected.Used) ? selected.Id : 0;
         var enemy = enemies.FirstOrDefault(x => x.Id == newId) ?? enemies[0];
         var freeSlot = _enemies.First(a => !a.Used);
         freeSlot.Id = enemy.Id;
         freeSlot.Name = enemy.Name;
         freeSlot.Sprite = enemy.Sprite;
-        freeSlot.X = 0; freeSlot.Y = 0;
+        
+        int count = _enemies.Count(a => a.Used);
+        freeSlot.X = 4 + (count % 4);
+        freeSlot.Y = 2 + (count / 4);
+
         freeSlot.Used = true;
         freeSlot.IsEnemy = true;
         LoadUnitSprite(freeSlot);
 
-        _activePanel = 1;
-        _selectedSlot = _enemies.IndexOf(freeSlot);
-        ShowInspector(freeSlot);
+        EnemiesList.ItemsSource = null;
+        EnemiesList.ItemsSource = _enemies;
+        EnemiesList.SelectedItem = freeSlot;
         RebuildOverlay();
     }
 
     private void OnDeleteEnemyClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (_activePanel == 1 && _selectedSlot >= 0 && _enemies[_selectedSlot].Used)
+        if (EnemiesList.SelectedItem is BattleUnit unit && unit.Used)
         {
-            _enemies[_selectedSlot].Used = false;
-            _enemies[_selectedSlot].Image = null;
+            unit.Used = false;
+            unit.Image = null;
             InspectorPanel.IsVisible = false;
+            EnemiesList.ItemsSource = null;
+            EnemiesList.ItemsSource = _enemies;
             RebuildOverlay();
         }
     }
 
-    // ─── Парсинг баз ───
     private class UnitMeta { public int Id; public string Name = ""; public string Sprite = ""; }
 
     private System.Collections.Generic.List<UnitMeta> LoadActorsJson()
@@ -152,11 +222,7 @@ public partial class BattleEditorView
             for (int i = 0; i < arr.Count; i++)
             {
                 var o = arr[i];
-                res.Add(new UnitMeta {
-                    Id = i,
-                    Name = o?["name"]?.GetValue<string>() ?? "",
-                    Sprite = o?["mapsprite"]?.GetValue<string>() ?? ""
-                });
+                res.Add(new UnitMeta { Id = i, Name = o?["name"]?.GetValue<string>() ?? "", Sprite = o?["mapsprite"]?.GetValue<string>() ?? "" });
             }
         }
         return res;
@@ -174,11 +240,7 @@ public partial class BattleEditorView
             for (int i = 0; i < arr.Count; i++)
             {
                 var o = arr[i];
-                res.Add(new UnitMeta {
-                    Id = i,
-                    Name = o?["name"]?.GetValue<string>() ?? "",
-                    Sprite = o?["mapsprite"]?.GetValue<string>() ?? ""
-                });
+                res.Add(new UnitMeta { Id = i, Name = o?["name"]?.GetValue<string>() ?? "", Sprite = o?["mapsprite"]?.GetValue<string>() ?? "" });
             }
         }
         return res;

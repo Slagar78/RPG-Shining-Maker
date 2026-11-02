@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using Avalonia.Media.Imaging;
+using Avalonia.Media;
 
 namespace RpgShinzoMaker.Desktop.Editors.BattleEditor;
 
@@ -52,8 +52,8 @@ public class BattleUnit : INotifyPropertyChanged
         set { _used = value; OnPropertyChanged(nameof(Used)); OnPropertyChanged(nameof(Image)); }
     }
 
-    private Bitmap? _image;
-    public Bitmap? Image
+    private IImage? _image;
+    public IImage? Image
     {
         get => _image;
         set { _image = value; OnPropertyChanged(nameof(Image)); }
