@@ -18,31 +18,32 @@ class ChurchMenu
 
   attr_reader :visible, :selected_index, :sub_state
 
-  # ЧТОБЫ ИЗ ИГРЫ МОЖНО БЫЛО ОБНОВЛЯТЬ ДАННЫЕ
   attr_accessor :current_slot, :current_map_id, :player_name
+  attr_accessor :flags                           # ← НОВОЕ
 
-  # ДОБАВЛЕН ПАРАМЕТР current_slot
-  def initialize(font, large_font, db, party, start_inventory, game_text = {}, player = nil, map_id = 0, player_name = "Bowie", current_slot = 1)
+  # + flags = nil в конце
+  def initialize(font, large_font, db, party, start_inventory, game_text = {}, player = nil, map_id = 0, player_name = "Bowie", current_slot = 1, flags = nil)
     @font            = font
     @large_font      = large_font || font
     @db              = db
     @party           = party || []
     @start_inventory = start_inventory || []
     @game_text       = game_text || {}
-    
+
     @player          = player
     @current_map_id  = map_id
     @player_name     = player_name
-    @current_slot    = current_slot # <--- Сохраняем номер слота
+    @current_slot    = current_slot
+    @flags           = flags                        # ← НОВОЕ
 
     @visible        = false
     @selected_index = 0
     @sub_state      = :main
     @anim_timer     = 0.0
-    
+
     @save_confirm_index = 0
     @confirm_anim_timer = 0.0
-    @save_text_stage    = 0 # 0: ask, 1: light, 2: continue, 3: rest
+    @save_text_stage    = 0
 
     @tiles = [
       { "id" => 0, "name" => "raise", "icon" => "assets/ui/menu/Raise.png", "icon_anim" => "assets/ui/menu/Raise_Anim.png" },
@@ -93,7 +94,7 @@ class ChurchMenu
     @yes_anim_tex = Raylib.LoadTexture("assets/ui/menu/Yes_Anim.png") if File.exist?("assets/ui/menu/Yes_Anim.png")
     @no_anim_tex = Raylib.LoadTexture("assets/ui/menu/No_Anim.png") if File.exist?("assets/ui/menu/No_Anim.png")
     @yes_no_panel_tex = Raylib.LoadTexture("assets/ui/yes-no_panel.png") if File.exist?("assets/ui/yes-no_panel.png")
-    
+
     [@yes_tex, @no_tex, @yes_anim_tex, @no_anim_tex, @yes_no_panel_tex].each do |t|
       Raylib.SetTextureFilter(t, Raylib::TEXTURE_FILTER_POINT) if t
     end
@@ -185,13 +186,13 @@ class ChurchMenu
       if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
         @save_confirm_index = 1 - @save_confirm_index
       elsif Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D) || Raylib.IsKeyPressed(Raylib::KEY_ENTER)
-        if @save_confirm_index == 0 # YES
+        if @save_confirm_index == 0
           save_game_to_file
           @sub_state = :save_light
           @save_text_stage = 1
           @text_reveal_index = 0
           @text_full_shown = false
-        else # NO
+        else
           @sub_state = :main
           @panel_anim_y = PANEL_MSG_HIDDEN_Y
         end
@@ -224,9 +225,9 @@ class ChurchMenu
       if Raylib.IsKeyPressed(Raylib::KEY_LEFT) || Raylib.IsKeyPressed(Raylib::KEY_RIGHT)
         @save_confirm_index = 1 - @save_confirm_index
       elsif Raylib.IsKeyPressed(Raylib::KEY_A) || Raylib.IsKeyPressed(Raylib::KEY_D) || Raylib.IsKeyPressed(Raylib::KEY_ENTER)
-        if @save_confirm_index == 0 # YES
+        if @save_confirm_index == 0
           close
-        else # NO
+        else
           @sub_state = :save_rest
           @save_text_stage = 3
           @text_reveal_index = 0
@@ -285,7 +286,7 @@ class ChurchMenu
     return unless @visible
     draw_message_panel if @panel_anim_y < PANEL_MSG_HIDDEN_Y
     draw_tiles if @sub_state == :main && @panel_anim_y >= PANEL_MSG_HIDDEN_Y
-    
+
     if [:save_ask, :save_continue].include?(@sub_state) && @text_full_shown
       draw_yes_no_icons
     end
@@ -336,7 +337,7 @@ class ChurchMenu
     panel_w = 64
     panel_h = 48
     gap_to_panel = 18
-    
+
     icons_total_width = (icon_size * 2) + spacing
     start_x = PANEL_MSG_X + (PANEL_MSG_W - icons_total_width) / 2
     icon_y = @panel_anim_y - icon_size + 10
@@ -427,23 +428,38 @@ class ChurchMenu
     end
   end
 
+  # ═══════════════════════════════════════════════════════════
+  # СОХРАНЕНИЕ — теперь с прокачкой и флагами
+  # ═══════════════════════════════════════════════════════════
   def save_game_to_file
     p_x = @player ? @player.x : 12
     p_y = @player ? @player.y : 14
-    
+
+    # ── Прокачка персонажей ──
+    party_state = (@party || []).map do |a|
+      {
+        "id"      => a["id"],
+        "level"   => a["level"],
+        "exp"     => a["exp"]     || 0,
+        "kills"   => a["kills"]   || 0,
+        "defeats" => a["defeats"] || 0
+      }
+    end
+
     save_data = {
-      "player_name" => @player_name, 
-      "gold" => @db&.globals ? (@db.globals["gold"] || 0) : 0,
-      "map_id" => @current_map_id, 
-      "x" => p_x,
-      "y" => p_y,
-      "start_inventory" => @start_inventory
+      "player_name"     => @player_name,
+      "gold"            => @db&.globals ? (@db.globals["gold"] || 0) : 0,
+      "map_id"          => @current_map_id,
+      "x"               => p_x,
+      "y"               => p_y,
+      "start_inventory" => @start_inventory,
+      "party_state"     => party_state,                    # ← НОВОЕ
+      "flags"           => (@flags ? @flags.to_h : {})     # ← НОВОЕ
     }
-    
+
     Dir.mkdir("data/save") unless Dir.exist?("data/save")
-    # СОХРАНЯЕМ В ВЫБРАННЫЙ СЛОТ
     File.write("data/save/save_#{@current_slot}.json", JSON.pretty_generate(save_data))
-    puts "✅ Игра успешно сохранена в data/save/save_#{@current_slot}.json!"
+    puts "✅ Игра сохранена в data/save/save_#{@current_slot}.json (party_state + flags)"
   end
 
   def unload

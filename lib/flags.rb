@@ -89,6 +89,10 @@ class Flags
     @data.dup
   end
 
+  def from_h(data)
+    @data = data.is_a?(Hash) ? data.dup : {}
+  end
+
   def save(path)
     require 'json'
     File.write(path, JSON.pretty_generate(@data))

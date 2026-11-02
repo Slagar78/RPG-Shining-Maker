@@ -1,6 +1,6 @@
 {
   "player_name": "Mushra",
-  "gold": 10,
+  "gold": 3450,
   "map_id": "Granseal",
   "x": 32,
   "y": 13,
@@ -15,7 +15,7 @@
           "equipped": true
         },
         {
-          "item_id": 6,
+          "item_id": -1,
           "equipped": false
         },
         {
@@ -65,7 +65,7 @@
           "equipped": false
         },
         {
-          "item_id": 4,
+          "item_id": -1,
           "equipped": false
         },
         {
@@ -149,8 +149,8 @@
       "start_level": 10,
       "items": [
         {
-          "item_id": -1,
-          "equipped": false
+          "item_id": 7,
+          "equipped": true
         },
         {
           "item_id": -1,
@@ -166,5 +166,57 @@
         }
       ]
     }
-  ]
+  ],
+  "party_state": [
+    {
+      "id": 0,
+      "level": 1,
+      "exp": 0,
+      "kills": 0,
+      "defeats": 0
+    },
+    {
+      "id": 1,
+      "level": 1,
+      "exp": 0,
+      "kills": 0,
+      "defeats": 0
+    },
+    {
+      "id": 2,
+      "level": 1,
+      "exp": 0,
+      "kills": 0,
+      "defeats": 0
+    },
+    {
+      "id": 3,
+      "level": 1,
+      "exp": 0,
+      "kills": 0,
+      "defeats": 0
+    },
+    {
+      "id": 4,
+      "level": 1,
+      "exp": 0,
+      "kills": 0,
+      "defeats": 0
+    },
+    {
+      "id": 5,
+      "level": 1,
+      "exp": 0,
+      "kills": 0,
+      "defeats": 0
+    },
+    {
+      "id": 6,
+      "level": 10,
+      "exp": 0,
+      "kills": 0,
+      "defeats": 0
+    }
+  ],
+  "flags": {}
 }

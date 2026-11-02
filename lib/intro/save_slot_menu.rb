@@ -21,17 +21,22 @@ class SaveSlotMenu
 
     if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D) || IsKeyPressed(KEY_ENTER)
       if @mode == :new_game
-        return :name_input
+        # ═══ НОВАЯ ПРОВЕРКА ═══
+        if File.exist?("data/save/save_#{@slot_index + 1}.json")
+          return :overwrite_ask
+        else
+          return :name_input
+        end
+        # ═════════════════════════
       else
-        # Проверяем, существует ли файл сохранения
         if File.exist?("data/save/save_#{@slot_index + 1}.json")
           return { action: :load, slot: @slot_index }
         else
-          # Если файла нет, звучит ошибка и ничего не происходит
           $audio.play_sfx("error") if $audio
           return nil
         end
       end
+
     elsif IsKeyPressed(KEY_BACKSPACE) || IsKeyPressed(KEY_S)
       return :title
     end

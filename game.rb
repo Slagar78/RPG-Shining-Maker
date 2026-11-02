@@ -14,6 +14,7 @@ require_relative 'lib/intro/intro'
 require_relative 'lib/intro/title_screen'
 require_relative 'lib/intro/save_slot_menu'
 require_relative 'lib/intro/name_input'
+require_relative 'lib/intro/overwrite_confirm'
 require_relative 'lib/dialog_manager'
 require_relative 'lib/shop_ui'
 require_relative 'lib/church_ui'
@@ -176,7 +177,21 @@ class Game
     # Сначала задаем имя и слот
     @player_name = "Mushra" 
     @current_slot = 1
-    @church_menu = ChurchMenu.new(@font, @large_font, @db, @party, @start_inventory, @game_text, @player, @current_map_id, @player_name, @current_slot)
+
+    @church_menu = ChurchMenu.new(
+      @font,
+      @large_font,
+      @db,
+      @party,
+      @start_inventory,
+      @game_text,
+      @player,
+      @current_map_id,
+      @player_name,
+      @current_slot,
+      @flags
+    )
+
     @dialog_manager = nil
 
     @anim_timer = 0.0
@@ -188,6 +203,7 @@ class Game
     @title_screen = nil
     @save_slot_menu = nil
     @name_input = nil
+    @overwrite_confirm = nil
 	
 	  @warp_pending = nil      # данные варпа, ожидающие перехода
     @fade_alpha = 0          # 0..255, 0 = прозрачный, 255 = чёрный
@@ -265,11 +281,11 @@ class Game
     if @game_state == :title
       result = @title_screen.update(dt)
       if result == :save_slot
-        @save_slot_menu = SaveSlotMenu.new(@font, :new_game) # Создаем для новой игры
+        @save_slot_menu = SaveSlotMenu.new(@font, :new_game)
         @game_state = :save_slot
         @audio.play_sfx(:confirm)
       elsif result == :continue
-        @save_slot_menu = SaveSlotMenu.new(@font, :load_game) # Создаем для загрузки
+        @save_slot_menu = SaveSlotMenu.new(@font, :load_game)
         @game_state = :save_slot
         @audio.play_sfx(:confirm)
       end
@@ -279,26 +295,50 @@ class Game
     # --- ОБРАБОТКА ВЫБОРА СЛОТА ---
     if @game_state == :save_slot
       result = @save_slot_menu.update(dt)
-      
-       if result == :name_input
-        @current_slot = @save_slot_menu.instance_variable_get(:@slot_index) + 1 
-        @church_menu.current_slot = @current_slot # <--- СООБЩАЕМ ЦЕРКВИ НОВЫЙ СЛОТ
-               
+
+      if result == :name_input
+        @current_slot = @save_slot_menu.instance_variable_get(:@slot_index) + 1
+        @church_menu.current_slot = @current_slot
+
         @name_input = NameInput.new(@font, @large_font)
         @game_state = :name_input
         @audio.play_sfx(:confirm)
-        
+
+      elsif result == :overwrite_ask
+        @current_slot = @save_slot_menu.instance_variable_get(:@slot_index) + 1
+        @church_menu.current_slot = @current_slot
+        @overwrite_confirm = OverwriteConfirm.new(@font, @large_font, @current_slot)
+        @game_state = :overwrite_ask
+        @audio.play_sfx(:confirm)
+
       elsif result.is_a?(Hash) && result[:action] == :load
-        # ЗАГРУЖАЕМ ИГРУ ИЗ СЛОТА
         slot = result[:slot] + 1
         if load_game_from_file(slot)
           @audio.play_sfx(:confirm)
         end
-        
+
       elsif result == :title
         @save_slot_menu.unload
         @save_slot_menu = nil
         @game_state = :title
+        @audio.play_sfx(:cancel)
+      end
+      return
+    end
+
+    # --- ОБРАБОТКА ПОДТВЕРЖДЕНИЯ ПЕРЕЗАПИСИ ---
+    if @game_state == :overwrite_ask
+      result = @overwrite_confirm.update(dt)
+      if result == :yes
+        @overwrite_confirm.unload
+        @overwrite_confirm = nil
+        @name_input = NameInput.new(@font, @large_font)
+        @game_state = :name_input
+        @audio.play_sfx(:confirm)
+      elsif result == :no
+        @overwrite_confirm.unload
+        @overwrite_confirm = nil
+        @game_state = :save_slot
         @audio.play_sfx(:cancel)
       end
       return
@@ -315,34 +355,38 @@ class Game
         if @party && @party[0]
           @party[0]["name"] = @player_name
         end
-        
+
         # Чистим память от экранов меню
         @title_screen.unload if @title_screen
         @save_slot_menu.unload if @save_slot_menu
         @name_input.unload if @name_input
-        
+
         @title_screen = nil
         @save_slot_menu = nil
         @name_input = nil
-        
+
+        # ═══ СБРОС ПРОГРЕССА (партия, инвентарь, золото, флаги) ═══
+        reset_progress_for_new_game
+        # ═══════════════════════════════════════════════════════════
+
         # ═══ ПЕРЕСОЗДАЕМ КАРТУ ДЛЯ НОВОЙ ИГРЫ ═══
         if @game_map
           @game_map.unload
           UnloadRenderTexture(@top_layer) if @top_layer
           UnloadRenderTexture(@layer2) if @layer2
         end
-        
+
         start_id = @db.globals["start_map_id"] || 0
         map_entry = @map_entries.find { |e| e["id"] == start_id } || @map_entries.first
         @game_map = GameMap.new(map_entry["folder"], @flags)
         @current_map_id = @game_map.map_id
-        
+        @church_menu.current_map_id = @current_map_id
         @top_layer = @game_map.build_top_layer
         SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
         @layer2 = @game_map.build_layer2
         SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
         @zone_hidden = Array.new(@game_map.roof_events.size, false)
-        
+
         start_x = @db.globals["start_x"] || @game_map.default_spawn[0]
         start_y = @db.globals["start_y"] || @game_map.default_spawn[1]
         @player.map = @game_map
@@ -357,7 +401,7 @@ class Game
         @audio.play_sfx(:confirm)
         @game_state = :playing
         @audio.play(@game_map.music_file, @game_map.music_volume)
-        
+
       elsif result == :title
         # Возврат на главный экран, если нажали S при вводе
         @name_input.unload
@@ -378,39 +422,17 @@ class Game
     end
 
     case @game_state
-	
-	when :warping
+
+    when :warping
       # во время варпа управление отключено
       return
-	
-when :playing
-  # Как только меню запрошено — блокируем ВСЁ до его появления.
-  # Pending снимается только в update, когда игрок стоит, камера доехала
-  # Блокируем ввод, если меню или диалог в ожидании
-  return if @pending_menu_request || @pending_dialog_request
 
-  # Открывать меню мгновенно можно только если персонаж не шагает
-  # И камера уже доехала до своей целевой позиции (4 тайла от края).
-  # Иначе — ставим pending и ждём, пока всё успокоится.
-  can_open_now = !@player.moving && @camera.arrived?
+    when :playing
+      return if @pending_menu_request || @pending_dialog_request
 
-  if IsKeyPressed(KEY_A)
-    if can_open_now
-      @game_state = :menu
-      @audio.play_sfx(:confirm)
-      @menu.open
-    else
-      @pending_menu_request = true
-    end
+      can_open_now = !@player.moving && @camera.arrived?
 
-    elsif IsKeyPressed(KEY_D) && @game_state != :dialog
-      if find_interactable_npc
-        if can_open_now
-          try_start_interaction
-        else
-          @pending_dialog_request = true
-        end
-      else
+      if IsKeyPressed(KEY_A)
         if can_open_now
           @game_state = :menu
           @audio.play_sfx(:confirm)
@@ -418,14 +440,30 @@ when :playing
         else
           @pending_menu_request = true
         end
-      end
-  else
-    @player.handle_input
-  end
 
-	when :dialog
-	  # Ничего не делаем — диалог управляется внутри DialogManager
-  
+      elsif IsKeyPressed(KEY_D) && @game_state != :dialog
+        if find_interactable_npc
+          if can_open_now
+            try_start_interaction
+          else
+            @pending_dialog_request = true
+          end
+        else
+          if can_open_now
+            @game_state = :menu
+            @audio.play_sfx(:confirm)
+            @menu.open
+          else
+            @pending_menu_request = true
+          end
+        end
+      else
+        @player.handle_input
+      end
+
+    when :dialog
+      # Ничего не делаем — диалог управляется внутри DialogManager
+
     when :menu
       if IsKeyPressed(KEY_S)
         @game_state = :playing
@@ -530,7 +568,7 @@ when :playing
     end
     
     # --- (заглушка для update, они работают в handle_input) ---
-    return if [:title, :save_slot, :name_input].include?(@game_state)
+    return if [:title, :save_slot, :name_input, :overwrite_ask].include?(@game_state)
     # -------------------------
 
     # Если идёт бой — обновляем только бой
@@ -652,6 +690,7 @@ when :playing
         @audio.stop
         @game_map = GameMap.new(pending[:map_id], @flags)
         @current_map_id = @game_map.map_id
+        @church_menu.current_map_id = @current_map_id
         @top_layer = @game_map.build_top_layer
         SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
         @layer2 = @game_map.build_layer2
@@ -667,7 +706,6 @@ when :playing
         @player.pattern = 0
         @zone_hidden = Array.new(@game_map.roof_events.size, false)
         @camera.snap_to(@player, @game_map)
-        # ВАЖНО: убрал отсюда @audio.play, он теперь ниже
       end
 
       # ПРОВЕРКА БИТВЫ ПРЯМО НА ЧЁРНОМ ЭКРАНЕ
@@ -920,7 +958,7 @@ when :playing
       return
     end
     # --- ОТРИСОВКА ЭКРАНОВ --
-    if [:title, :save_slot, :name_input].include?(@game_state)
+    if [:title, :save_slot, :name_input, :overwrite_ask].include?(@game_state)
       BeginDrawing()
       ClearBackground(BLACK)
       
@@ -933,6 +971,10 @@ when :playing
         @title_screen.draw 
         @save_slot_menu.draw 
         @name_input.draw 
+      elsif @game_state == :overwrite_ask
+        @title_screen.draw
+        @save_slot_menu.draw
+        @overwrite_confirm.draw
       end
       
       EndDrawing()
@@ -1184,11 +1226,62 @@ when :playing
       @layer2 = nil
     end
     
-    @flags = Flags.new
+    # ⚠️ Сбрасываем флаги В-МЕСТЕ (не создаём новый объект!),
+    #    иначе @church_menu, @dialog_manager и т.д. держат ссылку
+    #    на старый @flags и не увидят сброс.
+    @flags.from_h({})
+    
     @game_state = :title
     @title_screen = TitleScreen.new 
     @church_menu.close
     @dialog_manager = nil
+  end
+
+  def reset_progress_for_new_game
+    # 1. Перечитываем стартовый инвентарь с диска.
+    #    Мутируем существующий массив — @use_menu, @give_menu, @church_menu,
+    #    @battle_manager и т.д. держат на него ссылку, и не должны её потерять.
+    fresh_inventory = []
+    if File.exist?("data/actors/start_inventory.json")
+      inv_data = JSON.parse(File.read("data/actors/start_inventory.json"))
+      fresh_inventory = inv_data["start_inventory"] || []
+    end
+    @start_inventory.clear
+    @start_inventory.concat(fresh_inventory)
+
+    # 2. Пересобираем партию из db.actors + свежего инвентаря.
+    #    Опять же мутируем @party, чтобы все меню увидели новые данные.
+    fresh_party = @db.actors.map do |base_actor|
+      inv_entry = @start_inventory.find { |i| i["actor_id"] == base_actor["id"] }
+      class_id  = inv_entry ? inv_entry["class_id"] : base_actor["forClass"]
+
+      merged_actor = @db.get_merged_actor(base_actor, class_id)
+      merged_actor["level"]    = inv_entry["start_level"] if inv_entry && inv_entry["start_level"]
+      merged_actor["class_id"] = class_id
+      merged_actor["exp"]      = 0
+      merged_actor["kills"]    = 0
+      merged_actor["defeats"]  = 0
+      merged_actor
+    end
+    @party.clear
+    @party.concat(fresh_party)
+
+    # 3. Имя главного героя — из только что введённого.
+    if @party[0]
+      @party[0]["name"] = @player_name
+    end
+
+    # 4. Перечитываем global.json — сбрасываем золото и стартовые координаты.
+    if File.exist?("data/global.json")
+      fresh_globals = JSON.parse(File.read("data/global.json"))
+      @db.globals.merge!(fresh_globals)
+    end
+
+    # 5. Флаги — в ноль (на случай, если пришли не через reset_game_to_title).
+    @flags.from_h({})
+
+    # 6. Обновляем church_menu — на всякий случай, если он держит player_name
+    @church_menu.player_name = @player_name
   end
   
   def battle_id_for_map(map_id)
@@ -1254,7 +1347,7 @@ when :playing
       target_x = data["x"] || 12
       target_y = data["y"] || 14
  
-        # ВОССТАНАВЛИВАЕМ ИМЯ ГЛАВНОГО ГЕРОЯ В ПАРТИИ
+      # ВОССТАНАВЛИВАЕМ ИМЯ ГЛАВНОГО ГЕРОЯ В ПАРТИИ
       if @party && @party[0]
         @party[0]["name"] = @player_name
       end
@@ -1267,15 +1360,32 @@ when :playing
       # Восстанавливаем инвентарь
       if data["start_inventory"]
         @start_inventory = data["start_inventory"]
-        @use_menu.instance_variable_set(:@start_inventory, @start_inventory) if @use_menu
-        @equip_menu.instance_variable_set(:@start_inventory, @start_inventory) if @equip_menu
-        @give_menu.instance_variable_set(:@start_inventory, @start_inventory) if @give_menu
-        @drop_menu.instance_variable_set(:@start_inventory, @start_inventory) if @drop_menu
+        @use_menu.instance_variable_set(:@start_inventory, @start_inventory)    if @use_menu
+        @equip_menu.instance_variable_set(:@start_inventory, @start_inventory)  if @equip_menu
+        @give_menu.instance_variable_set(:@start_inventory, @start_inventory)   if @give_menu
+        @drop_menu.instance_variable_set(:@start_inventory, @start_inventory)   if @drop_menu
+        @church_menu.instance_variable_set(:@start_inventory, @start_inventory) if @church_menu
+        @shop_menu.instance_variable_set(:@start_inventory, @start_inventory)   if @shop_menu
       end
+
+      # ── ВОССТАНАВЛИВАЕМ ПРОКАЧКУ ПАРТИИ ──
+      if data["party_state"]
+        data["party_state"].each do |st|
+          actor = @party.find { |a| a["id"] == st["id"] }
+          next unless actor
+          actor["level"]   = st["level"]   if st["level"]
+          actor["exp"]     = st["exp"]     if st["exp"]
+          actor["kills"]   = st["kills"]   if st["kills"]
+          actor["defeats"] = st["defeats"] if st["defeats"]
+        end
+      end
+
+      # ── ВОССТАНАВЛИВАЕМ ФЛАГИ (мутируем существующий объект!) ──
+      @flags.from_h(data["flags"]) if data["flags"] && @flags.respond_to?(:from_h)
 
       if @game_map
         @game_map.unload
-        @game_map = nil # Зануляем, чтобы точно не выгрузить дважды
+        @game_map = nil
       end
       if @top_layer
         UnloadRenderTexture(@top_layer)
@@ -1286,7 +1396,6 @@ when :playing
         @layer2 = nil
       end
 
-      # Создаем карту заново
       @game_map = GameMap.new(target_map_id, @flags)
       @current_map_id = @game_map.map_id
       
@@ -1306,7 +1415,6 @@ when :playing
       
       @camera.snap_to(@player, @game_map)
       
-      # Очищаем меню
       @title_screen.unload if @title_screen
       @save_slot_menu.unload if @save_slot_menu
       @title_screen = nil
@@ -1314,7 +1422,6 @@ when :playing
       
       @current_slot = slot 
       
-      # СООБЩАЕМ ЦЕРКВИ НОВЫЕ ДАННЫЕ, ИНАЧЕ ОНА СОХРАНИТ СТАРЫЕ КООРДИНАТЫ И СЛОТ
       @church_menu.current_slot = @current_slot
       @church_menu.current_map_id = @current_map_id
       @church_menu.player_name = @player_name
