@@ -6,6 +6,7 @@
         xmlns:eventEditor="using:RpgShinzoMaker.Desktop.Editors.EventEditor"
         xmlns:importer="using:RpgShinzoMaker.Desktop.Editors.TilesetImporter"
         xmlns:dbEditor="using:RpgShinzoMaker.Desktop.Editors.DatabaseEditor"
+        xmlns:battleEditor="using:RpgShinzoMaker.Desktop.Editors.BattleEditor"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="RpgShinzoMaker.Desktop.Views.MainWindow"
         Icon="/Assets/shinzo.ico"
@@ -48,17 +49,13 @@
         <Style Selector="TabItem">
             <Setter Property="Background" Value="#1E1E1E"/>
             <Setter Property="Foreground" Value="#888888"/>
-            <!-- Отступ сверху, чтобы не прилипали к тулбару -->
             <Setter Property="Margin" Value="2,4,0,0"/>
-            <!-- Высота (сделали ниже) -->
             <Setter Property="Padding" Value="16,6"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
-            <!-- Скругляем ТОЛЬКО верхние углы: TopLeft, TopRight, BottomRight, BottomLeft -->
             <Setter Property="CornerRadius" Value="6,6,0,0"/>
             <Setter Property="Template">
                 <ControlTemplate>
-                    <!-- BorderThickness="0,2,0,0" создает место для цветной полоски сверху -->
                     <Border Name="PART_Border"
                             Background="{TemplateBinding Background}"
                             CornerRadius="{TemplateBinding CornerRadius}"
@@ -74,7 +71,6 @@
             </Setter>
         </Style>
 
-        <!-- Эффект при наведении (Hover) -->
         <Style Selector="TabItem:pointerover /template/ Border#PART_Border">
             <Setter Property="Background" Value="#2D2D30"/>
         </Style>
@@ -82,15 +78,13 @@
             <Setter Property="Foreground" Value="#CCCCCC"/>
         </Style>
 
-        <!-- ВЫБРАННАЯ ВКЛАДКА (Active) -->
         <Style Selector="TabItem:selected /template/ Border#PART_Border">
-            <Setter Property="Background" Value="#2D2D30"/> <!-- Сливается с фоном редактора -->
-            <Setter Property="BorderBrush" Value="#007ACC"/> <!-- Синяя полоска сверху -->
+            <Setter Property="Background" Value="#2D2D30"/>
+            <Setter Property="BorderBrush" Value="#007ACC"/>
         </Style>
         <Style Selector="TabItem:selected">
             <Setter Property="Foreground" Value="White"/>
         </Style>
-
     </Window.Styles>
 
     <Grid ColumnDefinitions="*,4,320">
@@ -109,11 +103,9 @@
                             Padding="12,6"
                             Click="OnSaveClick"/>
                     <Separator Width="1" Margin="6,2"/>
-                    <!-- Кнопка запуска игры -->
                     <Button Content="▶ Play Game"  
                             ToolTip.Tip="Запустить игру (F5)" 
                             Click="OnPlaytestClick"/>
-                    <!-- Кнопка битвы (отключена) -->
                     <Button Content="⚔ Battle Test" 
                             ToolTip.Tip="Запустить битву (в разработке)" 
                             IsEnabled="False"/>
@@ -154,14 +146,9 @@
                     <importer:TilesetImporterView x:Name="TilesetImporter"/>
                 </TabItem>
 
+                <!-- ★ ЗАМЕНЕНО: теперь настоящий BattleEditor ★ -->
                 <TabItem Header="Battles">
-                    <Border Background="#1E1E1E">
-                        <TextBlock Text="Battle Editor"
-                                   Foreground="Gray"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   FontSize="20"/>
-                    </Border>
+                    <battleEditor:BattleEditorView x:Name="BattleEditorControl"/>
                 </TabItem>
 
                 <TabItem Header="Scenes">
@@ -174,7 +161,6 @@
                     </Border>
                 </TabItem>
 
-                <!-- ЗАМЕНИЛИ ЗАГЛУШКУ НА РЕДАКТОР -->
                 <TabItem Header="Database">
                     <dbEditor:DatabaseEditorView x:Name="DatabaseEditor"/>
                 </TabItem>
@@ -187,7 +173,7 @@
                       ResizeDirection="Columns"
                       Width="4"/>
 
-<!-- КОЛОНКА 2: ASSETS + Свойства -->
+        <!-- КОЛОНКА 2: ASSETS + Свойства -->
         <Grid Grid.Column="2" RowDefinitions="*,4,280">
 
             <!-- ASSETS -->
@@ -271,7 +257,6 @@
                 </DockPanel>
             </Border>
 
-            <!-- РАЗДЕЛИТЕЛЬ между ASSETS и Свойствами -->
             <GridSplitter Grid.Row="1"
                           Background="#3E3E42"
                           ResizeDirection="Rows"
@@ -296,7 +281,7 @@
             </Border>
         </Grid>
 
-        <!-- ★ НАЧАЛО ЗАСТАВКИ ★ -->
+        <!-- ★ ЗАСТАВКА ★ -->
         <Border x:Name="SplashOverlay" 
                 Grid.ColumnSpan="3"
                 Background="Black" 

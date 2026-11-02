@@ -31,6 +31,10 @@ public partial class MainWindow : Window
 
         if (TilesetImporter != null)
             TilesetImporter.StatusChanged += OnEditorStatusChanged;
+
+        // ★ НОВОЕ: BattleEditor подписывается на статус-бар ★
+        if (BattleEditorControl != null)
+            BattleEditorControl.StatusChanged += OnEditorStatusChanged;
     }
 
     // ══════════════════════════════════════════════════════════════

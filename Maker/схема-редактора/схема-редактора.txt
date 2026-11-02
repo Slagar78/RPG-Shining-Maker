@@ -11,6 +11,7 @@ RPG-Shining-Maker/
 │   │   │   │   ├── GameMap.cs, MapEntry.cs, TileType.cs
 │   │   │   │   ├── RoofEvent, TileChangeEvent, StairEvent, WarpEvent, NpcEvent, CounterEvent, MapEvents, SubArea
 │   │   │   │   ├── GlobalSettings.cs               (start_map_id, start_x, start_y, gold)
+│   │   │   │   ├── BattleEntry.cs                  (map_id, battle_x/y/w/h, music, background)
 │   │   │   │   └── Database/
 │   │   │   │       ├── Actor.cs, CharacterClass.cs, Enemy.cs
 │   │   │   │       ├── ProwessCatalog.cs, StartInventory.cs
@@ -20,6 +21,9 @@ RPG-Shining-Maker/
 │   │   │       ├── ProjectPaths.cs, CJsonFormatter.cs
 │   │   │       ├── MapJsonService, EntriesService, TileTypesService, AreasService, EventsService, TilesetImportService
 │   │   │       ├── ActorsService, ItemsService, SpellsService, ClassesService, EnemiesService
+│   │   │       ├── BattleEntriesService.cs         (чтение/запись entries.json битв)
+│   │   │       ├── SpritesetService.cs             (чтение/запись spriteset.json)
+│   │   │       ├── TerrainService.cs               (чтение/запись terrain.json)
 │   │   │       ├── GlobalService.cs                (чтение/запись global.json)
 │   │   │       └── AssetScannerService.cs          (GetMusicFiles, GetPortraits и т.д.)
 │   │   │
@@ -39,6 +43,17 @@ RPG-Shining-Maker/
 │   │           ├── MapEditor/                      (11 файлов)
 │   │           ├── EventEditor/                    (7 файлов + EventCanvas)
 │   │           ├── TilesetImporter/                (4 файла)
+│   │           ├── BattleEditor/                   (11 файлов, новый)
+│   │           │   ├── BattleEditorView.axaml (.cs)
+│   │           │   ├── BattleEditorView.Battles.cs (загрузка entries.json)
+│   │           │   ├── BattleEditorView.Map.cs     (карта, тайлы, зум, режимы)
+│   │           │   ├── BattleEditorView.Canvas.cs  (OverlayCanvas + ScrollViewer bridge)
+│   │           │   ├── BattleEditorView.Units.cs   (Allies/Enemies, Add/Del)
+│   │           │   ├── BattleEditorView.Terrain.cs (кисти B/F/W)
+│   │           │   ├── BattleEditorView.Zone.cs    (Drag боевой зоны)
+│   │           │   ├── BattleEditorView.Inspector.cs (◄ ID ►)
+│   │           │   ├── BattleEditorView.Save.cs    (3 JSON)
+│   │           │   └── BattleUnit.cs               (модель слота)
 │   │           └── DatabaseEditor/
 │   │               ├── DatabaseEditorView.axaml (.cs)
 │   │               └── Views/
@@ -59,6 +74,7 @@ RPG-Shining-Maker/
 │   ├── items/items.json
 │   ├── spells/spells.json
 │   ├── enemies/enemies.json
+│   ├── battles/                                    (entries.json, battle00/spriteset.json, battle00/terrain.json)
 │   ├── shop/shops.json                             (ID предметов)
 │   └── movetypes.json
 │
@@ -75,7 +91,7 @@ RPG-Shining-Maker/
     └── game.rb                                     (Поиск стартовой карты по ID, Варпы по target_map_id)
 
 
-🏛️ Архитектура: оболочка и ПЯТЬ редакторов
+🏛️ Архитектура: оболочка и ШЕСТЬ редакторов
 
 ┌─────────────────────────────────────────────────────────────┐
 │                     MainWindow (Shell)                      │
@@ -86,6 +102,7 @@ RPG-Shining-Maker/
 │  │  MapEditorView  (IEditor)  ← вкладка «Maps»          │   │
 │  │  EventEditorView(IEditor)  ← вкладка «Events»        │   │
 │  │  TilesetImporter(IEditor)  ← вкладка «Importer»      │   │
+│  │  BattleEditorView(IEditor) ← вкладка «Battles»       │   │
 │  │  DatabaseEditor (IEditor)  ← вкладка «Database»      │   │
 │  └──────────────────────────────────────────────────────┘   │
 │  Правый док: [ASSETS] / [СВОЙСТВА]                          │
@@ -102,6 +119,12 @@ RPG-Shining-Maker/
   │ MapEditor │       │ EventEdit │       │ ImportEd  │       │ DataBase  │
   │  ✓ готов  │       │  ✓ готов  │       │  ✓ готов  │       │  ✓ готов  │
   └───────────┘       └───────────┘       └───────────┘       └───────────┘
+                            │
+                            ▼
+                      ┌───────────┐
+                      │ BattleEd  │
+                      │  ✓ готов  │
+                      └───────────┘
 
 
 📁 Формат JSON: Сохранение с табами (CJsonFormatter)
@@ -110,7 +133,21 @@ RPG-Shining-Maker/
 [{ "id": 0, "folder": "Granseal", "name": "Granseal", ... }]
 
 Пример data/battles/entries.json:
-[{ "folder": "battle00", "name": "Battle #0", "map_id": 1, "music": "...", ... }]
+[{ "folder": "battle00", "name": "Battle #0", "map_id": 1, "music": "...", "battle_x": 10, "battle_y": 14, "battle_width": 32, "battle_height": 24, "background": "...", "ground": "..." }]
+
+Пример data/battles/battle00/spriteset.json:
+{
+	"allies": [{"actor_id": 0, "x": 5, "y": 3}],
+	"enemies": [{"enemy_id": 0, "x": 8, "y": 5}],
+	"ai_points": [ ... ],   (сохраняется как есть)
+	"ai_regions": [ ... ]   (сохраняется как есть)
+}
+
+Пример data/battles/battle00/terrain.json:
+[
+	[1,1,1,-1,-1,1],
+	[1,0,1,-1,-1,1]
+]
 
 Пример события в events.json (обычное):
 { "type": "counter", "x": 5, "y": 10 }
@@ -140,7 +177,7 @@ RPG-Shining-Maker/
 
 #   Правило                                        Как соблюдать
 1   Один редактор — одна папка                     TilesetImporter в Editors/TilesetImporter/.
-2   Partial-файлы для больших редакторов            MapEditor = 11, EventEditor = 7, Importer = 4, Database = Views/.
+2   Partial-файлы для больших редакторов            MapEditor = 11, EventEditor = 7, Importer = 4, BattleEditor = 10, Database = Views/.
 3   Core — общий для всех                           Модели и сервисы в Core/.
 4   MainWindow знает только IEditor                 Никаких ссылок на конкретные классы.
 5   Общение редакторов — через Core                 Импортер вызывает MapJsonService, EntriesService.
@@ -170,13 +207,18 @@ RPG-Shining-Maker/
 29  Современный UI в MapEditor                      Использовать стили ModernComboBox для нижней панели (Map, Size, Tileset, Music).
 30  Современные вкладки (VS Code style)             Переопределять TabItem Template в MainWindow.axaml (скругление сверху, синяя полоса).
 31  Универсальный поиск карты в GameMap             GameMap.new принимает и строку (folder), и число (id). Сохраняет @map_id и @db_id.
+32  BattleEditor = Overlay поверх MapCanvas         Не трогать MapCanvas. Канвас оверлея в том же Grid, синхронизация через ScrollViewer.ScrollChanged + Zoom.
+33  BattleEditor: сохранение чужих ключей           SpritesetService сохраняет ai_points / ai_regions как были, меняет только allies и enemies.
+
 
 📈 Что уже готово vs что в планах
 
 Компонент                                              Статус
 ЯДРО И СЕРВИСЫ
 Core.Models (Карты, События, БД, GlobalSettings)       ✅
+Core.Models (BattleEntry)                              ✅
 Core.Services (JSON, Карты, Актеры, Враги, Магазины)   ✅
+Core.Services (Battle, Spriteset, Terrain)             ✅
 GlobalService (Чтение/запись global.json)              ✅
 
 ОБОЛОЧКА И РЕДАКТОРЫ
@@ -185,6 +227,13 @@ IEditor, MainWindow (Splash, Toolbar, StatusBar)       ✅
 MapEditor (11 файлов, современная нижняя панель)       ✅
 EventEditor (7 файлов + EventCanvas)                   ✅
 TilesetImporter (4 файла)                              ✅
+BattleEditor (10 файлов + модель BattleUnit)           ✅
+Вкладка Battles (Map/Battle/Terrain/Zone/Save/Zoom)    ✅
+Панели Allies/Enemies (сетки, Add/Del, Inspector ◄►)   ✅
+Overlay (юниты, зона, terrain-маркеры)                 ✅
+Сохранение battles/entries.json                        ✅
+Сохранение spriteset.json (только allies/enemies)      ✅
+Сохранение terrain.json                                ✅
 DatabaseEditor (Оболочка, вертикальные вкладки)        ✅
 Вкладка Heroes (инвентарь по ID)                       ✅
 Вкладка Items                                          ✅
@@ -204,7 +253,8 @@ DatabaseEditor (Оболочка, вертикальные вкладки)      
 BattleManager (give/drop/equip) по item_id             ✅
 
 В ПЛАНАХ
-BattleEditor, SceneEditor                              📋
+SceneEditor                                            📋
 ASSETS (живое дерево), СВОЙСТВА (инфо)                 📋
 MESSAGE / TEXTS (редактор диалогов)                    📋
 Undo/Redo в EventEditor, Визуальные subAreas           📋
+Кнопка [⚔ Battle Test] → запуск battle.rb              📋
