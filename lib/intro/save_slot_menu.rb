@@ -1,10 +1,12 @@
 # lib/intro/save_slot_menu.rb
 require 'raylib'
+require 'json'
 include Raylib
 
 class SaveSlotMenu
-  def initialize(font)
+  def initialize(font, mode = :new_game)
     @font = font
+    @mode = mode # :new_game или :load_game
     @frame_tex = LoadTexture("assets/intro/ui_save_slot_frame.png")
     SetTextureFilter(@frame_tex, TEXTURE_FILTER_POINT) if @frame_tex
     @slot_index = 0
@@ -18,8 +20,19 @@ class SaveSlotMenu
     end
 
     if IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D) || IsKeyPressed(KEY_ENTER)
-      return :name_input
-    elsif IsKeyPressed(KEY_BACKSPACE)
+      if @mode == :new_game
+        return :name_input
+      else
+        # Проверяем, существует ли файл сохранения
+        if File.exist?("data/save/save_#{@slot_index + 1}.json")
+          return { action: :load, slot: @slot_index }
+        else
+          # Если файла нет, звучит ошибка и ничего не происходит
+          $audio.play_sfx("error") if $audio
+          return nil
+        end
+      end
+    elsif IsKeyPressed(KEY_BACKSPACE) || IsKeyPressed(KEY_S)
       return :title
     end
     nil
@@ -44,39 +57,38 @@ class SaveSlotMenu
       
       DrawTexturePro(@frame_tex, src, dst, Vector2.create(0, 0), 0, tint)
       
-      # ═══ ЦЕНТРИРОВАНИЕ ТЕКСТА ═══
+      # ═══ ЧИТАЕМ ФАЙЛ, ЧТОБЫ ПОКАЗАТЬ ИМЯ ═══
+      file_path = "data/save/save_#{i + 1}.json"
       text = "Slot #{i + 1} - Empty"
-      text_color = (i == @slot_index) ? DARKBLUE : WHITE
+      
+      if File.exist?(file_path)
+        begin
+          save_data = JSON.parse(File.read(file_path))
+          p_name = save_data["player_name"] || "Unknown"
+          text = "#{p_name} - Lv 1" # Пока уровень по умолчанию 1
+        rescue
+          text = "Slot #{i + 1} - Corrupted"
+        end
+      end
+
+      text_color = (i == @slot_index) ? WHITE : LIGHTGRAY
       font_size = 18
       
       if @font
-        # Измеряем размер текста
         text_size = MeasureTextEx(@font, text, font_size, 1)
-        
-        # Вычисляем координаты для идеального центра
         text_x = x + (192 - text_size.x) / 2
         text_y = y + (64 - text_size.y) / 2
         
-        # ═══ РИСУЕМ ОБВОДКУ (ЧЕРНУЮ) ═══
+        # Обводка текста
         outline_color = BLACK
-        offset = 1.0 # Сдвиг на 1 пиксель
-
-        # Рисуем текст 8 раз со сдвигами (создаем контур)
+        offset = 1.0
         DrawTextEx(@font, text, Vector2.create(text_x - offset, text_y), font_size, 1, outline_color)
         DrawTextEx(@font, text, Vector2.create(text_x + offset, text_y), font_size, 1, outline_color)
         DrawTextEx(@font, text, Vector2.create(text_x, text_y - offset), font_size, 1, outline_color)
         DrawTextEx(@font, text, Vector2.create(text_x, text_y + offset), font_size, 1, outline_color)
         
-        # Диагонали (для еще более плотной обводки)
-        DrawTextEx(@font, text, Vector2.create(text_x - offset, text_y - offset), font_size, 1, outline_color)
-        DrawTextEx(@font, text, Vector2.create(text_x + offset, text_y - offset), font_size, 1, outline_color)
-        DrawTextEx(@font, text, Vector2.create(text_x - offset, text_y + offset), font_size, 1, outline_color)
-        DrawTextEx(@font, text, Vector2.create(text_x + offset, text_y + offset), font_size, 1, outline_color)
-
-        # ═══ РИСУЕМ ОСНОВНОЙ ТЕКСТ ПОВЕРХ ОБВОДКИ ═══
         DrawTextEx(@font, text, Vector2.create(text_x, text_y), font_size, 1, text_color)
       else
-        # Если шрифта нет (на всякий случай), рисуем хоть как-то
         DrawText(text, x + 35, y + 22, font_size, text_color)
       end
     end

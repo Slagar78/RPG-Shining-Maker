@@ -172,7 +172,11 @@ class Game
     @shop_menu = ShopMenu.new(@font, @db, @large_font, @game_text, @party, @start_inventory, @classes_data, @class_names, @font_gold)
     @shops = ShopMenu.load_all
     @dialog_manager = nil
-    @church_menu = ChurchMenu.new(@font, @large_font, @db, @party, @start_inventory, @game_text)
+
+    # Сначала задаем имя и слот
+    @player_name = "Mushra" 
+    @current_slot = 1
+    @church_menu = ChurchMenu.new(@font, @large_font, @db, @party, @start_inventory, @game_text, @player, @current_map_id, @player_name, @current_slot)
     @dialog_manager = nil
 
     @anim_timer = 0.0
@@ -184,7 +188,6 @@ class Game
     @title_screen = nil
     @save_slot_menu = nil
     @name_input = nil
-    @player_name = "Bowie" # Имя по умолчанию
 	
 	  @warp_pending = nil      # данные варпа, ожидающие перехода
     @fade_alpha = 0          # 0..255, 0 = прозрачный, 255 = чёрный
@@ -262,7 +265,11 @@ class Game
     if @game_state == :title
       result = @title_screen.update(dt)
       if result == :save_slot
-        @save_slot_menu = SaveSlotMenu.new(@font) # <--- Передаем шрифт
+        @save_slot_menu = SaveSlotMenu.new(@font, :new_game) # Создаем для новой игры
+        @game_state = :save_slot
+        @audio.play_sfx(:confirm)
+      elsif result == :continue
+        @save_slot_menu = SaveSlotMenu.new(@font, :load_game) # Создаем для загрузки
         @game_state = :save_slot
         @audio.play_sfx(:confirm)
       end
@@ -272,10 +279,22 @@ class Game
     # --- ОБРАБОТКА ВЫБОРА СЛОТА ---
     if @game_state == :save_slot
       result = @save_slot_menu.update(dt)
-      if result == :name_input
-        @name_input = NameInput.new(@font, @large_font) # <--- Передаем шрифты сюда
+      
+       if result == :name_input
+        @current_slot = @save_slot_menu.instance_variable_get(:@slot_index) + 1 
+        @church_menu.current_slot = @current_slot # <--- СООБЩАЕМ ЦЕРКВИ НОВЫЙ СЛОТ
+               
+        @name_input = NameInput.new(@font, @large_font)
         @game_state = :name_input
         @audio.play_sfx(:confirm)
+        
+      elsif result.is_a?(Hash) && result[:action] == :load
+        # ЗАГРУЖАЕМ ИГРУ ИЗ СЛОТА
+        slot = result[:slot] + 1
+        if load_game_from_file(slot)
+          @audio.play_sfx(:confirm)
+        end
+        
       elsif result == :title
         @save_slot_menu.unload
         @save_slot_menu = nil
@@ -290,6 +309,12 @@ class Game
       result = @name_input.update(dt)
       if result == :gameplay
         @player_name = @name_input.name
+        @church_menu.player_name = @player_name
+
+        # МЕНЯЕМ ИМЯ ГЛАВНОГО ГЕРОЯ В ПАРТИИ (ID 0)
+        if @party && @party[0]
+          @party[0]["name"] = @player_name
+        end
         
         # Чистим память от экранов меню
         @title_screen.unload if @title_screen
@@ -300,10 +325,39 @@ class Game
         @save_slot_menu = nil
         @name_input = nil
         
+        # ═══ ПЕРЕСОЗДАЕМ КАРТУ ДЛЯ НОВОЙ ИГРЫ ═══
+        if @game_map
+          @game_map.unload
+          UnloadRenderTexture(@top_layer) if @top_layer
+          UnloadRenderTexture(@layer2) if @layer2
+        end
+        
+        start_id = @db.globals["start_map_id"] || 0
+        map_entry = @map_entries.find { |e| e["id"] == start_id } || @map_entries.first
+        @game_map = GameMap.new(map_entry["folder"], @flags)
+        @current_map_id = @game_map.map_id
+        
+        @top_layer = @game_map.build_top_layer
+        SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
+        @layer2 = @game_map.build_layer2
+        SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
+        @zone_hidden = Array.new(@game_map.roof_events.size, false)
+        
+        start_x = @db.globals["start_x"] || @game_map.default_spawn[0]
+        start_y = @db.globals["start_y"] || @game_map.default_spawn[1]
+        @player.map = @game_map
+        @player.x = start_x
+        @player.y = start_y
+        @player.last_x = start_x
+        @player.last_y = start_y
+        @camera.snap_to(@player, @game_map)
+        # ═════════════════════════════════════════
+
         # Запускаем игру!
         @audio.play_sfx(:confirm)
         @game_state = :playing
         @audio.play(@game_map.music_file, @game_map.music_volume)
+        
       elsif result == :title
         # Возврат на главный экран, если нажали S при вводе
         @name_input.unload
@@ -821,8 +875,14 @@ when :playing
 
   # Церковь — аналогично
   if @church_menu.visible
-    @church_menu.handle_input(dt)
+    result = @church_menu.handle_input(dt)
     @church_menu.update(dt)
+    
+    # Ловим сигнал на сброс игры
+    if result == :reset_to_title
+      reset_game_to_title
+      return
+    end
   end
   
 	  if @dialog_manager.finished?
@@ -1011,19 +1071,19 @@ when :playing
     EndDrawing()
   end
 
-def change_map(map_id, target_x, target_y, facing = nil)
-  same_map = map_id.to_s.strip == @current_map_id.to_s.strip
+  def change_map(map_id, target_x, target_y, facing = nil)
+    same_map = map_id.to_s.strip == @current_map_id.to_s.strip
 
-  @warp_pending = {
-    map_id: map_id,
-    target_x: target_x,
-    target_y: target_y,
-    facing: facing
-  }
-  @game_state = :warping
-  @warp_delay = same_map ? 0 : 5
-  @warp_is_same_map = same_map
-end
+    @warp_pending = {
+      map_id: map_id,
+      target_x: target_x,
+      target_y: target_y,
+      facing: facing
+    }
+    @game_state = :warping
+    @warp_delay = same_map ? 0 : 5
+    @warp_is_same_map = same_map
+  end
 
   def draw_battle
     # 1. Рендер боевой сцены в её собственный холст (если активна)
@@ -1106,6 +1166,30 @@ end
       @game_state = :playing
     end
   end
+
+  def reset_game_to_title
+    @audio.stop
+    
+    # Безопасно чистим карту
+    if @game_map
+      @game_map.unload
+      @game_map = nil
+    end
+    if @top_layer
+      UnloadRenderTexture(@top_layer)
+      @top_layer = nil
+    end
+    if @layer2
+      UnloadRenderTexture(@layer2)
+      @layer2 = nil
+    end
+    
+    @flags = Flags.new
+    @game_state = :title
+    @title_screen = TitleScreen.new 
+    @church_menu.close
+    @dialog_manager = nil
+  end
   
   def battle_id_for_map(map_id)
     return nil if map_id.nil?
@@ -1156,6 +1240,97 @@ end
         @game_map.counter_at?(@player.x + dx / 2, @player.y + dy / 2)
     end
   end
+
+# ═══════════════════════════════════════
+  def load_game_from_file(slot)
+    path = "data/save/save_#{slot}.json"
+    return false unless File.exist?(path)
+
+    begin
+      data = JSON.parse(File.read(path))
+      
+      @player_name = data["player_name"]
+      target_map_id = data["map_id"] || 0
+      target_x = data["x"] || 12
+      target_y = data["y"] || 14
+ 
+        # ВОССТАНАВЛИВАЕМ ИМЯ ГЛАВНОГО ГЕРОЯ В ПАРТИИ
+      if @party && @party[0]
+        @party[0]["name"] = @player_name
+      end
+   
+      # Восстанавливаем золото
+      if @db.globals
+        @db.globals["gold"] = data["gold"] if data["gold"]
+      end
+      
+      # Восстанавливаем инвентарь
+      if data["start_inventory"]
+        @start_inventory = data["start_inventory"]
+        @use_menu.instance_variable_set(:@start_inventory, @start_inventory) if @use_menu
+        @equip_menu.instance_variable_set(:@start_inventory, @start_inventory) if @equip_menu
+        @give_menu.instance_variable_set(:@start_inventory, @start_inventory) if @give_menu
+        @drop_menu.instance_variable_set(:@start_inventory, @start_inventory) if @drop_menu
+      end
+
+      if @game_map
+        @game_map.unload
+        @game_map = nil # Зануляем, чтобы точно не выгрузить дважды
+      end
+      if @top_layer
+        UnloadRenderTexture(@top_layer)
+        @top_layer = nil
+      end
+      if @layer2
+        UnloadRenderTexture(@layer2)
+        @layer2 = nil
+      end
+
+      # Создаем карту заново
+      @game_map = GameMap.new(target_map_id, @flags)
+      @current_map_id = @game_map.map_id
+      
+      @top_layer = @game_map.build_top_layer
+      SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
+      @layer2 = @game_map.build_layer2
+      SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
+      
+      @zone_hidden = Array.new(@game_map.roof_events.size, false)
+      
+      @player.map = @game_map
+      @player.x = target_x
+      @player.y = target_y
+      @player.last_x = target_x
+      @player.last_y = target_y
+      @player.moving = false
+      
+      @camera.snap_to(@player, @game_map)
+      
+      # Очищаем меню
+      @title_screen.unload if @title_screen
+      @save_slot_menu.unload if @save_slot_menu
+      @title_screen = nil
+      @save_slot_menu = nil
+      
+      @current_slot = slot 
+      
+      # СООБЩАЕМ ЦЕРКВИ НОВЫЕ ДАННЫЕ, ИНАЧЕ ОНА СОХРАНИТ СТАРЫЕ КООРДИНАТЫ И СЛОТ
+      @church_menu.current_slot = @current_slot
+      @church_menu.current_map_id = @current_map_id
+      @church_menu.player_name = @player_name
+      
+      @game_state = :playing
+      @audio.play(@game_map.music_file, @game_map.music_volume)
+      
+      puts "✅ Игра успешно загружена из #{path}"
+      return true
+      
+    rescue => e
+      puts "❌ Ошибка при загрузке: #{e.message}"
+      return false
+    end
+  end
+# ═══════════════════════════════════════
 
   private
 

@@ -63,7 +63,7 @@ class NameInput
 
       # 3. Переход к кнопке OK (по Enter, Tab или Стрелке Вниз)
       if IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_TAB) || IsKeyPressed(KEY_DOWN)
-        @name = "Bowie" if @name.strip.empty?
+        @name = "Mushra" if @name.strip.empty?  # <--- ИСПРАВЛЕНО ТУТ
         @state = :ok_selected
       end
       
