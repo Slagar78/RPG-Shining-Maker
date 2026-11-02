@@ -1,4 +1,4 @@
-# lib/intro.rb
+# lib/intro/intro.rb
 
 class Intro
   def initialize

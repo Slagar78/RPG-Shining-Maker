@@ -10,7 +10,10 @@ require_relative 'lib/ui'
 require_relative 'lib/AudioManager'
 require_relative 'lib/item_actions_ui'
 require_relative 'lib/GameMap'
-require_relative 'lib/intro'
+require_relative 'lib/intro/intro'
+require_relative 'lib/intro/title_screen'
+require_relative 'lib/intro/save_slot_menu'
+require_relative 'lib/intro/name_input'
 require_relative 'lib/dialog_manager'
 require_relative 'lib/shop_ui'
 require_relative 'lib/church_ui'
@@ -178,6 +181,10 @@ class Game
 
     @game_state = :intro
     @intro = Intro.new
+    @title_screen = nil
+    @save_slot_menu = nil
+    @name_input = nil
+    @player_name = "Bowie" # Имя по умолчанию
 	
 	  @warp_pending = nil      # данные варпа, ожидающие перехода
     @fade_alpha = 0          # 0..255, 0 = прозрачный, 255 = чёрный
@@ -242,6 +249,7 @@ class Game
     SetMouseOffset(-dx, -dy)
     play_ui_sounds
 
+  # ==============================
     # --- ОБРАБОТКА ИНТРО ---
     if @game_state == :intro
       if IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_S) || IsKeyPressed(KEY_A) || IsKeyPressed(KEY_D)
@@ -249,7 +257,65 @@ class Game
       end
       return
     end
-    # ------------------------
+
+    # --- ОБРАБОТКА ТИТУЛЬНОГО ЭКРАНА ---
+    if @game_state == :title
+      result = @title_screen.update(dt)
+      if result == :save_slot
+        @save_slot_menu = SaveSlotMenu.new(@font) # <--- Передаем шрифт
+        @game_state = :save_slot
+        @audio.play_sfx(:confirm)
+      end
+      return
+    end
+
+    # --- ОБРАБОТКА ВЫБОРА СЛОТА ---
+    if @game_state == :save_slot
+      result = @save_slot_menu.update(dt)
+      if result == :name_input
+        @name_input = NameInput.new(@font, @large_font) # <--- Передаем шрифты сюда
+        @game_state = :name_input
+        @audio.play_sfx(:confirm)
+      elsif result == :title
+        @save_slot_menu.unload
+        @save_slot_menu = nil
+        @game_state = :title
+        @audio.play_sfx(:cancel)
+      end
+      return
+    end
+
+    # --- ОБРАБОТКА ВВОДА ИМЕНИ ---
+    if @game_state == :name_input
+      result = @name_input.update(dt)
+      if result == :gameplay
+        @player_name = @name_input.name
+        
+        # Чистим память от экранов меню
+        @title_screen.unload if @title_screen
+        @save_slot_menu.unload if @save_slot_menu
+        @name_input.unload if @name_input
+        
+        @title_screen = nil
+        @save_slot_menu = nil
+        @name_input = nil
+        
+        # Запускаем игру!
+        @audio.play_sfx(:confirm)
+        @game_state = :playing
+        @audio.play(@game_map.music_file, @game_map.music_volume)
+      elsif result == :title
+        # Возврат на главный экран, если нажали S при вводе
+        @name_input.unload
+        @save_slot_menu.unload
+        @name_input = nil
+        @save_slot_menu = nil
+        @game_state = :title
+        @audio.play_sfx(:cancel)
+      end
+      return
+    end
+  # ==============================
 
     # Если идёт бой — управление уходит ему
     if @game_state == :battle && @battle_manager
@@ -403,11 +469,14 @@ when :playing
       @intro.update(dt)
       if @intro.done?
         @intro.unload
-        @game_state = :playing
-        @audio.play(@game_map.music_file, @game_map.music_volume) # <--- включаем музыку после интро
+        @title_screen = TitleScreen.new  # <--- Запускаем экран с девушкой
+        @game_state = :title             # <--- Переключаем состояние
       end
       return
     end
+    
+    # --- (заглушка для update, они работают в handle_input) ---
+    return if [:title, :save_slot, :name_input].include?(@game_state)
     # -------------------------
 
     # Если идёт бой — обновляем только бой
@@ -790,6 +859,25 @@ when :playing
       EndDrawing()
       return
     end
+    # --- ОТРИСОВКА ЭКРАНОВ --
+    if [:title, :save_slot, :name_input].include?(@game_state)
+      BeginDrawing()
+      ClearBackground(BLACK)
+      
+      if @game_state == :title
+        @title_screen.draw
+      elsif @game_state == :save_slot
+        @title_screen.draw 
+        @save_slot_menu.draw 
+      elsif @game_state == :name_input
+        @title_screen.draw 
+        @save_slot_menu.draw 
+        @name_input.draw 
+      end
+      
+      EndDrawing()
+      return
+    end
     # ------------------------
 
     # Если идёт бой — рисуем бой
@@ -1036,7 +1124,7 @@ end
     return if script_entry.nil?
 
     local_text = @game_map.local_text || {}
-    leader_name = @party && @party[0] ? @party[0]["name"] : ""
+    leader_name = @player_name
 
     @dialog_manager = DialogManager.new(
       script_entry["script"],
