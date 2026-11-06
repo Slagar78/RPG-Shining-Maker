@@ -1,6 +1,6 @@
 {
   "player_name": "Mushra",
-  "gold": 3450,
+  "gold": 50,
   "map_id": "Granseal",
   "x": 32,
   "y": 13,
@@ -15,7 +15,7 @@
           "equipped": true
         },
         {
-          "item_id": -1,
+          "item_id": 6,
           "equipped": false
         },
         {
@@ -149,8 +149,8 @@
       "start_level": 10,
       "items": [
         {
-          "item_id": 7,
-          "equipped": true
+          "item_id": -1,
+          "equipped": false
         },
         {
           "item_id": -1,

@@ -206,6 +206,7 @@ class Game
     @overwrite_confirm = nil
 	
 	  @warp_pending = nil      # данные варпа, ожидающие перехода
+    @last_warp_pos = nil
     @fade_alpha = 0          # 0..255, 0 = прозрачный, 255 = чёрный
     @fade_state = nil        # :out, :in, nil
 	  @warp_delay = 0          # задержка перед началом fade (кадры)
@@ -681,6 +682,7 @@ class Game
         @player.moving = false
         @player.pattern = 0
         @camera.snap_to(@player, @game_map)
+        @last_warp_pos = [@player.x, @player.y]
       else
         # ── СМЕНА КАРТЫ (межкарточный варп) ──
         @game_map.unload if @game_map
@@ -706,6 +708,7 @@ class Game
         @player.pattern = 0
         @zone_hidden = Array.new(@game_map.roof_events.size, false)
         @camera.snap_to(@player, @game_map)
+        @last_warp_pos = [@player.x, @player.y] # Запоминаем, куда приземлились
       end
 
       # ПРОВЕРКА БИТВЫ ПРЯМО НА ЧЁРНОМ ЭКРАНЕ
@@ -764,8 +767,13 @@ class Game
 
    # Проверка варпов (телепортов)
    if @game_state == :playing && @game_map && @game_map.warp_events.any? && !@player.moving
+      
+      # Снимаем защиту, как только игрок сдвинулся с точки появления
+      if @last_warp_pos && (@player.x != @last_warp_pos[0] || @player.y != @last_warp_pos[1])
+        @last_warp_pos = nil
+      end
+
       @game_map.warp_events.each do |warp|
-        
         triggered = false
 
         # РАЗДЕЛЯЕМ НА ДВА РЕЖИМА ПО КЛЮЧУ "mode"
@@ -784,6 +792,10 @@ class Game
         # КОНЕЦ РАЗДЕЛЕНИЯ
 
         if triggered
+
+          # ══════
+          next if @last_warp_pos && @player.x == @last_warp_pos[0] && @player.y == @last_warp_pos[1]
+
           # Ищем карту в entries.json по числовому ID
           target_entry = @map_entries.find { |e| e["id"] == warp['target_map_id'] }
           
