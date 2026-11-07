@@ -256,9 +256,9 @@
 		"trigger_x":	3,
 		"trigger_y":	3,
 		"target_map_id":	0,
-		"target_x":	55,
+		"target_x":	54,
 		"target_y":	3,
-		"facing":	0
+		"facing":	2
 	},
 	{
 		"type":	"warp",
@@ -286,8 +286,8 @@
 		"trigger_x":	46,
 		"trigger_y":	7,
 		"target_map_id":	0,
-		"target_x":	58,
-		"target_y":	13,
+		"target_x":	59,
+		"target_y":	12,
 		"facing":	1
 	},
 	{
