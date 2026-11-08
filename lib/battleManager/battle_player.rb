@@ -5,6 +5,7 @@ class BattlePlayer
   FRAMES_PER_TILE = 12
   FIXED_DT = 1.0 / 60.0
   ANIM_SPEED  = 16
+  WALK_ANIM_SPEED = 10     # чуть быстрее при ходьбе
 
   DIR_DOWN  = 2
   DIR_LEFT  = 4
@@ -150,8 +151,9 @@ end
   end
 
   def update_animation(dt = 1.0 / 60.0)
+    speed = @moving ? WALK_ANIM_SPEED : ANIM_SPEED
     @anim_frame += dt
-    if @anim_frame >= ANIM_SPEED / 60.0
+    if @anim_frame >= speed / 60.0
       @anim_frame = 0
       @pattern = (@pattern + 1) % 2
     end

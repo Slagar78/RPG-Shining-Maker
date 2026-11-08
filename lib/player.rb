@@ -13,6 +13,7 @@ DIR_UP    = 8
 PIXEL_SPEED  = 4                # пикселей за 1/60 секунды (целое!)
 FIXED_DT     = 1.0 / 60.0       # логический шаг
 ANIM_SPEED   = 16
+WALK_ANIM_SPEED  = 10            # когда идём
 
 class Player
   attr_accessor :x, :y, :direction, :pattern, :last_x, :last_y
@@ -176,13 +177,15 @@ end
 
   # ====================== UPDATE ======================
   def update_animation(dt = 1.0 / 60.0)
-    return if @sliding               # на льду не меняем кадр анимации
-    @anim_frame += dt
-    if @anim_frame >= ANIM_SPEED / 60.0
-      @anim_frame = 0
-      @pattern = (@pattern + 1) % 2
-    end
-end
+      return if @sliding
+
+      speed = (@moving || @stairs_event) ? WALK_ANIM_SPEED : ANIM_SPEED
+      @anim_frame += dt
+      if @anim_frame >= speed / 60.0
+        @anim_frame = 0
+        @pattern = (@pattern + 1) % 2
+      end
+  end
 
 	def update_movement(dt = 1.0 / 60.0)
 	  @move_accum += dt
