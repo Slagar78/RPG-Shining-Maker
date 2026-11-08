@@ -673,7 +673,6 @@ class Game
 
       if same_map
         # ── ВАРП ВНУТРИ ОДНОЙ КАРТЫ ──
-        # Карту НЕ трогаем. Просто переносим игрока и камеру.
         @player.x = pending[:target_x]
         @player.y = pending[:target_y]
         @player.last_x = @player.x
@@ -708,8 +707,26 @@ class Game
         @player.pattern = 0
         @zone_hidden = Array.new(@game_map.roof_events.size, false)
         @camera.snap_to(@player, @game_map)
-        @last_warp_pos = [@player.x, @player.y] # Запоминаем, куда приземлились
+        @last_warp_pos = [@player.x, @player.y]
       end
+
+      # ── ЕДИНСТВЕННЫЙ ФИКС КРЫШИ ПРИ ВАРПЕ (стоит ОДИН раз после if/else) ──
+      if @game_map && @game_map.roof_events
+        @game_map.roof_events.each_with_index do |ev, idx|
+          if ev['start_x'] && ev['end_x']
+            rx1 = [ev['start_x'], ev['end_x']].min
+            rx2 = [ev['start_x'], ev['end_x']].max
+            ry1 = [ev['start_y'], ev['end_y']].min
+            ry2 = [ev['start_y'], ev['end_y']].max
+            if @player.x.between?(rx1, rx2) && @player.y.between?(ry1, ry2)
+              @zone_hidden[idx] = true
+            else
+              @zone_hidden[idx] = false
+            end
+          end
+        end
+      end
+      # ─────────────────────────────────────────────────────────────
 
       # ПРОВЕРКА БИТВЫ ПРЯМО НА ЧЁРНОМ ЭКРАНЕ
       battle_id = battle_id_for_map(@game_map.db_id)
