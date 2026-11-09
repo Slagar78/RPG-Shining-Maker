@@ -92,9 +92,13 @@ public static class MapJsonService
             {
                 int idx = x * h + y;
                 tiles[idx] = colT?[y]?.GetValue<int>() ?? 0;
-                rot  [idx] = colR?[y]?.GetValue<int>() ?? 0;
-                mx   [idx] = colMx?[y]?.GetValue<bool>() ?? false;
-                my   [idx] = colMy?[y]?.GetValue<bool>() ?? false;
+                
+                // ★ ЗАЩИТА ОТ МУСОРА В ПОВОРОТАХ ★
+                int rawRot = colR?[y]?.GetValue<int>() ?? 0;
+                rot[idx] = Math.Abs(rawRot) % 4; 
+                
+                mx[idx] = colMx?[y]?.GetValue<bool>() ?? false;
+                my[idx] = colMy?[y]?.GetValue<bool>() ?? false;
             }
         }
     }
@@ -115,6 +119,13 @@ public static class MapJsonService
     // ─── SAVE ──────────────────────────────────────
     public static void Save(string filePath, GameMap map)
     {
+        // ★ ЗАЩИТА ОТ МУСОРА ПЕРЕД ЗАПИСЬЮ ★
+        for (int i = 0; i < map.TotalCells; i++)
+        {
+            map.Rot[i] = Math.Abs(map.Rot[i]) % 4;
+            map.Rot2[i] = Math.Abs(map.Rot2[i]) % 4;
+        }
+
         var sb = new System.Text.StringBuilder();
         sb.AppendLine("{");
         sb.AppendLine($"\t\"width\":\t{map.Width},");
