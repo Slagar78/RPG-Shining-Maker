@@ -24,3 +24,4 @@
 0023=The light allows you to{N}resume your adventure!
 0024=Will you continue your{N}adventure?
 0025=Then, take a rest before{N}you continue.
+0026=Received {GOLD} gold coins.

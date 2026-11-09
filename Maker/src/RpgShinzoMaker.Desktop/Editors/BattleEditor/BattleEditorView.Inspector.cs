@@ -18,13 +18,15 @@ public partial class BattleEditorView
         InspectorPanel.IsVisible = true;
         InspectorText.Text = $"ID: {unit.Id}   {unit.Name}";
         
-        // ★ ВКЛЮЧАЕМ ПАНЕЛЬ УРОВНЯ ТОЛЬКО ДЛЯ ВРАГОВ ★
+        // ★ ВКЛЮЧАЕМ ПАНЕЛИ УРОВНЯ И ЗОЛОТА ТОЛЬКО ДЛЯ ВРАГОВ ★
         InspectorLevelPanel.IsVisible = unit.IsEnemy;
+        InspectorGoldPanel.IsVisible = unit.IsEnemy;
 
         if (unit.IsEnemy)
         {
             _suppressInspectorEvents = true;
             InspectorLevelBox.Text = unit.Level.ToString();
+            InspectorGoldBox.Text = unit.GoldReward.ToString();
             _suppressInspectorEvents = false;
         }
     }
@@ -113,4 +115,37 @@ public partial class BattleEditorView
             }
         }
     }
-}
+
+    private void OnInspectorIncGoldClick(object? sender, RoutedEventArgs e) => ChangeInspectorGold(10);
+    private void OnInspectorDecGoldClick(object? sender, RoutedEventArgs e) => ChangeInspectorGold(-10);
+
+    private void ChangeInspectorGold(int delta)
+    {
+        if (!_inspectorVisible || _inspectorPanel == 0) return;
+        var unit = _enemies[_inspectorSlotIdx];
+        unit.GoldReward = Math.Max(0, unit.GoldReward + delta);
+        ShowInspector(unit);
+    }
+
+    private void OnInspectorGoldChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_suppressInspectorEvents || !_inspectorVisible || _inspectorPanel == 0) return;
+
+        if (sender is TextBox tb)
+        {
+            string validText = System.Text.RegularExpressions.Regex.Replace(tb.Text ?? "", "[^0-9]", "");
+            if (tb.Text != validText)
+            {
+                tb.Text = validText;
+                tb.CaretIndex = validText.Length;
+            }
+
+            if (int.TryParse(tb.Text, out int val))
+            {
+                var unit = _enemies[_inspectorSlotIdx];
+                unit.GoldReward = Math.Max(0, val);
+            }
+        }
+    }
+
+} // <--- эта последняя скобка закрывает класс

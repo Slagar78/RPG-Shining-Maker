@@ -174,13 +174,14 @@ class BattleScene
     end
   end
 
-  def start(attacker_unit, defender_unit, damage = 0, exp_amount = 0)
+  def start(attacker_unit, defender_unit, damage = 0, exp_amount = 0, gold_amount = 0)
     UnloadTexture(@panel_tex) if @panel_tex
     @panel_tex = nil
     @attacker = attacker_unit
     @defender = defender_unit
     @damage = damage
 	  @exp_amount = exp_amount
+    @gold_amount = gold_amount
     @damage_applied = false
     @timer = DELAY_DURATION
 	
@@ -257,29 +258,43 @@ def prepare_damage_message
   @message_done_timer = 0.0
 end
 
-def prepare_exp_message
-  if @attacker[:actor]
-    name = @attacker[:actor]["name"] || "???"
-  elsif @attacker[:enemy]
-    name = @attacker[:enemy]["name"] || "???"
-  else
-    name = "???"
+  def prepare_exp_message
+    if @attacker[:actor]
+      name = @attacker[:actor]["name"] || "???"
+    elsif @attacker[:enemy]
+      name = @attacker[:enemy]["name"] || "???"
+    else
+      name = "???"
+    end
+    template = @game_text["0008"] || "{NAME}  earned  {N}EXP.  points."
+    @current_message = template.gsub("{NAME}", name).gsub("{EXP}", @exp_amount.to_s)
+    @message_reveal_index = 0
+    @message_timer = 0
+    @full_message_shown = false
+    @message_done_timer = 0.0
   end
-  template = @game_text["0008"] || "{NAME}  earned  {N}EXP.  points."
-  @current_message = template.gsub("{NAME}", name).gsub("{EXP}", @exp_amount.to_s)
-  @message_reveal_index = 0
-  @message_timer = 0
-  @full_message_shown = false
-  @message_done_timer = 0.0
-end
 
- def finish
-  return if @finished
-  @finished = true
-  @phase = :shutter_close
-  @shutter_progress = 0.0
-  # Убираем: if @battle_manager.audio ... resume_music
-end
+  def prepare_gold_message
+    if @defender[:enemy]
+      name = @defender[:enemy]["name"] || "Enemy"
+    else
+      name = "???"
+    end
+    template = @game_text["0026"] || "{NAME} dropped {GOLD} gold."
+    @current_message = template.gsub("{NAME}", name).gsub("{GOLD}", @gold_amount.to_s)
+    @message_reveal_index = 0
+    @message_timer = 0
+    @full_message_shown = false
+    @message_done_timer = 0.0
+  end
+
+  def finish
+    return if @finished
+    @finished = true
+    @phase = :shutter_close
+    @shutter_progress = 0.0
+    # Убираем: if @battle_manager.audio ... resume_music
+  end
 
 def update
   return unless @active
@@ -469,7 +484,11 @@ def update
           @battle_manager.apply_exp_to_actor(@attacker[:actor], @exp_amount, @attacker)
         end
 
-        if @defender[:hp] <= 0
+        if @defender[:hp] <= 0 && @gold_amount > 0
+          prepare_gold_message
+          @sub_phase = :gold_message
+          @sub_phase_timer = 0.0
+        elsif @defender[:hp] <= 0
           @sub_phase = :dying
           @dying_alpha = 255
           @dying_blink_timer = 0.0
@@ -481,6 +500,33 @@ def update
           @attacker_current_frame = 0
           @defender_current_frame = 0
         end
+      end
+
+    when :gold_message
+      @attacker_current_frame, @attacker_anim_timer = advance_frame(@attacker, :idle, @attacker_current_frame, @attacker_anim_timer, dt)
+      unless @full_message_shown
+        @message_timer += dt
+        if @message_timer >= @message_reveal_speed
+          @message_timer -= @message_reveal_speed
+          @message_reveal_index += 1
+          if @current_message[@message_reveal_index, 3] == "{N}"
+            @message_reveal_index += 3
+          end
+          if @message_reveal_index >= @current_message.length
+            @message_reveal_index = @current_message.length
+            @full_message_shown = true
+          end
+        end
+      else
+        @message_done_timer += dt
+      end
+
+      if @full_message_shown && @message_done_timer >= 1.0
+        @sub_phase = :dying
+        @dying_alpha = 255
+        @dying_blink_timer = 0.0
+        @dying_blinks = 0
+        @dying_visible = true
       end
 	  
   when :idle_after
@@ -611,7 +657,7 @@ end
       end
     end
 
-    if (@sub_phase == :pre_attack || @sub_phase == :damage_message || @sub_phase == :exp_message) && @message_panel_tex
+    if (@sub_phase == :pre_attack || @sub_phase == :damage_message || @sub_phase == :exp_message || @sub_phase == :gold_message) && @message_panel_tex
       panel_w = @message_panel_tex.width
       panel_h = @message_panel_tex.height
       panel_y = 960 - 16 - panel_h
@@ -649,23 +695,23 @@ end
   Raylib.EndTextureMode()
 end
 
-# Вывод готового холста в текущий target (обычно $canvas 576×480).
-def draw_to_target
-  return unless @active && @render_texture
+  # Вывод готового холста в текущий target (обычно $canvas 576×480).
+  def draw_to_target
+    return unless @active && @render_texture
 
-  # 1. Принудительно закрашиваем весь экран черным (глушим карту намертво)
-  Raylib.DrawRectangle(0, 0, 576, 480, Raylib::BLACK)
+    # 1. Принудительно закрашиваем весь экран черным (глушим карту намертво)
+    Raylib.DrawRectangle(0, 0, 576, 480, Raylib::BLACK)
 
-  # 2. Рисуем саму боевую сцену поверх этого черного квадрата
-  src = Raylib::Rectangle.create(0, 0, 1152, -960)
-  dst = Raylib::Rectangle.create(0, 0, 576, 480)
-  Raylib::DrawTexturePro(@render_texture.texture, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-end
+    # 2. Рисуем саму боевую сцену поверх этого черного квадрата
+    src = Raylib::Rectangle.create(0, 0, 1152, -960)
+    dst = Raylib::Rectangle.create(0, 0, 576, 480)
+    Raylib::DrawTexturePro(@render_texture.texture, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+  end
 
-# Проверка активности сцены.
-def active?
-  @active == true
-end
+  # Проверка активности сцены.
+  def active?
+    @active == true
+  end
 
   private
 

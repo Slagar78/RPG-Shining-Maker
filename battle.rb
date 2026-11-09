@@ -371,6 +371,7 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
         x: pos[0], y: pos[1],
         enemy: enemy, tex: tex,
         level: lv,
+        gold_reward: info["gold_reward"] || 0,
         sprite_frame: 0, sprite_timer: 0, sprite_speed: 14,
         ai_type: info["ai"] || 0,
         battle_anim: battle_anim,
@@ -1397,7 +1398,12 @@ end
       exp_amount = ExpCalculator.calculate_damage_exp(@current_unit, @attack_target, dmg)
       end
     end
+
     @pending_exp_amount = exp_amount
+    @pending_gold_amount = 0
+      if @current_unit[:actor] && @attack_target[:hp] - dmg <= 0
+        @pending_gold_amount = @attack_target[:gold_reward] || 0
+      end
 	  
       # Запоминаем данные для боевой сцены
       @pending_attacker = @current_unit
@@ -1460,10 +1466,10 @@ end
   when :fade_to_battle
       @fade_alpha += 600 * GetFrameTime()
       
-	if @fade_alpha >= 255
+    if @fade_alpha >= 255
       @fade_alpha = 255
-      @battle_scene.start(@pending_attacker, @pending_defender, @pending_damage, @pending_exp_amount)
-	  @last_attacker = @pending_attacker
+      @battle_scene.start(@pending_attacker, @pending_defender, @pending_damage, @pending_exp_amount, @pending_gold_amount)
+	    @last_attacker = @pending_attacker
       @last_defender = @pending_defender
       @pending_attacker = nil
       @pending_defender = nil
@@ -1608,6 +1614,12 @@ end    # ← конец метода update
       @enemies.delete(unit)
     elsif @allies.include?(unit)
       @allies.delete(unit)
+    end
+
+    # === НАЧИСЛЕНИЯ ЗОЛОТА ===
+    if unit[:enemy] && unit[:gold_reward] && unit[:gold_reward].to_i > 0
+      @db.globals["gold"] = (@db.globals["gold"] || 0) + unit[:gold_reward].to_i
+      puts "💰 Получено золота: #{unit[:gold_reward]}"
     end
 
     # Удаляем из очереди и корректируем индекс

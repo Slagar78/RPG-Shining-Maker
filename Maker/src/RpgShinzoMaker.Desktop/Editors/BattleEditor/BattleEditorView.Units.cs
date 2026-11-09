@@ -39,6 +39,7 @@ public partial class BattleEditorView
                 X = e.X, 
                 Y = e.Y, 
                 Level = e.Level,
+                GoldReward = e.GoldReward,
                 Used = true, 
                 IsEnemy = true 
             });

@@ -15,6 +15,7 @@ public class UnitPlacement
     public int X;
     public int Y;
     public int Level = 1;
+    public int GoldReward = 0;
 }
 
 /// <summary>
@@ -57,6 +58,7 @@ public static class SpritesetService
                 X  = o["x"]?.GetValue<int>() ?? 0,
                 Y  = o["y"]?.GetValue<int>() ?? 0,
                 Level = o["level"]?.GetValue<int>() ?? 1,
+                GoldReward = o["gold_reward"]?.GetValue<int>() ?? 0
             });
         }
     }
@@ -108,6 +110,7 @@ public static class SpritesetService
             };
             if (writeLevel)
                 obj["level"] = u.Level;
+                obj["gold_reward"] = u.GoldReward;
 
             arr.Add(obj);
         }

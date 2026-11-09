@@ -31,7 +31,8 @@ public partial class BattleEditorView
                         Id = e.Id, 
                         X = e.X, 
                         Y = e.Y,
-                        Level = e.Level
+                        Level = e.Level,
+                        GoldReward = e.GoldReward
                     });
 
             SpritesetService.Save(folder, alliesList, enemiesList);

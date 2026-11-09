@@ -20,6 +20,13 @@ public class BattleUnit : INotifyPropertyChanged
         set { _level = value; OnPropertyChanged(nameof(Level)); }
     }
 
+    private int _goldReward = 0;
+    public int GoldReward
+    {
+        get => _goldReward;
+        set { _goldReward = value; OnPropertyChanged(nameof(GoldReward)); }
+    }
+
     private string _name = "";
     public string Name
     {

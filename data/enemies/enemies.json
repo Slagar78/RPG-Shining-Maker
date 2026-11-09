@@ -34,7 +34,7 @@
 									"projected": 45,
 									"curve": "LINEAR"
 							},
-							"base_mov": 8
+							"base_mov": 3
 					},
 					"resistance": {
 							"wind": "none",

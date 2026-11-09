@@ -272,6 +272,15 @@
                                 </Grid>
                             </StackPanel>
 
+                            <StackPanel x:Name="InspectorGoldPanel" Orientation="Horizontal" HorizontalAlignment="Left" Spacing="6" IsVisible="False">
+                                <TextBlock Text="Gold:" Foreground="#AAAAAA" VerticalAlignment="Center" FontSize="14"/>
+                                <TextBox x:Name="InspectorGoldBox" Classes="NumBox" Width="60" Height="26" TextChanged="OnInspectorGoldChanged"/>
+                                <Grid RowDefinitions="*, *" Width="20">
+                                    <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn Small" Click="OnInspectorIncGoldClick" Delay="400" Interval="50"/>
+                                    <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn Small" Click="OnInspectorDecGoldClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
+                                </Grid>
+                            </StackPanel>
+
                         </StackPanel>
                     </Border>
                 </Grid>
