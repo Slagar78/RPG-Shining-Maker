@@ -46,7 +46,7 @@ class HpMpPanel
     elsif unit[:enemy]
       e = unit[:enemy]
       name = e.respond_to?(:name) ? e.name : e["name"] || "???"
-      lvl  = e.respond_to?(:level) ? e.level : e["level"] || 1
+      lvl  = unit[:level] || 1
     else
       return 0
     end
@@ -93,7 +93,7 @@ class HpMpPanel
     elsif unit[:enemy]
       e = unit[:enemy]
       name = e.respond_to?(:name) ? e.name : e["name"] || "???"
-      lvl  = e.respond_to?(:level) ? e.level : e["level"] || 1
+      lvl  = unit[:level] || 1
     else
       return
     end
@@ -167,7 +167,7 @@ class HpMpPanel
     elsif unit[:enemy]
       e = unit[:enemy]
       name = e.respond_to?(:name) ? e.name : e["name"] || "???"
-      lvl  = e.respond_to?(:level) ? e.level : e["level"] || 1
+      lvl  = unit[:level] || 1
     else
       return
     end

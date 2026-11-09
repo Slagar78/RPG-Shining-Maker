@@ -1560,96 +1560,110 @@ end    # ← конец метода update
     end
   end
 
-def draw
-  @renderer.draw
-  @battle_menu.draw if @battle_menu.visible
-  @death_anim.draw(@camera) if @death_anim
-  if @battle_state == :info_profile
-     @profile.draw
-  elsif @battle_state == :enemy_profile
-     @enemy_profile.draw
-  end
-  if @battle_state == :give_animation
-     draw_give_animation
-  end
-  if @battle_state == :give_message
-     draw_give_message
-  end
-  if @battle_state == :drop_confirm
-    draw_drop_confirm
-  elsif @battle_state == :drop_message
-    draw_drop_message
-  end
-  if @battle_state == :equip_weapon
-    draw_equip_weapon
-  elsif @battle_state == :equip_ring
-    draw_equip_ring
-  end
-end
-
-def return_from_battle_scene
-  if @last_defender && @last_defender[:hp] <= 0
-    if @last_attacker && @last_attacker[:actor]
-      @last_attacker[:actor]["kills"] ||= 0
-      @last_attacker[:actor]["kills"] += 1
+  def draw
+    @renderer.draw
+    @battle_menu.draw if @battle_menu.visible
+    @death_anim.draw(@camera) if @death_anim
+    if @battle_state == :info_profile
+       @profile.draw
+    elsif @battle_state == :enemy_profile
+       @enemy_profile.draw
     end
-    start_unit_death(@last_defender)
-  else
-    end_current_turn
-  end
-  @last_defender = nil
-  @last_attacker = nil
-  @last_defender_hp_before = nil
-end
-
-def start_unit_death(unit)
-  # Удаляем из боевых списков
-  if @enemies.include?(unit)
-    @enemies.delete(unit)
-  elsif @allies.include?(unit)
-    @allies.delete(unit)
-  end
-
-  # Удаляем из очереди и корректируем индекс
-  removed_index = @turn_order.index(unit)
-  @turn_order.delete(unit)
-  if removed_index && removed_index < @current_unit_index
-    @current_unit_index -= 1
+    if @battle_state == :give_animation
+       draw_give_animation
+    end
+    if @battle_state == :give_message
+       draw_give_message
+    end
+    if @battle_state == :drop_confirm
+      draw_drop_confirm
+    elsif @battle_state == :drop_message
+      draw_drop_message
+    end
+    if @battle_state == :equip_weapon
+      draw_equip_weapon
+    elsif @battle_state == :equip_ring
+      draw_equip_ring
+    end
   end
 
-  @death_anim = UnitDeath.new(unit, TILE_SIZE)
-  @battle_state = :death_animation
-  @cursor.visible = false
-  @battle_menu.close if @battle_menu
-end
-
-def open_battle_menu
-  # Принудительно синхронизируем позицию юнита с визуальным положением (если игрок не двигается)
-  if @battle_player && !@battle_player.moving
-    @current_unit[:x] = @battle_player.x
-    @current_unit[:y] = @battle_player.y
+  def return_from_battle_scene
+    if @last_defender && @last_defender[:hp] <= 0
+      if @last_attacker && @last_attacker[:actor]
+        @last_attacker[:actor]["kills"] ||= 0
+        @last_attacker[:actor]["kills"] += 1
+      end
+      start_unit_death(@last_defender)
+    else
+      end_current_turn
+    end
+    @last_defender = nil
+    @last_attacker = nil
+    @last_defender_hp_before = nil
   end
 
-  can_attack = adjacent_enemy?(@current_unit)
-  @cursor.visible = false
-  @battle_menu.open(can_attack)
-  @battle_state = :action_menu
-  @audio.play_sfx("confirm") if @audio
-end
+  def start_unit_death(unit)
+    # Удаляем из боевых списков
+    if @enemies.include?(unit)
+      @enemies.delete(unit)
+    elsif @allies.include?(unit)
+      @allies.delete(unit)
+    end
+
+    # Удаляем из очереди и корректируем индекс
+    removed_index = @turn_order.index(unit)
+    @turn_order.delete(unit)
+    if removed_index && removed_index < @current_unit_index
+      @current_unit_index -= 1
+    end
+
+    @death_anim = UnitDeath.new(unit, TILE_SIZE)
+    @battle_state = :death_animation
+    @cursor.visible = false
+    @battle_menu.close if @battle_menu
+  end
+
+  def open_battle_menu
+    # Принудительно синхронизируем позицию юнита с визуальным положением (если игрок не двигается)
+    if @battle_player && !@battle_player.moving
+      @current_unit[:x] = @battle_player.x
+      @current_unit[:y] = @battle_player.y
+    end
+
+    can_attack = adjacent_enemy?(@current_unit)
+    @cursor.visible = false
+    @battle_menu.open(can_attack)
+    @battle_state = :action_menu
+    @audio.play_sfx("confirm") if @audio
+  end
 
 
-def open_profile_for_ally(ally_unit)
-  party = @allies.map { |a| a[:actor] }.compact
-  classes_data = @db.classes
-  class_names = {}
-  classes_data.each { |c| class_names[c["id"]] = c["name"] }
+  def open_profile_for_ally(ally_unit)
+    party = @allies.map { |a| a[:actor] }.compact
+    classes_data = @db.classes
+    class_names = {}
+    classes_data.each { |c| class_names[c["id"]] = c["name"] }
 
-  # Используем уже созданный @profile и общий кэш портретов
-  @profile.open(ally_unit[:actor]["name"], party, class_names, classes_data, @portrait_cache, @start_inventory)
-end
+    # Используем уже созданный @profile и общий кэш портретов
+    @profile.open(ally_unit[:actor]["name"], party, class_names, classes_data, @portrait_cache, @start_inventory)
+  end
 
   def open_profile_for_enemy(enemy_unit)
-    @enemy_profile.open(enemy_unit[:enemy], @portrait_cache)
+    raw = enemy_unit[:enemy].to_h
+    raw["level"] = enemy_unit[:level]
+
+    # Профиль читает stats["max_hp"], stats["base_att"] и т.д.
+    # Подмешиваем туда уже посчитанные по уровню боевые статы юнита.
+    raw["stats"] = (raw["stats"] || {}).merge(
+      "max_hp"   => enemy_unit[:max_hp],
+      "max_mp"   => enemy_unit[:max_mp],
+      "base_att" => enemy_unit[:atk],
+      "base_def" => enemy_unit[:def],
+      "base_agi" => enemy_unit[:agi],
+      "base_mov" => enemy_unit[:mov]
+    )
+
+    @enemy_profile.open(OpenStruct.new(raw), @portrait_cache)
   end
 
  def unload

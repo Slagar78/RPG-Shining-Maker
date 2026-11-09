@@ -2,7 +2,7 @@
 		"start_inventory": [{
 					"actor_id": 0,
 					"class_id": 0,
-					"start_level": 1,
+					"start_level": 2,
 					"items": [{
 								"item_id": 5,
 								"equipped": true

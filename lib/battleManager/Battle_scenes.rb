@@ -703,7 +703,7 @@ end
     elsif unit[:enemy]
       e = unit[:enemy]
       name = e["name"] || "Enemy"
-      lvl  = e["level"] || 1
+      lvl  = unit[:level] || 1
     else
       name = "Unit"
       lvl  = 1
