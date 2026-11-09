@@ -225,17 +225,18 @@ public static class EventsService
     private static void ParseWarp(JsonObject obj, MapEvents events)
     {
         int facing = obj["facing"]?.GetValue<int>() ?? 0;
-        facing = facing switch { 2 => 0, 4 => 1, 6 => 2, 8 => 3, _ => facing };
+
+        facing = facing switch { 4 => 1, 6 => 2, 8 => 3, _ => facing };
 
         var warp = new WarpEvent
         {
-            Mode      = obj["mode"]?.GetValue<string>() ?? "",
-            TriggerX  = obj["trigger_x"]?.GetValue<int>()   ?? -1,
-            TriggerY  = obj["trigger_y"]?.GetValue<int>()   ?? -1,
+            Mode        = obj["mode"]?.GetValue<string>() ?? "",
+            TriggerX    = obj["trigger_x"]?.GetValue<int>() ?? -1,
+            TriggerY    = obj["trigger_y"]?.GetValue<int>() ?? -1,
             TargetMapId = obj["target_map_id"]?.GetValue<int>() ?? 0,
-            TargetX   = obj["target_x"]?.GetValue<int>()     ?? 0,
-            TargetY   = obj["target_y"]?.GetValue<int>()     ?? 0,
-            Facing    = facing,
+            TargetX     = obj["target_x"]?.GetValue<int>() ?? 0,
+            TargetY     = obj["target_y"]?.GetValue<int>() ?? 0,
+            Facing      = facing,
         };
 
         if (warp.Mode == "line")

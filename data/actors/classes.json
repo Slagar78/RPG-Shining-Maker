@@ -2,7 +2,7 @@
 		"classes": [{
 					"id": 0,
 					"name": "SDMN",
-					"full_name": "SDMN",
+					"full_name": "Swordsman",
 					"move": 9,
 					"move_type": "centaur_archer",
 					"race": "Enterran",
@@ -21,8 +21,8 @@
 					}
 			}, {
 					"id": 1,
-					"name": "SRST",
-					"full_name": "Priest",
+					"name": "KNTE",
+					"full_name": "Knight",
 					"move": 4,
 					"move_type": "healer",
 					"race": "Enterran",
@@ -42,7 +42,7 @@
 			}, {
 					"id": 2,
 					"name": "WARR",
-					"full_name": "Knight",
+					"full_name": "Warrior",
 					"move": 7,
 					"move_type": "centaur",
 					"race": "Enterran",
@@ -62,7 +62,7 @@
 			}, {
 					"id": 3,
 					"name": "MAGE",
-					"full_name": "Knight",
+					"full_name": "Mage",
 					"move": 7,
 					"move_type": "centaur",
 					"race": "Enterran",
@@ -81,8 +81,8 @@
 					}
 			}, {
 					"id": 4,
-					"name": "BRGT",
-					"full_name": "Knigh",
+					"name": "PRST",
+					"full_name": "Priest",
 					"move": 7,
 					"move_type": "centaur",
 					"race": "Enterran",
@@ -101,8 +101,8 @@
 					}
 			}, {
 					"id": 5,
-					"name": "WIZ",
-					"full_name": "Knight",
+					"name": "ACHR",
+					"full_name": "Archer",
 					"move": 7,
 					"move_type": "centaur",
 					"race": "Enterran",
@@ -121,8 +121,8 @@
 					}
 			}, {
 					"id": 6,
-					"name": "YZF",
-					"full_name": "Knight",
+					"name": "BDMN",
+					"full_name": "Birdman",
 					"move": 7,
 					"move_type": "centaur",
 					"race": "Enterran",

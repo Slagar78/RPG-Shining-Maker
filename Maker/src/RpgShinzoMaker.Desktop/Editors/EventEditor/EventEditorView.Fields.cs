@@ -769,6 +769,7 @@ public partial class EventEditorView
         var w = _events.Warps[_selectedIndex];
         w.TargetX = ParseCoord(W_TargetX.Text, fallback: 0);
         w.TargetY = ParseCoord(W_TargetY.Text, fallback: 0);
+        OnFieldChanged();
     }
     
     // ══════════════════════════════════════════════════════════════
