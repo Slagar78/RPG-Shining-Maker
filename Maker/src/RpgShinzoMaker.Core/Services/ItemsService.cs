@@ -27,6 +27,7 @@ public class ItemsService
         var items = new List<Item>();
         foreach (var node in itemsNode.AsArray())
         {
+          if (node == null) continue;
             var item = node.Deserialize<Item>(_options);
             if (item != null)
             {

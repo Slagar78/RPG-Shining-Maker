@@ -145,26 +145,11 @@ class Database
       data = JSON.parse(File.read("data/enemies/enemies.json"))
       raw_enemies = data["enemies"] || []
 
-      raw_enemies.each do |e|
-        stats = e["stats"]
-        next unless stats
-
-        # Если статы в новом growth-формате (из редактора)
-        if stats["hp_growth"]
-          lv = e["level"] || 1
-          
-          # Разворачиваем growth в плоские статы, которые ждет battle.rb
-          stats["max_hp"]   = stat_at_level(stats["hp_growth"], lv)
-          stats["max_mp"]   = stat_at_level(stats["mp_growth"], lv)
-          stats["base_att"] = stat_at_level(stats["attack_growth"], lv)
-          stats["base_def"] = stat_at_level(stats["defense_growth"], lv)
-          stats["base_agi"] = stat_at_level(stats["agility_growth"], lv)
-          # base_mov уже плоский (int), его не трогаем
-        end
-      end
-
+      # Уровень врага теперь задаётся в конкретной битве (spriteset.json),
+      # а здесь хранятся только шаблоны с growth-кривыми.
+      # Пересчёт статов по уровню делается позже — в battle.rb → load_spriteset.
       @enemies = raw_enemies.map { |h| OpenStruct.new(h) }
-      puts "Загружено врагов: #{@enemies.size}"
+      puts "Загружено шаблонов врагов: #{@enemies.size}"
     else
       @enemies = []
       puts "Файл data/enemies/enemies.json не найден!"

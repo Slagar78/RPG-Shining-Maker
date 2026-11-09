@@ -24,7 +24,15 @@ public partial class BattleEditorView
             foreach (var a in _allies) if (a.Used) alliesList.Add(new UnitPlacement { Id = a.Id, X = a.X, Y = a.Y });
 
             var enemiesList = new List<UnitPlacement>();
-            foreach (var e in _enemies) if (e.Used) enemiesList.Add(new UnitPlacement { Id = e.Id, X = e.X, Y = e.Y });
+            foreach (var e in _enemies) 
+                if (e.Used) 
+                    enemiesList.Add(new UnitPlacement 
+                    { 
+                        Id = e.Id, 
+                        X = e.X, 
+                        Y = e.Y,
+                        Level = e.Level
+                    });
 
             SpritesetService.Save(folder, alliesList, enemiesList);
 

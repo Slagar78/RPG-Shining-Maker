@@ -27,6 +27,7 @@ public class SpellsService
         var spells = new List<Spell>();
         foreach (var node in spellsNode)
         {
+          if (node == null) continue;
             var spell = node.Deserialize<Spell>(_options);
             if (spell != null)
             {
@@ -36,6 +37,7 @@ public class SpellsService
                     spell.Levels.Clear();
                     foreach (var lvlNode in levelsArray)
                     {
+                      if (lvlNode == null) continue;
                         var lvl = lvlNode.Deserialize<SpellLevel>(_options);
                         if (lvl != null)
                         {

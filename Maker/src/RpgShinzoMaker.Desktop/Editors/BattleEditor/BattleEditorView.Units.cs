@@ -31,7 +31,17 @@ public partial class BattleEditorView
         {
             var enemy = enemiesData.FirstOrDefault(x => x.Id == e.Id);
             if (enemy == null) continue;
-            _enemies.Add(new BattleUnit { Id = e.Id, Name = enemy.Name, Sprite = enemy.Sprite, X = e.X, Y = e.Y, Used = true, IsEnemy = true });
+            _enemies.Add(new BattleUnit 
+            { 
+                Id = e.Id, 
+                Name = enemy.Name, 
+                Sprite = enemy.Sprite, 
+                X = e.X, 
+                Y = e.Y, 
+                Level = e.Level,
+                Used = true, 
+                IsEnemy = true 
+            });
         }
 
         // Лимиты: 30 союзников, 48 врагов

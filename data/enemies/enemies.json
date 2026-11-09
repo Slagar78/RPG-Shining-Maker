@@ -7,7 +7,6 @@
 					"battle_sprite_path": "assets/battles/battlesprites/enemies/Gyasa",
 					"race": "Enterran",
 					"status": "normal",
-					"level": 14,
 					"spell_power": "enhanced",
 					"stats": {
 							"hp_growth": {
@@ -73,7 +72,6 @@
 					"battle_sprite_path": "assets/battles/battlesprites/enemies/Dark_King",
 					"race": "Cadrian",
 					"status": "normal",
-					"level": 10,
 					"spell_power": "regular",
 					"stats": {
 							"hp_growth": {
@@ -139,7 +137,6 @@
 					"battle_sprite_path": "assets/battles/battlesprites/enemies/Gizmo",
 					"race": "Cadrian",
 					"status": "normal",
-					"level": 1,
 					"spell_power": "regular",
 					"stats": {
 							"hp_growth": {
@@ -205,7 +202,6 @@
 					"battle_sprite_path": "assets/battles/battlesprites/enemies/Gizmo",
 					"race": "Cadrian",
 					"status": "normal",
-					"level": 2,
 					"spell_power": "regular",
 					"stats": {
 							"hp_growth": {

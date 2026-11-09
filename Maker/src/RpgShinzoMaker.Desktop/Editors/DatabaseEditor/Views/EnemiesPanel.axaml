@@ -139,18 +139,6 @@
                                 </Border>
                             </StackPanel>
 
-                            <!-- Level -->
-                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
-                                <TextBlock Text="Level:" Width="40" VerticalAlignment="Center"/>
-                                <StackPanel Orientation="Horizontal" Spacing="2">
-                                    <TextBox Classes="NumBox" Text="{Binding SelectedEnemy.Level}" MaxLength="3" Width="45"/>
-                                    <Grid RowDefinitions="*, *" Width="16">
-                                        <Button Grid.Row="0" Content="▲" Classes="ArrowBtn" Command="{Binding IncLevelCommand}"/>
-                                        <Button Grid.Row="1" Content="▼" Classes="ArrowBtn" Command="{Binding DecLevelCommand}" Margin="0,2,0,0"/>
-                                    </Grid>
-                                </StackPanel>
-                            </StackPanel>
-
                             <!-- Race / Status / Spell Power -->
                             <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
                                 <TextBlock Text="Race:" VerticalAlignment="Center"/>

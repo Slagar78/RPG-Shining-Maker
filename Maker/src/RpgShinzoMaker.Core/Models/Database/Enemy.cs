@@ -35,10 +35,6 @@ public partial class Enemy : ObservableObject
     private string _status = "normal";
 
     [ObservableProperty]
-    [property: JsonPropertyName("level")]
-    private int _level = 1;
-
-    [ObservableProperty]
     [property: JsonPropertyName("spell_power")]
     private string _spellPower = "regular";
 

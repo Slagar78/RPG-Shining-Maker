@@ -5,7 +5,7 @@ namespace RpgShinzoMaker.Core.Services;
 
 public static class CJsonFormatter
 {
-    public static string Format(JsonNode node)
+    public static string Format(JsonNode? node)
     {
         var sb = new StringBuilder();
         FormatNode(sb, node, 0);

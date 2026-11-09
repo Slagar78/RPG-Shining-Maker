@@ -239,9 +239,4 @@ public partial class EnemiesViewModel : ObservableObject
     [RelayCommand] private void IncMov() { if (SelectedEnemy != null) SelectedEnemy.Stats.BaseMov++; }
     [RelayCommand] private void DecMov() { if (SelectedEnemy != null && SelectedEnemy.Stats.BaseMov > 1) SelectedEnemy.Stats.BaseMov--; }
 
-    // ==========================================
-    // LEVEL
-    // ==========================================
-    [RelayCommand] private void IncLevel() { if (SelectedEnemy != null) SelectedEnemy.Level++; }
-    [RelayCommand] private void DecLevel() { if (SelectedEnemy != null && SelectedEnemy.Level > 1) SelectedEnemy.Level--; }
 }

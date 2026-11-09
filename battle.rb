@@ -340,7 +340,12 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
     # ========== Враги ==========
     (data["enemies"] || []).each do |info|
       enemy = @db.enemies.find { |e| e["id"] == info["enemy_id"] }
-      tex = enemy ? load_enemy_mapsprite(enemy["mapsprite"]) : nil
+      next unless enemy
+
+      # Уровень берётся из spriteset.json конкретной битвы
+      lv = info["level"] || 1
+
+      tex = load_enemy_mapsprite(enemy["mapsprite"])
       pos = [info["x"], info["y"]]
 
       if unit_at?(pos)
@@ -348,37 +353,41 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
         next
       end
 
-      if enemy
-        stats = enemy.respond_to?(:stats) ? enemy.stats : enemy["stats"] || {}
-        base_hp = stats.respond_to?(:max_hp) ? stats.max_hp : stats["max_hp"] || 0
-        base_mp = stats.respond_to?(:max_mp) ? stats.max_mp : stats["max_mp"] || 0
-      else
-        base_hp = 0
-        base_mp = 0
-      end
+      # Пересчёт статов по growth-кривым и уровню из битвы
+      stats = enemy["stats"] || {}
+      base_hp  = @db.stat_at_level(stats["hp_growth"],       lv)
+      base_mp  = @db.stat_at_level(stats["mp_growth"],       lv)
+      base_atk = @db.stat_at_level(stats["attack_growth"],   lv)
+      base_def = @db.stat_at_level(stats["defense_growth"],  lv)
+      base_agi = @db.stat_at_level(stats["agility_growth"],  lv)
+      base_mov = stats["base_mov"] || 3
 
       # Загрузка боевого спрайта врага
-      battle_sprite_path = enemy ? enemy["battle_sprite_path"] : nil
+      battle_sprite_path = enemy["battle_sprite_path"]
       battle_anim = (battle_sprite_path && !battle_sprite_path.empty?) ?
               BattleSpriteAnimation.new(battle_sprite_path) : nil
 
-        enemy_unit = {
+      enemy_unit = {
         x: pos[0], y: pos[1],
         enemy: enemy, tex: tex,
+        level: lv,
         sprite_frame: 0, sprite_timer: 0, sprite_speed: 14,
         ai_type: info["ai"] || 0,
         battle_anim: battle_anim,
         hp: base_hp, max_hp: base_hp,
         mp: base_mp, max_mp: base_mp,
-        atk: enemy ? enemy["stats"]["base_att"] : 0,
-        def: enemy ? enemy["stats"]["base_def"] : 0,
-        movetype: enemy ? (enemy["movetype"] || "regular") : "regular"
+        atk: base_atk,
+        def: base_def,
+        agi: base_agi,
+        mov: base_mov,
+        movetype: enemy["movetype"] || "regular"
       }
 
-      apply_equipment_bonuses(enemy_unit, enemy["items"]) if enemy && enemy["items"]
+      apply_equipment_bonuses(enemy_unit, enemy["items"]) if enemy["items"]
 
       @enemies << enemy_unit
     end
+    # ==========
   end
 
   def load_terrain
@@ -462,22 +471,20 @@ end
     @units.each do |unit|
       if unit[:actor]
         actor = unit[:actor]
-        # 1. Находим класс актера (SDMN, SRST и т.д.)
         klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
         
-        # 2. Берем ловкость из формулы роста класса (или ставим 10, если класса нет)
         if klass
           unit[:agi] = @db.stat_at_level(actor["agility_growth"], actor["level"] || 1)
         else
           unit[:agi] = 10
         end
         
-        # 3. Берем ходьбу (move) ИЗ КЛАССА
         unit[:mov] = klass ? (klass["move"] || 3) : 3
         
       elsif unit[:enemy]
-        unit[:agi] = unit[:enemy]["stats"]["base_agi"] || 10
-        unit[:mov] = unit[:enemy]["stats"]["base_mov"] || 3
+        # agi и mov уже посчитаны в load_spriteset — не перезаписываем
+        unit[:agi] ||= 10
+        unit[:mov] ||= 3
       end
     end
     @turn_order = @units.sort_by { |u| -u[:agi] }

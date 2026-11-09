@@ -75,7 +75,7 @@ public partial class BattleEditorView
         unit.Id = newId;
         unit.Name = meta.Name;
         unit.Sprite = meta.Sprite;
-        unit.Level = 1; 
+        unit.Level = 1; // Новый вид врага — сбрасываем уровень
         LoadUnitSprite(unit);
 
         ShowInspector(unit);

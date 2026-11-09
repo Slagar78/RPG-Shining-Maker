@@ -14,6 +14,7 @@ public class UnitPlacement
     public int Id;
     public int X;
     public int Y;
+    public int Level = 1;
 }
 
 /// <summary>
@@ -55,6 +56,7 @@ public static class SpritesetService
                 Id = o[idKey]?.GetValue<int>() ?? -1,
                 X  = o["x"]?.GetValue<int>() ?? 0,
                 Y  = o["y"]?.GetValue<int>() ?? 0,
+                Level = o["level"]?.GetValue<int>() ?? 1,
             });
         }
     }
@@ -81,8 +83,8 @@ public static class SpritesetService
             root = new JsonObject();
         }
 
-        root["allies"]  = BuildArray(allies,  "actor_id");
-        root["enemies"] = BuildArray(enemies, "enemy_id");
+        root["allies"]  = BuildArray(allies,  "actor_id", writeLevel: false);
+        root["enemies"] = BuildArray(enemies, "enemy_id", writeLevel: true);
 
         var sb = new StringBuilder();
         WriteObject(sb, root, 0);
@@ -93,17 +95,21 @@ public static class SpritesetService
         File.WriteAllText(path, sb.ToString());
     }
 
-    private static JsonArray BuildArray(IEnumerable<UnitPlacement> items, string idKey)
+    private static JsonArray BuildArray(IEnumerable<UnitPlacement> items, string idKey, bool writeLevel = false)
     {
         var arr = new JsonArray();
         foreach (var u in items)
         {
-            arr.Add(new JsonObject
+            var obj = new JsonObject
             {
                 [idKey] = u.Id,
                 ["x"]   = u.X,
                 ["y"]   = u.Y,
-            });
+            };
+            if (writeLevel)
+                obj["level"] = u.Level;
+
+            arr.Add(obj);
         }
         return arr;
     }
