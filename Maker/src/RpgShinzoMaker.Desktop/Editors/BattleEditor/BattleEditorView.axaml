@@ -18,7 +18,40 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
-        <!-- ★ ПУЛЬСИРУЮЩАЯ ФИОЛЕТОВАЯ РАМКА СО СКРУГЛЕНИЕМ ★ -->
+        <Style Selector="TextBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+
+        <Style Selector="TextBox.NumBox">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Width" Value="45"/>
+        </Style>
+
+        <Style Selector="RepeatButton.ArrowBtn">
+            <Setter Property="Background" Value="#444444"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="12"/>
+            <Setter Property="FontSize" Value="8"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="RepeatButton.ArrowBtn:pointerover">
+            <Setter Property="Background" Value="#666666"/>
+        </Style>
+
         <Style Selector="Border.hover-pulse">
             <Setter Property="BorderBrush" Value="#BF00FF"/>
             <Setter Property="BorderThickness" Value="3"/>
@@ -36,36 +69,26 @@
 
     <Grid ColumnDefinitions="250,4,*,4,200">
         
-        <!-- КОЛОНКА 0 -->
+        <!-- ЛЕВАЯ КОЛОНКА -->
         <Border Grid.Column="0" Background="#252526" Padding="8">
             <Border Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="1" CornerRadius="4">
                 <Grid Margin="8" RowDefinitions="Auto,*,Auto,Auto,*,Auto">
-                    
                     <TextBlock Grid.Row="0" Text="ALLIES" Foreground="White" FontWeight="Bold" Margin="0,0,0,6"/>
-                    
                     <ListBox Grid.Row="1" x:Name="AlliesList" Background="Transparent" BorderThickness="0" 
                              SelectionChanged="OnAllySelectionChanged"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
+                            <ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                         <ListBox.Styles>
                             <Style Selector="ListBoxItem">
-                                <Setter Property="Padding" Value="0"/>
-                                <Setter Property="Margin" Value="1"/>
-                                <Setter Property="MinHeight" Value="0"/>
-                                <Setter Property="MinWidth" Value="0"/>
-                                <Setter Property="Width" Value="34"/>
-                                <Setter Property="Height" Value="34"/>
+                                <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="1"/>
+                                <Setter Property="Width" Value="34"/><Setter Property="Height" Value="34"/>
                                 <Setter Property="Background" Value="Transparent"/>
                             </Style>
                             <Style Selector="ListBoxItem /template/ ContentPresenter">
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="Padding" Value="0"/>
-                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Background" Value="Transparent"/><Setter Property="Padding" Value="0"/><Setter Property="BorderThickness" Value="0"/>
                             </Style>
                         </ListBox.Styles>
                         <ListBox.ItemTemplate>
@@ -74,15 +97,14 @@
                                     <Grid>
                                         <Image Source="{Binding Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
                                         <TextBlock Text="{Binding Id}" Foreground="Yellow" FontWeight="Bold" FontSize="10" Margin="2,0,0,0" IsVisible="{Binding Used}"/>
-                                        <Border IsVisible="{Binding $parent[ListBoxItem].IsSelected}" 
-                                                BorderBrush="#BF00FF" BorderThickness="2" CornerRadius="6" Margin="1"/>
+                                        <Border IsVisible="{Binding $parent[ListBoxItem].IsSelected}" BorderBrush="#BF00FF" BorderThickness="2" CornerRadius="6" Margin="1"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
                     
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="4" Margin="0,6,0,6">
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="4" Margin="0,6">
                         <Button Content="+" MinWidth="30" Height="24" Padding="0" FontWeight="Bold" FontSize="16" Click="OnAddAllyClick"/>
                         <Button Content="−" MinWidth="30" Height="24" Padding="0" FontWeight="Bold" FontSize="16" Click="OnDeleteAllyClick"/>
                     </StackPanel>
@@ -94,24 +116,16 @@
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
+                            <ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                         <ListBox.Styles>
                             <Style Selector="ListBoxItem">
-                                <Setter Property="Padding" Value="0"/>
-                                <Setter Property="Margin" Value="1"/>
-                                <Setter Property="MinHeight" Value="0"/>
-                                <Setter Property="MinWidth" Value="0"/>
-                                <Setter Property="Width" Value="34"/>
-                                <Setter Property="Height" Value="34"/>
+                                <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="1"/>
+                                <Setter Property="Width" Value="34"/><Setter Property="Height" Value="34"/>
                                 <Setter Property="Background" Value="Transparent"/>
                             </Style>
                             <Style Selector="ListBoxItem /template/ ContentPresenter">
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="Padding" Value="0"/>
-                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Background" Value="Transparent"/><Setter Property="Padding" Value="0"/><Setter Property="BorderThickness" Value="0"/>
                             </Style>
                         </ListBox.Styles>
                         <ListBox.ItemTemplate>
@@ -120,8 +134,7 @@
                                     <Grid>
                                         <Image Source="{Binding Image}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None"/>
                                         <TextBlock Text="{Binding Id}" Foreground="Yellow" FontWeight="Bold" FontSize="10" Margin="2,0,0,0" IsVisible="{Binding Used}"/>
-                                        <Border IsVisible="{Binding $parent[ListBoxItem].IsSelected}" 
-                                                BorderBrush="#BF00FF" BorderThickness="2" CornerRadius="6" Margin="1"/>
+                                        <Border IsVisible="{Binding $parent[ListBoxItem].IsSelected}" BorderBrush="#BF00FF" BorderThickness="2" CornerRadius="6" Margin="1"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -138,52 +151,99 @@
 
         <Border Grid.Column="1" Background="#3E3E42" Width="4"/>
 
+        <!-- ЦЕНТРАЛЬНАЯ ЧАСТЬ -->
         <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto,Auto">
+            
+            <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
             <Border Grid.Row="0" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="0,0,0,1" Padding="10,6">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <ToggleButton x:Name="ModeMapBtn" Content="Map" IsChecked="True" Click="OnModeMapClick"/>
-                    <ToggleButton x:Name="ModeBattleBtn" Content="Battle" Click="OnModeBattleClick"/>
+                    <ToggleButton x:Name="ModeBattleBtn" Content="Battle" IsChecked="True" Click="OnModeBattleClick"/>
                     <ToggleButton x:Name="ModeTerrainBtn" Content="Terrain" Click="OnModeTerrainClick"/>
                     <Border Width="1" Background="#3E3E42" Margin="4,0"/>
                     <ToggleButton x:Name="ZoneBtn" Content="Zone" Click="OnZoneToggleClick"/>
+                    
                     <StackPanel x:Name="TerrainBrushesPanel" Orientation="Horizontal" Spacing="4" IsVisible="False" VerticalAlignment="Center">
                         <Button Content="B" Tag="-1" Click="OnTerrainBrushClick" Background="#E74C3C" Foreground="White" Width="28" Height="24" Padding="0" FontWeight="Bold"/>
                         <Button Content="F" Tag="0" Click="OnTerrainBrushClick" Background="#F1C40F" Foreground="Black" Width="28" Height="24" Padding="0" FontWeight="Bold"/>
                         <Button Content="W" Tag="1" Click="OnTerrainBrushClick" Background="#4CAF50" Foreground="White" Width="28" Height="24" Padding="0" FontWeight="Bold"/>
                     </StackPanel>
+                    
                     <Border Width="1" Background="#3E3E42" Margin="4,0"/>
                     <Button Content="Save" FontWeight="Bold" Background="#C88A50" Foreground="White" Click="OnSaveClick"/>
                     <Border Width="1" Background="#3E3E42" Margin="4,0"/>
+                    
                     <TextBlock Text="Zoom" Foreground="#AAAAAA" VerticalAlignment="Center"/>
                     <ComboBox x:Name="ZoomSelector" Classes="ModernComboBox" Width="90" SelectedIndex="2" SelectionChanged="OnZoomChanged">
                         <ComboBoxItem Content="1/4x"/><ComboBoxItem Content="1/2x"/><ComboBoxItem Content="1x"/><ComboBoxItem Content="2x"/><ComboBoxItem Content="4x"/>
                     </ComboBox>
-                    <Border Width="1" Background="#3E3E42" Margin="4,0"/>
-                    <TextBlock x:Name="ToolbarInfo" Foreground="#FFD700" VerticalAlignment="Center" Text="—"/>
                 </StackPanel>
             </Border>
 
+            <!-- КАРТА -->
             <Grid Grid.Row="1" ClipToBounds="True" Background="#1E1E1E">
                 <views:MapCanvas x:Name="MapCanvasControl"/>
                 <Canvas x:Name="OverlayCanvas" IsHitTestVisible="False" ClipToBounds="True"/>
             </Grid>
 
-            <Border Grid.Row="2" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" Padding="10,4">
-                <StackPanel Orientation="Horizontal" Spacing="16">
-                    <TextBlock x:Name="BottomModeText" Foreground="#FFD700" Text="GLOBAL MAP"/>
-                    <TextBlock x:Name="BottomZoneText" Foreground="#AAAAAA" Text="Zone: —"/>
-                    <TextBlock x:Name="BottomTerrainText" Foreground="#AAAAAA" Text="Terrain: Walkable"/>
+            <!-- ПАНЕЛЬ X, Y, W, H (Она поднимется выше, так как инспектор станет толстым) -->
+            <Border Grid.Row="2" Background="#252526" BorderBrush="#3E3E42" BorderThickness="0,1,0,1" Padding="10,10" MinHeight="50">
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock x:Name="BottomModeText" Foreground="#FFD700" Text="BATTLE ZONE" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
+                    
+                    <!-- X -->
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <TextBlock Text="X:" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox x:Name="BattlePosX" Classes="NumBox" TextChanged="OnZoneTextChanged"/>
+                        <Grid RowDefinitions="*, *" Width="18">
+                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn" Click="OnIncXClick" Delay="400" Interval="50"/>
+                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn" Click="OnDecXClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Y -->
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <TextBlock Text="Y:" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox x:Name="BattlePosY" Classes="NumBox" TextChanged="OnZoneTextChanged"/>
+                        <Grid RowDefinitions="*, *" Width="18">
+                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn" Click="OnIncYClick" Delay="400" Interval="50"/>
+                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn" Click="OnDecYClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- W -->
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <TextBlock Text="W:" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox x:Name="BattleSizeX" Classes="NumBox" TextChanged="OnZoneTextChanged"/>
+                        <Grid RowDefinitions="*, *" Width="18">
+                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn" Click="OnIncWClick" Delay="400" Interval="50"/>
+                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn" Click="OnDecWClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- H -->
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <TextBlock Text="H:" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox x:Name="BattleSizeY" Classes="NumBox" TextChanged="OnZoneTextChanged"/>
+                        <Grid RowDefinitions="*, *" Width="18">
+                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn" Click="OnIncHClick" Delay="400" Interval="50"/>
+                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn" Click="OnDecHClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <Border Width="1" Background="#3E3E42" Margin="10,0"/>
+                    <TextBlock x:Name="BottomTerrainText" Foreground="#AAAAAA" Text="Terrain: Walkable" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
 
-            <Border Grid.Row="3" Background="#252526" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" Padding="15,20" MinHeight="60">
+            <!-- ★ ИНСПЕКТОР (сделал его ВЫСОКИМ - MinHeight 100) ★ -->
+            <Border Grid.Row="3" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" Padding="15,20" MinHeight="100">
                 <Grid>
-                    <TextBlock Text="INSPECTOR" Foreground="White" FontWeight="Bold" VerticalAlignment="Center" FontSize="14"/>
-                    <Border x:Name="InspectorPanel" IsVisible="False" Background="#141414" BorderBrush="#3E3E42" BorderThickness="1" CornerRadius="3" Padding="6,4" HorizontalAlignment="Right">
+                    <TextBlock Text="INSPECTOR" Foreground="White" FontWeight="Bold" VerticalAlignment="Center" FontSize="16"/>
+                    <Border x:Name="InspectorPanel" IsVisible="False" Background="#141414" BorderBrush="#3E3E42" BorderThickness="1" CornerRadius="4" Padding="10,8" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Button Grid.Column="0" x:Name="InspectorPrevBtn" Content="◄" Width="26" Height="26" Padding="0" FontSize="14" FontWeight="Bold" Click="OnInspectorPrevClick"/>
-                            <TextBlock Grid.Column="1" x:Name="InspectorText" Foreground="#E0E0E0" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="15,0" Text="—"/>
-                            <Button Grid.Column="2" x:Name="InspectorNextBtn" Content="►" Width="26" Height="26" Padding="0" FontSize="14" FontWeight="Bold" Click="OnInspectorNextClick"/>
+                            <Button Grid.Column="0" x:Name="InspectorPrevBtn" Content="◄" Width="32" Height="32" Padding="0" FontSize="16" FontWeight="Bold" Click="OnInspectorPrevClick"/>
+                            <TextBlock Grid.Column="1" x:Name="InspectorText" Foreground="#E0E0E0" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,0" Text="—"/>
+                            <Button Grid.Column="2" x:Name="InspectorNextBtn" Content="►" Width="32" Height="32" Padding="0" FontSize="16" FontWeight="Bold" Click="OnInspectorNextClick"/>
                         </Grid>
                     </Border>
                 </Grid>
@@ -192,6 +252,7 @@
 
         <Border Grid.Column="3" Background="#3E3E42" Width="4"/>
 
+        <!-- ПРАВАЯ КОЛОНКА -->
         <Border Grid.Column="4" Background="#252526" Padding="8">
             <Border Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="1" CornerRadius="4">
                 <Grid Margin="8" RowDefinitions="Auto,*">

@@ -7,15 +7,8 @@ using RpgShinzoMaker.Core.Services;
 
 namespace RpgShinzoMaker.Desktop.Editors.BattleEditor;
 
-/// <summary>
-/// Часть BattleEditorView — загрузка battles/entries.json, выбор карты по map_id,
-/// загрузка layout.json, spriteset.json, terrain.json.
-/// </summary>
 public partial class BattleEditorView
 {
-    // ══════════════════════════════════════════════════════════
-    //   ЗАГРУЗКА ВСЕГО
-    // ══════════════════════════════════════════════════════════
     private void LoadAll()
     {
         try
@@ -42,9 +35,6 @@ public partial class BattleEditorView
         }
     }
 
-    // ══════════════════════════════════════════════════════════
-    //   СПИСОК БИТВ
-    // ══════════════════════════════════════════════════════════
     private void OnBattleSelected(object? sender, SelectionChangedEventArgs e)
     {
         int idx = BattlesList.SelectedIndex;
@@ -60,15 +50,11 @@ public partial class BattleEditorView
         LoadBattle(index);
     }
 
-    // ══════════════════════════════════════════════════════════
-    //   ЗАГРУЗКА ОДНОЙ БИТВЫ
-    // ══════════════════════════════════════════════════════════
     private void LoadBattle(int index)
     {
         if (index < 0 || index >= _battleEntries.Count) return;
         var entry = _battleEntries[index];
 
-        // 1. Резолв карты по map_id (число) → folder
         var mapEntry = _mapEntries.Find(m => m.Id == entry.MapId);
         if (mapEntry == null)
         {
@@ -77,7 +63,6 @@ public partial class BattleEditorView
             return;
         }
 
-        // 2. Загрузка layout.json
         var layoutPath = ProjectPaths.LayoutFile(mapEntry.Folder);
         var map = MapJsonService.Load(layoutPath);
         if (map == null)
@@ -93,17 +78,13 @@ public partial class BattleEditorView
         map.MusicVolume = mapEntry.MusicVolume;
         _currentMap = map;
 
-        // 3. Нарезка тайлсета
         LoadTilesetFromMap();
 
-        // 4. Отдать карту в MapCanvas
         if (MapCanvasControl != null)
             MapCanvasControl.SetMap(_currentMap, _tiles);
 
-        // 5. Загрузка spriteset.json и terrain.json (метод в Units.cs)
         LoadSpritesetAndTerrain(entry.Folder);
 
-        // 6. Обновление UI
         UpdateToolbarInfo();
         ApplyModeButtons();
         ApplyViewMode();
@@ -112,24 +93,20 @@ public partial class BattleEditorView
         StatusChanged?.Invoke($"Battle #{index} загружена — {map.Name}");
     }
 
-    // ══════════════════════════════════════════════════════════
-    //   ИНФО В ТУЛБАРЕ + BOTTOM BAR
-    // ══════════════════════════════════════════════════════════
     private void UpdateToolbarInfo()
     {
         if (_currentBattleIndex < 0 || _currentBattleIndex >= _battleEntries.Count) return;
 
         var entry = _battleEntries[_currentBattleIndex];
-        var mapName = _currentMap?.Name ?? "—";
 
-        if (ToolbarInfo != null)
-            ToolbarInfo.Text = $"Battle #{_currentBattleIndex}  |  Map: {mapName}";
-
-        if (BottomZoneText != null)
-        {
-            BottomZoneText.Text = entry.BattleWidth > 0
-                ? $"Zone: {entry.BattleX},{entry.BattleY}  {entry.BattleWidth}×{entry.BattleHeight}"
-                : "Zone: —";
-        }
+        // Блокируем события, чтобы не было рекурсии при обновлении TextBox.Text
+        _suppressZoneEvents = true;
+        
+        if (BattlePosX != null) BattlePosX.Text = entry.BattleX.ToString();
+        if (BattlePosY != null) BattlePosY.Text = entry.BattleY.ToString();
+        if (BattleSizeX != null) BattleSizeX.Text = entry.BattleWidth.ToString();
+        if (BattleSizeY != null) BattleSizeY.Text = entry.BattleHeight.ToString();
+        
+        _suppressZoneEvents = false;
     }
 }

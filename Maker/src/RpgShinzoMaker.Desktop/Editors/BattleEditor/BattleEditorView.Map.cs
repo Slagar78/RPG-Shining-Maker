@@ -11,7 +11,7 @@ using RpgShinzoMaker.Core.Services;
 namespace RpgShinzoMaker.Desktop.Editors.BattleEditor;
 
 /// <summary>
-/// Часть BattleEditorView — тайлсет, зум, режимы Map/Battle/Terrain.
+/// Часть BattleEditorView — тайлсет, зум, режимы Battle/Terrain.
 /// </summary>
 public partial class BattleEditorView
 {
@@ -95,15 +95,9 @@ public partial class BattleEditorView
     // ══════════════════════════════════════════════════════════
     //   РЕЖИМЫ
     // ══════════════════════════════════════════════════════════
-    private void OnModeMapClick(object? sender, RoutedEventArgs e)
-    {
-        _viewMode = 0;
-        ApplyModeButtons();
-        ApplyViewMode();
-    }
-
     private void OnModeBattleClick(object? sender, RoutedEventArgs e)
     {
+        // Всегда включаем режим Battle (1)
         _viewMode = 1;
         ApplyModeButtons();
         ApplyViewMode();
@@ -111,33 +105,33 @@ public partial class BattleEditorView
 
     private void OnModeTerrainClick(object? sender, RoutedEventArgs e)
     {
-        _viewMode = 2;
+        // Если включили — Terrain (2).
+        // Если выключили — возвращаемся в Battle (1).
+        _viewMode = (ModeTerrainBtn?.IsChecked == true) ? 2 : 1;
+        
+        // Синхронизируем кнопку Battle
+        if (ModeBattleBtn != null) ModeBattleBtn.IsChecked = (_viewMode == 1);
+        
         ApplyModeButtons();
         ApplyViewMode();
     }
 
     private void ApplyModeButtons()
     {
-        if (ModeMapBtn     != null) ModeMapBtn.IsChecked     = _viewMode == 0;
         if (ModeBattleBtn  != null) ModeBattleBtn.IsChecked  = _viewMode == 1;
         if (ModeTerrainBtn != null) ModeTerrainBtn.IsChecked = _viewMode == 2;
 
-        // показываем кисти только в режиме Terrain
+        // Показываем кисти только в режиме Terrain
         if (TerrainBrushesPanel != null) TerrainBrushesPanel.IsVisible = _viewMode == 2;
 
         if (BottomModeText != null)
-            BottomModeText.Text = _viewMode switch
-            {
-                0 => "GLOBAL MAP",
-                1 => "BATTLE ZONE",
-                2 => "TERRAIN EDIT",
-                _ => "—"
-            };
+        {
+            BottomModeText.Text = _viewMode == 2 ? "TERRAIN EDIT" : "BATTLE ZONE";
+        }
     }
 
     /// <summary>
-    /// В режиме Battle — ставит зум/скролл так, чтобы зона была видна.
-    /// В остальных — сбрасывает на 1x и в начало карты.
+    /// Авто-зум и центрирование для режима Battle. В Terrain камеру не трогаем.
     /// </summary>
     private void ApplyViewMode()
     {
@@ -146,9 +140,9 @@ public partial class BattleEditorView
 
         var entry = _battleEntries[_currentBattleIndex];
 
+        // Авто-зум и центрирование ТОЛЬКО для режима Battle (1)
         if (_viewMode == 1 && entry.BattleWidth > 0 && entry.BattleHeight > 0)
         {
-            // Подбираем зум так, чтобы зона влезла (не больше 1x)
             var scrollW = _mapScrollViewer?.Viewport.Width  ?? 800;
             var scrollH = _mapScrollViewer?.Viewport.Height ?? 600;
             double zw = scrollW / (entry.BattleWidth  * (double)GameMap.TileSize);
@@ -158,11 +152,6 @@ public partial class BattleEditorView
 
             MapCanvasControl.SetZoom(zoom);
             SetScrollTo(entry.BattleX * Ts, entry.BattleY * Ts);
-        }
-        else
-        {
-            MapCanvasControl.SetZoom(1.0);
-            SetScrollTo(0, 0);
         }
 
         RebuildOverlay();

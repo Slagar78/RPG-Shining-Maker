@@ -27,7 +27,7 @@ public partial class BattleEditorView : UserControl, IEditor
     private int[][]? _terrain;
 
     // ─── Режимы ───
-    private int _viewMode = 0;                    // 0 = Map, 1 = Battle, 2 = Terrain
+    private int _viewMode = 1; 
     private int _currentCollisionType = 1;         // 1 = Walkable
 
     // ─── Боевая зона ───
