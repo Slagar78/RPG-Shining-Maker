@@ -123,7 +123,7 @@ public partial class BattleEditorView
     {
         if (!_inspectorVisible || _inspectorPanel == 0) return;
         var unit = _enemies[_inspectorSlotIdx];
-        unit.GoldReward = Math.Max(0, unit.GoldReward + delta);
+        unit.GoldReward = Math.Clamp(unit.GoldReward + delta, 0, 9_999_999);
         ShowInspector(unit);
     }
 
@@ -143,7 +143,7 @@ public partial class BattleEditorView
             if (int.TryParse(tb.Text, out int val))
             {
                 var unit = _enemies[_inspectorSlotIdx];
-                unit.GoldReward = Math.Max(0, val);
+                unit.GoldReward = Math.Clamp(val, 0, 9_999_999);
             }
         }
     }

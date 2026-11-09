@@ -109,8 +109,10 @@ public static class SpritesetService
                 ["y"]   = u.Y,
             };
             if (writeLevel)
+            {
                 obj["level"] = u.Level;
-                obj["gold_reward"] = u.GoldReward;
+                obj["gold_reward"] = u.GoldReward; // <-- ТОЛЬКО ДЛЯ ВРАГОВ
+            }
 
             arr.Add(obj);
         }

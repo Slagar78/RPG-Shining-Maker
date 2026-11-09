@@ -42,28 +42,28 @@
 			"x": 21,
 			"y": 5,
 			"level": 14,
-     "gold_reward": 100
+			"gold_reward": 100
 		},
 		{
 			"enemy_id": 1,
 			"x": 19,
 			"y": 7,
 			"level": 10,
-     "gold_reward": 110
+			"gold_reward": 110
 		},
 		{
 			"enemy_id": 0,
 			"x": 13,
 			"y": 11,
 			"level": 15,
-     "gold_reward": 140
+			"gold_reward": 140
 		},
 		{
 			"enemy_id": 2,
 			"x": 11,
 			"y": 14,
 			"level": 1,
-     "gold_reward": 120
+			"gold_reward": 255
 		}
 	]
 }
