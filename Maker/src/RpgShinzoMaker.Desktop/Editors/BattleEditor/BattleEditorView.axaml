@@ -36,20 +36,27 @@
             <Setter Property="Width" Value="45"/>
         </Style>
 
-        <Style Selector="RepeatButton.ArrowBtn">
+        <!-- Стиль для кнопок-стрелочек -->
+        <Style Selector="Button.ArrowBtn, RepeatButton.ArrowBtn">
             <Setter Property="Background" Value="#444444"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Width" Value="18"/>
-            <Setter Property="Height" Value="12"/>
-            <Setter Property="FontSize" Value="8"/>
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
             <Setter Property="CornerRadius" Value="2"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
-        <Style Selector="RepeatButton.ArrowBtn:pointerover">
+        <Style Selector="Button.ArrowBtn:pointerover, RepeatButton.ArrowBtn:pointerover">
             <Setter Property="Background" Value="#666666"/>
+        </Style>
+
+        <!-- Стиль для маленьких стрелочек уровня -->
+        <Style Selector="RepeatButton.ArrowBtn.Small">
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="12"/>
+            <Setter Property="FontSize" Value="8"/>
         </Style>
 
         <Style Selector="Border.hover-pulse">
@@ -185,48 +192,44 @@
                 <Canvas x:Name="OverlayCanvas" IsHitTestVisible="False" ClipToBounds="True"/>
             </Grid>
 
-            <!-- ПАНЕЛЬ X, Y, W, H (Она поднимется выше, так как инспектор станет толстым) -->
+            <!-- ПАНЕЛЬ X, Y, W, H -->
             <Border Grid.Row="2" Background="#252526" BorderBrush="#3E3E42" BorderThickness="0,1,0,1" Padding="10,10" MinHeight="50">
                 <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                     <TextBlock x:Name="BottomModeText" Foreground="#FFD700" Text="BATTLE ZONE" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
                     
-                    <!-- X -->
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <TextBlock Text="X:" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <TextBox x:Name="BattlePosX" Classes="NumBox" TextChanged="OnZoneTextChanged"/>
                         <Grid RowDefinitions="*, *" Width="18">
-                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn" Click="OnIncXClick" Delay="400" Interval="50"/>
-                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn" Click="OnDecXClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
+                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn Small" Click="OnIncXClick" Delay="400" Interval="50"/>
+                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn Small" Click="OnDecXClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
                         </Grid>
                     </StackPanel>
 
-                    <!-- Y -->
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <TextBlock Text="Y:" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <TextBox x:Name="BattlePosY" Classes="NumBox" TextChanged="OnZoneTextChanged"/>
                         <Grid RowDefinitions="*, *" Width="18">
-                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn" Click="OnIncYClick" Delay="400" Interval="50"/>
-                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn" Click="OnDecYClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
+                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn Small" Click="OnIncYClick" Delay="400" Interval="50"/>
+                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn Small" Click="OnDecYClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
                         </Grid>
                     </StackPanel>
 
-                    <!-- W -->
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <TextBlock Text="W:" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <TextBox x:Name="BattleSizeX" Classes="NumBox" TextChanged="OnZoneTextChanged"/>
                         <Grid RowDefinitions="*, *" Width="18">
-                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn" Click="OnIncWClick" Delay="400" Interval="50"/>
-                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn" Click="OnDecWClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
+                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn Small" Click="OnIncWClick" Delay="400" Interval="50"/>
+                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn Small" Click="OnDecWClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
                         </Grid>
                     </StackPanel>
 
-                    <!-- H -->
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <TextBlock Text="H:" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <TextBox x:Name="BattleSizeY" Classes="NumBox" TextChanged="OnZoneTextChanged"/>
                         <Grid RowDefinitions="*, *" Width="18">
-                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn" Click="OnIncHClick" Delay="400" Interval="50"/>
-                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn" Click="OnDecHClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
+                            <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn Small" Click="OnIncHClick" Delay="400" Interval="50"/>
+                            <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn Small" Click="OnDecHClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
                         </Grid>
                     </StackPanel>
 
@@ -235,16 +238,41 @@
                 </StackPanel>
             </Border>
 
-            <!-- ★ ИНСПЕКТОР (сделал его ВЫСОКИМ - MinHeight 100) ★ -->
-            <Border Grid.Row="3" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" Padding="15,20" MinHeight="100">
+            <!-- ★ ИНСПЕКТОР (С ИДЕАЛЬНЫМИ ВЕКТОРНЫМИ СТРЕЛКАМИ) ★ -->
+            <Border Grid.Row="3" Background="#1E1E1E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" Padding="15,10" MinHeight="100">
                 <Grid>
-                    <TextBlock Text="INSPECTOR" Foreground="White" FontWeight="Bold" VerticalAlignment="Center" FontSize="16"/>
-                    <Border x:Name="InspectorPanel" IsVisible="False" Background="#141414" BorderBrush="#3E3E42" BorderThickness="1" CornerRadius="4" Padding="10,8" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Button Grid.Column="0" x:Name="InspectorPrevBtn" Content="◄" Width="32" Height="32" Padding="0" FontSize="16" FontWeight="Bold" Click="OnInspectorPrevClick"/>
-                            <TextBlock Grid.Column="1" x:Name="InspectorText" Foreground="#E0E0E0" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,0" Text="—"/>
-                            <Button Grid.Column="2" x:Name="InspectorNextBtn" Content="►" Width="32" Height="32" Padding="0" FontSize="16" FontWeight="Bold" Click="OnInspectorNextClick"/>
-                        </Grid>
+                    <Border x:Name="InspectorPanel" IsVisible="False" Background="#141414" BorderBrush="#3E3E42" BorderThickness="1" CornerRadius="4" Padding="15,10" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="20,0,0,0">
+                        <StackPanel Orientation="Vertical" Spacing="8">
+                            
+                            <!-- Строка 1: ID и Имя -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="10">
+                                
+                                <!-- Левая стрелка (Идеальный треугольник через Path) -->
+                                <Button x:Name="InspectorPrevBtn" Classes="ArrowBtn" Width="24" Height="24" Click="OnInspectorPrevClick">
+                                    <Path Data="M 8,0 L 0,5 L 8,10 Z" Fill="White" Stretch="Uniform" Width="8" Height="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+                                
+                                <!-- Фиксированная ширина -->
+                                <TextBlock x:Name="InspectorText" Width="180" TextAlignment="Center" Foreground="#E0E0E0" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                
+                                <!-- Правая стрелка (Идеальный треугольник через Path) -->
+                                <Button x:Name="InspectorNextBtn" Classes="ArrowBtn" Width="24" Height="24" Click="OnInspectorNextClick">
+                                    <Path Data="M 0,0 L 8,5 L 0,10 Z" Fill="White" Stretch="Uniform" Width="8" Height="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+                                
+                            </StackPanel>
+
+                            <!-- Строка 2: Уровень (Виден ТОЛЬКО для врагов) -->
+                            <StackPanel x:Name="InspectorLevelPanel" Orientation="Horizontal" HorizontalAlignment="Left" Spacing="6" IsVisible="False">
+                                <TextBlock Text="Level:" Foreground="#AAAAAA" VerticalAlignment="Center" FontSize="14"/>
+                                <TextBox x:Name="InspectorLevelBox" Classes="NumBox" Width="45" Height="26" TextChanged="OnInspectorLevelChanged"/>
+                                <Grid RowDefinitions="*, *" Width="20">
+                                    <RepeatButton Grid.Row="0" Content="▲" Classes="ArrowBtn Small" Click="OnInspectorIncLevelClick" Delay="400" Interval="50"/>
+                                    <RepeatButton Grid.Row="1" Content="▼" Classes="ArrowBtn Small" Click="OnInspectorDecLevelClick" Delay="400" Interval="50" Margin="0,2,0,0"/>
+                                </Grid>
+                            </StackPanel>
+
+                        </StackPanel>
                     </Border>
                 </Grid>
             </Border>

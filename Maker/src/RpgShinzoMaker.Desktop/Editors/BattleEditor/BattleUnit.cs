@@ -3,11 +3,6 @@ using Avalonia.Media;
 
 namespace RpgShinzoMaker.Desktop.Editors.BattleEditor;
 
-/// <summary>
-/// Модель юнита на карте боя. Используется и как слот в панели, и как данные
-/// для отрисовки на оверлее.
-/// Id = actor_id (allies) или enemy_id (enemies); -1 = пусто.
-/// </summary>
 public class BattleUnit : INotifyPropertyChanged
 {
     private int _id = -1;
@@ -15,6 +10,14 @@ public class BattleUnit : INotifyPropertyChanged
     {
         get => _id;
         set { _id = value; OnPropertyChanged(nameof(Id)); }
+    }
+
+    // ★ ДОБАВЛЕНО: Уровень юнита (пока только для визуала) ★
+    private int _level = 1;
+    public int Level
+    {
+        get => _level;
+        set { _level = value; OnPropertyChanged(nameof(Level)); }
     }
 
     private string _name = "";

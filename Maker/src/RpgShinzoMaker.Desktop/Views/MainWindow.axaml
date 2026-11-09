@@ -295,7 +295,7 @@
                 </Transitions>
             </Border.Transitions>
             <Image Source="/Assets/logo.png" 
-                   Stretch="Uniform" 
+                   Stretch="UniformToFill" 
                    RenderOptions.BitmapInterpolationMode="HighQuality"/>
         </Border>
 

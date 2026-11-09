@@ -85,7 +85,11 @@ public partial class BattleEditorView
             if (EnemiesList != null) EnemiesList.SelectedItem = null;
             ShowInspector(unit);
             RebuildOverlay();
-            CenterOnUnit(unit); // Автоскролл к юниту
+            CenterOnUnit(unit);
+        }
+        else if (EnemiesList?.SelectedItem == null)
+        {
+            HideInspector();
         }
     }
 
@@ -96,7 +100,11 @@ public partial class BattleEditorView
             if (AlliesList != null) AlliesList.SelectedItem = null;
             ShowInspector(unit);
             RebuildOverlay();
-            CenterOnUnit(unit); // Автоскролл к юниту
+            CenterOnUnit(unit);
+        }
+        else if (AlliesList?.SelectedItem == null)
+        {
+            HideInspector();
         }
     }
 
