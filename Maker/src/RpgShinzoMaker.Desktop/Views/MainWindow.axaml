@@ -87,7 +87,7 @@
         </Style>
     </Window.Styles>
 
-    <Grid ColumnDefinitions="*,4,320">
+    <Grid ColumnDefinitions="*,4,250">
 
         <!-- КОЛОНКА 0: Тулбар + Вкладки + Статус-бар -->
         <DockPanel Grid.Column="0">
@@ -167,93 +167,31 @@
             </TabControl>
         </DockPanel>
 
-        <!-- РАЗДЕЛИТЕЛЬ -->
-        <GridSplitter Grid.Column="1"
-                      Background="#3E3E42"
-                      ResizeDirection="Columns"
-                      Width="4"/>
 
-        <!-- КОЛОНКА 2: ASSETS + Свойства -->
-        <Grid Grid.Column="2" RowDefinitions="*,4,280">
+        <!-- КОЛОНКА 2 Свойства -->
+        <Grid Grid.Column="2" RowDefinitions="*,4,280"> <!-- ★ ВОТ ЭТУ СТРОКУ ТЫ ЗАБЫЛ ★ -->
 
-            <!-- ASSETS -->
-            <Border Grid.Row="0" Background="#252526" Padding="8">
+            <Border Grid.Row="0" Background="#252526" Padding="10">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Top"
-                               Text="ASSETS"
-                               Foreground="White"
-                               FontWeight="Bold"
-                               Margin="0,0,0,8"/>
+                    <!-- Мушрембо прижат к низу как маскот -->
+                    <Image DockPanel.Dock="Bottom"
+                           Source="avares://RpgShinzoMaker.Desktop/Assets/Mushrambo.png" 
+                           Stretch="Uniform" MaxHeight="200" Margin="0,10,0,0"
+                           RenderOptions.BitmapInterpolationMode="None"/>
 
-                    <TreeView Background="Transparent">
-                        <TreeViewItem Header="🗺 Maps" IsExpanded="True">
-                            <TreeViewItem Header="Granseal"/>
-                            <TreeViewItem Header="Ribble"/>
-                            <TreeViewItem Header="Castle"/>
-                        </TreeViewItem>
-
-                        <TreeViewItem Header="⚔ Battles" IsExpanded="False">
-                            <TreeViewItem Header="Battle 1 — Goblins"/>
-                            <TreeViewItem Header="Battle 2 — Dark Mage"/>
-                            <TreeViewItem Header="Battle 3 — Boss"/>
-                        </TreeViewItem>
-
-                        <TreeViewItem Header="🧙 Characters" IsExpanded="False">
-                            <TreeViewItem Header="Bowie"/>
-                            <TreeViewItem Header="Sarah"/>
-                            <TreeViewItem Header="Chester"/>
-                            <TreeViewItem Header="Jaha"/>
-                        </TreeViewItem>
-
-                        <TreeViewItem Header="🎒 Items" IsExpanded="False">
-                            <TreeViewItem Header="🔧 Weapons">
-                                <TreeViewItem Header="Iron Sword"/>
-                                <TreeViewItem Header="Steel Lance"/>
-                            </TreeViewItem>
-                            <TreeViewItem Header="🛡 Armor">
-                                <TreeViewItem Header="Leather Armor"/>
-                                <TreeViewItem Header="Chain Mail"/>
-                            </TreeViewItem>
-                            <TreeViewItem Header="🧪 Potions">
-                                <TreeViewItem Header="Herb"/>
-                                <TreeViewItem Header="Antidote"/>
-                            </TreeViewItem>
-                        </TreeViewItem>
-
-                        <TreeViewItem Header="✨ Spells" IsExpanded="False">
-                            <TreeViewItem Header="Blaze"/>
-                            <TreeViewItem Header="Heal"/>
-                            <TreeViewItem Header="Bolt"/>
-                        </TreeViewItem>
-
-                        <TreeViewItem Header="👹 Enemies" IsExpanded="False">
-                            <TreeViewItem Header="Goblin"/>
-                            <TreeViewItem Header="Dark Mage"/>
-                            <TreeViewItem Header="Dragon"/>
-                        </TreeViewItem>
-
-                        <TreeViewItem Header="🎬 Scenes" IsExpanded="False">
-                            <TreeViewItem Header="Intro"/>
-                            <TreeViewItem Header="Granseal's Fall"/>
-                            <TreeViewItem Header="Final Battle"/>
-                        </TreeViewItem>
-
-                        <TreeViewItem Header="📜 Dialogues" IsExpanded="False">
-                            <TreeViewItem Header="npc_granseal_01"/>
-                            <TreeViewItem Header="battle_intro_01"/>
-                            <TreeViewItem Header="ending"/>
-                        </TreeViewItem>
-
-                        <TreeViewItem Header="🎵 Music" IsExpanded="False">
-                            <TreeViewItem Header="Track1.mp3"/>
-                            <TreeViewItem Header="Track2.mp3"/>
-                        </TreeViewItem>
-
-                        <TreeViewItem Header="🖼 Sprites" IsExpanded="False">
-                            <TreeViewItem Header="Tilesets"/>
-                            <TreeViewItem Header="Characters"/>
-                        </TreeViewItem>
-                    </TreeView>
+                    <!-- А сверху — плеер -->
+                    <StackPanel Spacing="10" VerticalAlignment="Top">
+                        <TextBlock Text="🎵 MAP BGM" Foreground="#888888" FontWeight="Bold"/>
+                        <TextBlock Text="SF_Feather.mp3" Foreground="White" FontSize="14" TextTrimming="CharacterEllipsis"/>
+                        
+                        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                            <Button Content="▶" Width="40" Height="40" FontSize="20" Background="#007ACC" Foreground="White" CornerRadius="20"/>
+                            <Button Content="⏸" Width="40" Height="40" FontSize="20" Background="#3E3E42" Foreground="White" CornerRadius="20"/>
+                            <Button Content="⏹" Width="40" Height="40" FontSize="20" Background="#3E3E42" Foreground="White" CornerRadius="20"/>
+                        </StackPanel>
+                        
+                        <Slider Minimum="0" Maximum="100" Value="80" />
+                    </StackPanel>
                 </DockPanel>
             </Border>
 

@@ -267,35 +267,45 @@ end
     end
   end
 
-def maybe_start_stairs
-  return unless @map
-  ev = @map.stairs_at(@x, @y)
-  return unless ev
+  def maybe_start_stairs
+    return unless @map
+    ev = @map.stairs_at(@x, @y)
+    return unless ev
 
-  x1 = ev['start_x']; y1 = ev['start_y']
-  x2 = ev['end_x'];   y2 = ev['end_y']
+    x1 = ev['start_x']; y1 = ev['start_y']
+    x2 = ev['end_x'];   y2 = ev['end_y']
 
-  # не запускаем, если уже стоим на конечной клетке
-  return if @x == x2 && @y == y2
+    # не запускаем, если уже стоим на конечной клетке
+    return if @x == x2 && @y == y2
 
-  dx = (x2 - x1) <=> 0
-  dy = (y2 - y1) <=> 0
+    dx = (x2 - x1) <=> 0
+    dy = (y2 - y1) <=> 0
 
-  @stairs_event = ev
-  @stairs_dx = dx
-  @stairs_dy = dy
-  @target_x = x2
-  @target_y = y2
+    # ── ГЛАВНОЕ: автостарт только если игрок ВОШЁЛ в направлении лестницы ──
+    if dx != 0
+      expected_dir = dx > 0 ? DIR_RIGHT : DIR_LEFT
+      return unless @move_dir == expected_dir
+    elsif dy != 0
+      expected_dir = dy > 0 ? DIR_DOWN : DIR_UP
+      return unless @move_dir == expected_dir
+    end
+    # ──────────────────────────────────────────────────────────────────────
 
-  if dx == 1
-    @direction = DIR_RIGHT
-  elsif dx == -1
-    @direction = DIR_LEFT
+    @stairs_event = ev
+    @stairs_dx = dx
+    @stairs_dy = dy
+    @target_x = x2
+    @target_y = y2
+
+    if dx == 1
+      @direction = DIR_RIGHT
+    elsif dx == -1
+      @direction = DIR_LEFT
+    end
+
+    @moving = true
+    @pixel_offset = 0
   end
-
-  @moving = true
-  @pixel_offset = 0
-end
 
 	def update(dt = 1.0 / 60.0)
 	  update_animation(dt)

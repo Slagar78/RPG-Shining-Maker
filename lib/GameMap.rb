@@ -764,16 +764,19 @@ class GameMap
     elsif x == x2 && y == y2
       target_x, target_y = x1, y1
     else
-      # Промежуточная клетка – по умолчанию к конечной
       target_x, target_y = x2, y2
     end
 
     dx = (target_x - x) <=> 0
     dy = (target_y - y) <=> 0
 
-    # Движение начнётся, если нажатое направление совпадает по горизонтали или вертикали
-    if (dx != 0 && input_dx == dx) || (dy != 0 && input_dy == dy)
-      return [dx, dy, target_x, target_y]
+    # Направление лестницы определяется её осью:
+    #   диагональная (dx != 0) → только по горизонтали (вправо/влево)
+    #   вертикальная (dx == 0) → только по вертикали (вверх/вниз)
+    if dx != 0
+      return [dx, dy, target_x, target_y] if input_dx == dx
+    elsif dy != 0
+      return [dx, dy, target_x, target_y] if input_dy == dy
     end
     nil
   end
