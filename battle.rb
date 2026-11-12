@@ -659,9 +659,6 @@ end
     klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
     return unless klass
 
-    old_max_hp = unit[:max_hp]
-    old_max_mp = unit[:max_mp]
-
     new_max_hp = @db.stat_at_level(actor["hp_growth"], new_level)
     new_max_mp = @db.stat_at_level(actor["mp_growth"], new_level)
     new_atk    = @db.stat_at_level(actor["attack_growth"], new_level)
@@ -676,16 +673,14 @@ end
     unit[:agi]    = new_agi
     unit[:mov]    = new_mov
 
-    hp_diff = new_max_hp - old_max_hp
-    mp_diff = new_max_mp - old_max_mp
-    unit[:hp] = [unit[:hp] + hp_diff, new_max_hp].min
-    unit[:mp] = [unit[:mp] + mp_diff, new_max_mp].min
+    # Текущие HP/MP НЕ доливаем — только обрезаем до нового максимума.
+    unit[:hp] = [unit[:hp], new_max_hp].min
+    unit[:mp] = [unit[:mp], new_max_mp].min
 
-    # Обновляем данные актора для сохранения (опционально)
-    actor["hp"] = new_max_hp
-    actor["mp"] = new_max_mp
-    
-    recalc_current_unit_stats   # ← чтобы бонусы экипировки снова применились
+    actor["hp"] = unit[:hp]
+    actor["mp"] = unit[:mp]
+
+    recalc_current_unit_stats
   end
 
  def handle_input

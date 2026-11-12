@@ -16,14 +16,9 @@ class BattleScene
   GROUND_SCALE        = 2.0
   GROUND_OFFSET_X     = 136
   GROUND_OFFSET_Y     = 422
-  STICK_W             = 3
+  STICK_W             = 4
   STICK_H             = 26
-  STICK_TEXTURE_PATHS = [
-    "assets/ui/Hp_Mp_Points_big.png",
-    "assets/ui/Hp_Mp_Points_2_big.png",
-    "assets/ui/Hp_Mp_Points_3_big.png",
-    "assets/ui/Hp_Mp_Points_4_big.png"
-  ]
+
   LEFT_EDGE_W  = 12
   RIGHT_EDGE_W = 12
   MID_TILE_W   = 8
@@ -76,8 +71,7 @@ class BattleScene
 	
     @defender_anim = :dodge
 
-    @stick_textures = []
-    # Загрузка окантовки для полосок HP/MP
+    # ЗАГРУЗКА РАМКИ
     @edging_tex = nil
     edging_path = "assets/ui/Panel_Edging_Big.png"
     if File.exist?(edging_path)
@@ -88,20 +82,7 @@ class BattleScene
     else
       puts "WARNING: Panel_Edging_Big.png not found"
     end
-	
-	# для полосок 1 HP/ 1 MP
-	@edging_tex_1 = nil
-	edging_path_1 = "assets/ui/Panel_Edging_Big1.png"
-	if File.exist?(edging_path_1)
-	  img = Raylib.LoadImage(edging_path_1)
-	  @edging_tex_1 = Raylib.LoadTextureFromImage(img)
-	  Raylib.UnloadImage(img)
-	  Raylib.SetTextureFilter(@edging_tex_1, Raylib::TEXTURE_FILTER_POINT)
-	else
-	  puts "WARNING: Panel_Edging_Big1.png not found"
-	end
 
-    load_stick_textures
     load_background
 
     # Загрузка панели сообщения перед атакой
@@ -158,21 +139,7 @@ class BattleScene
     puts "Failed to load ground texture: #{e.message}"
   end
 
-  # ---------- Загрузка палочек HP/MP ----------
-  def load_stick_textures
-    STICK_TEXTURE_PATHS.each do |path|
-      if File.exist?(path)
-        img = Raylib.LoadImage(path)
-        tex = Raylib.LoadTextureFromImage(img)
-        Raylib.UnloadImage(img)
-        Raylib.SetTextureFilter(tex, Raylib::TEXTURE_FILTER_POINT)
-        @stick_textures << tex
-      else
-        @stick_textures << nil
-        puts "WARNING: stick texture not found: #{path}"
-      end
-    end
-  end
+  # -------------------
 
   def start(attacker_unit, defender_unit, damage = 0, exp_amount = 0, gold_amount = 0)
     UnloadTexture(@panel_tex) if @panel_tex
@@ -821,19 +788,22 @@ end
 
     bar_area_x = tx
     bar_area_w = panel_w - text_margin_x * 2
-    draw_stick_bar(bar_area_x, ty_hp, bar_area_w, hp, max_hp, font, font_size, "HP")
-    draw_stick_bar(bar_area_x, ty_mp, bar_area_w, mp, max_mp, font, font_size, "MP")
+    
+    # Вычисляем максимальную ширину между "HP" и "MP", чтобы они идеально ровнялись друг под другом
+    max_label_w = [measure_text_ex("HP", font, font_size), measure_text_ex("MP", font, font_size)].max
+    
+    draw_stick_bar(bar_area_x, ty_hp, bar_area_w, hp, max_hp, font, font_size, "HP", max_label_w)
+    draw_stick_bar(bar_area_x, ty_mp, bar_area_w, mp, max_mp, font, font_size, "MP", max_label_w)
   end
 
-  def draw_stick_bar(base_x, base_y, area_width, current, max_val, font, font_size, label)
-    # ... (весь существующий код без изменений)
+# ========================================================================
+  def draw_stick_bar(base_x, base_y, area_width, current, max_val, font, font_size, label, label_w)
     if font
       Raylib.DrawTextEx(font, label, Raylib::Vector2.create(base_x, base_y), font_size, 1, Raylib::WHITE)
     else
       Raylib.DrawText(label, base_x, base_y, font_size, Raylib::WHITE)
     end
 
-    label_w = measure_text_ex(label, font, font_size)
     number_str = "#{current}/#{max_val}"
     number_w = measure_text_ex(number_str, font, font_size)
 
@@ -843,20 +813,24 @@ end
     total_positions = 0 if total_positions < 0
 
     sticks_to_draw = [current, max_val, total_positions].min
-
-    bar_start_x = base_x + label_w + gap
+    
+    # Сдвигаем старт палочек на 2 пикселя ВПРАВО (внутрь рамки)
+    # Левый край рамки будет начинаться ровно на 3 пикселя ЛЕВЕЕ палочек
+    bar_start_x = base_x + label_w + gap + 2 
+    
     stick_y = base_y + (font_size - STICK_H) / 2
 
-    if label == "HP"
-      max_visible = [max_val, total_positions].min
-      (sticks_to_draw...max_visible).each do |i|
-        stick_x = bar_start_x + i * STICK_W
-        red = Raylib::Color.new
-        red.r = 220; red.g = 40; red.b = 40; red.a = 200
-        Raylib.DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, red)
-      end
+    # === 1. СНАЧАЛА РИСУЕМ КРАСНЫЕ ПАЛОЧКИ ===
+    max_visible = [max_val, total_positions].min
+    red = Raylib::Color.new
+    red.r = 220; red.g = 40; red.b = 40; red.a = 200
+    
+    (sticks_to_draw...max_visible).each do |i|
+      stick_x = bar_start_x + i * STICK_W
+      Raylib::DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, red)
     end
 
+    # === 2. РИСУЕМ ЦВЕТНЫЕ ПАЛОЧКИ ===
     limits = [100, 200, 300, 9999]
     prev_limit = 0
     limits.each_with_index do |limit, idx|
@@ -865,53 +839,50 @@ end
       count = [sticks_to_draw, layer_max].min
       next if count <= 0
 
-      tex = @stick_textures[idx]
+      color = Raylib::Color.new
+      case idx
+      when 0 then color.r = 255; color.g = 210; color.b = 0;   color.a = 255 # Жёлтый
+      when 1 then color.r = 50;  color.g = 205; color.b = 50;  color.a = 255 # Зелёный
+      when 2 then color.r = 160; color.g = 32;  color.b = 240; color.a = 255 # Фиолетовый
+      when 3 then color.r = 30;  color.g = 30;  color.b = 30;  color.a = 255 # Чёрный
+      end
+
       (0...count).each do |i|
         stick_x = bar_start_x + i * STICK_W
-        if tex
-          src = Raylib::Rectangle.create(0, 0, tex.width, tex.height)
-          dst = Raylib::Rectangle.create(stick_x, stick_y, STICK_W, STICK_H)
-          Raylib.DrawTexturePro(tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-        end
+        Raylib::DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, color)
       end
       prev_limit = limit
     end
 
-	if @edging_tex
-	  if label == "HP"
-		actual_positions = [max_val, total_positions].min
-	  else
-		actual_positions = [current, total_positions].min
-	  end
+    # === 3. ТЕПЕРЬ РИСУЕМ РАМКУ ПОВЕРХ ПАЛОЧЕК ===
+    if @edging_tex
+      actual_positions = [max_val, total_positions].min
+      
+      if actual_positions > 0
+        total_w = actual_positions * STICK_W
 
-	  if actual_positions == 1 && @edging_tex_1
-		# Рамка для одной палочки
-		src = Raylib::Rectangle.create(0, 0, @edging_tex_1.width, @edging_tex_1.height)
-		dst = Raylib::Rectangle.create(bar_start_x, stick_y, @edging_tex_1.width, @edging_tex_1.height)
-		Raylib::DrawTexturePro(@edging_tex_1, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-	  else
-		total_w = actual_positions * STICK_W
+        # Середина рамки (2px). Растягиваем ровно под палочками.
+        mid_src = Raylib::Rectangle.create(3, 0, 2, @edging_tex.height)
+        (0...total_w).step(2) do |i|
+          slice_w = [2, total_w - i].min
+          src_rect = Raylib::Rectangle.create(3, 0, slice_w, @edging_tex.height)
+          mid_dst = Raylib::Rectangle.create(bar_start_x + i, stick_y, slice_w, STICK_H)
+          Raylib::DrawTexturePro(@edging_tex, src_rect, mid_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+        end
 
-		if total_w >= 2 * 3
-		  left_src  = Raylib::Rectangle.create(0, 0, 3, @edging_tex.height)
-		  mid_src   = Raylib::Rectangle.create(3, 0, 3, @edging_tex.height)
-		  right_src = Raylib::Rectangle.create(6, 0, 3, @edging_tex.height)
+        # Левый край (3px). Рисуем ПОВЕРХ палочек. Начинается за 2 пикселя до палочек.
+        left_src = Raylib::Rectangle.create(0, 0, 3, @edging_tex.height)
+        left_dst = Raylib::Rectangle.create(bar_start_x - 2, stick_y, 3, STICK_H)
+        Raylib::DrawTexturePro(@edging_tex, left_src, left_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
 
-		  left_dst = Raylib::Rectangle.create(bar_start_x, stick_y, 3, STICK_H)
-		  Raylib::DrawTexturePro(@edging_tex, left_src, left_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+        # Правый край (3px). Рисуем ПОВЕРХ палочек. Начинается на 1 пиксель раньше конца.
+        right_src = Raylib::Rectangle.create(5, 0, 3, @edging_tex.height)
+        right_dst = Raylib::Rectangle.create(bar_start_x + total_w - 1, stick_y, 3, STICK_H)
+        Raylib::DrawTexturePro(@edging_tex, right_src, right_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
+      end
+    end
 
-		  mid_count = actual_positions - 2
-		  mid_count.times do |i|
-			mid_dst = Raylib::Rectangle.create(bar_start_x + 3 + i * 3, stick_y, 3, STICK_H)
-			Raylib::DrawTexturePro(@edging_tex, mid_src, mid_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
-		  end
-
-		  right_dst = Raylib::Rectangle.create(bar_start_x + (actual_positions - 1) * 3, stick_y, 3, STICK_H)
-		  Raylib::DrawTexturePro(@edging_tex, right_src, right_dst, Raylib::Vector2.create(0,0), 0, Raylib::WHITE)
-		end
-	  end
-	end
-
+    # Число справа
     number_x = bar_start_x + total_positions * STICK_W + gap
     if font
       Raylib.DrawTextEx(font, number_str, Raylib::Vector2.create(number_x, base_y), font_size, 1, Raylib::WHITE)
@@ -919,6 +890,8 @@ end
       Raylib.DrawText(number_str, number_x, base_y, font_size, Raylib::WHITE)
     end
   end
+# ========================================================================
+
 
   def update_animation(dt)
     case @sub_phase
@@ -1009,9 +982,6 @@ end
     UnloadTexture(@message_panel_tex) if @message_panel_tex
     UnloadTexture(@panel_tex)        if @panel_tex
     UnloadTexture(@edging_tex)       if @edging_tex
-    UnloadTexture(@edging_tex_1)     if @edging_tex_1
-
-    @stick_textures.each { |t| UnloadTexture(t) if t } if @stick_textures
 
     if @render_texture
       UnloadRenderTexture(@render_texture)

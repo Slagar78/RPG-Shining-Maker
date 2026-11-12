@@ -247,15 +247,13 @@ class HpMpPanel
 
     stick_y = base_y + (FONT_SIZE - STICK_H) / 2
 
-    # Красные палочки ТОЛЬКО для HP (потерянное здоровье)
-    if label == "HP"
-      max_visible = [maximum, total_positions].min
-      (current...max_visible).each do |i|
-        stick_x = bar_start_x + i * STICK_W
-        red = Color.new
-        red.r = 220; red.g = 40; red.b = 40; red.a = 200
-        DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, red)
-      end
+    # Красные палочки для HP и MP
+    max_visible = [maximum, total_positions].min
+    (current...max_visible).each do |i|
+      stick_x = bar_start_x + i * STICK_W
+      red = Color.new
+      red.r = 220; red.g = 40; red.b = 40; red.a = 200
+      DrawRectangle(stick_x, stick_y, STICK_W, STICK_H, red)
     end
 
     # Цветные палочки текущего здоровья / маны
@@ -287,13 +285,7 @@ class HpMpPanel
     # ---------- Окантовка поверх полосок ----------
     if @edging_tex
       # Определяем, сколько палочек реально занимает шкала
-      if label == "HP"
-        # Для HP – до максимума (включая красные)
-        actual_positions = [maximum, total_positions].min
-      else
-        # Для MP – только до текущего значения
-        actual_positions = [current, total_positions].min
-      end
+      actual_positions = [maximum, total_positions].min
 
       total_w = actual_positions * STICK_W
 

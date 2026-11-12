@@ -41,14 +41,14 @@
 			"enemy_id": 0,
 			"x": 21,
 			"y": 5,
-			"level": 14,
+			"level": 2,
 			"gold_reward": 100
 		},
 		{
 			"enemy_id": 1,
 			"x": 19,
 			"y": 7,
-			"level": 10,
+			"level": 3,
 			"gold_reward": 110
 		},
 		{

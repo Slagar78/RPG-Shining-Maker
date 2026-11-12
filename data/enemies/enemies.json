@@ -10,8 +10,8 @@
 					"spell_power": "enhanced",
 					"stats": {
 							"hp_growth": {
-									"start": 529,
-									"projected": 900,
+									"start": 12,
+									"projected": 54,
 									"curve": "LINEAR"
 							},
 							"mp_growth": {
