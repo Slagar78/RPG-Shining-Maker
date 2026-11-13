@@ -229,11 +229,6 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
 
     @camera_follow_player = true
 
-    @info_cursor_dir = nil
-    @info_cursor_start_tile_x = 0
-    @info_cursor_start_tile_y = 0
-    @info_cursor_press_time = 0.0
-
     @last_attacker = nil
     @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
     @last_defender_hp_before = nil
@@ -689,7 +684,6 @@ end
      # ничего не делаем — движение обрабатывается в update
 
    when :player_turn
-
      if IsKeyPressed(KEY_S)
        if @battle_player.moving
          @pending_info = true
@@ -701,10 +695,6 @@ end
          end
          @info_cursor_x = @current_unit[:x]
          @info_cursor_y = @current_unit[:y]
-         @info_cursor_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2
-         @info_cursor_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
-         @info_cursor_vx = 0
-         @info_cursor_vy = 0
          @battle_player.face_down
          @battle_state = :info_mode
          @battle_player.blinking = true if @battle_player
@@ -811,31 +801,35 @@ end
        @audio.play_sfx("cancel_menu") if @audio
      end
 
-  when :info_mode
-     unless @info_panel_unit
-       dir = nil
-       if IsKeyDown(KEY_LEFT) then dir = [-1, 0]
-       elsif IsKeyDown(KEY_RIGHT) then dir = [1, 0]
-       elsif IsKeyDown(KEY_UP) then dir = [0, -1]
-       elsif IsKeyDown(KEY_DOWN) then dir = [0, 1]
-       end
+    when :info_mode
+       unless @info_panel_unit
+         dx = 0
+         dy = 0
+         dx -= 1 if IsKeyDown(KEY_LEFT)
+         dx += 1 if IsKeyDown(KEY_RIGHT)
+         dy -= 1 if IsKeyDown(KEY_UP)
+         dy += 1 if IsKeyDown(KEY_DOWN)
 
-       if dir
-         if @info_das_key != dir
-           @info_das_key = dir
-           @info_das_timer = 0.2
-           move_info_cursor(dir[0], dir[1])
-         else
-           @info_das_timer -= GetFrameTime()
-           if @info_das_timer <= 0
-             @info_das_timer = 0.05
+         dir = (dx != 0 || dy != 0) ? [dx, dy] : nil
+
+         if dir
+           if @info_das_key != dir
+             # сменили направление — мгновенный шаг
+             @info_das_key = dir
+             @info_das_timer = 0.2
              move_info_cursor(dir[0], dir[1])
+           else
+             # удержание — задержка и потом автоповтор
+             @info_das_timer -= GetFrameTime()
+             if @info_das_timer <= 0
+               @info_das_timer = 0.05
+               move_info_cursor(dir[0], dir[1])
+             end
            end
+         else
+           @info_das_key = nil
          end
-       else
-         @info_das_key = nil
        end
-     end
 
      if IsKeyPressed(KEY_A)
        ally = @allies.find { |a| a[:x] == @info_cursor_x && a[:y] == @info_cursor_y }
@@ -1039,9 +1033,10 @@ end
  end
 
   def move_info_cursor(dx, dy)
-    new_x = @info_cursor_x + dx
-    new_y = @info_cursor_y + dy
-    if new_x >= 0 && new_x < @battle_w && new_y >= 0 && new_y < @battle_h
+    new_x = (@info_cursor_x + dx).clamp(0, @battle_w - 1)
+    new_y = (@info_cursor_y + dy).clamp(0, @battle_h - 1)
+
+    if new_x != @info_cursor_x || new_y != @info_cursor_y
       @info_cursor_x = new_x
       @info_cursor_y = new_y
       @audio.play_sfx("cursor") if @audio
@@ -1250,10 +1245,6 @@ end
           if @pending_info
             @info_cursor_x = @current_unit[:x]
             @info_cursor_y = @current_unit[:y]
-            @info_cursor_px = @info_cursor_x * TILE_SIZE + TILE_SIZE / 2
-            @info_cursor_py = @info_cursor_y * TILE_SIZE + TILE_SIZE / 2
-            @info_cursor_vx = 0
-            @info_cursor_vy = 0
             unless cell_free?(@battle_player.x, @battle_player.y, @current_unit)
               @audio.play_sfx("block") if @audio
               @pending_info = false
