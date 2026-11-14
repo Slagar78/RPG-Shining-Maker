@@ -607,34 +607,10 @@ end
   end
 
   def check_enemy_attack
-    # Ищем союзника (твоего героя), который стоит вплотную к врагу
     target = @allies.find do |ally|
       (ally[:x] - @current_unit[:x]).abs + (ally[:y] - @current_unit[:y]).abs == 1 && ally[:hp] > 0
     end
-
-    if target
-      # Считаем урон (ВРАГ бьет СОЮЗНИКА)
-      dmg = DamageCalculator.physical_for_units(@current_unit, target)
-      
-      # ВАЖНО: Атакующий - это враг (@current_unit), а Защитник - это союзник (target)
-      @pending_attacker = @current_unit
-      @pending_defender = target
-      
-      @pending_damage = dmg
-      @pending_exp_amount = 0   # Враги не получают опыт
-      @pending_gold_amount = 0
-      
-      # Запускаем затемнение и сцену
-      @fade_alpha = 0
-      @battle_state = :fade_to_battle
-      
-      @last_attacker = @pending_attacker
-      @last_defender = @pending_defender
-      
-      @audio.play_sfx("confirm") if @audio
-      return true # Атака запущена
-    end
-    false # Атаковать некого
+    target # Возвращаем цель или nil
   end
 
   def end_current_turn
@@ -1352,10 +1328,31 @@ end
 	  
       @enemy_action_timer -= dt * 60.0
       if @enemy_action_timer <= 0
-        @cursor.visible = false
+        @cursor.visible = false        
         @enemy_move_queue = EnemyAI.decide_moves(@current_unit, @allies, @enemies, @highlight_tiles)
-        if @enemy_move_queue.empty?
-          unless check_enemy_attack # <--- Если можем ударить — бьем!
+        
+        if @enemy_move_queue.empty? || @enemy_move_index >= @enemy_move_queue.size
+          target = check_enemy_attack          
+          if target
+            # Враг готовится бить
+            @pending_attacker = @current_unit
+            @pending_defender = target
+            @pending_damage = DamageCalculator.physical_for_units(@current_unit, target)
+            @pending_exp_amount = 0
+            @pending_gold_amount = 0
+            
+            @battle_player&.face_target(target[:x], target[:y])
+            @target_highlight = target
+            @highlight_tiles = [
+              [@current_unit[:x] + 1, @current_unit[:y]],
+              [@current_unit[:x] - 1, @current_unit[:y]],
+              [@current_unit[:x],     @current_unit[:y] + 1],
+              [@current_unit[:x],     @current_unit[:y] - 1]
+            ].select { |nx, ny| nx >= 0 && nx < @battle_w && ny >= 0 && ny < @battle_h }
+            
+            @enemy_attack_delay = 0.2
+            @battle_state = :enemy_attack_preview
+          else
             end_current_turn
           end
         else
@@ -1386,7 +1383,27 @@ end
             end
           end
         else
-          unless check_enemy_attack # <--- Проверяем, не дошел ли он вплотную
+          target = check_enemy_attack
+          
+          if target
+            @pending_attacker = @current_unit
+            @pending_defender = target
+            @pending_damage = DamageCalculator.physical_for_units(@current_unit, target)
+            @pending_exp_amount = 0
+            @pending_gold_amount = 0
+            
+            @battle_player&.face_target(target[:x], target[:y])
+            @target_highlight = target
+            @highlight_tiles = [
+              [@current_unit[:x] + 1, @current_unit[:y]],
+              [@current_unit[:x] - 1, @current_unit[:y]],
+              [@current_unit[:x],     @current_unit[:y] + 1],
+              [@current_unit[:x],     @current_unit[:y] - 1]
+            ].select { |nx, ny| nx >= 0 && nx < @battle_w && ny >= 0 && ny < @battle_h }
+            
+            @enemy_attack_delay = 0.2
+            @battle_state = :enemy_attack_preview
+          else
             end_current_turn
           end
         end
@@ -1499,17 +1516,34 @@ end
   when :battle_scene
       @battle_scene.update
 
+  when :enemy_attack_preview
+      @battle_player&.update_animation(dt)
+      @enemy_attack_delay -= dt
+      
+      if @enemy_attack_delay <= 0
+        @fade_alpha = 0
+        @battle_state = :fade_to_battle
+        @last_attacker = @pending_attacker
+        @last_defender = @pending_defender
+        @audio.play_sfx("confirm") if @audio
+      end
+
   when :fade_to_battle
       @fade_alpha += 600 * GetFrameTime()
       
     if @fade_alpha >= 255
       @fade_alpha = 255
       @battle_scene.start(@pending_attacker, @pending_defender, @pending_damage, @pending_exp_amount, @pending_gold_amount)
-	    @last_attacker = @pending_attacker
+      @last_attacker = @pending_attacker
       @last_defender = @pending_defender
       @pending_attacker = nil
       @pending_defender = nil
       @pending_damage = 0
+      
+      # --- ОЧИЩАЕМ ВИЗУАЛ ---
+      @target_highlight = nil
+      @highlight_tiles = @saved_highlight_tiles.dup
+      
       @battle_state = :battle_scene
     end
 

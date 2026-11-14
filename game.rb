@@ -82,6 +82,7 @@ class Game
     @audio.load_sfx("cursor", "assets/sounds/buttons/Cursor.ogg")
     @audio.load_sfx("error",  "assets/sounds/buttons/Error.ogg")
     @audio.load_sfx("attack", "assets/sounds/sounds_BattleScenes/Attack.mp3")
+    @audio.load_sfx("enemy_attack", "assets/sounds/sounds_BattleScenes/Enemy_Attack.mp3")
 
     $audio = @audio
 

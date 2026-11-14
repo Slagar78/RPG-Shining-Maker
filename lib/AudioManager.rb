@@ -6,8 +6,9 @@ class AudioManager
     @current_bgm = nil
     @current_file = nil
     @sfx = {}
-	@base_sfx_volumes = {}
+    @base_sfx_volumes = {}
     @saved_music_volume = 0.8
+    @is_paused = false
   end
 
   # ── Фоновая музыка ──
@@ -21,6 +22,7 @@ class AudioManager
     Raylib.SetMusicVolume(@current_bgm, @saved_music_volume)
     Raylib.PlayMusicStream(@current_bgm)
     @current_file = file
+    @is_paused = false
   end
 
   def stop
@@ -34,6 +36,11 @@ class AudioManager
   def update
     if @current_bgm
       Raylib.UpdateMusicStream(@current_bgm)
+      
+      # Если музыка закончилась, но мы её не ставили на паузу — запускаем заново!
+      if !@is_paused && !Raylib.IsMusicStreamPlaying(@current_bgm)
+        Raylib.PlayMusicStream(@current_bgm)
+      end
     end
   end
 
@@ -41,11 +48,13 @@ class AudioManager
   def pause_music
     return unless @current_bgm
     Raylib.PauseMusicStream(@current_bgm)
+    @is_paused = true
   end
 
   def resume_music
     return unless @current_bgm
     Raylib.ResumeMusicStream(@current_bgm)
+    @is_paused = false
   end
 
   # ── Заглушение и восстановление музыки (резерв) ──

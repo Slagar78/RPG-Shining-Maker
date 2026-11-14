@@ -35,7 +35,7 @@ class BattleScene
 
   def initialize(battle_manager, game_text = {})
     @battle_manager = battle_manager
-	@game_text = game_text
+    @game_text = game_text
     @timer = 0.0
     @active = false
     @finished = false
@@ -64,11 +64,9 @@ class BattleScene
     @dying_alpha = 255
     @dying_blink_timer = 0.0
     @dying_blinks = 0
-    @dying_visible = true
-	
-	@shutter_progress = 0.0
-	@shutter_hold_timer = 0.0
-	
+    @dying_visible = true	
+    @shutter_progress = 0.0
+    @shutter_hold_timer = 0.0	
     @defender_anim = :dodge
 
     # ЗАГРУЗКА РАМКИ
@@ -167,12 +165,18 @@ class BattleScene
     @message_reveal_index = 0
     @message_timer = 0
     @full_message_shown = false
-	@message_done_timer = 0.0
+    @message_done_timer = 0.0
 	
     @active = true
 
     # --- звук атаки при входе в сцену ---
-    @battle_manager.audio.play_sfx("attack") if @battle_manager.audio
+    if @battle_manager.audio
+      if attacker_unit[:enemy]
+        @battle_manager.audio.play_sfx("enemy_attack") # Звук врага
+      else
+        @battle_manager.audio.play_sfx("attack")       # Звук союзника
+      end
+    end
 
     # --- ставим фоновую музыку на паузу (работает с OGG) ---
     @battle_manager.audio.pause_music if @battle_manager.audio
@@ -285,7 +289,8 @@ def update
 
   if @phase == :finished
     @battle_manager.return_from_battle_scene
-    @battle_manager.audio.stop_sfx("attack") if @battle_manager.audio   # выключаем боевую музыку
+    @battle_manager.audio.stop_sfx("attack") if @battle_manager.audio
+    @battle_manager.audio.stop_sfx("enemy_attack") if @battle_manager.audio
     @battle_manager.audio.resume_music if @battle_manager.audio         # снимаем фоновую музыку с паузы
 
     # Очистка ресурсов
@@ -591,7 +596,9 @@ end
       Raylib.DrawRectangle(0, 0, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
       Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
 
-      if @attacker && !@attacker[:enemy] && @ground_tex
+      # Рисуем платформу, если на экране есть союзник (неважно, бьет он или защищается)
+      has_ally = (@attacker && !@attacker[:enemy]) || (@defender && !@defender[:enemy])
+      if has_ally && @ground_tex
         gw = @ground_tex.width
         gh = @ground_tex.height
         scaled_w = gw * GROUND_SCALE
@@ -600,7 +607,7 @@ end
         gy = ALLY_Y - scaled_h + GROUND_OFFSET_Y
         src = Raylib::Rectangle.create(0, 0, gw, gh)
         dst = Raylib::Rectangle.create(gx, gy, scaled_w, scaled_h)
-        Raylib.DrawTexturePro(@ground_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+        Raylib::DrawTexturePro(@ground_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
       end
 
       att_x = @attacker[:enemy] ? ENEMY_X : @ally_draw_x
