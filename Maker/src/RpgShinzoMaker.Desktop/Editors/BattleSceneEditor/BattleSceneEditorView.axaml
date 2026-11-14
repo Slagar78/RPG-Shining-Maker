@@ -1,0 +1,108 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:RpgShinzoMaker.Core.Models"
+             x:Class="RpgShinzoMaker.Desktop.Editors.BattleSceneEditor.BattleSceneEditorView">
+    
+    <Grid ColumnDefinitions="200, 140, *">
+
+        <!-- ═══════════ КНОПКИ (слева) ═══════════ -->
+        <StackPanel Grid.Column="0" Margin="5,10,5,0" Spacing="5" VerticalAlignment="Top">
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
+                <Button Grid.Column="0" Content="Save" Click="OnSaveClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
+                <Button Grid.Column="1" Content="Change BG" Click="OnChangeBgClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
+            </Grid>
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
+                <Button Grid.Column="0" Content="Load Ally" Click="OnLoadAllyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
+                <Button Grid.Column="1" Content="Load Enemy" Click="OnLoadEnemyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
+            </Grid>
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
+                <Button Grid.Column="0" Content="Save Ally" Click="OnSaveAllyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
+                <Button Grid.Column="1" Content="Save Enemy" Click="OnSaveEnemyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
+            </Grid>
+            <Button Content="Rescan Frames" Click="OnRescanFramesClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
+        </StackPanel>
+
+        <!-- ═══════════ СПИСОК БИТВ (узкий) ═══════════ -->
+        <Border Grid.Column="1" Background="#1E1E1E" Margin="5,10,5,10" CornerRadius="4">
+            <ListBox x:Name="BattlesList" 
+                     Background="Transparent" 
+                     BorderThickness="0"
+                     SelectionChanged="OnBattleSelected">
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem">
+                        <Setter Property="MinHeight" Value="28"/>
+                        <Setter Property="Padding" Value="5,0"/>
+                        <Setter Property="Margin" Value="2,1"/>
+                        <Setter Property="CornerRadius" Value="4"/>
+                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                    </Style>
+                    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                        <Setter Property="Background" Value="#2D2D30"/>
+                    </Style>
+                    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                        <Setter Property="Background" Value="#007ACC"/>
+                    </Style>
+                </ListBox.Styles>
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:BattleEntry">
+                        <TextBlock Text="{Binding Name}" Foreground="White" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <!-- ═══════════ ПРАВАЯ ПАНЕЛЬ (Сцена + Настройки) ═══════════ -->
+        <Grid Grid.Column="2" RowDefinitions="*, Auto" Background="#191928">
+            
+            <!-- Сцена -->
+            <Border Grid.Row="0" Background="Black" Margin="10,10,10,10" ClipToBounds="True" x:Name="PreviewContainer">
+                <Canvas x:Name="PreviewCanvas" ClipToBounds="True" SizeChanged="OnCanvasSizeChanged">
+                    <Rectangle x:Name="TopBar" Fill="Black" />
+                    <Rectangle x:Name="BottomBar" Fill="Black" />
+                    <Image x:Name="BgImage" />
+                    <Image x:Name="GroundImage" />
+                    <Image x:Name="AllyImage" />
+                    <Image x:Name="EnemyImage" />
+                </Canvas>
+            </Border>
+
+            <!-- Настройки внизу -->
+            <Border Grid.Row="1" Background="#1E1E28" Padding="10" VerticalAlignment="Bottom">
+                <Grid ColumnDefinitions="*, 1, *">
+                    
+                    <!-- Союзник -->
+                    <Border Grid.Column="0" BorderBrush="#3E3E42" BorderThickness="1" CornerRadius="4" Margin="0,0,10,0" Padding="5">
+                        <StackPanel>
+                            <TextBlock Text="ALLY" Foreground="#FFFF64" FontWeight="Bold" FontSize="11" Margin="0,0,0,5"/>
+                            <Grid ColumnDefinitions="50, *" RowDefinitions="Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Idle" Foreground="#DCDCF0" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Attack" Foreground="#DCDCF0" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Dodge" Foreground="#DCDCF0" FontSize="11" VerticalAlignment="Center"/>
+                                <Grid Grid.Row="0" Grid.Column="1" x:Name="AllyIdleControls"/>
+                                <Grid Grid.Row="1" Grid.Column="1" x:Name="AllyAttackControls"/>
+                                <Grid Grid.Row="2" Grid.Column="1" x:Name="AllyDodgeControls"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Rectangle Grid.Column="1" Fill="#3E3E42" Width="1" Margin="0,5"/>
+
+                    <!-- Враг -->
+                    <Border Grid.Column="2" BorderBrush="#3E3E42" BorderThickness="1" CornerRadius="4" Margin="10,0,0,0" Padding="5">
+                        <StackPanel>
+                            <TextBlock Text="ENEMY" Foreground="#FF8888" FontWeight="Bold" FontSize="11" Margin="0,0,0,5"/>
+                            <Grid ColumnDefinitions="50, *" RowDefinitions="Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Idle" Foreground="#DCDCF0" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Attack" Foreground="#DCDCF0" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Dodge" Foreground="#DCDCF0" FontSize="11" VerticalAlignment="Center"/>
+                                <Grid Grid.Row="0" Grid.Column="1" x:Name="EnemyIdleControls"/>
+                                <Grid Grid.Row="1" Grid.Column="1" x:Name="EnemyAttackControls"/>
+                                <Grid Grid.Row="2" Grid.Column="1" x:Name="EnemyDodgeControls"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

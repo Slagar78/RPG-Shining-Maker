@@ -12,6 +12,9 @@ RPG-Shining-Maker/
 │   │   │   │   ├── RoofEvent, TileChangeEvent, StairEvent, WarpEvent, NpcEvent, CounterEvent, MapEvents, SubArea
 │   │   │   │   ├── GlobalSettings.cs               (start_map_id, start_x, start_y, gold)
 │   │   │   │   ├── BattleEntry.cs                  (map_id, battle_x/y/w/h, music, background)
+│   │   │   │   ├── AnimationSet.cs                 (idle, attack, dodge + runtime-поля)
+│   │   │   │   ├── AnimPhase.cs                    (frames, offset_x, offset_y)
+│   │   │   │   ├── AnimFrame.cs                    (file, duration, offset_x, offset_y)
 │   │   │   │   └── Database/
 │   │   │   │       ├── Actor.cs, CharacterClass.cs, Enemy.cs
 │   │   │   │       ├── ProwessCatalog.cs, StartInventory.cs
@@ -24,6 +27,7 @@ RPG-Shining-Maker/
 │   │   │       ├── BattleEntriesService.cs         (чтение/запись entries.json битв)
 │   │   │       ├── SpritesetService.cs             (чтение/запись spriteset.json)
 │   │   │       ├── TerrainService.cs               (чтение/запись terrain.json)
+│   │   │       ├── AnimationService.cs             (чтение/запись animation.json, Rescan Frames)
 │   │   │       ├── GlobalService.cs                (чтение/запись global.json)
 │   │   │       └── AssetScannerService.cs          (GetMusicFiles, GetPortraits и т.д.)
 │   │   │
@@ -57,6 +61,11 @@ RPG-Shining-Maker/
 │   │           │   ├── BattleEditorView.Inspector.cs (◄ ID ►)
 │   │           │   ├── BattleEditorView.Save.cs    (3 JSON)
 │   │           │   └── BattleUnit.cs               (модель слота)
+│   │           ├── BattleSceneEditor/              ← НОВОЕ (Портирован из C)
+│   │           │   ├── BattleSceneEditorView.axaml (.cs) (Каркас, IEditor, таймер)
+│   │           │   ├── BattleSceneEditorView.Animations.cs (Диалоги, Rescan Frames)
+│   │           │   ├── BattleSceneEditorView.Inputs.cs (Сетка контролов, X/Y/Dur)
+│   │           │   └── BattleSceneEditorView.Render.cs (Отрисовка сцены 1152x960, масштабы)
 │   │           └── DatabaseEditor/
 │   │               ├── DatabaseEditorView.axaml (.cs)
 │   │               └── Views/
@@ -94,7 +103,7 @@ RPG-Shining-Maker/
     └── game.rb                                     (Поиск стартовой карты по ID, Варпы по target_map_id)
 
 
-🏛️ Архитектура: оболочка и ШЕСТЬ редакторов
+🏛️ Архитектура: оболочка и СЕМЬ редакторов
 
 ┌─────────────────────────────────────────────────────────────┐
 │                     MainWindow (Shell)                      │
@@ -106,6 +115,7 @@ RPG-Shining-Maker/
 │  │  EventEditorView(IEditor)  ← вкладка «Events»        │   │
 │  │  TilesetImporter(IEditor)  ← вкладка «Importer»      │   │
 │  │  BattleEditorView(IEditor) ← вкладка «Battles»       │   │
+│  │  BattleSceneEditor(IEditor)← вкладка «Scenes»        │   │
 │  │  DatabaseEditor (IEditor)  ← вкладка «Database»      │   │
 │  └──────────────────────────────────────────────────────┘   │
 │  Правый док: [MUSIC PLAYER] / [СВОЙСТВА]  ← НОВОЕ           │
@@ -126,6 +136,12 @@ RPG-Shining-Maker/
                             ▼
                       ┌───────────┐
                       │ BattleEd  │
+                      │  ✓ готов  │
+                      └───────────┘
+                            │
+                            ▼
+                      ┌───────────┐
+                      │ BattleScEd│
                       │  ✓ готов  │
                       └───────────┘
 
@@ -151,6 +167,13 @@ RPG-Shining-Maker/
 	[1,1,1,-1,-1,1],
 	[1,0,1,-1,-1,1]
 ]
+
+Пример animation.json:
+{
+	"idle": { "frames": [{"file": "idle_1.png", "duration": 0.30, "offset_x": 0, "offset_y": 0}] },
+	"attack": { "frames": [{"file": "frame_attack_1.png", "duration": 0.30, "offset_x": -30, "offset_y": 0}] },
+	"dodge": { "frames": [] }
+}
 
 Пример события в events.json (обычное):
 { "type": "counter", "x": 5, "y": 10 }
@@ -180,7 +203,7 @@ RPG-Shining-Maker/
 
 #   Правило                                        Как соблюдать
 1   Один редактор — одна папка                     TilesetImporter в Editors/TilesetImporter/.
-2   Partial-файлы для больших редакторов            MapEditor = 11, EventEditor = 7, Importer = 4, BattleEditor = 10, Database = Views/.
+2   Partial-файлы для больших редакторов            MapEditor = 11, EventEditor = 7, Importer = 4, BattleEditor = 10, BattleSceneEditor = 4, Database = Views/.
 3   Core — общий для всех                           Модели и сервисы в Core/.
 4   MainWindow знает только IEditor                 Никаких ссылок на конкретные классы.
 5   Общение редакторов — через Core                 Импортер вызывает MapJsonService, EntriesService.
@@ -218,6 +241,9 @@ RPG-Shining-Maker/
 37  Музыкальный плеер (NAudio)                      Использовать MusicPlayer и MusicLibrary. Поддержка MP3 (NAudio) и OGG (NAudio.Vorbis).
 38  Сканирование музыки                             MusicLibrary.ScanSounds() читает <GameRoot>/assets/sounds/ при старте окна.
 39  UI плеера                                       Кнопки — векторные Path (5 шт.), список ограничен MaxHeight со стилями CornerRadius для аккуратных плашек.
+40  BattleSceneEditor: Сетка для контролов          В нижней панели использовать Grid с фиксированными колонками вместо StackPanel, чтобы элементы не вылезали за рамки.
+41  BattleSceneEditor: Масштабирование сцены        Использовать Math.Min(Width/1152, Height/960) чтобы картинка (включая землю) всегда влезала целиком.
+42  BattleSceneEditor: Поиск путей                  Использовать метод GetGameRoot() для поиска папки data/assets вверх по дереву, чтобы относительные пути из JSON работали.
 
 
 📈 Что уже готово vs что в планах
@@ -226,8 +252,10 @@ RPG-Shining-Maker/
 ЯДРО И СЕРВИСЫ
 Core.Models (Карты, События, БД, GlobalSettings)       ✅
 Core.Models (BattleEntry)                              ✅
+Core.Models (AnimationSet, AnimPhase, AnimFrame)       ✅
 Core.Services (JSON, Карты, Актеры, Враги, Магазины)   ✅
 Core.Services (Battle, Spriteset, Terrain)             ✅
+Core.Services (AnimationService: Load/Save/Rescan)     ✅
 GlobalService (Чтение/запись global.json)              ✅
 
 ОБОЛОЧКА И РЕДАКТОРЫ
@@ -252,6 +280,11 @@ DatabaseEditor (Оболочка, вертикальные вкладки)      
 Вкладка Classes                                        ✅
 Вкладка Enemies (статы, сопротивления, магия по ID)    ✅
 Вкладка System (Start Map ID, X, Y, Gold)              ✅
+BattleSceneEditor (4 файла, портирован из C)           ✅
+Загрузка фонов, земли и анимаций по путям              ✅
+Панель управления X/Y/Dur (Grid, компактно)            ✅
+Запуск анимации (чекбокс Anim)                         ✅
+Rescan Frames (пересканирование папки)                 ✅
 
 ИГРА (RUBY)
 Рефакторинг: всё (инвентарь, магазины, бой) на ID      ✅
@@ -264,8 +297,6 @@ DatabaseEditor (Оболочка, вертикальные вкладки)      
 BattleManager (give/drop/equip) по item_id             ✅
 
 В ПЛАНАХ
-SceneEditor                                            📋
-ASSETS (живое дерево), СВОЙСТВА (инфо)                 📋
 MESSAGE / TEXTS (редактор диалогов)                    📋
 Undo/Redo в EventEditor, Визуальные subAreas           📋
 Кнопка [⚔ Battle Test] → запуск battle.rb              📋

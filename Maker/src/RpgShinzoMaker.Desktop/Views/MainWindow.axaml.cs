@@ -33,6 +33,9 @@ public partial class MainWindow : Window
         if (BattleEditorControl != null)
             BattleEditorControl.StatusChanged += OnEditorStatusChanged;
 
+        if (BattleSceneEditor != null)
+            BattleSceneEditor.StatusChanged += OnEditorStatusChanged;
+
         InitializeMusicPlayer();
     }
 

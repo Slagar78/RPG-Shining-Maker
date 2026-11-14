@@ -7,6 +7,7 @@
         xmlns:importer="using:RpgShinzoMaker.Desktop.Editors.TilesetImporter"
         xmlns:dbEditor="using:RpgShinzoMaker.Desktop.Editors.DatabaseEditor"
         xmlns:battleEditor="using:RpgShinzoMaker.Desktop.Editors.BattleEditor"
+        xmlns:battleSceneEditor="using:RpgShinzoMaker.Desktop.Editors.BattleSceneEditor"
         xmlns:audio="using:RpgShinzoMaker.Desktop.Shared.Audio"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="RpgShinzoMaker.Desktop.Views.MainWindow"
@@ -147,19 +148,13 @@
                     <importer:TilesetImporterView x:Name="TilesetImporter"/>
                 </TabItem>
 
-                <!-- ★ ЗАМЕНЕНО: теперь настоящий BattleEditor ★ -->
+                <!-- BattleEditor -->
                 <TabItem Header="Battles">
                     <battleEditor:BattleEditorView x:Name="BattleEditorControl"/>
                 </TabItem>
 
                 <TabItem Header="Scenes">
-                    <Border Background="#1E1E1E">
-                        <TextBlock Text="Scene Editor"
-                                   Foreground="Gray"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   FontSize="20"/>
-                    </Border>
+                    <battleSceneEditor:BattleSceneEditorView x:Name="BattleSceneEditor"/>
                 </TabItem>
 
                 <TabItem Header="Database">
