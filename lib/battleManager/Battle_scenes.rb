@@ -407,7 +407,6 @@ def update
         if @message_timer >= @message_reveal_speed
           @message_timer -= @message_reveal_speed
           @message_reveal_index += 1
-          # Пропускаем управляющий символ {N} целиком
           if @current_message[@message_reveal_index, 3] == "{N}"
             @message_reveal_index += 3
           end
@@ -421,8 +420,26 @@ def update
       end
 
       if @full_message_shown && @message_done_timer >= 1.0
-        prepare_exp_message
-        @sub_phase = :exp_message
+        if @attacker[:actor]
+          # Атаковал СОЮЗНИК -> показываем опыт (золото проверится после опыта)
+          prepare_exp_message
+          @sub_phase = :exp_message
+        else
+          # Атаковал ВРАГ -> опыт и золото НЕ показываем вообще
+          if @defender[:hp] <= 0
+            # Твой герой погиб
+            @sub_phase = :dying
+            @dying_alpha = 255
+            @dying_blink_timer = 0.0
+            @dying_blinks = 0
+            @dying_visible = true
+          else
+            # Твой герой выжил
+            @sub_phase = :idle_after
+            @attacker_current_frame = 0
+            @defender_current_frame = 0
+          end
+        end
         @sub_phase_timer = 0.0
       end
 
@@ -551,76 +568,84 @@ when :dying_wait
   end
 end
 
-# Рендер в собственный холст 1152×960.
-# Вызывается СНАРУЖИ $canvas, до BeginTextureMode($canvas).
-def render_to_internal_rt
-  return unless @active && @render_texture
+  # Рендер в собственный холст 1152×960.
+  # Вызывается СНАРУЖИ $canvas, до BeginTextureMode($canvas).
+  def render_to_internal_rt
+    return unless @active && @render_texture
 
-  Raylib.BeginTextureMode(@render_texture)
+    Raylib.BeginTextureMode(@render_texture)
 
-  case @phase
-  when :delay, :end_delay
-    Raylib.ClearBackground(Raylib::BLACK)
+    case @phase
+    when :delay, :end_delay
+      Raylib.ClearBackground(Raylib::BLACK)
 
-  when :display, :shutter_close, :shutter_hold
-    Raylib.ClearBackground(Raylib::BLACK)
+    when :display, :shutter_close, :shutter_hold
+      Raylib.ClearBackground(Raylib::BLACK)
 
-    if @background_tex
-      src = Raylib::Rectangle.create(0, 0, @background_tex.width, @background_tex.height)
-      dst = Raylib::Rectangle.create(0, BAR_HEIGHT, WORK_WIDTH, WORK_HEIGHT)
-      Raylib.DrawTexturePro(@background_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-    end
+      if @background_tex
+        src = Raylib::Rectangle.create(0, 0, @background_tex.width, @background_tex.height)
+        dst = Raylib::Rectangle.create(0, BAR_HEIGHT, WORK_WIDTH, WORK_HEIGHT)
+        Raylib.DrawTexturePro(@background_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+      end
 
-    Raylib.DrawRectangle(0, 0, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
-    Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
+      Raylib.DrawRectangle(0, 0, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
+      Raylib.DrawRectangle(0, 960 - BAR_HEIGHT, WORK_WIDTH, BAR_HEIGHT, Raylib::BLACK)
 
-    if @attacker && !@attacker[:enemy] && @ground_tex
-      gw = @ground_tex.width
-      gh = @ground_tex.height
-      scaled_w = gw * GROUND_SCALE
-      scaled_h = gh * GROUND_SCALE
-      gx = @ally_draw_x - scaled_w / 2 + GROUND_OFFSET_X
-      gy = ALLY_Y - scaled_h + GROUND_OFFSET_Y
-      src = Raylib::Rectangle.create(0, 0, gw, gh)
-      dst = Raylib::Rectangle.create(gx, gy, scaled_w, scaled_h)
-      Raylib.DrawTexturePro(@ground_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
-    end
+      if @attacker && !@attacker[:enemy] && @ground_tex
+        gw = @ground_tex.width
+        gh = @ground_tex.height
+        scaled_w = gw * GROUND_SCALE
+        scaled_h = gh * GROUND_SCALE
+        gx = @ally_draw_x - scaled_w / 2 + GROUND_OFFSET_X
+        gy = ALLY_Y - scaled_h + GROUND_OFFSET_Y
+        src = Raylib::Rectangle.create(0, 0, gw, gh)
+        dst = Raylib::Rectangle.create(gx, gy, scaled_w, scaled_h)
+        Raylib.DrawTexturePro(@ground_tex, src, dst, Raylib::Vector2.create(0, 0), 0, Raylib::WHITE)
+      end
 
-    att_x = @attacker[:enemy] ? ENEMY_X : @ally_draw_x
-    att_y = @attacker[:enemy] ? ENEMY_Y : ALLY_Y
-    def_x = @defender[:enemy] ? ENEMY_X : @ally_draw_x
-    def_y = @defender[:enemy] ? ENEMY_Y : ALLY_Y
+      att_x = @attacker[:enemy] ? ENEMY_X : @ally_draw_x
+      att_y = @attacker[:enemy] ? ENEMY_Y : ALLY_Y
+      def_x = @defender[:enemy] ? ENEMY_X : @ally_draw_x
+      def_y = @defender[:enemy] ? ENEMY_Y : ALLY_Y
 
-if @sub_phase == :attack
-  draw_unit(@defender, @defender_anim, def_x, def_y, false, @defender_current_frame, true)
-  draw_unit(@attacker, :attack, att_x, att_y, false, @attacker_current_frame, true)
-elsif @sub_phase == :dying || @sub_phase == :dying_wait
-  # Защитник замирает в позе получения урона и исчезает (или уже невидим)
-  draw_unit_with_alpha(@defender, @defender_anim || :idle, def_x, def_y, false, @defender_current_frame, true, @dying_alpha)
-  draw_unit(@attacker, :idle, att_x, att_y, false, @attacker_current_frame, true)
-else
-  draw_unit(@attacker, :idle, att_x, att_y, false, @attacker_current_frame, true)
-  draw_unit(@defender, :idle, def_x, def_y, false, @defender_current_frame, true)
-end
+  if @sub_phase == :attack
+    draw_unit(@defender, @defender_anim, def_x, def_y, false, @defender_current_frame, true)
+    draw_unit(@attacker, :attack, att_x, att_y, false, @attacker_current_frame, true)
+  elsif @sub_phase == :dying || @sub_phase == :dying_wait
+    # Защитник замирает в позе получения урона и исчезает (или уже невидим)
+    draw_unit_with_alpha(@defender, @defender_anim || :idle, def_x, def_y, false, @defender_current_frame, true, @dying_alpha)
+    draw_unit(@attacker, :idle, att_x, att_y, false, @attacker_current_frame, true)
+  else
+    draw_unit(@attacker, :idle, att_x, att_y, false, @attacker_current_frame, true)
+    draw_unit(@defender, :idle, def_x, def_y, false, @defender_current_frame, true)
+  end
 
-    if @attacker && @attacker[:max_hp]
+    # ─── ПАНЕЛИ СТАТОВ (ФИКСИРОВАННЫЕ МЕСТА) ───
+    # Определяем, кто союзник, а кто враг, независимо от того, кто бьет
+    ally_unit  = @attacker[:actor] ? @attacker : (@defender[:actor] ? @defender : nil)
+    enemy_unit = @attacker[:enemy] ? @attacker : (@defender[:enemy] ? @defender : nil)
+
+    # Панель СОЮЗНИКА — всегда справа сверху
+    if ally_unit && ally_unit[:max_hp]
       load_panel_texture
       if @panel_tex
         panel_w = @panel_tex.width
         panel_h = @panel_tex.height
         panel_x = WORK_WIDTH - 16 - panel_w
         panel_y = (BAR_HEIGHT - panel_h) / 2
-        draw_panel_with_sprite(@attacker, panel_x + panel_w, panel_y, true)
+        draw_panel_with_sprite(ally_unit, panel_x + panel_w, panel_y, true)
       end
     end
-    if @defender && @defender[:max_hp]
+
+    # Панель ВРАГА — всегда слева снизу
+    if enemy_unit && enemy_unit[:max_hp]
       load_panel_texture
       if @panel_tex
         panel_w = @panel_tex.width
         panel_h = @panel_tex.height
         panel_x = 16
         panel_y = 960 - BAR_HEIGHT + (BAR_HEIGHT - panel_h) / 2
-        draw_panel_with_sprite(@defender, panel_x, panel_y, false)
+        draw_panel_with_sprite(enemy_unit, panel_x, panel_y, false)
       end
     end
 

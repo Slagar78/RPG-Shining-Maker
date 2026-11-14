@@ -18,13 +18,16 @@ module AiTypes
       # Считаем дистанцию по прямой
       distance = (@unit[:x] - target[:x]).abs + (@unit[:y] - target[:y]).abs
 
-      # Если мы уже вплотную, просто стоим. Никакой атаки.
+      # Передаем ВСЕХ юнитов, чтобы команды видели актуальную обстановку
+      ctx = { unit: @unit, highlight_tiles: @highlight_tiles, allies: @allies, enemies: @enemies }
+
+      # Если мы уже вплотную, вызываем команду АТАКИ
       if distance <= 1
-        return []
+        result = AiCommands.execute(:attack, ctx, { target: target })
+        return result[:path] # Вернет пустой массив []
       end
 
       # Если цель далеко — идем к ней
-      ctx = { unit: @unit, highlight_tiles: @highlight_tiles }
       result = AiCommands.execute(:move, ctx, { target: target })
       
       if result[:success]

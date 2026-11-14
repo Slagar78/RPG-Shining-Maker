@@ -606,6 +606,37 @@ end
     @panel_slide_state = :hidden
   end
 
+  def check_enemy_attack
+    # Ищем союзника (твоего героя), который стоит вплотную к врагу
+    target = @allies.find do |ally|
+      (ally[:x] - @current_unit[:x]).abs + (ally[:y] - @current_unit[:y]).abs == 1 && ally[:hp] > 0
+    end
+
+    if target
+      # Считаем урон (ВРАГ бьет СОЮЗНИКА)
+      dmg = DamageCalculator.physical_for_units(@current_unit, target)
+      
+      # ВАЖНО: Атакующий - это враг (@current_unit), а Защитник - это союзник (target)
+      @pending_attacker = @current_unit
+      @pending_defender = target
+      
+      @pending_damage = dmg
+      @pending_exp_amount = 0   # Враги не получают опыт
+      @pending_gold_amount = 0
+      
+      # Запускаем затемнение и сцену
+      @fade_alpha = 0
+      @battle_state = :fade_to_battle
+      
+      @last_attacker = @pending_attacker
+      @last_defender = @pending_defender
+      
+      @audio.play_sfx("confirm") if @audio
+      return true # Атака запущена
+    end
+    false # Атаковать некого
+  end
+
   def end_current_turn
     if @current_unit && @battle_player
       new_x = @battle_player.x
@@ -1324,7 +1355,9 @@ end
         @cursor.visible = false
         @enemy_move_queue = EnemyAI.decide_moves(@current_unit, @allies, @enemies, @highlight_tiles)
         if @enemy_move_queue.empty?
-          end_current_turn
+          unless check_enemy_attack # <--- Если можем ударить — бьем!
+            end_current_turn
+          end
         else
           @enemy_move_index = 0
           @battle_state = :enemy_moving
@@ -1346,27 +1379,23 @@ end
 
         if @enemy_move_index < @enemy_move_queue.size
           target = @enemy_move_queue[@enemy_move_index]
-          # Если клетка занята другим врагом – пропускаем её, не пытаемся встать
-          if @enemies.any? { |e| e != @current_unit && e[:x] == target[0] && e[:y] == target[1] }
-            @enemy_move_index += 1
-          else
-            @battle_player.move_towards(target[0], target[1], self)
-            unless @battle_player.moving
-              if @battle_player.x == target[0] && @battle_player.y == target[1]
-                @enemy_move_index += 1
-              end
+          @battle_player.move_towards(target[0], target[1], self)
+          unless @battle_player.moving
+            if @battle_player.x == target[0] && @battle_player.y == target[1]
+              @enemy_move_index += 1
             end
           end
         else
-          end_current_turn
+          unless check_enemy_attack # <--- Проверяем, не дошел ли он вплотную
+            end_current_turn
+          end
         end
       end
 
-    when :action_menu
-      @battle_player&.update_animation(dt)
-	  
+  when :action_menu
+    @battle_player&.update_animation(dt)
 	when :item_grid_select
-      @battle_player&.update_animation(dt)  
+    @battle_player&.update_animation(dt)  
 
   when :attack_targeting
   @battle_player&.update_animation(dt)  # только анимация, без движения
