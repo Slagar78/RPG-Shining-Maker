@@ -48,8 +48,8 @@
 					},
 					"prowess": ["critical150_1in8", "double_1in16", "counter_1in16"],
 					"items": [{
-								"item_id": -1,
-								"equipped": false
+								"item_id": 5,
+								"equipped": true
 						}, {
 								"item_id": -1,
 								"equipped": false

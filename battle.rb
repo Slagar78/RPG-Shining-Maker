@@ -54,19 +54,33 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
     inventory_items.each do |item_data|
       next unless item_data["equipped"]
       
-      # Читаем строго ID.
       item_id = item_data["item_id"]
-      
-      # Пропускаем пустые слоты
       next if item_id.nil? || item_id == -1
 
-      # Ищем предмет по ID в базе данных
       item = @db.item(item_id) 
       next unless item
 
-      # Применяем бонусы
-      unit[:atk] += (item["attack"] || 0).to_i
-      unit[:def] += (item["defense"] || 0).to_i
+      atk_bonus = (item["attack"]  || 0).to_i
+      def_bonus = (item["defense"] || 0).to_i
+      hp_bonus  = (item["hp"]      || 0).to_i
+      mp_bonus  = (item["mp"]      || 0).to_i
+      agi_bonus = (item["agility"] || 0).to_i
+      mov_bonus = (item["mov"]     || 0).to_i
+
+      unit[:atk] = (unit[:atk] || 0) + atk_bonus
+      unit[:def] = (unit[:def] || 0) + def_bonus
+      unit[:agi] = (unit[:agi] || 0) + agi_bonus
+      unit[:mov] = (unit[:mov] || 0) + mov_bonus
+
+      if hp_bonus != 0
+        unit[:max_hp] = (unit[:max_hp] || 0) + hp_bonus
+        unit[:hp] = [(unit[:hp] || 0) + hp_bonus, 0].max
+      end
+
+      if mp_bonus != 0
+        unit[:max_mp] = (unit[:max_mp] || 0) + mp_bonus
+        unit[:mp] = [(unit[:mp] || 0) + mp_bonus, 0].max
+      end
     end
   end
   
@@ -376,7 +390,14 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
         def: base_def,
         agi: base_agi,
         mov: base_mov,
-        movetype: enemy["movetype"] || "regular"
+        movetype: enemy["movetype"] || "regular",
+
+        base_hp: base_hp,
+        base_mp: base_mp,
+        base_atk: base_atk,
+        base_def: base_def,
+        base_agi: base_agi,
+        base_mov: base_mov
       }
 
       apply_equipment_bonuses(enemy_unit, enemy["items"]) if enemy["items"]
@@ -1650,15 +1671,14 @@ end    # ← конец метода update
     raw = enemy_unit[:enemy].to_h
     raw["level"] = enemy_unit[:level]
 
-    # Профиль читает stats["max_hp"], stats["base_att"] и т.д.
-    # Подмешиваем туда уже посчитанные по уровню боевые статы юнита.
+    # Передаем базовые статы, чтобы профиль САМ начислил бонусы и не было двойного счета
     raw["stats"] = (raw["stats"] || {}).merge(
-      "max_hp"   => enemy_unit[:max_hp],
-      "max_mp"   => enemy_unit[:max_mp],
-      "base_att" => enemy_unit[:atk],
-      "base_def" => enemy_unit[:def],
-      "base_agi" => enemy_unit[:agi],
-      "base_mov" => enemy_unit[:mov]
+      "max_hp"   => enemy_unit[:base_hp]  || enemy_unit[:max_hp],
+      "max_mp"   => enemy_unit[:base_mp]  || enemy_unit[:max_mp],
+      "base_att" => enemy_unit[:base_atk] || enemy_unit[:atk],
+      "base_def" => enemy_unit[:base_def] || enemy_unit[:def],
+      "base_agi" => enemy_unit[:base_agi] || enemy_unit[:agi],
+      "base_mov" => enemy_unit[:base_mov] || enemy_unit[:mov]
     )
 
     @enemy_profile.open(OpenStruct.new(raw), @portrait_cache)
