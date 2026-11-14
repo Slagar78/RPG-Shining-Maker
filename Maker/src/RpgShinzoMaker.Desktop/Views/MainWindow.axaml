@@ -7,6 +7,7 @@
         xmlns:importer="using:RpgShinzoMaker.Desktop.Editors.TilesetImporter"
         xmlns:dbEditor="using:RpgShinzoMaker.Desktop.Editors.DatabaseEditor"
         xmlns:battleEditor="using:RpgShinzoMaker.Desktop.Editors.BattleEditor"
+        xmlns:audio="using:RpgShinzoMaker.Desktop.Shared.Audio"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="RpgShinzoMaker.Desktop.Views.MainWindow"
         Icon="/Assets/shinzo.ico"
@@ -168,39 +169,143 @@
         </DockPanel>
 
 
-        <!-- КОЛОНКА 2 Свойства -->
-        <Grid Grid.Column="2" RowDefinitions="*,4,280"> <!-- ★ ВОТ ЭТУ СТРОКУ ТЫ ЗАБЫЛ ★ -->
+        <Grid Grid.Column="2" RowDefinitions="*,4,280">
 
+            <!-- ═══ КОЛОНКА 2, ВЕРХ — ПЛЕЕР + ПЛЕЙЛИСТ ═══ -->
             <Border Grid.Row="0" Background="#252526" Padding="10">
                 <DockPanel>
-                    <!-- Мушрембо прижат к низу как маскот -->
-                    <Image DockPanel.Dock="Bottom"
-                           Source="avares://RpgShinzoMaker.Desktop/Assets/Mushrambo.png" 
-                           Stretch="Uniform" MaxHeight="200" Margin="0,10,0,0"
-                           RenderOptions.BitmapInterpolationMode="None"/>
 
-                    <!-- А сверху — плеер -->
-                    <StackPanel Spacing="10" VerticalAlignment="Top">
-                        <TextBlock Text="🎵 MAP BGM" Foreground="#888888" FontWeight="Bold"/>
-                        <TextBlock Text="SF_Feather.mp3" Foreground="White" FontSize="14" TextTrimming="CharacterEllipsis"/>
-                        
-                        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                            <Button Content="▶" Width="40" Height="40" FontSize="20" Background="#007ACC" Foreground="White" CornerRadius="20"/>
-                            <Button Content="⏸" Width="40" Height="40" FontSize="20" Background="#3E3E42" Foreground="White" CornerRadius="20"/>
-                            <Button Content="⏹" Width="40" Height="40" FontSize="20" Background="#3E3E42" Foreground="White" CornerRadius="20"/>
+                    <!-- Заголовок -->
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="🎵 MUSIC"
+                               Foreground="#888888"
+                               FontWeight="Bold"
+                               Margin="0,0,0,8"/>
+
+                    <!-- Управление прижато к низу -->
+                    <Border DockPanel.Dock="Bottom"
+                            Background="#1E1E1E"
+                            Padding="10"
+                            Margin="0,8,0,0"
+                            CornerRadius="6">
+                        <StackPanel Spacing="8">
+                            <TextBlock x:Name="NowPlayingText"
+                                       Text="Ничего не играет"
+                                       Foreground="#CCCCCC"
+                                       FontSize="12"
+                                       HorizontalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"/>
+
+                                  <!-- ★ 5 КНОПОК С ВЕКТОРНЫМИ ИКОНКАМИ ★ -->
+                                  <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                      
+                                      <!-- Назад (Prev) -->
+                                      <Button x:Name="PrevBtn" Width="38" Height="38" CornerRadius="8"
+                                              Background="#3E3E42" BorderBrush="Black" BorderThickness="2"
+                                              Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                              Click="OnPrevClick" ToolTip.Tip="Предыдущий трек">
+                                          <Path Data="M 10,0 L 0,6 L 10,12 Z M 20,0 L 10,6 L 20,12 Z" Fill="White" Stretch="Uniform" Width="14" Height="12" />
+                                      </Button>
+
+                                      <!-- Играть (Play) -->
+                                      <Button x:Name="PlayBtn" Width="38" Height="38" CornerRadius="8"
+                                              Background="#3E3E42" BorderBrush="Black" BorderThickness="2"
+                                              Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                              Click="OnPlayClick" ToolTip.Tip="Играть">
+                                          <Path Data="M 0,0 L 12,6 L 0,12 Z" Fill="White" Stretch="Uniform" Width="12" Height="12" Margin="2,0,0,0" />
+                                      </Button>
+
+                                      <!-- Пауза (Pause) -->
+                                      <Button x:Name="PauseBtn" Width="38" Height="38" CornerRadius="8"
+                                              Background="#3E3E42" BorderBrush="Black" BorderThickness="2"
+                                              Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                              Click="OnPauseClick" ToolTip.Tip="Пауза">
+                                          <Path Data="M 0,0 L 4,0 L 4,12 L 0,12 Z M 8,0 L 12,0 L 12,12 L 8,12 Z" Fill="White" Stretch="Uniform" Width="10" Height="12" />
+                                      </Button>
+
+                                      <!-- Стоп (Stop) -->
+                                      <Button x:Name="StopBtn" Width="38" Height="38" CornerRadius="8"
+                                              Background="#3E3E42" BorderBrush="Black" BorderThickness="2"
+                                              Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                              Click="OnStopClick" ToolTip.Tip="Стоп">
+                                          <Path Data="M 0,0 L 12,0 L 12,12 L 0,12 Z" Fill="White" Stretch="Uniform" Width="11" Height="11" />
+                                      </Button>
+
+                                      <!-- Вперёд (Next) -->
+                                      <Button x:Name="NextBtn" Width="38" Height="38" CornerRadius="8"
+                                              Background="#3E3E42" BorderBrush="Black" BorderThickness="2"
+                                              Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                              Click="OnNextClick" ToolTip.Tip="Следующий трек">
+                                          <Path Data="M 0,0 L 10,6 L 0,12 Z M 10,0 L 20,6 L 10,12 Z" Fill="White" Stretch="Uniform" Width="14" Height="12" />
+                                      </Button>
+
+                                  </StackPanel>
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <TextBlock Grid.Column="0" Text="🔊" Foreground="#888888"
+                                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <Slider Grid.Column="1" x:Name="VolumeSlider"
+                                        Minimum="0" Maximum="100" Value="80"
+                                        ValueChanged="OnVolumeChanged"
+                                        VerticalAlignment="Center"/>
+                            </Grid>
                         </StackPanel>
-                        
-                        <Slider Minimum="0" Maximum="100" Value="80" />
-                    </StackPanel>
+                    </Border>
+
+                    <!-- Список треков (со скроллом) -->
+                    <Border Background="#1E1E1E" CornerRadius="6" VerticalAlignment="Top">
+                        <!-- ★ Вот тут MaxHeight="340" — это ровно 10 песен ★ -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="340">
+                          <ListBox x:Name="MusicList"
+                                   Background="Transparent"
+                                   BorderThickness="0"
+                                   SelectionChanged="OnMusicSelected">
+                              <ListBox.Styles>
+                                  <!-- ★ БАЗОВЫЙ СТИЛЬ ДЛЯ КАЖДОЙ ПЕСНИ ★ -->
+                                  <Style Selector="ListBoxItem">
+                                      <Setter Property="MinHeight" Value="32"/>
+                                      <Setter Property="Padding" Value="10,0"/>
+                                      <!-- Отступы: 4 слева/справа, 2 сверху/снизу -->
+                                      <Setter Property="Margin" Value="4,2,4,2"/>
+                                      <!-- Скругляем края -->
+                                      <Setter Property="CornerRadius" Value="4"/>
+                                      <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                  </Style>
+
+                                  <!-- ★ ЭФФЕКТ ПРИ НАВЕДЕНИИ МЫШКОЙ ★ -->
+                                  <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                                      <Setter Property="Background" Value="#2D2D30"/>
+                                  </Style>
+
+                                  <!-- ★ ЦВЕТ ВЫДЕЛЕННОЙ ПЕСНИ (вместо серого будет синий) ★ -->
+                                  <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                      <Setter Property="Background" Value="#007ACC"/>
+                                      <Setter Property="CornerRadius" Value="4"/>
+                                  </Style>
+
+                                  <!-- ★ ТЕКСТ ВЫДЕЛЕННОЙ ПЕСНИ СТАНОВИТСЯ БЕЛЫМ ★ -->
+                                  <Style Selector="ListBoxItem:selected TextBlock">
+                                      <Setter Property="Foreground" Value="White"/>
+                                  </Style>
+                              </ListBox.Styles>
+                              
+                              <ListBox.ItemTemplate>
+                                  <DataTemplate x:DataType="audio:MusicTrack">
+                                      <TextBlock Text="{Binding DisplayName}"
+                                                 Foreground="#CCCCCC"
+                                                 FontSize="13"/>
+                                  </DataTemplate>
+                              </ListBox.ItemTemplate>
+                          </ListBox>
+                        </ScrollViewer>
+                    </Border>
+
                 </DockPanel>
             </Border>
 
-            <GridSplitter Grid.Row="1"
-                          Background="#3E3E42"
-                          ResizeDirection="Rows"
-                          Height="4"/>
+            <GridSplitter Grid.Row="1" Background="#3E3E42" ResizeDirection="Rows" Height="4"/>
 
-            <!-- СВОЙСТВА -->
+            <!-- ═══ КОЛОНКА 2, НИЗ — СВОЙСТВА ═══ -->
             <Border Grid.Row="2" Background="#252526" Padding="8">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top"
@@ -217,6 +322,7 @@
                     </ScrollViewer>
                 </DockPanel>
             </Border>
+
         </Grid>
 
         <!-- ★ ЗАСТАВКА ★ -->

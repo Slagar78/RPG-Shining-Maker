@@ -38,7 +38,10 @@ RPG-Shining-Maker/
 │   │       │   └── MainWindow.axaml (.cs), MapCanvas.axaml (.cs)
 │   │       ├── Shared/
 │   │       │   ├── Interfaces/IEditor.cs
-│   │       │   └── Converters/PortraitConverter.cs
+│   │       │   ├── Converters/PortraitConverter.cs
+│   │       │   └── Audio/                          ← НОВОЕ (МУЗЫКА)
+│   │       │       ├── MusicPlayer.cs              (обертка NAudio + NAudio.Vorbis)
+│   │       │       └── MusicLibrary.cs             (сканер папки assets/sounds)
 │   │       └── Editors/
 │   │           ├── MapEditor/                      (11 файлов)
 │   │           ├── EventEditor/                    (7 файлов + EventCanvas)
@@ -105,7 +108,7 @@ RPG-Shining-Maker/
 │  │  BattleEditorView(IEditor) ← вкладка «Battles»       │   │
 │  │  DatabaseEditor (IEditor)  ← вкладка «Database»      │   │
 │  └──────────────────────────────────────────────────────┘   │
-│  Правый док: [ASSETS] / [СВОЙСТВА]                          │
+│  Правый док: [MUSIC PLAYER] / [СВОЙСТВА]  ← НОВОЕ           │
 └───────────────────────────┬─────────────────────────────────┘
                             │  SAVE → editor.Save() / StatusChanged / OnActivate()
                             ▼
@@ -212,6 +215,9 @@ RPG-Shining-Maker/
 34  Drag & Drop в BattleEditor                      Зажал ЛКМ на юните — тянешь. У краёв экрана карта скроллится сама (Photoshop-style).
 35  Лимиты юнитов в битве                           30 союзников (Allies) и 48 врагов (Enemies) максимум.
 36  Визуал BattleEditor                              Рамки выбора фиолетовые (#BF00FF), со скруглением (CornerRadius 6). Слоты в панели 34x34.
+37  Музыкальный плеер (NAudio)                      Использовать MusicPlayer и MusicLibrary. Поддержка MP3 (NAudio) и OGG (NAudio.Vorbis).
+38  Сканирование музыки                             MusicLibrary.ScanSounds() читает <GameRoot>/assets/sounds/ при старте окна.
+39  UI плеера                                       Кнопки — векторные Path (5 шт.), список ограничен MaxHeight со стилями CornerRadius для аккуратных плашек.
 
 
 📈 Что уже готово vs что в планах
@@ -226,6 +232,7 @@ GlobalService (Чтение/запись global.json)              ✅
 
 ОБОЛОЧКА И РЕДАКТОРЫ
 IEditor, MainWindow (Splash, Toolbar, StatusBar)       ✅
+Музыкальный плеер (NAudio + OGG, кнопки Path)          ✅
 Современные вкладки VS Code style                      ✅
 MapEditor (11 файлов, современная нижняя панель)       ✅
 EventEditor (7 файлов + EventCanvas)                   ✅

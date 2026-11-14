@@ -3,26 +3,24 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using RpgShinzoMaker.Desktop.Shared.Audio;
 using RpgShinzoMaker.Desktop.Shared.Interfaces;
 
 namespace RpgShinzoMaker.Desktop.Views;
 
-/// <summary>
-/// Оболочка приложения.
-/// Отвечает только за: тулбар, статус-бар, переключение вкладок.
-/// Вся логика редактирования — внутри конкретных IEditor'ов (MapEditor, EventEditor...).
-/// </summary>
 public partial class MainWindow : Window
 {
+    private MusicPlayer? _musicPlayer;
+
     public MainWindow()
     {
         InitializeComponent();
 
-        // ★ ЗАПУСКАЕМ ТАЙМЕР ТОЛЬКО КОГДА ОКНО ПОЛНОСТЬЮ ОТРИСОВАЛОСЬ НА ЭКРАНЕ ★
         this.Opened += OnWindowOpened;
 
-        // Мост для статус-бара: каждый редактор отправляет текст — MainWindow его ставит
         if (MapEditor != null)
             MapEditor.StatusChanged += OnEditorStatusChanged;
 
@@ -32,13 +30,134 @@ public partial class MainWindow : Window
         if (TilesetImporter != null)
             TilesetImporter.StatusChanged += OnEditorStatusChanged;
 
-        // ★ НОВОЕ: BattleEditor подписывается на статус-бар ★
         if (BattleEditorControl != null)
             BattleEditorControl.StatusChanged += OnEditorStatusChanged;
+
+        InitializeMusicPlayer();
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   СТАТУС-БАР — приём текста от редакторов
+    //   МУЗЫКАЛЬНЫЙ ПЛЕЕР
+    // ══════════════════════════════════════════════════════════════
+    private void InitializeMusicPlayer()
+    {
+        _musicPlayer = new MusicPlayer();
+
+        _musicPlayer.TrackStarted += path =>
+        {
+            if (NowPlayingText != null)
+                NowPlayingText.Text = "▶ " + Path.GetFileNameWithoutExtension(path);
+        };
+
+        // ★ СТАРУЮ ПОДПИСКУ PlayStateChanged Я УДАЛИЛ, ТЕПЕРЬ ЦВЕТА МЕНЯЮТСЯ ВРУЧНУЮ ★
+
+        var tracks = MusicLibrary.ScanSounds();
+        if (MusicList != null)
+        {
+            MusicList.ItemsSource = tracks;
+            if (tracks.Count == 0 && NowPlayingText != null)
+                NowPlayingText.Text = "Папка assets/sounds пуста";
+        }
+
+        if (VolumeSlider != null && _musicPlayer != null)
+            _musicPlayer.Volume = (float)(VolumeSlider.Value / 100.0);
+    }
+
+    // ★ НОВЫЙ МЕТОД: ПОДСВЕТКА КНОПОК ★
+    private void UpdatePlayerButtons(string activeButton)
+    {
+        var activeColor = new SolidColorBrush(Color.Parse("#4CAF50")); // Зеленый
+        var inactiveColor = new SolidColorBrush(Color.Parse("#3E3E42")); // Темно-серый
+
+        if (PlayBtn != null) PlayBtn.Background = activeButton == "Play" ? activeColor : inactiveColor;
+        if (PauseBtn != null) PauseBtn.Background = activeButton == "Pause" ? activeColor : inactiveColor;
+        if (StopBtn != null) StopBtn.Background = activeButton == "Stop" ? activeColor : inactiveColor;
+        if (NextBtn != null) NextBtn.Background = inactiveColor;
+        if (PrevBtn != null) PrevBtn.Background = inactiveColor;
+    }
+
+    // ★ НОВЫЙ МЕТОД: КНОПКА ВПЕРЁД ★
+    private void OnNextClick(object? sender, RoutedEventArgs e)
+    {
+        if (_musicPlayer == null) return;
+        if (MusicList?.ItemsSource is System.Collections.IList list && list.Count > 0)
+        {
+            int newIndex = MusicList.SelectedIndex + 1;
+            if (newIndex >= list.Count) newIndex = 0; // Если были на последнем, уходим на первый
+            MusicList.SelectedIndex = newIndex;
+            UpdatePlayerButtons("Play");
+        }
+    }
+
+    // ★ НОВЫЙ МЕТОД: КНОПКА НАЗАД ★
+    private void OnPrevClick(object? sender, RoutedEventArgs e)
+    {
+        if (_musicPlayer == null) return;
+        
+        if (MusicList?.ItemsSource is System.Collections.IList list && list.Count > 0)
+        {
+            int newIndex = MusicList.SelectedIndex - 1;
+            if (newIndex < 0) newIndex = list.Count - 1; // Если были на первом, уходим на последний
+            MusicList.SelectedIndex = newIndex;
+            UpdatePlayerButtons("Play");
+        }
+    }
+
+    private void OnPlayClick(object? sender, RoutedEventArgs e)
+    {
+        if (_musicPlayer == null) return;
+        if (MusicList?.SelectedItem is MusicTrack track)
+        {
+            _musicPlayer.Play(track.FilePath);
+            UpdatePlayerButtons("Play"); // ★ Красим Play в зеленый ★
+            return;
+        }
+        if (MusicList?.ItemsSource is System.Collections.IEnumerable all)
+        {
+            foreach (var t in all)
+            {
+                MusicList.SelectedItem = t;
+                break;
+            }
+        }
+    }
+
+    private void OnPauseClick(object? sender, RoutedEventArgs e)
+    {
+        _musicPlayer?.Pause();
+        UpdatePlayerButtons("Pause"); // ★ Красим Pause в зеленый ★
+    }
+
+    private void OnStopClick(object? sender, RoutedEventArgs e)
+    {
+        _musicPlayer?.Stop();
+        UpdatePlayerButtons("Stop"); // ★ Красим Stop в зеленый ★
+    }
+
+    private void OnVolumeChanged(object? sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (_musicPlayer != null)
+            _musicPlayer.Volume = (float)(e.NewValue / 100.0);
+    }
+
+    private void OnMusicSelected(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_musicPlayer == null) return;
+        if (MusicList?.SelectedItem is MusicTrack track)
+        {
+            _musicPlayer.Play(track.FilePath);
+            UpdatePlayerButtons("Play"); // Если выбрали трек из списка, Play загорается
+        }
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _musicPlayer?.Dispose();
+        base.OnClosed(e);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //   СТАТУС-БАР
     // ══════════════════════════════════════════════════════════════
     private void OnEditorStatusChanged(string text)
     {
@@ -47,7 +166,7 @@ public partial class MainWindow : Window
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   SAVE — делегируется активному редактору
+    //   SAVE
     // ══════════════════════════════════════════════════════════════
     private void OnSaveClick(object? sender, RoutedEventArgs e)
     {
@@ -64,15 +183,13 @@ public partial class MainWindow : Window
     }
 
     // ══════════════════════════════════════════════════════════════
-    //   Переключение вкладок — активируем/деактивируем редактор
+    //   ВКЛАДКИ
     // ══════════════════════════════════════════════════════════════
     private void OnTabChanged(object? sender, SelectionChangedEventArgs e)
     {
-        // На этапе инициализации XAML EditorTabs ещё null — тихо выходим
         if (EditorTabs == null) return;
         if (sender is not TabControl tabs) return;
 
-        // Деактивировать старую вкладку
         if (e.RemovedItems.Count > 0 &&
             e.RemovedItems[0] is TabItem oldTab &&
             oldTab.Content is IEditor oldEditor)
@@ -80,20 +197,15 @@ public partial class MainWindow : Window
             oldEditor.OnDeactivate();
         }
 
-        // Активировать новую вкладку
         if (tabs.SelectedItem is TabItem newTab &&
             newTab.Content is IEditor newEditor)
         {
             newEditor.OnActivate();
         }
 
-        // Обновить статус-бар на «Готово»
         StatusText.Text = "Готово";
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //   ВСПОМОГАТЕЛЬНОЕ
-    // ══════════════════════════════════════════════════════════════
     private IEditor? GetActiveEditor()
     {
         if (EditorTabs == null) return null;
@@ -105,17 +217,14 @@ public partial class MainWindow : Window
         return null;
     }
 
-        // ══════════════════════════════════════════════════════════════
-    //   ЗАПУСК ИГРЫ (PLAYTEST)
+    // ══════════════════════════════════════════════════════════════
+    //   PLAYTEST
     // ══════════════════════════════════════════════════════════════
     private void OnPlaytestClick(object? sender, RoutedEventArgs e)
     {
         LaunchRubyScript("game.rb", "--playtest");
     }
 
-    /// <summary>
-    /// Запускает игру на Ruby без сборки в EXE (как в C-конструкторе).
-    /// </summary>
     private void LaunchRubyScript(string scriptName, string arguments)
     {
         try
@@ -128,11 +237,11 @@ public partial class MainWindow : Window
                 return;
             }
 
-            string rubyExe = Path.Combine(projectRoot, "PortableRuby", "bin", "ruby.exe");
+            string rubyExe    = Path.Combine(projectRoot, "PortableRuby", "bin", "ruby.exe");
             string scriptPath = Path.Combine(projectRoot, scriptName);
-            string gemHome = Path.Combine(projectRoot, "PortableRuby", "gems");
-            string dllDir = Path.Combine(projectRoot, "PortableRuby", "dll");
-            string binDir = Path.Combine(projectRoot, "PortableRuby", "bin");
+            string gemHome    = Path.Combine(projectRoot, "PortableRuby", "gems");
+            string dllDir     = Path.Combine(projectRoot, "PortableRuby", "dll");
+            string binDir     = Path.Combine(projectRoot, "PortableRuby", "bin");
 
             if (!File.Exists(rubyExe) || !File.Exists(scriptPath))
             {
@@ -140,24 +249,18 @@ public partial class MainWindow : Window
                 return;
             }
 
-            // Создаем временный bat-файл
             string batPath = Path.Combine(Path.GetTempPath(), "playtest.bat");
             using (StreamWriter sw = new StreamWriter(batPath, false, new System.Text.UTF8Encoding(false)))
             {
                 sw.WriteLine("@echo off");
-                sw.WriteLine("chcp 65001 >nul"); 
+                sw.WriteLine("chcp 65001 >nul");
                 sw.WriteLine($"cd /d \"{projectRoot}\"");
                 sw.WriteLine($"set \"GEM_HOME={gemHome}\"");
                 sw.WriteLine($"set \"GEM_PATH={gemHome}\"");
                 sw.WriteLine($"set \"PATH={dllDir};{binDir};%PATH%\"");
-                
-                // ★ ВОТ ОНА ★
                 sw.WriteLine("set GALLIUM_DRIVER=llvmpipe");
-                
-                // Запускаем ruby
                 sw.WriteLine($"\"{rubyExe}\" \"{scriptPath}\" {arguments}");
-                // Пауза, чтобы окно не закрылось мгновенно, если будет ошибка
-                sw.WriteLine("if %errorlevel% neq 0 pause"); 
+                sw.WriteLine("if %errorlevel% neq 0 pause");
             }
 
             var psi = new ProcessStartInfo
@@ -178,12 +281,8 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>
-    /// Ищет папку, где лежат PortableRuby и game.rb.
-    /// </summary>
     private string? FindGameRoot()
     {
-        // Более надежный способ найти директорию приложения
         var dir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
         for (int i = 0; i < 10 && dir != null; i++)
         {
@@ -197,22 +296,14 @@ public partial class MainWindow : Window
         return null;
     }
 
-    // Срабатывает ровно в тот момент, когда окно готово и показано пользователю
     private async void OnWindowOpened(object? sender, EventArgs e)
     {
-        // Ждём 3 секунды (3000 мс). Поскольку окно УЖЕ загружено, 
-        // эти 3 секунды пройдут ровно столько, сколько нужно.
         await System.Threading.Tasks.Task.Delay(3000);
 
         if (SplashOverlay != null)
         {
-            // Запускаем плавное затухание (Fade Out)
             SplashOverlay.Opacity = 0;
-
-            // Ждём 1.5 секунды, пока анимация затухания завершится (время из XAML)
             await System.Threading.Tasks.Task.Delay(1500);
-
-            // Полностью убираем заставку, чтобы она не мешала кликам
             SplashOverlay.IsVisible = false;
         }
     }
