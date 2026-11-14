@@ -10,8 +10,8 @@
 					"mapsprite": "hero",
 					"battle_sprite_path": "assets/battles/battlesprites/allies/Mushra",
 					"hp_growth": {
-							"start": 300,
-							"projected": 580,
+							"start": 30,
+							"projected": 58,
 							"curve": "LATE"
 					},
 					"mp_growth": {

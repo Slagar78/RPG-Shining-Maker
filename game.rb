@@ -1199,6 +1199,7 @@ class Game
   def launch_battle(battle_id)
     @audio.stop
     @current_battle_id = battle_id
+    @gold_before_battle = @db.globals["gold"] || 0
 
     @battle_manager = BattleManager.new(@db, @font, @game_text, battle_id, @start_inventory, @party)
     @battle_manager.audio = @audio
@@ -1214,26 +1215,76 @@ class Game
   end
   
   def end_battle
-    won = @battle_manager.enemies.empty? && !@battle_manager.allies.empty?
+    hero_dead = @battle_manager.hero_died
+    won = @battle_manager.enemies.empty? && !@battle_manager.allies.empty? && !hero_dead
 
     @battle_manager.unload
     @battle_manager = nil
-
     @audio.stop
+
+    # ── ЕСЛИ ГЛАВНЫЙ ГЕРОЙ УМЕР ──
+    if hero_dead
+      # 1. Забираем 50% от ТЕКУЩЕГО золота
+      @db.globals["gold"] = ((@db.globals["gold"] || 0) * 0.5).to_i
+      
+      # 2. Оживляем всех в отряде (полные HP/MP)
+      @party.each do |actor|
+        klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
+        if klass
+          lv = actor["level"] || 1
+          actor["hp"] = @db.stat_at_level(actor["hp_growth"], lv)
+          actor["mp"] = @db.stat_at_level(actor["mp_growth"], lv)
+        end
+      end
+      
+      # 3. Телепортируемся на карту Грансил (ID: 0) к церкви
+      if @game_map
+        @game_map.unload 
+        UnloadRenderTexture(@top_layer) if @top_layer
+        UnloadRenderTexture(@layer2) if @layer2
+      end
+
+      @game_map = GameMap.new(0, @flags)
+      @current_map_id = @game_map.map_id
+      
+      @top_layer = @game_map.build_top_layer
+      SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
+      @layer2 = @game_map.build_layer2
+      SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
+      @zone_hidden = Array.new(@game_map.roof_events.size, false)
+
+      # Ставим игрока на координаты перед священником (54, 3) лицом вверх (8)
+      @player.map = @game_map
+       # Ставим перед священником (npc4: 32, 11)
+      @player.x = 32
+      @player.y = 13
+      @player.last_x = 32
+      @player.last_y = 13
+      @player.direction = 8 # Смотрит вверх на священника
+      @player.moving = false
+      @camera.snap_to(@player, @game_map)
+      
+      # 4. Возвращаем игру в обычный режим (игрок сам подойдет к NPC)
+      @game_state = :playing
+      
+      @audio.play(@game_map.music_file, @game_map.music_volume)
+      @current_battle_id = nil
+      return
+    end
+
+    # ── ОБЫЧНАЯ ПОБЕДА (или выход из боя) ──
     if won && @current_battle_id
       @flags.complete_battle(@current_battle_id)
     end
     @current_battle_id = nil
 
     if @battle_pending_after_warp
-      # Бой был после варпа: запускаем плавное появление карты
       @battle_pending_after_warp = false
       @game_state = :warping
       @fade_state = :in
       @fade_alpha = 255
       @audio.play(@game_map.music_file, @game_map.music_volume)
     else
-      # Обычный бой: просто возвращаемся в игру
       @audio.play(@game_map.music_file, @game_map.music_volume)
       @game_state = :playing
     end

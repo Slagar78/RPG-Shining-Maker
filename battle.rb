@@ -40,7 +40,7 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
             :battle_scene, :target_highlight, :highlight_tex,
             :attack_target, :hp_mp_panel, :target_hp_panel,
             :fade_alpha, :db, :battle_x, :battle_y, :info_panel_unit,
-            :battle_w, :battle_h
+            :battle_w, :battle_h, :hero_died
   attr_accessor :audio
   attr_accessor :battle_scene_font
 
@@ -242,10 +242,10 @@ attr_reader :camera, :static_bg, :layer2, :top_layer,
     @info_das_timer = 0.0
 
     @camera_follow_player = true
-
     @last_attacker = nil
     @last_defender = nil       # запоминаем цель атаки для проверки HP после сцены
     @last_defender_hp_before = nil
+    @hero_died = false
 
     @fade_alpha = 0
     @pending_attacker = nil
@@ -1679,6 +1679,10 @@ end    # ← конец метода update
   end
 
   def start_unit_death(unit)
+    if unit[:actor] && unit[:actor]["id"] == 0
+      @hero_died = true
+    end
+
     # Удаляем из боевых списков
     if @enemies.include?(unit)
       @enemies.delete(unit)
@@ -1803,8 +1807,10 @@ end    # ← конец метода update
 
   # Бой завершён? — одна из сторон полностью мертва
   def battle_over?
-    return false unless @allies && @enemies
     return false if @battle_state == :death_animation
+    return true if @hero_died
+    return false unless @allies && @enemies
     @allies.empty? || @enemies.empty?
   end
+
 end
