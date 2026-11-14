@@ -1227,52 +1227,27 @@ class Game
       # 1. Забираем 50% от ТЕКУЩЕГО золота
       @db.globals["gold"] = ((@db.globals["gold"] || 0) * 0.5).to_i
       
-      # 2. Оживляем всех в отряде (полные HP/MP)
-      @party.each do |actor|
-        klass = @db.classes.find { |c| c["id"] == actor["class_id"] }
+      # 2. Воскрешаем ТОЛЬКО Мущру (ID 0) с полным HP/MP
+      mushra = @party.find { |a| a["id"] == 0 }
+      if mushra
+        klass = @db.classes.find { |c| c["id"] == mushra["class_id"] }
         if klass
-          lv = actor["level"] || 1
-          actor["hp"] = @db.stat_at_level(actor["hp_growth"], lv)
-          actor["mp"] = @db.stat_at_level(actor["mp_growth"], lv)
+          lv = mushra["level"] || 1
+          mushra["hp"] = @db.stat_at_level(mushra["hp_growth"], lv)
+          mushra["mp"] = @db.stat_at_level(mushra["mp_growth"], lv)
         end
       end
+      # Остальные остаются мертвыми (будут воскрешаться в церкви за деньги)
       
-      # 3. Телепортируемся на карту Грансил (ID: 0) к церкви
-      if @game_map
-        @game_map.unload 
-        UnloadRenderTexture(@top_layer) if @top_layer
-        UnloadRenderTexture(@layer2) if @layer2
-      end
-
-      @game_map = GameMap.new(0, @flags)
-      @current_map_id = @game_map.map_id
+      # 3. Вызываем штатный варп на карту Грансил (ID: 0)
+      # Ставим игрока на клетку 32, 13 (перед священником) лицом вверх (8)
+      change_map(0, 32, 13, 8)
       
-      @top_layer = @game_map.build_top_layer
-      SetTextureFilter(@top_layer.texture, TEXTURE_FILTER_POINT) if @top_layer
-      @layer2 = @game_map.build_layer2
-      SetTextureFilter(@layer2.texture, TEXTURE_FILTER_POINT) if @layer2
-      @zone_hidden = Array.new(@game_map.roof_events.size, false)
-
-      # Ставим игрока на координаты перед священником (54, 3) лицом вверх (8)
-      @player.map = @game_map
-       # Ставим перед священником (npc4: 32, 11)
-      @player.x = 32
-      @player.y = 13
-      @player.last_x = 32
-      @player.last_y = 13
-      @player.direction = 8 # Смотрит вверх на священника
-      @player.moving = false
-      @camera.snap_to(@player, @game_map)
-      
-      # 4. Возвращаем игру в обычный режим (игрок сам подойдет к NPC)
-      @game_state = :playing
-      
-      @audio.play(@game_map.music_file, @game_map.music_volume)
       @current_battle_id = nil
       return
     end
 
-    # ── ОБЫЧНАЯ ПОБЕДА (или выход из боя) ──
+    # ── ОБЫЧНАЯ ПОБЕДА / ВЫХОД ИЗ БОЯ ──
     if won && @current_battle_id
       @flags.complete_battle(@current_battle_id)
     end
