@@ -6,21 +6,36 @@
     <Grid ColumnDefinitions="200, 140, *">
 
         <!-- ═══════════ КНОПКИ (слева) ═══════════ -->
-        <StackPanel Grid.Column="0" Margin="5,10,5,0" Spacing="5" VerticalAlignment="Top">
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
-                <Button Grid.Column="0" Content="Save" Click="OnSaveClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
-                <Button Grid.Column="1" Content="Change BG" Click="OnChangeBgClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
-            </Grid>
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
-                <Button Grid.Column="0" Content="Load Ally" Click="OnLoadAllyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
-                <Button Grid.Column="1" Content="Load Enemy" Click="OnLoadEnemyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
-            </Grid>
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
-                <Button Grid.Column="0" Content="Save Ally" Click="OnSaveAllyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
-                <Button Grid.Column="1" Content="Save Enemy" Click="OnSaveEnemyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
-            </Grid>
-            <Button Content="Rescan Frames" Click="OnRescanFramesClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="2,4"/>
-        </StackPanel>
+        <Grid Grid.Column="0" Margin="5,10,5,10" RowDefinitions="Auto, *">
+            
+            <!-- Кнопки прижаты к верху -->
+            <StackPanel Grid.Row="0" Spacing="5">
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
+                    <!-- Увеличили Padding и FontSize для высоты -->
+                    <Button Grid.Column="0" Content="Save" Click="OnSaveClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" Padding="4,8"/>
+                    <Button Grid.Column="1" Content="Change BG" Click="OnChangeBgClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" Padding="4,8"/>
+                </Grid>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
+                    <Button Grid.Column="0" Content="Load Ally" Click="OnLoadAllyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" Padding="4,8"/>
+                    <Button Grid.Column="1" Content="Load Enemy" Click="OnLoadEnemyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" Padding="4,8"/>
+                </Grid>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
+                    <Button Grid.Column="0" Content="Save Ally" Click="OnSaveAllyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" Padding="4,8"/>
+                    <Button Grid.Column="1" Content="Save Enemy" Click="OnSaveEnemyClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" Padding="4,8"/>
+                </Grid>
+                <Button Content="Rescan Frames" Click="OnRescanFramesClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" Padding="4,8"/>
+            </StackPanel>
+
+            <!-- Плашка с размерами прижата к самому низу -->
+            <Border Grid.Row="1" Background="#2D2D30" CornerRadius="4" Padding="10,8" Margin="0,15,0,0" VerticalAlignment="Bottom">
+                <StackPanel Spacing="5">
+                    <TextBlock Text="CANVAS SIZES" Foreground="LightGray" FontWeight="Bold" FontSize="12" TextAlignment="Center"/>
+                    <TextBlock Text="Ally: 600x500 px" Foreground="#FFFF64" FontSize="11" TextAlignment="Center"/>
+                    <TextBlock Text="Enemy: 400x400 px" Foreground="#FF8888" FontSize="11" TextAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            
+        </Grid>
 
         <!-- ═══════════ СПИСОК БИТВ (узкий) ═══════════ -->
         <Border Grid.Column="1" Background="#1E1E1E" Margin="5,10,5,10" CornerRadius="4">

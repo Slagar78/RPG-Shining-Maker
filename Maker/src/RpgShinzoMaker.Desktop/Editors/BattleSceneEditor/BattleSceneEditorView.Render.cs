@@ -9,11 +9,11 @@ namespace RpgShinzoMaker.Desktop.Editors.BattleSceneEditor;
 
 public partial class BattleSceneEditorView
 {
-    private const int ALLY_X = 750;
-    private const int ALLY_Y = 480;
+    private const int ALLY_X = 470;
+    private const int ALLY_Y = 380;
     private const float GROUND_SCALE = 2.0f;
-    private const int GROUND_OFFSET_X = 136;
-    private const int GROUND_OFFSET_Y = 422;
+    private const int GROUND_OFFSET_X = 440;
+    private const int GROUND_OFFSET_Y = 522;
 
     private const int ENEMY_GAME_X = 124;
     private const int ENEMY_GAME_Y = 370;

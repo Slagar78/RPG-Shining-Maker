@@ -11,11 +11,11 @@ class BattleScene
   WORK_HEIGHT         = 960 - 2 * BAR_HEIGHT
   ENEMY_X             = 124
   ENEMY_Y             = 370
-  ALLY_X              = 750
-  ALLY_Y              = 480
+  ALLY_X              = 470
+  ALLY_Y              = 380
   GROUND_SCALE        = 2.0
-  GROUND_OFFSET_X     = 136
-  GROUND_OFFSET_Y     = 422
+  GROUND_OFFSET_X     = 440
+  GROUND_OFFSET_Y     = 522
   STICK_W             = 4
   STICK_H             = 26
 

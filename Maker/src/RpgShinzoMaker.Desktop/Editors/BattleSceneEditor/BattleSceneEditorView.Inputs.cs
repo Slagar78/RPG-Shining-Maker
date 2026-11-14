@@ -1,10 +1,13 @@
 using System;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using RpgShinzoMaker.Core.Models;
 
 namespace RpgShinzoMaker.Desktop.Editors.BattleSceneEditor;
@@ -44,7 +47,9 @@ public partial class BattleSceneEditorView
         var lblX = new TextBlock { Text = "X", Foreground = Brushes.LightGray, VerticalAlignment = VerticalAlignment.Center, FontSize = 10, Margin = new Thickness(0,0,2,0) };
         Grid.SetColumn(lblX, col++); container.Children.Add(lblX);
 
-        pc.TxtX = new TextBox { Width = 40, Height = 20, Padding = new Thickness(0), FontSize = 10, TextAlignment = TextAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,2,0) };
+        // УБРАН TextAlignment = TextAlignment.Center
+        pc.TxtX = new TextBox { Width = 40, Height = 20, Padding = new Thickness(0), FontSize = 10, VerticalContentAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,2,0) };
+        SetupNumericBox(pc.TxtX);
         pc.TxtX.LostFocus += (s, e) => ApplyTextInput(unit, phase, 0);
         pc.TxtX.KeyDown += (s, e) => { if (e.Key == Key.Enter) ApplyTextInput(unit, phase, 0); };
         Grid.SetColumn(pc.TxtX, col++); container.Children.Add(pc.TxtX);
@@ -61,7 +66,8 @@ public partial class BattleSceneEditorView
         var lblY = new TextBlock { Text = "Y", Foreground = Brushes.LightGray, VerticalAlignment = VerticalAlignment.Center, FontSize = 10, Margin = new Thickness(0,0,2,0) };
         Grid.SetColumn(lblY, col++); container.Children.Add(lblY);
 
-        pc.TxtY = new TextBox { Width = 40, Height = 20, Padding = new Thickness(0), FontSize = 10, TextAlignment = TextAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,2,0) };
+        pc.TxtY = new TextBox { Width = 40, Height = 20, Padding = new Thickness(0), FontSize = 10, VerticalContentAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,2,0) };
+        SetupNumericBox(pc.TxtY);
         pc.TxtY.LostFocus += (s, e) => ApplyTextInput(unit, phase, 1);
         pc.TxtY.KeyDown += (s, e) => { if (e.Key == Key.Enter) ApplyTextInput(unit, phase, 1); };
         Grid.SetColumn(pc.TxtY, col++); container.Children.Add(pc.TxtY);
@@ -78,7 +84,7 @@ public partial class BattleSceneEditorView
         var lblDur = new TextBlock { Text = "D", Foreground = Brushes.LightGray, VerticalAlignment = VerticalAlignment.Center, FontSize = 10, Margin = new Thickness(0,0,2,0) };
         Grid.SetColumn(lblDur, col++); container.Children.Add(lblDur);
 
-        pc.TxtDur = new TextBox { Width = 40, Height = 20, Padding = new Thickness(0), FontSize = 10, TextAlignment = TextAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,2,0) };
+        pc.TxtDur = new TextBox { Width = 40, Height = 20, Padding = new Thickness(0), FontSize = 10, VerticalContentAlignment = VerticalAlignment.Center, Margin = new Thickness(0,0,2,0) };
         pc.TxtDur.LostFocus += (s, e) => ApplyTextInput(unit, phase, 2);
         pc.TxtDur.KeyDown += (s, e) => { if (e.Key == Key.Enter) ApplyTextInput(unit, phase, 2); };
         Grid.SetColumn(pc.TxtDur, col++); container.Children.Add(pc.TxtDur);
@@ -111,6 +117,63 @@ public partial class BattleSceneEditorView
         return pc;
     }
 
+    private void SetupNumericBox(TextBox tb)
+    {
+        tb.AddHandler(TextInputEvent, OnNumericTextInput, RoutingStrategies.Tunnel);
+
+        // 1. При клике мышкой (фокусе) - палочка в конец
+        tb.GotFocus += (s, e) =>
+        {
+            if (s is TextBox t)
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    t.CaretIndex = (t.Text ?? "").Length;
+                }, DispatcherPriority.Input);
+            }
+        };
+
+        // 2. При любом изменении текста (Backspace, Delete, ввод) - палочка в конец
+        tb.TextChanged += (s, e) =>
+        {
+            if (s is TextBox t && t.IsFocused)
+                t.CaretIndex = t.Text?.Length ?? 0;
+        };
+    }
+
+    private void OnNumericTextInput(object? sender, TextInputEventArgs e)
+    {
+        if (sender is not TextBox tb) return;
+        var input = e.Text;
+        if (string.IsNullOrEmpty(input)) return;
+
+        if (!input.All(c => char.IsDigit(c) || c == '-'))
+        {
+            e.Handled = true;
+            return;
+        }
+
+        if (input.Contains('-'))
+        {
+            if (tb.CaretIndex != 0 || (tb.Text ?? "").StartsWith("-"))
+            {
+                e.Handled = true;
+                return;
+            }
+        }
+
+        var currentText = tb.Text ?? "";
+        var selectionLength = tb.SelectionEnd - tb.SelectionStart;
+        var newLength = currentText.Length - selectionLength + input.Length;
+        var hasMinus = currentText.StartsWith("-") || (input == "-" && tb.CaretIndex == 0);
+        var maxLength = hasMinus ? 5 : 4;
+
+        if (newLength > maxLength)
+        {
+            e.Handled = true;
+        }
+    }
+
     private AnimationSet GetAnimSet(int unit) => (unit == 0) ? AllyAnim : EnemyAnim;
 
     private void ApplyTextInput(int unit, int phase, int target)
@@ -122,10 +185,11 @@ public partial class BattleSceneEditorView
         int idx = set.CurrentFrame[phase] % ph.Frames.Count;
         var frame = ph.Frames[idx];
         var pc = _phaseControls[unit, phase];
+        
         try
         {
-            if (target == 0 && int.TryParse(pc.TxtX.Text, out int x)) frame.OffsetX = x;
-            else if (target == 1 && int.TryParse(pc.TxtY.Text, out int y)) frame.OffsetY = y;
+            if (target == 0 && int.TryParse(pc.TxtX.Text, out int x)) frame.OffsetX = Math.Clamp(x, -9999, 9999);
+            else if (target == 1 && int.TryParse(pc.TxtY.Text, out int y)) frame.OffsetY = Math.Clamp(y, -9999, 9999);
             else if (target == 2 && float.TryParse(pc.TxtDur.Text, out float d)) frame.Duration = Math.Clamp(d, 0.01f, 5.0f);
         }
         catch { }
@@ -140,8 +204,10 @@ public partial class BattleSceneEditorView
         var ph = set.GetPhase(phase);
         if (ph.Frames.Count == 0) return;
         int idx = set.CurrentFrame[phase] % ph.Frames.Count;
-        if (axis == 0) ph.Frames[idx].OffsetX += direction;
-        else ph.Frames[idx].OffsetY += direction;
+        
+        if (axis == 0) ph.Frames[idx].OffsetX = Math.Clamp(ph.Frames[idx].OffsetX + direction, -9999, 9999);
+        else ph.Frames[idx].OffsetY = Math.Clamp(ph.Frames[idx].OffsetY + direction, -9999, 9999);
+
         UpdateInputsUI();
         UpdatePreview();
     }
@@ -202,9 +268,11 @@ public partial class BattleSceneEditorView
                 pc.ChkAnim.IsEnabled = true; pc.ChkAnim.IsChecked = ph.Animate;
                 int idx = set.CurrentFrame[p] % ph.Frames.Count;
                 var frame = ph.Frames[idx];
-                if (!pc.TxtX.IsFocused) pc.TxtX.Text = frame.OffsetX.ToString();
-                if (!pc.TxtY.IsFocused) pc.TxtY.Text = frame.OffsetY.ToString();
-                if (!pc.TxtDur.IsFocused) pc.TxtDur.Text = frame.Duration.ToString("F2");
+
+                if (!pc.TxtX.IsFocused) { pc.TxtX.Text = frame.OffsetX.ToString(); pc.TxtX.CaretIndex = pc.TxtX.Text.Length; }
+                if (!pc.TxtY.IsFocused) { pc.TxtY.Text = frame.OffsetY.ToString(); pc.TxtY.CaretIndex = pc.TxtY.Text.Length; }
+                if (!pc.TxtDur.IsFocused) { pc.TxtDur.Text = frame.Duration.ToString("F2"); pc.TxtDur.CaretIndex = pc.TxtDur.Text.Length; }
+
                 pc.LblFrame.Text = $"{set.CurrentFrame[p] + 1}/{ph.Frames.Count}";
             }
         }
