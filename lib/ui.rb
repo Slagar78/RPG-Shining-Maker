@@ -509,6 +509,7 @@ end
         @anim_phase = 2
       end
     when 3
+      close_speed = speed * 2.0
       @portrait_x -= speed; @portrait_x = @portrait_start_x if @portrait_x < @portrait_start_x
       @frame_x -= speed; @frame_x = @frame_start_x if @frame_x < @frame_start_x
       @upper_x += speed; @upper_x = @upper_start_x if @upper_x > @upper_start_x
@@ -886,7 +887,7 @@ class Profile
 
     when 3  # разборка
       # Ускоряем закрытие, чтобы меню не ждало долго
-      close_speed = speed * 1.8
+      close_speed = speed * 2.0
 
       @portrait_x -= close_speed
       @portrait_x = @portrait_start_x if @portrait_x < @portrait_start_x
@@ -1569,6 +1570,7 @@ end
         @anim_phase = 2
       end
     when 3
+      close_speed = speed * 2.0
       @portrait_x -= speed; @portrait_x = @portrait_start_x if @portrait_x < @portrait_start_x
       @frame_x -= speed; @frame_x = @frame_start_x if @frame_x < @frame_start_x
       @upper_x += speed; @upper_x = @upper_start_x if @upper_x > @upper_start_x
