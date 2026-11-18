@@ -59,7 +59,7 @@ public partial class EnemiesViewModel : ObservableObject
         _itemsPath    = Path.Combine(ProjectPaths.DataDir, "items", "items.json");
         _movetypesPath = Path.Combine(ProjectPaths.DataDir, "movetypes.json");
         _portraitsDir = Path.Combine(ProjectPaths.AssetsDir, "ui", "portraits");
-        _mapspritesDir = Path.Combine(ProjectPaths.AssetsDir, "mapsprites");
+        _mapspritesDir = Path.Combine(ProjectPaths.AssetsDir, "mapsprites_enemy");
 
         LoadData();
     }

@@ -1,5 +1,4 @@
 Файловая структура
-
 RPG-Shining-Maker/
 │
 ├── Maker/
@@ -29,20 +28,21 @@ RPG-Shining-Maker/
 │   │   │       ├── TerrainService.cs               (чтение/запись terrain.json)
 │   │   │       ├── AnimationService.cs             (чтение/запись animation.json, Rescan Frames)
 │   │   │       ├── GlobalService.cs                (чтение/запись global.json)
-│   │   │       └── AssetScannerService.cs          (GetMusicFiles, GetPortraits и т.д.)
+│   │   │       └── AssetScannerService.cs          (GetMusicFiles, GetPortraits, GetMapsprites и т.д.)
 │   │   │
 │   │   └── RpgShinzoMaker.Desktop/                 ← UI
 │   │       ├── App.axaml, Program.cs, ViewLocator.cs
 │   │       ├── Assets/
 │   │       ├── ViewModels/
 │   │       │   ├── MainViewModel.cs                (Actors, Items, Spells, Classes, Enemies, System)
-│   │       │   ├── ActorsViewModel, ItemsViewModel, SpellsViewModel, ClassesViewModel, EnemiesViewModel
+│   │       │   ├── ActorsViewModel, ItemsViewModel, SpellsViewModel, ClassesViewModel, EnemiesViewModel (у Enemies _mapspritesDir → mapsprites_enemy ← ОБНОВЛЕНО)
 │   │       │   └── SystemViewModel.cs              (Start Map ID, X, Y, Gold)
 │   │       ├── Views/
 │   │       │   └── MainWindow.axaml (.cs), MapCanvas.axaml (.cs)
 │   │       ├── Shared/
 │   │       │   ├── Interfaces/IEditor.cs
 │   │       │   ├── Converters/PortraitConverter.cs
+│   │       │   ├── Converters/MapspriteConverter.cs ← НОВОЕ (превью мапспрайтов; ConverterParameter = подпапка assets, дефолт "mapsprites"; файл/папка/имя с .png)
 │   │       │   └── Audio/                          ← НОВОЕ (МУЗЫКА)
 │   │       │       ├── MusicPlayer.cs              (обертка NAudio + NAudio.Vorbis)
 │   │       │       └── MusicLibrary.cs             (сканер папки assets/sounds)
@@ -69,14 +69,19 @@ RPG-Shining-Maker/
 │   │           └── DatabaseEditor/
 │   │               ├── DatabaseEditorView.axaml (.cs)
 │   │               └── Views/
-│   │                   ├── ActorsPanel.axaml (.cs)
+│   │                   ├── ActorsPanel.axaml (.cs)   ← ОБНОВЛЕНО: превью Portrait + Mapsprite рядом (Block Settings), Mapsprite без параметра (дефолт)
 │   │                   ├── ItemsPanel.axaml (.cs)
 │   │                   ├── SpellsPanel.axaml (.cs)
 │   │                   ├── ClassesPanel.axaml (.cs)
-│   │                   ├── EnemiesPanel.axaml (.cs)
+│   │                   ├── EnemiesPanel.axaml (.cs)  ← ОБНОВЛЕНО: превью Portrait + Mapsprite рядом, ConverterParameter=mapsprites_enemy
 │   │                   └── SystemPanel.axaml (.cs) (Глобальные настройки)
 │   │
 │   └── assets/
+│       ├── ui/portraits/                           (портреты героев и врагов)
+│       ├── mapsprites/                             (мапспрайты СОЮЗНИКОВ/актёров)
+│       ├── mapsprites_enemy/                       ← НОВОЕ (мапспрайты ВРАГОВ, отдельная папка)
+│       ├── sounds/                                 (музыка MP3/OGG)
+│       └── battles/                                (батл-спрайты, фоны, анимации)
 │
 ├── data/
 │   ├── global.json                                 (start_map_id, start_x, start_y, gold)
@@ -102,9 +107,7 @@ RPG-Shining-Maker/
     ├── battleManager/                              (battle_ui, give, drop, equip, renderer, player)
     └── game.rb                                     (Поиск стартовой карты по ID, Варпы по target_map_id)
 
-
 🏛️ Архитектура: оболочка и СЕМЬ редакторов
-
 ┌─────────────────────────────────────────────────────────────┐
 │                     MainWindow (Shell)                      │
 │  [SAVE] [▶ Play Game] [⚔ Battle Test]                       │
@@ -120,87 +123,73 @@ RPG-Shining-Maker/
 │  └──────────────────────────────────────────────────────┘   │
 │  Правый док: [MUSIC PLAYER] / [СВОЙСТВА]  ← НОВОЕ           │
 └───────────────────────────┬─────────────────────────────────┘
-                            │  SAVE → editor.Save() / StatusChanged / OnActivate()
+                            │
+        SAVE → editor.Save() / StatusChanged / OnActivate()
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                     IEditor (интерфейс)                     │
 └───────────────────────────┬─────────────────────────────────┘
                             │  реализуют
-        ┌───────────────────┼───────────────────┬───────────────────┐
-        ▼                   ▼                   ▼                   ▼
-  ┌───────────┐       ┌───────────┐       ┌───────────┐       ┌───────────┐
-  │ MapEditor │       │ EventEdit │       │ ImportEd  │       │ DataBase  │
-  │  ✓ готов  │       │  ✓ готов  │       │  ✓ готов  │       │  ✓ готов  │
-  └───────────┘       └───────────┘       └───────────┘       └───────────┘
-                            │
-                            ▼
-                      ┌───────────┐
-                      │ BattleEd  │
-                      │  ✓ готов  │
-                      └───────────┘
-                            │
-                            ▼
-                      ┌───────────┐
-                      │ BattleScEd│
-                      │  ✓ готов  │
-                      └───────────┘
-
+     ┌───────────────────┬──┴────────────────┬───────────────────┐
+     ▼                   ▼                   ▼                   ▼
+┌───────────┐       ┌───────────┐       ┌───────────┐       ┌───────────┐
+│ MapEditor │       │ EventEdit │       │ ImportEd  │       │ DataBase  │
+│  ✓ готов  │       │  ✓ готов  │       │  ✓ готов  │       │  ✓ готов  │
+└───────────┘       └───────────┘       └───────────┘       └───────────┘
+                                                              │
+                                                              ▼
+                                                        ┌───────────┐
+                                                        │ BattleEd  │
+                                                        │  ✓ готов  │
+                                                        └───────────┘
+                                                              │
+                                                              ▼
+                                                        ┌───────────┐
+                                                        │ BattleScEd│
+                                                        │  ✓ готов  │
+                                                        └───────────┘
 
 📁 Формат JSON: Сохранение с табами (CJsonFormatter)
-
 Пример data/maps/entries.json:
 [{ "id": 0, "folder": "Granseal", "name": "Granseal", ... }]
-
 Пример data/battles/entries.json:
 [{ "folder": "battle00", "name": "Battle #0", "map_id": 1, "music": "...", "battle_x": 10, "battle_y": 14, "battle_width": 32, "battle_height": 24, "background": "...", "ground": "..." }]
-
 Пример data/battles/battle00/spriteset.json:
 {
-	"allies": [{"actor_id": 0, "x": 5, "y": 3}],
-	"enemies": [{"enemy_id": 0, "x": 8, "y": 5}],
-	"ai_points": [ ... ],   (сохраняется как есть)
-	"ai_regions": [ ... ]   (сохраняется как есть)
+  "allies": [{"actor_id": 0, "x": 5, "y": 3}],
+  "enemies": [{"enemy_id": 0, "x": 8, "y": 5}],
+  "ai_points": [ ... ],   (сохраняется как есть)
+  "ai_regions": [ ... ]   (сохраняется как есть)
 }
-
 Пример data/battles/battle00/terrain.json:
 [
-	[1,1,1,-1,-1,1],
-	[1,0,1,-1,-1,1]
+  [1,1,1,-1,-1,1],
+  [1,0,1,-1,-1,1]
 ]
-
 Пример animation.json:
 {
-	"idle": { "frames": [{"file": "idle_1.png", "duration": 0.30, "offset_x": 0, "offset_y": 0}] },
-	"attack": { "frames": [{"file": "frame_attack_1.png", "duration": 0.30, "offset_x": -30, "offset_y": 0}] },
-	"dodge": { "frames": [] }
+  "idle": { "frames": [{"file": "idle_1.png", "duration": 0.30, "offset_x": 0, "offset_y": 0}] },
+  "attack": { "frames": [{"file": "frame_attack_1.png", "duration": 0.30, "offset_x": -30, "offset_y": 0}] },
+  "dodge": { "frames": [] }
 }
-
 Пример события в events.json (обычное):
 { "type": "counter", "x": 5, "y": 10 }
-
 Пример варпа в events.json (теперь по ID, а не по имени):
 { "type": "warp", "trigger_x": 3, "trigger_y": 3, "target_map_id": 0, "target_x": 55, "target_y": 3, "facing": 3 }
-
 Пример врага в enemies.json:
 { "id": 0, "name": "Gyasa", "items": [{ "item_id": 5, "equipped": true }], "spells": [1, -1, -1, -1], "spell_levels": [2, 1, 1, 1] }
-
 Пример start_inventory.json:
 { "start_inventory": [{ "actor_id": 0, "class_id": 0, "start_level": 1, "items": [{ "item_id": 5, "equipped": true }, { "item_id": -1, "equipped": false }] }] }
-
 Пример shops.json:
 { "shops": [{ "id": 0, "name": "Granseal Weapons", "type": "weapon", "items": [5, 7, 6, 4] }] }
-
 Пример global.json:
 { "start_map_id": 0, "start_x": 12, "start_y": 14, "gold": 50 }
-
 Правила:
 • Табы (\t), каждый элемент с новой строки.
 • Вложенные массивы (tiles, collision, collision2) пишутся горизонтально.
 • Игра на Ruby читает без ошибок.
 
-
 📐 Правила, чтобы код не превратился в кашу
-
 #   Правило                                        Как соблюдать
 1   Один редактор — одна папка                     TilesetImporter в Editors/TilesetImporter/.
 2   Partial-файлы для больших редакторов            MapEditor = 11, EventEditor = 7, Importer = 4, BattleEditor = 10, BattleSceneEditor = 4, Database = Views/.
@@ -237,18 +226,20 @@ RPG-Shining-Maker/
 33  BattleEditor: сохранение чужих ключей           SpritesetService сохраняет ai_points / ai_regions как были, меняет только allies и enemies.
 34  Drag & Drop в BattleEditor                      Зажал ЛКМ на юните — тянешь. У краёв экрана карта скроллится сама (Photoshop-style).
 35  Лимиты юнитов в битве                           30 союзников (Allies) и 48 врагов (Enemies) максимум.
-36  Визуал BattleEditor                              Рамки выбора фиолетовые (#BF00FF), со скруглением (CornerRadius 6). Слоты в панели 34x34.
+36  Визуал BattleEditor                             Рамки выбора фиолетовые (#BF00FF), со скруглением (CornerRadius 6). Слоты в панели 34x34.
 37  Музыкальный плеер (NAudio)                      Использовать MusicPlayer и MusicLibrary. Поддержка MP3 (NAudio) и OGG (NAudio.Vorbis).
 38  Сканирование музыки                             MusicLibrary.ScanSounds() читает <GameRoot>/assets/sounds/ при старте окна.
 39  UI плеера                                       Кнопки — векторные Path (5 шт.), список ограничен MaxHeight со стилями CornerRadius для аккуратных плашек.
 40  BattleSceneEditor: Сетка для контролов          В нижней панели использовать Grid с фиксированными колонками вместо StackPanel, чтобы элементы не вылезали за рамки.
 41  BattleSceneEditor: Масштабирование сцены        Использовать Math.Min(Width/1152, Height/960) чтобы картинка (включая землю) всегда влезала целиком.
 42  BattleSceneEditor: Поиск путей                  Использовать метод GetGameRoot() для поиска папки data/assets вверх по дереву, чтобы относительные пути из JSON работали.
-
+43  Превью мапспрайтов ← НОВОЕ                      MapspriteConverter по образцу портретов: надпись → Image → ComboBox. Stretch=Uniform + RenderOptions.BitmapInterpolationMode=None (пиксель-арт без мыла). Конвертер терпит: имя с .png, без расширения, папку с кадрами (берет первый png).
+44  Раздельные папки мапспрайтов ← НОВОЕ            assets/mapsprites — союзники, assets/mapsprites_enemy — враги. Папка в VM (_mapspritesDir) = ConverterParameter в XAML = имя на диске, символ в символ. Пустой ComboBox = сканер не нашел папку/файлы, а не ошибка конвертера.
+45  Сканирование ассетов — при старте ← НОВОЕ       LoadData() вызывается только в конструкторе VM. Создал/наполнил папку — перезапусти редактор. Старым записям JSON перевыбери спрайт из списка и SAVE DATABASE.
 
 📈 Что уже готово vs что в планах
-
 Компонент                                              Статус
+
 ЯДРО И СЕРВИСЫ
 Core.Models (Карты, События, БД, GlobalSettings)       ✅
 Core.Models (BattleEntry)                              ✅
@@ -285,6 +276,10 @@ BattleSceneEditor (4 файла, портирован из C)           ✅
 Панель управления X/Y/Dur (Grid, компактно)            ✅
 Запуск анимации (чекбокс Anim)                         ✅
 Rescan Frames (пересканирование папки)                 ✅
+MapspriteConverter (параметризованный, Shared/Converters) ← НОВОЕ ✅
+Heroes: превью Mapsprite рядом с Portrait (Block Settings) ← НОВОЕ ✅
+Enemies: превью Mapsprite (ConverterParameter=mapsprites_enemy) ← НОВОЕ ✅
+Ассеты разнесены: mapsprites (союзники) / mapsprites_enemy (враги) ← НОВОЕ ✅
 
 ИГРА (RUBY)
 Рефакторинг: всё (инвентарь, магазины, бой) на ID      ✅
@@ -300,3 +295,5 @@ BattleManager (give/drop/equip) по item_id             ✅
 MESSAGE / TEXTS (редактор диалогов)                    📋
 Undo/Redo в EventEditor, Визуальные subAreas           📋
 Кнопка [⚔ Battle Test] → запуск battle.rb              📋
+Ruby: мапспрайты врагов грузить из assets/mapsprites_enemy ← НОВОЕ 📋
+Превью: первый кадр спрайт-листа (CroppedBitmap + SourceRect, опция) ← НОВОЕ 📋
