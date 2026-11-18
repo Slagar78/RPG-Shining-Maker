@@ -21,8 +21,14 @@ public partial class SpellLevel : ObservableObject
     [ObservableProperty] private int _mp = 5;
     [ObservableProperty] private int _power = 5;
     [ObservableProperty] private int _radius = 1;
-    
     // В JSON это массив range: [0, 1], поэтому при сохранении мы их склеим
     [ObservableProperty] private int _rangeMin = 0;
     [ObservableProperty] private int _rangeMax = 3;
+
+    // Номер уровня всегда 1..5
+    partial void OnLevelChanged(int value)
+    {
+        if (value < 1) Level = 1;
+        else if (value > 5) Level = 5;
+    }
 }

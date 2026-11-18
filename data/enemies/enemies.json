@@ -198,7 +198,7 @@
 					"id": 3,
 					"name": "New Enemy",
 					"portrait": "Huper_Rusephina",
-					"mapsprite": "mapsprite107",
+					"mapsprite": "mapsprite090",
 					"battle_sprite_path": "assets/battles/battlesprites/enemies/Gizmo",
 					"race": "Cadrian",
 					"status": "normal",

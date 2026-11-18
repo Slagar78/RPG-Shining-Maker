@@ -2,10 +2,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:models="using:RpgShinzoMaker.Core.Models.Database"
              xmlns:vm="using:RpgShinzoMaker.Desktop.ViewModels"
+             xmlns:conv="using:RpgShinzoMaker.Desktop.Shared.Converters"
              x:DataType="vm:SpellsViewModel"
              x:Class="RpgShinzoMaker.Desktop.Editors.DatabaseEditor.Views.SpellsPanel">
 
     <UserControl.Resources>
+        <conv:SpellIconConverter x:Key="SpellIconConverter"/>
+
         <ControlTheme x:Key="CustomSpellItem" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Padding" Value="4,3"/>
@@ -130,10 +133,21 @@
                 <Border Classes="GroupBox">
                     <StackPanel>
                         <TextBlock Text="Visuals" Classes="GroupHeader"/>
-                        <Grid ColumnDefinitions="Auto, *" HorizontalAlignment="Left">
-                            <TextBlock Grid.Column="0" Text="Icon:" Margin="0,2,8,2"/>
-                            <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableIcons}" SelectedItem="{Binding SelectedSpell.Icon}" Width="300" HorizontalAlignment="Left" Margin="0,2"/>
-                        </Grid>
+                        <StackPanel Spacing="4" Width="300" HorizontalAlignment="Left">
+
+                            <TextBlock Text="Icon:" Margin="0,0,0,2"/>
+
+                            <Border BorderBrush="#555555" BorderThickness="1" CornerRadius="4"
+                                    Width="68" Height="100" Background="#1E1E1E" HorizontalAlignment="Left">
+                                <Image Width="64" Height="96" Stretch="Uniform"
+                                       RenderOptions.BitmapInterpolationMode="None"
+                                       Source="{Binding SelectedSpell.Icon, Converter={StaticResource SpellIconConverter}}"/>
+                            </Border>
+
+                            <ComboBox ItemsSource="{Binding AvailableIcons}"
+                                      SelectedItem="{Binding SelectedSpell.Icon}"
+                                      HorizontalAlignment="Stretch" Margin="0,4,0,0"/>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -162,8 +176,8 @@
                                 <DataTemplate x:DataType="models:SpellLevel">
                                     <Grid ColumnDefinitions="50, 80, 80, 80, 80, 80, 40" Margin="0,2" HorizontalAlignment="Left" VerticalAlignment="Center">
                                         
-                                        <!-- ТЕПЕРЬ ЭТО TEXTBOX С КЛАССОМ NumBox -->
-                                        <TextBox Grid.Column="0" Classes="NumBox" Text="{Binding Level}" MaxLength="5" Margin="0,0,5,0" Width="45" VerticalAlignment="Center"/>
+                                        <!-- TEXTBOX С КЛАССОМ NumBox -->
+                                        <TextBox Grid.Column="0" Classes="NumBox" Text="{Binding Level}" MaxLength="1" Margin="0,0,5,0" Width="45" VerticalAlignment="Center"/>
                                         <TextBox Grid.Column="1" Classes="NumBox" Text="{Binding Mp}" MaxLength="5" Margin="0,0,5,0" Width="70" VerticalAlignment="Center"/>
                                         <TextBox Grid.Column="2" Classes="NumBox" Text="{Binding Power}" MaxLength="5" Margin="0,0,5,0" Width="70" VerticalAlignment="Center"/>
                                         <TextBox Grid.Column="3" Classes="NumBox" Text="{Binding Radius}" MaxLength="5" Margin="0,0,5,0" Width="70" VerticalAlignment="Center"/>

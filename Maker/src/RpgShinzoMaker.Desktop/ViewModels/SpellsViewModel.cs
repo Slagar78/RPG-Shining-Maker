@@ -13,6 +13,8 @@ namespace RpgShinzoMaker.Desktop.ViewModels;
 
 public partial class SpellsViewModel : ObservableObject
 {
+    private const int MaxLevels = 5;
+
     private readonly SpellsService _spellsService = new();
     private readonly string _spellsPath;
     private readonly string _iconsDir = "assets/spells";
@@ -103,7 +105,9 @@ public partial class SpellsViewModel : ObservableObject
     private void AddLevel()
     {
         if (SelectedSpell == null) return;
-        int nextLevel = SelectedSpell.Levels.Count > 0 ? SelectedSpell.Levels.Max(l => l.Level) + 1 : 1;
+        if (SelectedSpell.Levels.Count >= MaxLevels) return;   // максимум 5 уровней
+
+        int nextLevel = SelectedSpell.Levels.Count + 1;        // 1,2,3,4,5 по порядку
         SelectedSpell.Levels.Add(new SpellLevel { Level = nextLevel, Mp = 5, Power = 5, Radius = 1, RangeMin = 0, RangeMax = 3 });
     }
 
@@ -111,6 +115,8 @@ public partial class SpellsViewModel : ObservableObject
     private void DeleteLevel(SpellLevel level)
     {
         if (SelectedSpell == null || level == null) return;
+        if (SelectedSpell.Levels.Count <= 1) return;           // минимум 1 — последний не удаляем
+
         SelectedSpell.Levels.Remove(level);
     }
 }

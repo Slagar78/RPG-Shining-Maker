@@ -16,11 +16,9 @@ public partial class EnemiesViewModel : ObservableObject
     private readonly EnemiesService _enemiesService = new();
     private readonly AssetScannerService _assetScanner = new();
     private readonly SpellsService _spellsService = new();
-    private readonly ClassesService _classesService = new();
     private readonly ItemsService _itemsService = new();
 
     private readonly string _enemiesPath;
-    private readonly string _classesPath;
     private readonly string _spellsPath;
     private readonly string _itemsPath;
     private readonly string _movetypesPath;
@@ -34,7 +32,8 @@ public partial class EnemiesViewModel : ObservableObject
     public ObservableCollection<string> AvailableMapsprites { get; } = new();
     public ObservableCollection<Item> AvailableItems { get; } = new();
     public ObservableCollection<Spell> AvailableSpells { get; } = new(); // Изменено на Spell
-    public ObservableCollection<string> AvailableRaces { get; } = new();
+    public ObservableCollection<string> AvailableRaces { get; } = new()
+    { "Enterran", "Cadrian", "human" };
     public ObservableCollection<string> AvailableMovetypes { get; } = new();
 
     public ObservableCollection<string> AvailableResistances { get; } = new()
@@ -43,7 +42,12 @@ public partial class EnemiesViewModel : ObservableObject
     public ObservableCollection<string> AvailableSpellPowers { get; } = new()
         { "regular", "enhanced", "powerful" };
 
+    // Status юнита — как у союзников
     public ObservableCollection<string> AvailableStatuses { get; } = new()
+        { "normal", "hyper", "ultra" };
+
+    // Init Status 
+    public ObservableCollection<string> AvailableInitialStatuses { get; } = new()
         { "normal", "poisoned", "sleeping", "silenced", "stunned", "confused", "charmed", "berserk" };
 
     public ObservableCollection<string> Curves { get; } = new()
@@ -54,7 +58,6 @@ public partial class EnemiesViewModel : ObservableObject
     public EnemiesViewModel()
     {
         _enemiesPath  = Path.Combine(ProjectPaths.DataDir, "enemies", "enemies.json");
-        _classesPath  = Path.Combine(ProjectPaths.DataDir, "actors", "classes.json");
         _spellsPath   = Path.Combine(ProjectPaths.DataDir, "spells", "spells.json");
         _itemsPath    = Path.Combine(ProjectPaths.DataDir, "items", "items.json");
         _movetypesPath = Path.Combine(ProjectPaths.DataDir, "movetypes.json");
@@ -90,15 +93,6 @@ public partial class EnemiesViewModel : ObservableObject
             if (!string.IsNullOrWhiteSpace(spell.Name))
                 AvailableSpells.Add(spell);
         }
-
-        // Расы — Distinct из classes.json
-        AvailableRaces.Clear();
-        foreach (var race in _classesService.LoadClasses(_classesPath)
-                     .Select(c => c.Race)
-                     .Where(r => !string.IsNullOrWhiteSpace(r))
-                     .Distinct()
-                     .OrderBy(r => r))
-            AvailableRaces.Add(race);
 
         // Типы передвижения — из movetypes.json
         LoadMovetypes();
